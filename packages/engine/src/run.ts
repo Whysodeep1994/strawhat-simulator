@@ -11,6 +11,8 @@ import {
   findOnField,
   hasKeywordNow,
   matchesFilter,
+  onPlayNegated,
+  powerAmount,
   powerOf,
 } from "./state.js";
 import { drawCards, knockOut, pushEffect, putOnField, queueEffects, startTurn } from "./turn.js";
@@ -108,6 +110,8 @@ function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
   if (frame.stage === "check") {
     // Rule 8-1-3-1-3: an auto effect whose card has left its area doesn't activate.
     if (ON_FIELD_TIMINGS.has(effect.timing) && !findOnField(state, frame.source)) return "done";
+    // Rule 8-2-1-1: a negated [On Play] effect does not happen.
+    if (effect.timing === "onPlay" && onPlayNegated(state, frame.controller)) return "done";
     // [On K.O.] conditions were checked on the field (rule 10-2-17-1).
     if (
       effect.timing !== "onKO" &&
@@ -195,6 +199,19 @@ function payCost(
     moveFromHandToTrash(state, frame.controller, chosen);
   } else if ("restThis" in cost) {
     source.rested = true;
+  } else if ("returnGivenDon" in cost) {
+    // One DON!! at a time, so the player picks which cards they come from.
+    while (frame.memo.length < cost.returnGivenDon) {
+      const given = [p.leader, ...p.characters].filter((c) => c.givenDon > 0);
+      const chosen = choose(state, frame, frame.controller, given, 1, 1, "returnGivenDon");
+      if (chosen === "wait") return "wait";
+      const card = given.find((c) => c.uid === chosen[0]);
+      if (!card) return "continue";
+      card.givenDon -= 1;
+      p.donRested += 1;
+      frame.memo.push(card.uid);
+    }
+    frame.memo = [];
   }
   return "continue";
 }
@@ -293,6 +310,16 @@ function runStep(
       const targets = chooseTargets(state, frame, source, step.target, step.do);
       if (targets === "wait") return "wait";
       for (const uid of targets) applyToTarget(state, controller, step, uid);
+      return "continue";
+    }
+
+    case "negateOnPlay": {
+      const player = step.side === "self" ? controller : opponentOf(controller);
+      state.modifiers.push({
+        target: state.players[player].leader.uid,
+        negateOnPlay: true,
+        until: step.duration ?? "turn",
+      });
       return "continue";
     }
 
@@ -430,7 +457,11 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
   const card = location.card;
   switch (step.do) {
     case "powerUp":
-      state.modifiers.push({ target: uid, power: step.amount, until: step.duration ?? "turn" });
+      state.modifiers.push({
+        target: uid,
+        power: powerAmount(state, controller, step),
+        until: step.duration ?? "turn",
+      });
       return;
     case "grantKeyword":
       state.modifiers.push({ target: uid, keyword: step.keyword, until: step.duration ?? "turn" });

@@ -43,22 +43,30 @@ Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you ma
 ## Conditions
 
 `donAtLeast` ([DON!! xX]), `yourTurn`, `opponentsTurn`, `lifeAtMost`, `lifeAtLeast`,
-`opponentLifeAtMost`, `leaderHasType`, `charactersAtLeast`, `handAtMost`.
+`opponentLifeAtMost`, `opponentLifeAtLeast`, `leaderHasType`, `charactersAtLeast`, `handAtMost`.
 
 ## Costs
 
-`restDon` (①), `donMinus` (DON!! −X), `trashFromHand`, `restThis`.
+`restDon` (①), `donMinus` (DON!! −X), `trashFromHand`, `restThis`, `returnGivenDon` ("return N of your
+currently given DON!! cards to your cost area rested"; the player picks which cards).
 
 ## Targets
 
 `{ "side": "self" | "opponent" | "this", "zone": "leader" | "characters" | "leaderOrCharacters" | "stage", "filter": {...}, "count": 1, "upTo": true }`
 
 Filters: `category`, `costAtMost`, `costAtLeast`, `powerAtMost`, `powerAtLeast`, `type`, `name`,
-`nameIncludes`, `color`, `rested`, `notThis`, `hasTrigger`, `keyword` (for example
+`nameIncludes`, `color`, `rested`, `costAtMostOpponentLife` ("a cost equal to or less than the number of
+your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for example
 `{ "keyword": "blocker" }` for "[Blocker] Characters").
 
 When there's no real choice (for example, exactly one valid target and no "up to"), the engine
 picks automatically, so players are only asked about meaningful decisions.
+
+## Keywords
+
+Besides the printed keywords, `canAttackActive` means "this Character can also attack your
+opponent's active Characters". Grant it with `grantKeyword` in a `permanent` effect for
+conditional wording such as "[DON!! x2] This Character can also attack...".
 
 ## Steps
 
@@ -66,6 +74,7 @@ picks automatically, so players are only asked about meaningful decisions.
 | -------------------------------- | --------------------------------------------------------------------- |
 | `draw`                           | Draw cards.                                                           |
 | `powerUp`                        | Change power (negative for "−"), for the turn or the battle.          |
+| `negateOnPlay`                   | "[On Play] effects are negated" for `self` or `opponent`.             |
 | `grantKeyword`                   | Give [Rush], [Blocker], [Double Attack], and so on.                   |
 | `ko`                             | K.O. Characters.                                                      |
 | `rest` / `setActive`             | Rest or set active.                                                   |
@@ -82,5 +91,7 @@ picks automatically, so players are only asked about meaningful decisions.
 | `lifeToHand` / `deckToLife`      | Move cards between Life, hand, and deck.                              |
 | `playThis`                       | [Trigger] only: play this card.                                       |
 | `if`                             | Only do the nested steps if the conditions hold.                      |
+
+`powerUp` takes `perTrash: 4` for "+X power for every 4 cards in your trash".
 
 Each block is tested in `packages/engine/scenarios/effects/` using made-up `TEST-` cards.

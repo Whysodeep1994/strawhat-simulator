@@ -55,6 +55,8 @@ export interface Modifier {
   keyword?: Keyword;
   /** The opponent can't activate [Blocker] Characters matching this when the target attacks. */
   noBlockers?: Filter;
+  /** The target is a Leader: its player's [On Play] effects are negated. */
+  negateOnPlay?: boolean;
   until: Duration;
 }
 

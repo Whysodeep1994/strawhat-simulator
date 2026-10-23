@@ -43,6 +43,7 @@ export type Condition =
   | { lifeAtMost: number }
   | { lifeAtLeast: number }
   | { opponentLifeAtMost: number }
+  | { opponentLifeAtLeast: number }
   | { leaderHasType: string }
   | { charactersAtLeast: number }
   | { handAtMost: number };
@@ -53,7 +54,9 @@ export type Cost =
   /** DON!! −X: return DON!! from the field to the DON!! deck (rule 8-3-1-6). */
   | { donMinus: number }
   | { trashFromHand: number }
-  | { restThis: true };
+  | { restThis: true }
+  /** "Return N total of your currently given DON!! cards to your cost area rested." */
+  | { returnGivenDon: number };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -71,6 +74,8 @@ export interface Filter {
   category?: CardCategory;
   costAtMost?: number;
   costAtLeast?: number;
+  /** "With a cost equal to or less than the number of your opponent's Life cards." */
+  costAtMostOpponentLife?: boolean;
   powerAtMost?: number;
   powerAtLeast?: number;
   type?: string;
@@ -90,7 +95,8 @@ export type Duration = "turn" | "battle";
 
 export type Step =
   | { do: "draw"; count: number }
-  | { do: "powerUp"; target: Target; amount: number; duration?: Duration }
+  /** `perTrash`: "+amount for every N cards in your trash". */
+  | { do: "powerUp"; target: Target; amount: number; duration?: Duration; perTrash?: number }
   | { do: "grantKeyword"; target: Target; keyword: Keyword; duration?: Duration }
   | { do: "ko"; target: Target }
   | { do: "rest"; target: Target }
@@ -118,6 +124,8 @@ export type Step =
   | { do: "playFromTrash"; filter?: Filter }
   | { do: "lifeToHand"; count: number }
   | { do: "deckToLife"; count: number }
+  /** "[On Play] effects are negated" for you (`self`) or your opponent. */
+  | { do: "negateOnPlay"; side: "self" | "opponent"; duration?: Duration }
   /** Trigger only: play this card instead of trashing it. */
   | { do: "playThis" }
   /** A whole sub-sequence that only happens "if" a condition holds (rule 8-3-3). */

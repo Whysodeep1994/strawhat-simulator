@@ -22,6 +22,7 @@ export const KEYWORD_NAMES: Record<Keyword, string> = {
   banish: "Banish",
   blocker: "Blocker",
   unblockable: "Unblockable",
+  canAttackActive: "Can attack active Characters",
 };
 
 const KEYWORD_HELP: Record<Keyword, string> = {
@@ -32,6 +33,7 @@ const KEYWORD_HELP: Record<Keyword, string> = {
   blocker:
     "After your opponent declares an attack, you may rest this card to make it the new target.",
   unblockable: "Your opponent cannot activate [Blocker] when this card attacks.",
+  canAttackActive: "This card can also attack your opponent's active Characters.",
 };
 
 const TIMING_NAMES: Record<Timing, string> = {
@@ -79,6 +81,9 @@ function conditionText(condition: Condition): string {
   if ("opponentLifeAtMost" in condition) {
     return `(If your opponent has ${condition.opponentLifeAtMost} or less Life)`;
   }
+  if ("opponentLifeAtLeast" in condition) {
+    return `(If your opponent has ${condition.opponentLifeAtLeast} or more Life)`;
+  }
   if ("leaderHasType" in condition)
     return `(If your Leader has the {${condition.leaderHasType}} type)`;
   if ("charactersAtLeast" in condition) {
@@ -91,6 +96,8 @@ function costText(cost: Cost): string {
   if ("restDon" in cost) return `①`.repeat(cost.restDon);
   if ("donMinus" in cost) return `DON!! −${cost.donMinus}`;
   if ("trashFromHand" in cost) return `trash ${cost.trashFromHand} card(s) from your hand`;
+  if ("returnGivenDon" in cost)
+    return `return ${cost.returnGivenDon} of your given DON!! cards to your cost area rested`;
   return "rest this card";
 }
 
@@ -136,6 +143,8 @@ function stepText(step: Step): string {
       return `Add up to ${step.count} card(s) from the top of your deck to the top of your Life cards.`;
     case "playThis":
       return "Play this card.";
+    case "negateOnPlay":
+      return `${step.side === "self" ? "Your" : "Your opponent's"} [On Play] effects are negated${durationText(step.duration)}.`;
     case "if":
       return `If ${step.conditions.map(conditionText).join(" and ")}, ${step.steps.map(stepText).join(" ")}`;
   }
@@ -171,6 +180,7 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.rested) parts.push("rested");
   if (filter.costAtMost !== undefined) parts.push(`a cost of ${filter.costAtMost} or less`);
   if (filter.costAtLeast !== undefined) parts.push(`a cost of ${filter.costAtLeast} or more`);
+  if (filter.costAtMostOpponentLife) parts.push("a cost up to your opponent's Life count");
   if (filter.powerAtMost !== undefined) parts.push(`${filter.powerAtMost} power or less`);
   if (filter.powerAtLeast !== undefined) parts.push(`${filter.powerAtLeast} power or more`);
   if (filter.type) parts.push(`the {${filter.type}} type`);

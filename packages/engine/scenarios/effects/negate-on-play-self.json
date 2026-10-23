@@ -1,0 +1,20 @@
+{
+  "name": "\"Your [On Play] effects are negated\" stops your own [On Play]",
+  "rules": ["8-2-1", "8-2-1-1", "10-2-6"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-LEADER-NEGATE",
+      "hand": ["TEST-ONPLAY-DRAW"],
+      "don": { "active": 2 }
+    },
+    "p2": {
+      "hand": ["TEST-ONPLAY-DRAW"]
+    }
+  },
+  "actions": [{ "type": "playCard", "player": "p1", "card": "p1.hand.0" }],
+  "expect": {
+    "p1.hand": 0,
+    "p1.deck": 20,
+    "p1.characters": 1
+  }
+}

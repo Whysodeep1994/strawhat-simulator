@@ -13,7 +13,9 @@ export type Keyword =
   | "doubleAttack"
   | "banish"
   | "blocker"
-  | "unblockable";
+  | "unblockable"
+  /** "Can also attack your opponent's active Characters." */
+  | "canAttackActive";
 
 export interface CardDefinition {
   id: string;

@@ -159,10 +159,14 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
   if (p.turnsTaken <= 1) return [];
   const opponent = state.players[opponentOf(player)];
   const restedCharacters = opponent.characters.filter((c) => c.rested).map((c) => c.uid);
+  const allCharacters = opponent.characters.map((c) => c.uid);
   const actions: Action[] = [];
   for (const attacker of [p.leader, ...p.characters]) {
     if (attacker.rested) continue;
-    const targets = attackTargets(state, attacker, opponent.leader.uid, restedCharacters);
+    const attackable = hasKeywordNow(state, attacker, "canAttackActive")
+      ? allCharacters
+      : restedCharacters;
+    const targets = attackTargets(state, attacker, opponent.leader.uid, attackable);
     for (const target of targets)
       actions.push({ type: "attack", player, attacker: attacker.uid, target });
   }

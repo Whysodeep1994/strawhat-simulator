@@ -496,6 +496,87 @@ const cards: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-LEADER-NEGATE",
+    name: "Test Leader Negate",
+    category: "leader",
+    colors: ["black"],
+    power: 5000,
+    life: 5,
+    effects: [{ timing: "permanent", steps: [{ do: "negateOnPlay", side: "self" }] }],
+  },
+  {
+    id: "TEST-NEGATE-OPPONENT",
+    name: "Test Negate Opponent",
+    category: "character",
+    colors: ["black"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "activateMain",
+        steps: [{ do: "negateOnPlay", side: "opponent", duration: "turn" }],
+      },
+    ],
+  },
+  {
+    id: "TEST-PER-TRASH",
+    name: "Test Per Trash",
+    category: "character",
+    colors: ["black"],
+    cost: 4,
+    power: 5000,
+    effects: [
+      {
+        timing: "permanent",
+        steps: [{ do: "powerUp", target: { side: "this" }, amount: 1000, perTrash: 4 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-RETURN-DON",
+    name: "Test Return DON",
+    category: "character",
+    colors: ["yellow"],
+    cost: 6,
+    power: 7000,
+    effects: [
+      {
+        timing: "activateMain",
+        costs: [{ returnGivenDon: 2 }],
+        steps: [{ do: "grantKeyword", target: { side: "this" }, keyword: "rush" }],
+      },
+    ],
+  },
+  {
+    id: "TEST-ATTACK-ACTIVE",
+    name: "Test Attack Active",
+    category: "character",
+    colors: ["yellow"],
+    cost: 4,
+    power: 5000,
+    keywords: ["canAttackActive"],
+  },
+  {
+    id: "TEST-KO-OPPONENT-LIFE",
+    name: "Test K.O. Opponent Life",
+    category: "character",
+    colors: ["yellow"],
+    cost: 3,
+    power: 3000,
+    effects: [
+      {
+        timing: "onPlay",
+        conditions: [{ opponentLifeAtLeast: 3 }],
+        steps: [
+          {
+            do: "ko",
+            target: { side: "opponent", filter: { costAtMostOpponentLife: true }, upTo: true },
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 export const TEST_CATALOG: CardCatalog = Object.fromEntries(cards.map((c) => [c.id, c]));
