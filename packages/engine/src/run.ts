@@ -11,6 +11,7 @@ import {
   findCard,
   findOnField,
   hasKeywordNow,
+  hasRule,
   leaveField,
   hasStatus,
   matchesFilter,
@@ -115,6 +116,8 @@ const ON_FIELD_TIMINGS = new Set([
   "characterRestedByYourEffect",
   "replaceRemoval",
   "donReturned",
+  "characterKOd",
+  "attackDealsDamage",
 ]);
 
 function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
@@ -307,6 +310,19 @@ function payCost(
     }
   } else if ("trashThis" in cost) {
     moveFieldCardToTrash(state, source);
+  } else if ("characterToLife" in cost) {
+    const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+    const n = cost.characterToLife;
+    const chosen = choose(state, frame, frame.controller, own, n, n, "characterToLife");
+    if (chosen === "wait") return "wait";
+    for (const uid of chosen) {
+      const card = p.characters.find((c) => c.uid === uid);
+      if (!card) continue;
+      p.characters = p.characters.filter((c) => c.uid !== uid);
+      leaveField(state, card);
+      if (cost.faceUp) card.faceUp = true;
+      p.life.unshift(card);
+    }
   }
   return "continue";
 }
@@ -506,14 +522,41 @@ function runStep(
     }
 
     case "handToLife": {
+      const options = [...p.hand, ...(step.fromTrash ? p.trash : [])].filter((c) =>
+        matchesFilter(state, c, step.filter, source, false),
+      );
       const chosen =
-        p.hand.length === 0 ? [] : choose(state, frame, controller, p.hand, 0, step.count, step.do);
+        options.length === 0
+          ? []
+          : choose(state, frame, controller, options, 0, step.count, step.do);
       if (chosen === "wait") return "wait";
-      const cards = chosen.map((uid) => p.hand.find((c) => c.uid === uid)).filter((c) => !!c);
+      const cards = chosen.map((uid) => options.find((c) => c.uid === uid)).filter((c) => !!c);
       p.hand = p.hand.filter((c) => !chosen.includes(c.uid));
+      p.trash = p.trash.filter((c) => !chosen.includes(c.uid));
+      if (step.faceUp) for (const card of cards) card.faceUp = true;
       p.life.unshift(...cards);
       return "continue";
     }
+
+    case "trashFaceUpLife": {
+      const faceUp = p.life.filter((c) => c.faceUp);
+      p.life = p.life.filter((c) => !c.faceUp);
+      for (const card of faceUp) {
+        delete card.faceUp;
+        p.trash.unshift(card);
+      }
+      return "continue";
+    }
+
+    case "trashDeckTop":
+      p.trash.unshift(...p.deck.splice(0, step.count).reverse());
+      return "continue";
+
+    // Rules for the game, not steps that happen: read by damage, rule processing, and checkDeck.
+    case "faceUpLifeToDeckBottom":
+    case "winOnDeckOut":
+    case "deckOnlyType":
+      return "continue";
 
     case "revealedToDeckTop":
       moveFromHandToDeckTop(
@@ -558,7 +601,11 @@ function runStep(
       // Rule 11-2-1: cards moved from the deck to the hand are revealed.
       const rest = looked.filter((c) => !chosen.includes(c.uid));
       p.deck = p.deck.slice(looked.length);
-      p.hand.push(...looked.filter((c) => chosen.includes(c.uid)));
+      const taken = looked.filter((c) => chosen.includes(c.uid));
+      if (step.to === "lifeFaceUp") {
+        for (const card of taken) card.faceUp = true;
+        p.life.unshift(...taken);
+      } else p.hand.push(...taken);
       if (step.rest === "trash") p.trash.unshift(...rest.reverse());
       else if (step.rest === "topOrBottom") {
         // The rest go back on top, then the player arranges them.
@@ -1178,6 +1225,7 @@ function runBattle(state: GameState, frame: FrameOf<"battle">): Outcome {
         processRules(state, [target.player]);
         return "continue";
       }
+      queueEffects(state, attacker.player, attacker.card, "attackDealsDamage");
       state.stack.push({
         kind: "damage",
         defender: target.player,
@@ -1206,6 +1254,8 @@ function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
     const hasTrigger = (definitionOf(state, top).effects ?? []).some((e) => e.timing === "trigger");
     if (frame.banish) {
       p.trash.unshift(takeLife(p.life, 0) as CardInstance);
+    } else if (top.faceUp && hasRule(state, frame.defender, "faceUpLifeToDeckBottom")) {
+      p.deck.push(takeLife(p.life, 0) as CardInstance);
     } else if (!hasTrigger) {
       p.hand.push(takeLife(p.life, 0) as CardInstance);
     } else if (frame.answer === null) {

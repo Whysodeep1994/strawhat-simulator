@@ -1,0 +1,32 @@
+{
+  "name": "Look at the top cards and add a cost 5 Character to the top of your Life face-up",
+  "rules": ["3-10-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-SEARCH-TO-LIFE"],
+      "deck": ["TEST-FILLER", "TEST-C5-6000", "TEST-C5-6000"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.deck.1"]
+    }
+  ],
+  "expect": {
+    "p1.life": 5,
+    "p1.life.0.cardId": "TEST-C5-6000",
+    "p1.life.0.faceUp": true,
+    "p1.deck": 2,
+    "p1.deck.0.cardId": "TEST-FILLER"
+  }
+}

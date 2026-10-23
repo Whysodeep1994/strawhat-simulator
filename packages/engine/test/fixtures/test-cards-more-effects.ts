@@ -468,4 +468,122 @@ export const MORE_EFFECT_CARDS: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-LEADER-KO-WATCH",
+    name: "Test Leader K.O. Watch",
+    category: "leader",
+    colors: ["black"],
+    power: 5000,
+    life: 5,
+    effects: [
+      {
+        timing: "characterKOd",
+        conditions: [{ yourTurn: true }],
+        steps: [{ do: "giveRestedDon", target: { side: "this" }, count: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-LEADER-VANILLA-BOOST",
+    name: "Test Leader Vanilla Boost",
+    category: "leader",
+    colors: ["red"],
+    power: 5000,
+    life: 5,
+    effects: [
+      {
+        timing: "activateMain",
+        steps: [
+          {
+            do: "powerUp",
+            target: { side: "self", filter: { noBaseEffect: true }, upTo: true },
+            amount: 2000,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-LEADER-LIFE-COST",
+    name: "Test Leader Character to Life Cost",
+    category: "leader",
+    colors: ["yellow"],
+    power: 5000,
+    life: 4,
+    effects: [
+      {
+        timing: "activateMain",
+        optional: true,
+        costs: [{ characterToLife: 1, filter: { costAtLeast: 5 }, faceUp: true }],
+        steps: [{ do: "draw", count: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-LEADER-FACE-UP-RULES",
+    name: "Test Leader Face-Up Rules",
+    category: "leader",
+    colors: ["yellow"],
+    power: 5000,
+    life: 4,
+    effects: [
+      { timing: "permanent", steps: [{ do: "faceUpLifeToDeckBottom" }] },
+      {
+        timing: "activateMain",
+        steps: [
+          {
+            do: "handToLife",
+            count: 2,
+            fromTrash: true,
+            faceUp: true,
+            filter: { category: "character", costAtLeast: 5, costAtMost: 5 },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRASH-FACE-UP",
+    name: "Test Trash Face-Up Life",
+    category: "event",
+    colors: ["yellow"],
+    cost: 1,
+    effects: [{ timing: "main", steps: [{ do: "trashFaceUpLife" }] }],
+  },
+  {
+    id: "TEST-SEARCH-TO-LIFE",
+    name: "Test Search to Life",
+    category: "event",
+    colors: ["yellow"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "searchDeck",
+            look: 5,
+            take: 1,
+            filter: { category: "character", costAtLeast: 5, costAtMost: 5 },
+            to: "lifeFaceUp",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-LEADER-EAST",
+    name: "Test Leader East",
+    category: "leader",
+    colors: ["red"],
+    power: 5000,
+    life: 5,
+    effects: [
+      {
+        timing: "permanent",
+        steps: [{ do: "deckOnlyType", type: "Test Crew" }, { do: "winOnDeckOut" }],
+      },
+      { timing: "attackDealsDamage", optional: true, steps: [{ do: "trashDeckTop", count: 1 }] },
+    ],
+  },
 ];

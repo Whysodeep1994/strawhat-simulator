@@ -54,6 +54,8 @@ const TIMING_NAMES: Record<Timing, string> = {
   characterRestedByYourEffect: "(If a Character is rested by your effect)",
   replaceRemoval: "",
   donReturned: "When DON!! cards on your field are returned to your DON!! deck,",
+  characterKOd: "When a Character is K.O.'d,",
+  attackDealsDamage: "When this card's attack deals damage to your opponent's Life,",
   permanent: "",
 };
 
@@ -165,6 +167,8 @@ function costText(cost: Cost): string {
   if ("trashToDeckBottom" in cost) {
     return `place ${cost.trashToDeckBottom} card(s) from your trash at the bottom of your deck`;
   }
+  if ("characterToLife" in cost)
+    return `add ${cost.characterToLife} of your Characters${withFilter(cost.filter)} to the top of your Life cards${cost.faceUp ? " face-up" : ""}`;
   return "rest this card";
 }
 
@@ -205,7 +209,17 @@ function stepText(step: Step): string {
     case "handToDeckBottom":
       return `Place ${step.count} card(s) from your hand at the bottom of your deck.`;
     case "handToLife":
-      return `Add up to ${step.count} card(s) from your hand to the top of your Life cards.`;
+      return `Add up to ${step.count}${filterText(step.filter)} card(s) from your hand${step.fromTrash ? " or trash" : ""} to the top of your Life cards${step.faceUp ? " face-up" : ""}.`;
+    case "trashFaceUpLife":
+      return "Trash all your face-up Life cards.";
+    case "trashDeckTop":
+      return `Trash ${step.count} card(s) from the top of your deck.`;
+    case "faceUpLifeToDeckBottom":
+      return "Your face-up Life cards are placed at the bottom of your deck instead of being added to your hand, according to the rules.";
+    case "winOnDeckOut":
+      return "When your deck is reduced to 0, you win the game instead of losing.";
+    case "deckOnlyType":
+      return `You can only include {${step.type}} type cards in your deck.`;
     case "revealedToDeckTop":
       return "Place the revealed card(s) at the top of your deck.";
     case "trashToHand":
@@ -225,7 +239,7 @@ function stepText(step: Step): string {
     case "opponentTrashesFromHand":
       return `Your opponent trashes ${step.count} card(s) from their hand.`;
     case "searchDeck":
-      return `Look at ${step.look} cards from the top of your deck; reveal up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"} and add ${step.take === 1 ? "it" : "them"} to your hand. Then, ${step.rest === "trash" ? "trash the rest" : "place the rest at the bottom of your deck in any order"}.`;
+      return `Look at ${step.look} cards from the top of your deck; reveal up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"} and add ${step.take === 1 ? "it" : "them"} to ${step.to === "lifeFaceUp" ? "the top of your Life cards face-up" : "your hand"}. Then, ${step.rest === "trash" ? "trash the rest" : "place the rest at the bottom of your deck in any order"}.`;
     case "playFromHand":
       return `Play up to 1${filterText(step.filter)} card from your hand${step.rested ? " rested" : ""}.`;
     case "playFromTrash":
@@ -289,6 +303,7 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.costAtLeast !== undefined) parts.push(`a cost of ${filter.costAtLeast} or more`);
   if (filter.costAtMostOpponentLife) parts.push("a cost up to your opponent's Life count");
   if (filter.costAtMostTotalLife) parts.push("a cost up to the total of both players' Life cards");
+  if (filter.noBaseEffect) parts.push("no base effect");
   if (filter.powerAtMost !== undefined) parts.push(`${filter.powerAtMost} power or less`);
   if (filter.powerAtLeast !== undefined) parts.push(`${filter.powerAtLeast} power or more`);
   if (filter.type) parts.push(`the {${filter.type}} type`);
