@@ -1,0 +1,40 @@
+{
+  "name": "A [Your Turn] \"When a Character is K.O.'d\" effect does nothing on the opponent's turn",
+  "rules": ["8-3-2-4"],
+  "setup": {
+    "turn": 4,
+    "turnPlayer": "p2",
+    "p1": {
+      "leader": "TEST-LEADER-KO-WATCH",
+      "characters": [
+        {
+          "card": "TEST-FILLER",
+          "rested": true
+        }
+      ],
+      "don": {
+        "rested": 1
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p2",
+      "attacker": "p2.characters.0",
+      "target": "p1.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p1.characters": 0,
+    "p1.leader.givenDon": 0,
+    "p1.donRested": 1
+  }
+}

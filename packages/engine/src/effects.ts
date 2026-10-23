@@ -61,6 +61,10 @@ export type Timing =
   | "replaceRemoval"
   /** "When ... DON!! cards on your field are returned to your DON!! deck". See `returnedAtLeast`. */
   | "donReturned"
+  /** "When a Character is K.O.'d": any Character, either player's, in battle or by an effect. */
+  | "characterKOd"
+  /** "When this card's attack deals damage to your opponent's Life". */
+  | "attackDealsDamage"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -141,7 +145,9 @@ export type Cost =
   /** Trash this card from the field. Not a K.O. */
   | { trashThis: true }
   /** "Return N total of your currently given DON!! cards to your cost area rested." */
-  | { returnGivenDon: number };
+  | { returnGivenDon: number }
+  /** "Add 1 of your Characters ... to the top of your Life cards (face-up)". */
+  | { characterToLife: number; filter?: Filter; faceUp?: boolean };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -189,6 +195,8 @@ export interface Filter {
   keyword?: Keyword;
   /** At least one of these filters matches ("{Cross Guild} type or ..."). */
   anyOf?: Filter[];
+  /** "With no base effect": a card without card text (rule 2-8-5), so no effects or keywords. */
+  noBaseEffect?: boolean;
 }
 
 /**
@@ -256,8 +264,24 @@ export type Step =
   | { do: "handToDeckTop"; count: number }
   /** Place cards from your hand at the bottom of your deck. */
   | { do: "handToDeckBottom"; count: number }
-  /** "Add up to 1 card from your hand to the top of your Life cards." */
-  | { do: "handToLife"; count: number }
+  /**
+   * "Add up to 1 card from your hand to the top of your Life cards." `fromTrash` also offers
+   * matching cards in your trash ("from your hand or trash"); `faceUp` adds them face-up.
+   */
+  | { do: "handToLife"; count: number; filter?: Filter; fromTrash?: boolean; faceUp?: boolean }
+  /** Trash all of your face-up Life cards. */
+  | { do: "trashFaceUpLife" }
+  /** Trash cards from the top of your deck. */
+  | { do: "trashDeckTop"; count: number }
+  /**
+   * Permanent only: "Your face-up Life cards are placed at the bottom of your deck instead of
+   * being added to your hand, according to the rules" (damage, rule 7-1-4-1-1-2).
+   */
+  | { do: "faceUpLifeToDeckBottom" }
+  /** Permanent, on a Leader: "when your deck is reduced to 0, you win the game instead of losing". */
+  | { do: "winOnDeckOut" }
+  /** Permanent, on a Leader: "you can only include {type} type cards in your deck". Checked by `checkDeck`. */
+  | { do: "deckOnlyType"; type: string }
   /** Place the cards revealed by a `revealFromHand` cost at the top of your deck. */
   | { do: "revealedToDeckTop" }
   /** Add up to `count` (default 1) matching cards from your trash to your hand. */
@@ -275,6 +299,8 @@ export type Step =
       take: number;
       filter?: Filter;
       rest?: "bottom" | "trash" | "topOrBottom";
+      /** "Add ... to the top of your Life cards face-up" instead of to your hand. */
+      to?: "lifeFaceUp";
     }
   /**
    * Look at the top cards and put them back on top in any order. With `bottom`,

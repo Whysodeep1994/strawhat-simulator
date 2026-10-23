@@ -75,6 +75,12 @@ describe("deck formats", () => {
     expect(found).toContainEqual(expect.stringMatching(/TEST-LEADER and TEST-DOUBLE can't/));
   });
 
+  it('apply a Leader\'s "only {type} cards" deck rule', () => {
+    const found = messages(BASE_RULES, legal, "TEST-LEADER-EAST");
+    expect(found).toContainEqual(expect.stringMatching(/\(TEST-FILLER\) isn't \{Test Crew\} type/));
+    expect(found).not.toContainEqual(expect.stringMatching(/TEST-C2-3000/));
+  });
+
   it("rotate out blocks that aren't legal", () => {
     const rotated = { ...BASE_RULES, name: "Standard", legalBlocks: [2, 3] };
     expect(copyLimit(rotated, catalog, "TEST-C2-3000")).toBe(0);
