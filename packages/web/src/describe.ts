@@ -1,4 +1,5 @@
 import type {
+  CardCount,
   CardDefinition,
   Condition,
   Cost,
@@ -58,6 +59,7 @@ const TIMING_NAMES: Record<Timing, string> = {
   characterRestedByYourEffect: "(If a Character is rested by your effect)",
   replaceRemoval: "",
   donReturned: "When DON!! cards on your field are returned to your DON!! deck,",
+  becomesRested: "When this Character becomes rested,",
   characterKOd: "When a Character is K.O.'d,",
   attackDealsDamage: "When this card's attack deals damage to your opponent's Life,",
   permanent: "",
@@ -72,6 +74,7 @@ const STATUS_TEXT: Record<Status, string> = {
   noRefresh: "will not become active in the next Refresh Phase",
   cannotBeKOdInBattleByLeaders: "cannot be K.O.'d in battle by Leaders",
   negated: "has its effects negated",
+  cannotBeRested: "cannot be rested",
 };
 
 export function cardText(card: CardDefinition): string[] {
@@ -139,6 +142,14 @@ function conditionText(condition: Condition): string {
     return "(If you have equal or fewer Life cards than your opponent)";
   if ("leaderTypeIncludes" in condition)
     return `(If your Leader's type includes "${condition.leaderTypeIncludes}")`;
+  if ("givenDonAtLeast" in condition)
+    return `(If you have a total of ${condition.givenDonAtLeast} or more given DON!! cards)`;
+  if ("leaderAttribute" in condition)
+    return `(If your Leader has the <${condition.leaderAttribute}> attribute)`;
+  if ("opponentHandAtLeast" in condition)
+    return `(If your opponent has ${condition.opponentHandAtLeast} or more cards in their hand)`;
+  if ("handTrashedByEffectThisTurn" in condition)
+    return "(During the turn in which a card in your hand is trashed by an effect)";
   if ("leaderMulticolored" in condition) return "(If your Leader is multicolored)";
   if ("opponentDonOnFieldAtLeast" in condition)
     return `(If your opponent has ${condition.opponentDonOnFieldAtLeast} or more DON!! cards on their field)`;
@@ -178,8 +189,17 @@ function costText(cost: Cost): string {
     return `add ${cost.lifeToHand} card(s) from the ${from} of your Life cards to your hand`;
   }
   if ("trashLife" in cost) return `trash ${cost.trashLife} card(s) from the top of your Life cards`;
-  if ("lifeFaceUp" in cost)
-    return `turn ${cost.lifeFaceUp} card(s) from the top of your Life cards face-up`;
+  if ("lifeFaceUp" in cost) {
+    const from = cost.from === "topOrBottom" ? "top or bottom" : "top";
+    return `turn ${cost.lifeFaceUp} card(s) from the ${from} of your Life cards face-up`;
+  }
+  if ("lifeFaceDown" in cost) {
+    const from = cost.from === "topOrBottom" ? "top or bottom" : "top";
+    return `turn ${cost.lifeFaceDown} card(s) from the ${from} of your Life cards face-down`;
+  }
+  if ("trashFromDeckTop" in cost)
+    return `trash ${cost.trashFromDeckTop} card(s) from the top of your deck`;
+  if ("oneOf" in cost) return cost.oneOf.map(costText).join(" or ");
   if ("trashToDeckBottom" in cost) {
     return `place ${cost.trashToDeckBottom} card(s) from your trash at the bottom of your deck`;
   }
@@ -193,13 +213,13 @@ function stepText(step: Step): string {
     case "draw":
       return `Draw ${step.count} card${step.count === 1 ? "" : "s"}.`;
     case "powerUp":
-      return `Give ${targetText(step.target)} ${step.amount >= 0 ? "+" : "−"}${Math.abs(step.amount)} power${durationText(step.duration)}${step.perPrevious ? " for every card moved" : ""}.`;
+      return `Give ${targetText(step.target)} ${step.amount >= 0 ? "+" : "−"}${Math.abs(step.amount)} power${durationText(step.duration)}${step.perPrevious ? " for every card moved" : ""}${perCountText(step.perCount)}.`;
     case "grantKeyword":
       return `${capital(targetText(step.target))} gains [${KEYWORD_NAMES[step.keyword]}]${durationText(step.duration)}.`;
     case "grantStatus":
       return `${capital(targetText(step.target))} ${STATUS_TEXT[step.status]}${durationText(step.duration)}.`;
     case "costChange":
-      return `Give ${targetText(step.target)} ${step.amount >= 0 ? "+" : "−"}${Math.abs(step.amount)} cost${durationText(step.duration)}.`;
+      return `Give ${targetText(step.target)} ${step.amount >= 0 ? "+" : "−"}${Math.abs(step.amount)} cost${durationText(step.duration)}${perCountText(step.perCount)}.`;
     case "ko":
       return `K.O. ${targetText(step.target)}.`;
     case "rest":
@@ -224,6 +244,8 @@ function stepText(step: Step): string {
       return `Place ${step.count} card(s) from your hand at the top of your deck.`;
     case "handToDeckBottom":
       return `Place ${step.count} card(s) from your hand at the bottom of your deck.`;
+    case "redirectAttack":
+      return `Change the target of the attack to ${targetText(step.target)}.`;
     case "handToLife":
       return `Add up to ${step.count}${filterText(step.filter)} card(s) from your hand${step.fromTrash ? " or trash" : ""} to the top of your Life cards${step.faceUp ? " face-up" : ""}.`;
     case "trashFaceUpLife":
@@ -345,10 +367,17 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.name) parts.push(`the name "${filter.name}"`);
   if (filter.nameIncludes) parts.push(`"${filter.nameIncludes}" in the name`);
   if (filter.keyword) parts.push(`[${KEYWORD_NAMES[filter.keyword]}]`);
+  if (filter.attribute) parts.push(`the <${filter.attribute}> attribute`);
   if (parts.length === 0) return "";
   const rested = filter.rested ? " that are rested" : "";
   const rest = parts.filter((p) => p !== "rested");
   return rest.length ? `${rested} with ${rest.join(" and ")}` : rested;
+}
+
+function perCountText(count: CardCount | undefined): string {
+  if (!count) return "";
+  const owner = count.side === "self" ? "your" : "your opponent's";
+  return ` for every${filterText(count.filter)} card on ${owner} field`;
 }
 
 function durationText(duration: Duration | undefined): string {

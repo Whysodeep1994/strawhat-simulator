@@ -1,6 +1,6 @@
 import type { CardDefinition } from "../../src/index.js";
 
-/** Made-up cards for the effect blocks added for starter decks ST-15 to ST-17. */
+/** Made-up cards for the effect blocks added for starter decks ST-15 onwards. */
 export const MORE_EFFECT_CARDS: CardDefinition[] = [
   {
     id: "TEST-RETURN-ANY",

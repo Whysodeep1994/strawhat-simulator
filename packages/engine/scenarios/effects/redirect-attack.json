@@ -1,0 +1,36 @@
+{
+  "name": "Turning a face-up Life card face-down changes the target of the attack",
+  "rules": ["8-3-1-3"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C5-6000"]
+    },
+    "p2": {
+      "characters": ["TEST-REDIRECT", "TEST-C5-6000"],
+      "life": 2,
+      "lifeFaceUp": 1
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "confirm",
+      "player": "p2",
+      "accept": true
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 2,
+    "p2.life.0.faceUp": false,
+    "p2.characters": 1
+  }
+}

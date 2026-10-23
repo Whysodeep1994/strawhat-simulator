@@ -34,7 +34,7 @@ Scenarios live in `packages/engine/scenarios/` as JSON files and run with `pnpm 
 - **`setup`**: the position. Unless you say otherwise it is turn 3, `p1`'s Main Phase, both
   Leaders are `TEST-LEADER` (5000 power), each deck has 20 filler cards and each Life area 4.
   - Per player: `leader`, `characters`, `stage`, `hand`, `trash`, `deck`, `life`, `don`
-    (`active`, `rested`, `deck`), `turnsTaken`.
+    (`active`, `rested`, `deck`), `turnsTaken`, `lifeFaceUp` (how many top Life cards start face-up).
   - A Character can be just a card id, or `{ "card": "...", "rested": true, "don": 2, "playedThisTurn": true }`.
   - `deck` and `life` take a number of filler cards or a list of card ids, top card first.
 - **`actions`**: played in order. Point at cards with paths like `p1.hand.0`, `p2.leader`, or

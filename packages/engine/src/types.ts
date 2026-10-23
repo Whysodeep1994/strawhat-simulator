@@ -104,6 +104,8 @@ export type Frame =
       memo: string[];
       /** Cards revealed from the hand to pay a `revealFromHand` cost. */
       revealed?: string[];
+      /** Which option of a `oneOf` cost the player is paying. */
+      picked?: number;
       /** How many cards the previous step moved, for "for every card trashed". */
       previous?: number;
       /** The cards the previous targeting step picked, for "that Character". */
@@ -177,6 +179,8 @@ export interface GameState {
   usedThisTurn: string[];
   /** Steps waiting for the End Phase ("at the end of this turn"). */
   delayed: DelayedEffect[];
+  /** The last turn in which each player's hand had a card trashed by an effect. */
+  handTrashedTurn?: Partial<Record<PlayerId, number>>;
   /** Cards whose pending removal a replacement effect prevented (rule 8-1-3-4). */
   prevented?: string[];
   /** A [Trigger] card being activated belongs to no area (rule 10-1-5-3). */

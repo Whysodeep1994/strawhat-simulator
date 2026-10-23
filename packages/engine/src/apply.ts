@@ -159,6 +159,7 @@ function declareAttack(state: GameState, player: PlayerId, attacker: string, tar
   state.battle = { attacker, target, blocked: false };
   state.stack.push({ kind: "battle", step: "attack" });
   queueEffects(state, player, location.card, "whenAttacking");
+  queueEffects(state, player, location.card, "becomesRested");
   for (const card of fieldCards(state, opponentOf(player))) {
     queueEffects(state, opponentOf(player), card, "onOpponentsAttack");
   }
@@ -181,6 +182,7 @@ function block(state: GameState, blocker: string): void {
   const attacker = opponentOf(location.player);
   for (const card of fieldCards(state, attacker))
     queueEffects(state, attacker, card, "onOpponentsBlock");
+  queueEffects(state, location.player, location.card, "becomesRested");
 }
 
 /** Rule 7-1-3-1-1. */
