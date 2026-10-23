@@ -1,0 +1,21 @@
+{
+  "name": "With 1 DON!! left in the DON!! deck, place 1",
+  "rules": ["6-4-2"],
+  "setup": {
+    "p2": {
+      "don": {
+        "deck": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "endTurn",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p2.donActive": 1,
+    "p2.donDeck": 0
+  }
+}

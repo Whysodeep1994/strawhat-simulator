@@ -1,0 +1,19 @@
+{
+  "name": "A player with 0 cards in their deck loses",
+  "rules": ["1-2-1-1-2", "1-2-2-2", "9-2-1-2"],
+  "setup": {
+    "p2": {
+      "deck": 1
+    }
+  },
+  "actions": [
+    {
+      "type": "endTurn",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "winner": "p1",
+    "p2.deck": 0
+  }
+}

@@ -13,17 +13,17 @@ export function nextPhase(phase: Phase): Phase | null {
 }
 
 /**
- * Cards drawn in the Draw Phase. The player going first skips the draw
+ * Cards drawn in the Draw Phase of a player's `playerTurn`-th turn. The player going first skips the draw
  * on their first turn (rule 6-3-1).
  */
-export function cardsToDraw(turnNumber: number, isFirstPlayer: boolean): number {
-  return turnNumber === 1 && isFirstPlayer ? 0 : 1;
+export function cardsToDraw(playerTurn: number, isFirstPlayer: boolean): number {
+  return playerTurn === 1 && isFirstPlayer ? 0 : 1;
 }
 
 /**
- * DON!! cards placed in the DON!! Phase. The player going first places 1
+ * DON!! cards placed in the DON!! Phase of a player's `playerTurn`-th turn. The player going first places 1
  * on their first turn instead of 2 (rule 6-4-1).
  */
-export function donToPlace(turnNumber: number, isFirstPlayer: boolean): number {
-  return turnNumber === 1 && isFirstPlayer ? 1 : 2;
+export function donToPlace(playerTurn: number, isFirstPlayer: boolean): number {
+  return playerTurn === 1 && isFirstPlayer ? 1 : 2;
 }

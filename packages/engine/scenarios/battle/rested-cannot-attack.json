@@ -1,0 +1,30 @@
+{
+  "name": "Only active cards can attack",
+  "rules": ["7-1-1-1"],
+  "setup": {
+    "p1": {
+      "leader": {
+        "card": "TEST-LEADER",
+        "rested": true
+      },
+      "characters": [
+        {
+          "card": "TEST-C4-5000",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.leader",
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "legal.p1.attack": 0
+  }
+}

@@ -16,8 +16,9 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
-    "prepare": "simple-git-hooks"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && node packages/engine/scripts/rules-coverage.mjs --check",
+    "prepare": "simple-git-hooks",
+    "coverage:rules": "node packages/engine/scripts/rules-coverage.mjs"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm check"
@@ -26,6 +27,7 @@
     "@eslint/js": "9.39.1",
     "@types/node": "22.19.1",
     "eslint": "9.39.1",
+    "globals": "16.4.0",
     "prettier": "3.6.2",
     "simple-git-hooks": "2.13.1",
     "typescript": "5.9.3",

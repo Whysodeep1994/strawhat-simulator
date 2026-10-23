@@ -5,7 +5,9 @@ Thanks for helping! This guide grows as the project does.
 ## Ground rules
 
 - Read [PROJECT_LOG.md](PROJECT_LOG.md) first. It says what's being worked on.
-- Never commit card images, logos, or official card text. See [docs/CARD_ASSETS.md](docs/CARD_ASSETS.md).
+- Never commit card images, logos, or official card text here; they belong in
+  [strawhat-card-data](https://github.com/Whysodeep1994/strawhat-card-data). See
+  [docs/CARD_ASSETS.md](docs/CARD_ASSETS.md).
 - Never copy code from closed-source simulators, including OPTCGSim.
 - Every rules change needs a test that cites the Comprehensive Rules number, e.g.
   `describe("rule 6-3-1: draw phase", ...)`.
@@ -21,7 +23,7 @@ Thanks for helping! This guide grows as the project does.
 
 Open an issue with the **Rules bug** template. Include the cards involved, what happened, what
 should have happened, and the rule number if you know it. Confirmed reports become test
-scenarios so the bug can never come back.
+scenarios so the bug can never come back. See [docs/SCENARIOS.md](docs/SCENARIOS.md).
 
 ## Adding a new card or set
 

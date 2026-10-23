@@ -1,0 +1,41 @@
+{
+  "name": "DON!! can be given to the Leader",
+  "rules": ["6-5-5-1"],
+  "setup": {
+    "p1": {
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "hand": ["TEST-C2-3000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "giveDon",
+      "player": "p1",
+      "target": "p1.leader"
+    },
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.leader"
+    },
+    {
+      "type": "counter",
+      "player": "p2",
+      "card": "p2.hand.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 3,
+    "p1.leader.givenDon": 1
+  }
+}

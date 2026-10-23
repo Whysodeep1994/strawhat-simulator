@@ -1,0 +1,22 @@
+{
+  "name": "With an empty DON!! deck, place none",
+  "rules": ["6-4-3"],
+  "setup": {
+    "p2": {
+      "don": {
+        "deck": 0,
+        "rested": 10
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "endTurn",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p2.donActive": 10,
+    "p2.donDeck": 0
+  }
+}

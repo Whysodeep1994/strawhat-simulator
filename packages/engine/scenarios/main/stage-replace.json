@@ -1,0 +1,25 @@
+{
+  "name": "Playing a Stage trashes the one already in play",
+  "rules": ["3-8", "3-8-3", "3-8-4", "3-8-5", "3-8-5-1", "2-7-4"],
+  "setup": {
+    "p1": {
+      "stage": "TEST-STAGE",
+      "hand": ["TEST-STAGE-2"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.stage.cardId": "TEST-STAGE-2",
+    "p1.trash": 1,
+    "p1.trash.0.cardId": "TEST-STAGE"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "A winning attack on the Leader moves the top Life card to hand",
+  "rules": [
+    "7-1",
+    "7-1-1",
+    "7-1-1-1",
+    "7-1-1-2",
+    "7-1-4",
+    "7-1-4-1",
+    "7-1-4-1-1",
+    "7-1-4-1-1-2",
+    "4-6",
+    "4-6-1",
+    "4-6-2",
+    "4-6-2-1",
+    "3-10-2",
+    "7-1-5",
+    "7-1-5-1",
+    "7-1-5-5",
+    "3-6-3",
+    "6-5-6-2"
+  ],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C4-5000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 3,
+    "p2.hand": 1,
+    "p1.characters.0.rested": true,
+    "battle": null,
+    "prompt.kind": "main"
+  }
+}

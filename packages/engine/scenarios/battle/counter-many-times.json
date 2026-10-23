@@ -1,0 +1,45 @@
+{
+  "name": "Several Counters can be used in one Counter Step",
+  "rules": ["7-1-3-1"],
+  "setup": {
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-C5-6000",
+          "don": 1
+        }
+      ]
+    },
+    "p2": {
+      "hand": ["TEST-C2-3000", "TEST-C4-5000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "counter",
+      "player": "p2",
+      "card": "p2.hand.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "counter",
+      "player": "p2",
+      "card": "p2.hand.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 4,
+    "p2.trash": 2
+  }
+}

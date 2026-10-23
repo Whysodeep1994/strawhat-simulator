@@ -1,0 +1,16 @@
+{
+  "name": "Only the turn player can take Main Phase actions",
+  "rules": ["4-3", "4-3-1", "4-3-2", "6-1-2"],
+  "setup": {},
+  "actions": [
+    {
+      "type": "endTurn",
+      "player": "p2",
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "legal.p2.endTurn": 0,
+    "legal.p1.endTurn": 1
+  }
+}

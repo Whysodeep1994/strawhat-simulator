@@ -1,0 +1,16 @@
+{
+  "name": "Event cards need the effect library and can't be played yet",
+  "rules": ["6-5-3-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-EVENT"],
+      "don": {
+        "active": 3
+      }
+    }
+  },
+  "actions": [],
+  "expect": {
+    "legal.p1.playCard": 0
+  }
+}

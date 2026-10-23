@@ -1,0 +1,15 @@
+{
+  "name": "Either player may concede at any time",
+  "rules": ["1-2-3"],
+  "setup": {},
+  "actions": [
+    {
+      "type": "concede",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "winner": "p1",
+    "prompt.kind": "gameOver"
+  }
+}

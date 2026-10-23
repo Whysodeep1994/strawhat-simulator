@@ -1,18 +1,24 @@
 # Card assets policy
 
-Card images, logos, and official card text belong to Bandai and are **never** committed to
-this repository or bundled in a release.
+Strawhat Simulator shows real cards with their exact art and text, and every card uses its
+official card number (for example, `OP13-001` is the real OP13-001). The project is free and
+will never be monetized.
 
-What we do instead:
+## Where card data lives
 
-1. **Images** are loaded at runtime from a source the user chooses, or from a folder on the
-   user's own computer. Cards without an image show a plain text frame.
-2. **Card rules** are stored as our own structured data (stats, keywords, and effects made of
-   building blocks), not copied printed text.
-3. **No Bandai or ONE PIECE logos** in our name, icon, screenshots, or store pages.
-4. **Nothing is sold.** Donations may cover server costs only, with no paid perks tied to
-   Bandai's intellectual property.
-5. **Takedowns:** card data lives in its own package, so it can be removed without touching the
-   engine.
+- **This repository (the engine and app) contains no official card art or card text.** Engine
+  tests use made-up cards whose ids start with `TEST-`.
+- **Card art, text, and stats live in a separate repository,
+  [strawhat-card-data](https://github.com/Whysodeep1994/strawhat-card-data).** The app downloads
+  them when it runs.
+
+Keeping them apart means a takedown request about card assets can't remove the game code or its
+history.
+
+## Rules for contributors
+
+1. Never commit card images, logos, or official card text to this repository.
+2. Card data changes go to `strawhat-card-data`.
+3. Never add paid features, ads, or anything that sells access to Bandai's intellectual property.
 
 The `card-assets/` folder is ignored by Git for local images during development.
