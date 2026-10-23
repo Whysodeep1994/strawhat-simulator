@@ -100,7 +100,9 @@ export type Condition =
   /** "If your opponent has 5 or more DON!! cards on their field". */
   | { opponentDonOnFieldAtLeast: number }
   /** "If your Leader's type includes "Whitebeard Pirates"". */
-  | { leaderTypeIncludes: string };
+  | { leaderTypeIncludes: string }
+  /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
+  | { lifeAtMostOpponents: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -160,6 +162,8 @@ export interface Filter {
   costAtLeast?: number;
   /** "With a cost equal to or less than the number of your opponent's Life cards." */
   costAtMostOpponentLife?: boolean;
+  /** "With a cost equal to or less than the total of your and your opponent's Life cards." */
+  costAtMostTotalLife?: boolean;
   /** Printed cost ("base cost", rule 2-7-1). */
   baseCostAtMost?: number;
   baseCostAtLeast?: number;
@@ -252,6 +256,8 @@ export type Step =
   | { do: "handToDeckTop"; count: number }
   /** Place cards from your hand at the bottom of your deck. */
   | { do: "handToDeckBottom"; count: number }
+  /** "Add up to 1 card from your hand to the top of your Life cards." */
+  | { do: "handToLife"; count: number }
   /** Place the cards revealed by a `revealFromHand` cost at the top of your deck. */
   | { do: "revealedToDeckTop" }
   /** Add up to `count` (default 1) matching cards from your trash to your hand. */

@@ -127,6 +127,8 @@ function conditionText(condition: Condition): string {
     return `(If you have ${condition.donRestedAtLeast} or more rested DON!! cards)`;
   if ("restedCardsAtLeast" in condition)
     return `(If you have ${condition.restedCardsAtLeast} or more rested cards)`;
+  if ("lifeAtMostOpponents" in condition)
+    return "(If you have equal or fewer Life cards than your opponent)";
   if ("leaderTypeIncludes" in condition)
     return `(If your Leader's type includes "${condition.leaderTypeIncludes}")`;
   if ("leaderMulticolored" in condition) return "(If your Leader is multicolored)";
@@ -202,6 +204,8 @@ function stepText(step: Step): string {
       return `Place ${step.count} card(s) from your hand at the top of your deck.`;
     case "handToDeckBottom":
       return `Place ${step.count} card(s) from your hand at the bottom of your deck.`;
+    case "handToLife":
+      return `Add up to ${step.count} card(s) from your hand to the top of your Life cards.`;
     case "revealedToDeckTop":
       return "Place the revealed card(s) at the top of your deck.";
     case "trashToHand":
@@ -284,6 +288,7 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.costAtMost !== undefined) parts.push(`a cost of ${filter.costAtMost} or less`);
   if (filter.costAtLeast !== undefined) parts.push(`a cost of ${filter.costAtLeast} or more`);
   if (filter.costAtMostOpponentLife) parts.push("a cost up to your opponent's Life count");
+  if (filter.costAtMostTotalLife) parts.push("a cost up to the total of both players' Life cards");
   if (filter.powerAtMost !== undefined) parts.push(`${filter.powerAtMost} power or less`);
   if (filter.powerAtLeast !== undefined) parts.push(`${filter.powerAtLeast} power or more`);
   if (filter.type) parts.push(`the {${filter.type}} type`);
