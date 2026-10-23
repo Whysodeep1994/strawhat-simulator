@@ -1,5 +1,13 @@
 import type { CardDefinition, Keyword } from "./cards.js";
-import type { CardCount, Condition, Cost, EffectDefinition, Filter, Status } from "./effects.js";
+import type {
+  CardCount,
+  Condition,
+  Cost,
+  EffectDefinition,
+  Filter,
+  Status,
+  Step,
+} from "./effects.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
 
 export type FieldZone = "leader" | "characters" | "stage";
@@ -151,14 +159,45 @@ function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, gr
                 zoneMatches(state, card, t.zone) &&
                 matchesFilter(state, card, t.filter, source, false);
           if (!applies) continue;
-          if (step.do === "powerUp") grants.push({ power: step.amount });
-          else if (step.do === "costChange") grants.push({ cost: step.amount });
+          if (step.do === "powerUp") grants.push({ power: powerAmount(state, player, step) });
+          else if (step.do === "costChange")
+            grants.push({ cost: powerAmount(state, player, step) });
           else if (step.do === "grantKeyword") grants.push({ keyword: step.keyword });
           else grants.push({ status: step.status });
         }
       }
     }
   }
+}
+
+/** A power or cost change, scaled by `perTrash` ("for every 4 cards in your trash"). */
+export function powerAmount(
+  state: GameState,
+  controller: PlayerId,
+  step: Extract<Step, { do: "powerUp" | "costChange" }>,
+): number {
+  if (!step.perTrash) return step.amount;
+  return step.amount * Math.floor(state.players[controller].trash.length / step.perTrash);
+}
+
+/** Whether `player`'s [On Play] effects are negated right now. */
+export function onPlayNegated(state: GameState, player: PlayerId): boolean {
+  const leader = state.players[player].leader.uid;
+  if (state.modifiers.some((m) => m.negateOnPlay && m.target === leader)) return true;
+  for (const owner of ["p1", "p2"] as const) {
+    for (const source of fieldCards(state, owner)) {
+      for (const effect of definitionOf(state, source).effects ?? []) {
+        if (effect.timing !== "permanent") continue;
+        if (!conditionsMet(state, owner, source, effect.conditions)) continue;
+        const negated = effect.steps.some(
+          (s) =>
+            s.do === "negateOnPlay" && (s.side === "self" ? owner : opponentOf(owner)) === player,
+        );
+        if (negated) return true;
+      }
+    }
+  }
+  return false;
 }
 
 function zoneMatches(state: GameState, card: CardInstance, zone: string | undefined): boolean {
@@ -206,6 +245,7 @@ export function conditionsMet(
     if ("lifeAtMost" in c) return me.life.length <= c.lifeAtMost;
     if ("lifeAtLeast" in c) return me.life.length >= c.lifeAtLeast;
     if ("opponentLifeAtMost" in c) return them.life.length <= c.opponentLifeAtMost;
+    if ("opponentLifeAtLeast" in c) return them.life.length >= c.opponentLifeAtLeast;
     if ("leaderHasType" in c)
       return (definitionOf(state, me.leader).types ?? []).includes(c.leaderHasType);
     if ("charactersAtLeast" in c) return me.characters.length >= c.charactersAtLeast;
@@ -246,13 +286,18 @@ export function matchesFilter(
   const baseCost = def.cost ?? 0;
   const basePower = def.power ?? 0;
   const cost =
-    filter.costAtMost !== undefined || filter.costAtLeast !== undefined
+    filter.costAtMost !== undefined ||
+    filter.costAtLeast !== undefined ||
+    filter.costAtMostOpponentLife
       ? costOf(state, card)
       : baseCost;
   const power = usePower && findOnField(state, card.uid) ? powerOf(state, card) : basePower;
   if (filter.category && def.category !== filter.category) return false;
   if (filter.costAtMost !== undefined && cost > filter.costAtMost) return false;
   if (filter.costAtLeast !== undefined && cost < filter.costAtLeast) return false;
+  if (filter.costAtMostOpponentLife && source) {
+    if (cost > state.players[opponentOf(source.owner)].life.length) return false;
+  }
   if (filter.baseCostAtMost !== undefined && baseCost > filter.baseCostAtMost) return false;
   if (filter.baseCostAtLeast !== undefined && baseCost < filter.baseCostAtLeast) return false;
   if (filter.powerAtMost !== undefined && power > filter.powerAtMost) return false;
@@ -310,6 +355,7 @@ export function canPayCosts(
   let donMinus = 0;
   let fromHand = 0;
   let returned = 0;
+  let returnGiven = 0;
   let life = 0;
   let fromTrash = 0;
   for (const cost of costs) {
@@ -329,6 +375,7 @@ export function canPayCosts(
       if (own.length === 0) return false;
     }
     if ("restThis" in cost && source.rested) return false;
+    if ("returnGivenDon" in cost) returnGiven += cost.returnGivenDon;
     if ("lifeToHand" in cost) life += cost.lifeToHand;
     if ("trashLife" in cost) life += cost.trashLife;
     if ("lifeFaceUp" in cost && (!p.life[0] || p.life[0].faceUp)) return false;
@@ -341,6 +388,7 @@ export function canPayCosts(
     fromHand <= hand.length &&
     returned <= p.characters.length &&
     life <= p.life.length &&
-    fromTrash <= p.trash.filter((c) => c.uid !== source.uid).length
+    fromTrash <= p.trash.filter((c) => c.uid !== source.uid).length &&
+    returnGiven <= [p.leader, ...p.characters].reduce((n, c) => n + c.givenDon, 0)
   );
 }

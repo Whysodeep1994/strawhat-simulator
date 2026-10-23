@@ -1,0 +1,26 @@
+{
+  "name": "Negating your opponent's [On Play] leaves your own working",
+  "rules": ["8-2-1-1"],
+  "setup": {
+    "turn": 4,
+    "turnPlayer": "p2",
+    "p1": {
+      "hand": ["TEST-ONPLAY-DRAW"]
+    },
+    "p2": {
+      "characters": ["TEST-NEGATE-OPPONENT"],
+      "hand": ["TEST-ONPLAY-DRAW", "TEST-ONPLAY-DRAW"],
+      "don": { "active": 4 }
+    }
+  },
+  "actions": [
+    { "type": "activate", "player": "p2", "card": "p2.characters.0", "effect": 0 },
+    { "type": "playCard", "player": "p2", "card": "p2.hand.0" }
+  ],
+  "expect": {
+    "p2.hand": 2,
+    "p2.deck": 19,
+    "p2.characters": 2,
+    "modifiers": 1
+  }
+}

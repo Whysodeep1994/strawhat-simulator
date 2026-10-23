@@ -1,0 +1,22 @@
+{
+  "name": "Placing 1 Life card on top of the deck and reordering the rest",
+  "rules": ["3-10-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-LIFE-TO-DECK"],
+      "don": { "active": 1 },
+      "life": ["TEST-FILLER", "TEST-C1-0", "TEST-C2-3000"]
+    }
+  },
+  "actions": [
+    { "type": "playCard", "player": "p1", "card": "p1.hand.0" },
+    { "type": "choose", "player": "p1", "cards": ["p1.life.1"] },
+    { "type": "choose", "player": "p1", "cards": ["p1.life.1", "p1.life.0"] }
+  ],
+  "expect": {
+    "p1.life": 2,
+    "p1.deck.0.cardId": "TEST-C1-0",
+    "p1.life.0.cardId": "TEST-C2-3000",
+    "p1.life.1.cardId": "TEST-FILLER"
+  }
+}

@@ -79,7 +79,7 @@ never replaced.
 ## Conditions
 
 `donAtLeast` ([DON!! xX]), `yourTurn`, `opponentsTurn`, `lifeAtMost`, `lifeAtLeast`,
-`opponentLifeAtMost`, `leaderHasType`, `charactersAtLeast`, `handAtMost`, `deckTopMatches`
+`opponentLifeAtMost`, `opponentLifeAtLeast`, `leaderHasType`, `charactersAtLeast`, `handAtMost`, `deckTopMatches`
 (a filter for the top card of your deck, for "Reveal 1 card from the top of your deck. If that
 card is..."), `donOnFieldAtLeast` and `donOnFieldAtMost` ("if you have 8 or more DON!! cards on
 your field", counting active, rested and given DON!!), `playedThisTurn` ("if this Character was
@@ -106,7 +106,9 @@ hand at the top of your deck), `returnOwnCharacter` (return your Characters to y
 `{ "restOwn": { "name": "Uta" } }`), `restThis`, `trashThis` ("trash this Character", not a K.O.), `lifeToHand` (add Life cards to
 your hand; `"from": "topOrBottom"` lets the player take the bottom one), `trashLife` (trash from
 the top of your Life), `lifeFaceUp` (turn the top Life card face-up; it must be face-down),
-`trashToDeckBottom` (place cards from your trash at the bottom of your deck).
+`trashToDeckBottom` (place cards from your trash at the bottom of your deck), `returnGivenDon`
+("return N of your currently given DON!! cards to your cost area rested"; the player picks which
+cards).
 
 Face-up Life cards are open to both players (rule 3-10-2-1): `viewFor` shows them in `life`, and
 a card is face-down again once it leaves the Life area.
@@ -119,7 +121,8 @@ a card is face-down again once it leaves the Life area.
 or less" that doesn't say whose.
 
 Filters: `category`, `costAtMost`, `costAtLeast`, `powerAtMost`, `powerAtLeast`, `type`, `name`,
-`nameIncludes`, `color`, `rested`, `notThis`, `hasTrigger`, `keyword` (for example
+`nameIncludes`, `color`, `rested`, `costAtMostOpponentLife` ("a cost equal to or less than the
+number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for example
 `{ "keyword": "blocker" }` for "[Blocker] Characters"), and:
 
 - `baseCostAtMost`, `baseCostAtLeast`, `basePowerAtMost`, `basePowerAtLeast`: printed values
@@ -131,12 +134,19 @@ Filters: `category`, `costAtMost`, `costAtLeast`, `powerAtMost`, `powerAtLeast`,
 When there's no real choice (for example, exactly one valid target and no "up to"), the engine
 picks automatically, so players are only asked about meaningful decisions.
 
+## Keywords
+
+Besides the printed keywords, `canAttackActive` means "this Character can also attack your
+opponent's active Characters". Grant it with `grantKeyword` in a `permanent` effect for
+conditional wording such as "[DON!! x2] This Character can also attack...".
+
 ## Steps
 
 | Step                             | What it does                                                                                                                                                                                      |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `draw`                           | Draw cards.                                                                                                                                                                                       |
 | `powerUp`                        | Change power (negative for "−"), for the turn or the battle. With `perPrevious`, the amount counts once for every card the previous step moved ("+1000 for every card trashed").                  |
+| `negateOnPlay`                   | "[On Play] effects are negated" for `self` or `opponent`.                                                                                                                                         |
 | `grantKeyword`                   | Give [Rush], [Blocker], [Double Attack], and so on.                                                                                                                                               |
 | `ko`                             | K.O. Characters.                                                                                                                                                                                  |
 | `rest` / `setActive`             | Rest or set active.                                                                                                                                                                               |
@@ -153,6 +163,8 @@ picks automatically, so players are only asked about meaningful decisions.
 | `lifeToHand` / `deckToLife`      | Move cards between Life, hand, and deck.                                                                                                                                                          |
 | `trashLife`                      | Trash the top of your (`"side": "self"`) or the opponent's Life.                                                                                                                                  |
 | `arrangeLife`                    | Look at the top Life card of either player; place it top or bottom.                                                                                                                               |
+| `characterToLife`                | Add a Character to the top or bottom of its owner's Life; `faceUp` for face-up.                                                                                                                   |
+| `lifeToDeckTop`                  | Look at all your Life; place 1 on top of your deck, the rest back in any order.                                                                                                                   |
 | `trashCharacter`                 | Trash Characters from the field. Not a K.O., so no [On K.O.].                                                                                                                                     |
 | `addThisToHand`                  | [Trigger] only: add this card to your hand.                                                                                                                                                       |
 | `playThis`                       | Play this card: a [Trigger] card, or this card from the trash (e.g. [On K.O.]). `rested` plays it rested.                                                                                         |
@@ -168,7 +180,9 @@ picks automatically, so players are only asked about meaningful decisions.
 | `grantStatus`                    | "Cannot attack", "cannot be K.O.'d ...", and so on. See below.                                                                                                                                    |
 | `costChange`                     | Change cost (negative for "−"), for the turn or as a permanent effect.                                                                                                                            |
 
-Durations (`duration` on `powerUp`, `grantKeyword`, `grantStatus`, `costChange`, `noBlockers`):
+`powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash".
+
+Durations (`duration` on `negateOnPlay`, `powerUp`, `grantKeyword`, `grantStatus`, `costChange`, `noBlockers`):
 `"turn"` (the default), `"battle"`, and `"opponentsNextTurn"` for "until the end of your
 opponent's next turn" or "... next End Phase".
 
@@ -182,5 +196,7 @@ Step options:
   opponent's next Refresh Phase", and `"ifYouDo": [steps]` for "you may rest ...: If you do,
   ..." (use `"upTo": true` on its target so the player can decline).
 - `playFromHand` and `playFromTrash` take `"rested": true` for "play ... rested".
+
+`powerUp` takes `perTrash: 4` for "+X power for every 4 cards in your trash".
 
 Each block is tested in `packages/engine/scenarios/effects/` using made-up `TEST-` cards.

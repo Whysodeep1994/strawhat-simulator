@@ -10,8 +10,11 @@ import {
   findCard,
   findOnField,
   hasKeywordNow,
+  leaveField,
   hasStatus,
   matchesFilter,
+  onPlayNegated,
+  powerAmount,
   powerOf,
 } from "./state.js";
 import {
@@ -122,6 +125,8 @@ function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
   if (frame.stage === "check") {
     // Rule 8-1-3-1-3: an auto effect whose card has left its area doesn't activate.
     if (ON_FIELD_TIMINGS.has(effect.timing) && !findOnField(state, frame.source)) return "done";
+    // Rule 8-2-1-1: a negated [On Play] effect does not happen.
+    if (effect.timing === "onPlay" && onPlayNegated(state, frame.controller)) return "done";
     // [On K.O.] conditions were checked on the field (rule 10-2-17-1).
     if (
       effect.timing !== "onKO" &&
@@ -228,6 +233,19 @@ function payCost(
     if (!source.rested && findOnField(state, source.uid)?.zone === "characters")
       characterRested(state, frame.controller);
     source.rested = true;
+  } else if ("returnGivenDon" in cost) {
+    // One DON!! at a time, so the player picks which cards they come from.
+    while (frame.memo.length < cost.returnGivenDon) {
+      const given = [p.leader, ...p.characters].filter((c) => c.givenDon > 0);
+      const chosen = choose(state, frame, frame.controller, given, 1, 1, "returnGivenDon");
+      if (chosen === "wait") return "wait";
+      const card = given.find((c) => c.uid === chosen[0]);
+      if (!card) return "continue";
+      card.givenDon -= 1;
+      p.donRested += 1;
+      frame.memo.push(card.uid);
+    }
+    frame.memo = [];
   } else if ("lifeToHand" in cost) {
     for (let i = frame.memo.length; i < cost.lifeToHand; i++) {
       let fromBottom = false;
@@ -386,6 +404,16 @@ function runStep(
       // "You may rest ...: If you do, ..."
       if (step.do === "rest" && step.ifYouDo && targets.length > 0)
         frame.steps.splice(1, 0, ...step.ifYouDo);
+      return "continue";
+    }
+
+    case "negateOnPlay": {
+      const player = step.side === "self" ? controller : opponentOf(controller);
+      state.modifiers.push({
+        target: state.players[player].leader.uid,
+        negateOnPlay: true,
+        ...lasting(state, controller, step.duration),
+      });
       return "continue";
     }
 
@@ -577,6 +605,40 @@ function runStep(
     case "trashLife":
       trashFromLife(state, step.side === "self" ? controller : opponentOf(controller), step.count);
       return "continue";
+
+    case "characterToLife":
+      return characterToLife(state, frame, source, step);
+
+    case "lifeToDeckTop": {
+      if (frame.memo.length === 0) {
+        const chosen = choose(state, frame, controller, p.life, 1, 1, "lifeToDeckTop");
+        if (chosen === "wait") return "wait";
+        const index = p.life.findIndex((c) => c.uid === chosen[0]);
+        const card = index >= 0 ? takeLife(p.life, index) : undefined;
+        if (!card) return "continue";
+        p.deck.unshift(card);
+        frame.memo = [card.uid];
+      }
+      // "Place the rest back in your Life area in any order": first picked is the new top.
+      if (p.life.length > 1) {
+        if (!Array.isArray(frame.answer)) {
+          state.prompt = {
+            kind: "choose",
+            player: controller,
+            options: p.life.map((c) => c.uid),
+            min: p.life.length,
+            max: p.life.length,
+            reason: "lifeOrder",
+            source: frame.source,
+          };
+          return "wait";
+        }
+        const order = frame.answer;
+        frame.answer = null;
+        p.life = order.map((uid) => p.life.find((c) => c.uid === uid) as CardInstance);
+      }
+      return "continue";
+    }
 
     case "arrangeLife":
       return arrangeLife(state, frame);
@@ -793,14 +855,14 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
     case "powerUp":
       state.modifiers.push({
         target: uid,
-        power: step.amount,
+        power: powerAmount(state, controller, step),
         ...lasting(state, controller, step.duration),
       });
       return;
     case "costChange":
       state.modifiers.push({
         target: uid,
-        cost: step.amount,
+        cost: powerAmount(state, controller, step),
         ...lasting(state, controller, step.duration),
       });
       return;
@@ -866,6 +928,45 @@ function takeLife(life: CardInstance[], index: number): CardInstance | undefined
 function trashFromLife(state: GameState, player: PlayerId, count: number): void {
   const p = state.players[player];
   for (let i = 0; i < count && p.life.length > 0; i++) p.trash.unshift(takeLife(p.life, 0)!);
+}
+
+/** Moves a Character to the top or bottom of its owner's Life cards (rule 3-10-2-1 for face-up). */
+function characterToLife(
+  state: GameState,
+  frame: FrameOf<"effect">,
+  source: CardInstance,
+  step: Extract<Step, { do: "characterToLife" }>,
+): Outcome {
+  if (frame.memo.length === 0) {
+    const picked = chooseTargets(state, frame, source, step.target, step.do);
+    if (picked === "wait") return "wait";
+    if (picked.length === 0) return "continue";
+    frame.memo = picked;
+  }
+  const location = findOnField(state, frame.memo[0] as string);
+  if (location?.zone !== "characters") return "continue";
+  const card = location.card;
+  const owner = state.players[card.owner];
+  let toBottom = false;
+  if (owner.life.length > 0) {
+    if (frame.answer === null) {
+      state.prompt = {
+        kind: "confirm",
+        player: frame.controller,
+        reason: "lifeToBottom",
+        source: card.uid,
+      };
+      return "wait";
+    }
+    toBottom = frame.answer === true;
+    frame.answer = null;
+  }
+  owner.characters = owner.characters.filter((c) => c.uid !== card.uid);
+  leaveField(state, card);
+  if (step.faceUp) card.faceUp = true;
+  if (toBottom) owner.life.push(card);
+  else owner.life.unshift(card);
+  return "continue";
 }
 
 /**

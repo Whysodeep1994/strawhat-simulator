@@ -59,6 +59,8 @@ export interface Modifier {
   status?: Status;
   /** The opponent can't activate [Blocker] Characters matching this when the target attacks. */
   noBlockers?: Filter;
+  /** The target is a Leader: its player's [On Play] effects are negated. */
+  negateOnPlay?: boolean;
   /** On a Leader: its player can't add Life cards to their hand with their own effects. */
   noLifeToHand?: boolean;
   until: "turn" | "battle";

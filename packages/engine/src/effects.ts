@@ -70,6 +70,7 @@ export type Condition =
   | { lifeAtMost: number }
   | { lifeAtLeast: number }
   | { opponentLifeAtMost: number }
+  | { opponentLifeAtLeast: number }
   | { leaderHasType: string }
   | { charactersAtLeast: number }
   | { handAtMost: number }
@@ -121,7 +122,9 @@ export type Cost =
   /** Place cards from your trash at the bottom of your deck. */
   | { trashToDeckBottom: number }
   /** Trash this card from the field. Not a K.O. */
-  | { trashThis: true };
+  | { trashThis: true }
+  /** "Return N total of your currently given DON!! cards to your cost area rested." */
+  | { returnGivenDon: number };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -140,6 +143,8 @@ export interface Filter {
   /** Current cost, after effects such as "+1 cost". */
   costAtMost?: number;
   costAtLeast?: number;
+  /** "With a cost equal to or less than the number of your opponent's Life cards." */
+  costAtMostOpponentLife?: boolean;
   /** Printed cost ("base cost", rule 2-7-1). */
   baseCostAtMost?: number;
   baseCostAtLeast?: number;
@@ -187,15 +192,25 @@ export type Status =
 
 export type Step =
   | { do: "draw"; count: number }
-  /** With `perPrevious`, `amount` is multiplied by how many cards the previous step moved. */
-  | { do: "powerUp"; target: Target; amount: number; duration?: Duration; perPrevious?: boolean }
+  /**
+   * With `perPrevious`, `amount` is multiplied by how many cards the previous step moved.
+   * `perTrash`: "+amount for every N cards in your trash".
+   */
+  | {
+      do: "powerUp";
+      target: Target;
+      amount: number;
+      duration?: Duration;
+      perPrevious?: boolean;
+      perTrash?: number;
+    }
   | { do: "grantKeyword"; target: Target; keyword: Keyword; duration?: Duration }
   | { do: "grantStatus"; target: Target; status: Status; duration?: Duration }
   /**
    * Change cost (negative for "−"). As a permanent effect with `zone: "hand"`
    * it changes the cost to play the card.
    */
-  | { do: "costChange"; target: Target; amount: number; duration?: Duration }
+  | { do: "costChange"; target: Target; amount: number; duration?: Duration; perTrash?: number }
   | { do: "ko"; target: Target }
   /**
    * `stayRested`: "and that Character will not become active in your
@@ -250,6 +265,8 @@ export type Step =
   | { do: "noLifeToHand" }
   | { do: "lifeToHand"; count: number }
   | { do: "deckToLife"; count: number }
+  /** "[On Play] effects are negated" for you (`self`) or your opponent. */
+  | { do: "negateOnPlay"; side: "self" | "opponent"; duration?: Duration }
   /** Trash cards from the top of your (or your opponent's) Life cards. */
   | { do: "trashLife"; side: "self" | "opponent"; count: number }
   /**
@@ -257,6 +274,13 @@ export type Step =
    * and place it at the top or bottom of the Life cards."
    */
   | { do: "arrangeLife" }
+  /**
+   * "Add up to 1 of your Characters ... to the top or bottom of the owner's Life cards face-up."
+   * The player picks the Character, then top or bottom.
+   */
+  | { do: "characterToLife"; target: Target; faceUp?: boolean }
+  /** "Look at all your Life cards; place 1 at the top of your deck and the rest back in any order." */
+  | { do: "lifeToDeckTop" }
   /** Trigger only: add this card to your hand. */
   | { do: "addThisToHand" }
   /** Trash Characters from the field. This is not a K.O. (rule 10-2-14). */
