@@ -35,19 +35,22 @@ Each phase has a check the project owner can do without reading code.
 ## Next
 
 1. Owner merges the Phase 2 pull request and confirms the green check on GitHub.
-2. Phase 3: model the game state (zones, DON!!, life, leader, characters, stage) and the
+2. Phase 3: the engine must list every legal action at any moment, so the UI can highlight
+   playable cards and only ask the player when there is a real choice (Master Duel style).
+3. Phase 3: model the game state (zones, DON!!, life, leader, characters, stage) and the
    scenario test format.
 
 ## Decisions
 
-| Date       | Decision                                                                | Why                                                         |
-| ---------- | ----------------------------------------------------------------------- | ----------------------------------------------------------- |
-| 2026-10-23 | Project name: Strawhat Simulator.                                       | Owner's choice.                                             |
-| 2026-10-23 | License: AGPL-3.0-or-later.                                             | Keeps hosted forks open source.                             |
-| 2026-10-23 | Stack: TypeScript, pnpm workspace, Vitest, ESLint, Prettier, GitHub CI. | One language for engine, server, and web app; widely known. |
-| 2026-10-23 | Planned: Node.js WebSocket server (authoritative), React web client.    | Server hides private info; runs in any browser.             |
-| 2026-10-23 | No Bandai images, logos, or official card text in the repo.             | Lowers takedown risk; see docs/CARD_ASSETS.md.              |
-| 2026-10-23 | Rebuild from scratch; OPTCGSim is reference only.                       | OPTCGSim has no source code or license.                     |
+| Date       | Decision                                                                                                                                 | Why                                                         |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 2026-10-23 | UI and feel modeled on Yu-Gi-Oh! Master Duel: highlight only legal plays, one-tap actions, auto-prompts for responses, quick animations. | Owner's direction: simple to play and polished.             |
+| 2026-10-23 | Project name: Strawhat Simulator.                                                                                                        | Owner's choice.                                             |
+| 2026-10-23 | License: AGPL-3.0-or-later.                                                                                                              | Keeps hosted forks open source.                             |
+| 2026-10-23 | Stack: TypeScript, pnpm workspace, Vitest, ESLint, Prettier, GitHub CI.                                                                  | One language for engine, server, and web app; widely known. |
+| 2026-10-23 | Planned: Node.js WebSocket server (authoritative), React web client.                                                                     | Server hides private info; runs in any browser.             |
+| 2026-10-23 | No Bandai images, logos, or official card text in the repo.                                                                              | Lowers takedown risk; see docs/CARD_ASSETS.md.              |
+| 2026-10-23 | Rebuild from scratch; OPTCGSim is reference only.                                                                                        | OPTCGSim has no source code or license.                     |
 
 ## Open decisions
 
