@@ -505,6 +505,16 @@ function runStep(
       return "continue";
     }
 
+    case "handToLife": {
+      const chosen =
+        p.hand.length === 0 ? [] : choose(state, frame, controller, p.hand, 0, step.count, step.do);
+      if (chosen === "wait") return "wait";
+      const cards = chosen.map((uid) => p.hand.find((c) => c.uid === uid)).filter((c) => !!c);
+      p.hand = p.hand.filter((c) => !chosen.includes(c.uid));
+      p.life.unshift(...cards);
+      return "continue";
+    }
+
     case "revealedToDeckTop":
       moveFromHandToDeckTop(
         state,

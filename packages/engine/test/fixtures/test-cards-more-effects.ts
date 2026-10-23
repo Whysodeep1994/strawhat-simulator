@@ -447,4 +447,25 @@ export const MORE_EFFECT_CARDS: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-LIFE-COMPARE",
+    name: "Test Life Compare",
+    category: "character",
+    colors: ["yellow"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "activateMain",
+        conditions: [{ lifeAtMostOpponents: true }],
+        steps: [
+          { do: "handToLife", count: 1 },
+          {
+            do: "ko",
+            target: { side: "opponent", filter: { costAtMostTotalLife: true }, upTo: true },
+          },
+        ],
+      },
+    ],
+  },
 ];
