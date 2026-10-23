@@ -1,0 +1,26 @@
+{
+  "name": "The total Life condition fails at 6 Life cards",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-TOTAL-LIFE"],
+      "don": {
+        "active": 1
+      },
+      "life": 3
+    },
+    "p2": {
+      "life": 3
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 0
+  }
+}

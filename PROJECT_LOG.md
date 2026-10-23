@@ -28,6 +28,13 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-23: Engine blocks for set OP-09: "negate the effect of" (a `negated` status that also
+  turns off printed keywords), "that Character" targets, "total power of 4000 or less", "your
+  Character cards are played rested", "cannot be K.O.'d in battle by Leaders", trashing cards from
+  the deck, placing hand cards at the deck bottom as a cost, adding a hand card to Life, "If you do"
+  after playing a card, taking Life from the top or bottom, "K.O.'d by your opponent's effect",
+  "removed from the field by your opponent's effect", "when your opponent activates [Blocker]",
+  "you win the game", and DON!!, hand and total Life comparisons. 24 new effect scenarios.
 - 2026-10-23: Engine blocks for starter decks ST-15 (Edward.Newgate), ST-16 (Uta), ST-17
   (Doflamingo): either-player targets, more costs, deck arranging, reveal-and-play, choose one,
   "at the end of this turn", "cannot add Life cards", "K.O.'d by an effect". 24 new scenarios.

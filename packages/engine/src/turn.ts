@@ -5,6 +5,8 @@ import {
   conditionsMet,
   definitionOf,
   effectOf,
+  effectsOf,
+  fieldCards,
   findOnField,
   hasStatus,
   leaveField,
@@ -24,7 +26,7 @@ export function queueEffects(
   card: CardInstance,
   timing: Timing,
 ): void {
-  (definitionOf(state, card).effects ?? []).forEach((effect, index) => {
+  effectsOf(state, card).forEach((effect, index) => {
     if (effect.timing === timing)
       state.pendingEffects.push({ controller, source: card.uid, effect: index });
   });
@@ -69,16 +71,19 @@ export function startTurn(state: GameState, player: PlayerId): void {
 
 /**
  * Rules 10-2-1-2 and 10-2-17: [On K.O.] conditions are checked while the card
- * is still on the field; the effect then resolves from the trash. `byEffect`
- * is false for a K.O. in battle.
+ * is still on the field; the effect then resolves from the trash. `by` is the
+ * player whose effect K.O.s the card, and is left out for a K.O. in battle.
  */
-export function knockOut(state: GameState, uid: string, byEffect = false): void {
+export function knockOut(state: GameState, uid: string, by?: PlayerId): void {
   for (const player of ["p1", "p2"] as const) {
     const p = state.players[player];
     const card = p.characters.find((c) => c.uid === uid);
     if (!card) continue;
-    (definitionOf(state, card).effects ?? []).forEach((effect, index) => {
-      const timingMet = effect.timing === "onKO" || (effect.timing === "koByEffect" && byEffect);
+    effectsOf(state, card).forEach((effect, index) => {
+      const timingMet =
+        effect.timing === "onKO" ||
+        (effect.timing === "koByEffect" && by !== undefined) ||
+        (effect.timing === "koByOpponentsEffect" && by !== undefined && by !== player);
       if (timingMet && conditionsMet(state, player, card, effect.conditions)) {
         state.pendingEffects.push({ controller: player, source: card.uid, effect: index });
       }
@@ -107,8 +112,21 @@ export function putOnField(
     const old = trash ? p.characters.find((c) => c.uid === trash) : undefined;
     if (old) moveFieldCardToTrash(state, old);
     p.characters.push(card);
+    // "Your Character cards are played rested."
+    if (playsRested(state, player)) card.rested = true;
   }
   queueEffects(state, player, card, "onPlay");
+}
+
+function playsRested(state: GameState, player: PlayerId): boolean {
+  return fieldCards(state, player).some((source) =>
+    effectsOf(state, source).some(
+      (effect) =>
+        effect.timing === "permanent" &&
+        effect.steps.some((s) => s.do === "playRested") &&
+        conditionsMet(state, player, source, effect.conditions),
+    ),
+  );
 }
 
 /** Trashing by rule (3-7-6-1-1, 3-8-5-1) or by a "trash this Character" cost is not a K.O. */

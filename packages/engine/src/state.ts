@@ -29,7 +29,18 @@ export function effectOf(
   card: CardInstance,
   index: number,
 ): EffectDefinition | undefined {
-  return definitionOf(state, card).effects?.[index];
+  return effectsOf(state, card)[index];
+}
+
+/** Whether an effect has negated this field card's effects (rule 8-2). */
+export function isNegated(state: GameState, card: CardInstance): boolean {
+  return state.modifiers.some((m) => m.target === card.uid && m.status === "negated");
+}
+
+/** A card's effects, or none while they are negated on the field (rule 8-2). */
+export function effectsOf(state: GameState, card: CardInstance): EffectDefinition[] {
+  if (isNegated(state, card) && findOnField(state, card.uid)) return [];
+  return definitionOf(state, card).effects ?? [];
 }
 
 /** Finds a card on the field (Leader, Character, or Stage area) by uid. */
@@ -85,7 +96,10 @@ export function basePowerOf(state: GameState, card: CardInstance): number {
 
 /** Printed keywords plus any gained from effects. */
 export function keywordsOf(state: GameState, card: CardInstance): Keyword[] {
-  const keywords = new Set(definitionOf(state, card).keywords ?? []);
+  // Printed keywords are effects too, so negating the card removes them (rule 8-2).
+  const keywords = new Set(
+    isNegated(state, card) ? [] : (definitionOf(state, card).keywords ?? []),
+  );
   for (const m of state.modifiers) if (m.target === card.uid && m.keyword) keywords.add(m.keyword);
   for (const grant of permanentGrants(state, card, "grantKeyword"))
     if (grant.keyword) keywords.add(grant.keyword);
@@ -151,7 +165,7 @@ function permanentGrants(state: GameState, card: CardInstance, kind: GrantStep):
 function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, grants: Grant[]) {
   for (const player of ["p1", "p2"] as const) {
     for (const source of fieldCards(state, player)) {
-      for (const effect of definitionOf(state, source).effects ?? []) {
+      for (const effect of effectsOf(state, source)) {
         if (effect.timing !== "permanent" || effect.zone === "hand") continue;
         if (!conditionsMet(state, player, source, effect.conditions)) continue;
         for (const step of effect.steps) {
@@ -192,7 +206,7 @@ export function onPlayNegated(state: GameState, player: PlayerId): boolean {
   if (state.modifiers.some((m) => m.negateOnPlay && m.target === leader)) return true;
   for (const owner of ["p1", "p2"] as const) {
     for (const source of fieldCards(state, owner)) {
-      for (const effect of definitionOf(state, source).effects ?? []) {
+      for (const effect of effectsOf(state, source)) {
         if (effect.timing !== "permanent") continue;
         if (!conditionsMet(state, owner, source, effect.conditions)) continue;
         const negated = effect.steps.some(
@@ -283,6 +297,12 @@ export function conditionsMet(
     if ("leaderMulticolored" in c) return definitionOf(state, me.leader).colors.length > 1;
     if ("opponentDonOnFieldAtLeast" in c)
       return donOnField(state, opponentOf(controller)) >= c.opponentDonOnFieldAtLeast;
+    if ("opponentHasMoreDon" in c)
+      return donOnField(state, opponentOf(controller)) > donOnField(state, controller);
+    if ("opponentHandAtLeast" in c) return them.hand.length >= c.opponentHandAtLeast;
+    if ("handFewerThanOpponentBy" in c)
+      return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
+    if ("totalLifeAtMost" in c) return me.life.length + them.life.length <= c.totalLifeAtMost;
     return false;
   });
 }
@@ -379,6 +399,7 @@ export function canPayCosts(
       if (matching.length < cost.trashFromHand) return false;
     }
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
+    if ("handToDeckBottom" in cost) fromHand += cost.handToDeckBottom;
     if ("returnOwnCharacter" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.returnOwnCharacter) return false;

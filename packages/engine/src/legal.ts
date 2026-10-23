@@ -3,12 +3,14 @@ import {
   canPayCosts,
   conditionsMet,
   definitionOf,
+  effectsOf,
   fieldCards,
   findOnField,
   hasKeywordNow,
   hasStatus,
   matchesFilter,
   playCostOf,
+  powerOf,
 } from "./state.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
 
@@ -81,6 +83,13 @@ export function isLegal(state: GameState, action: Action): boolean {
     const prompt = state.prompt;
     if (prompt.kind !== "choose" || prompt.player !== action.player) return false;
     const unique = new Set(action.cards);
+    if (prompt.maxTotalPower !== undefined) {
+      const total = action.cards.reduce((sum, uid) => {
+        const card = findOnField(state, uid)?.card;
+        return sum + (card ? powerOf(state, card) : 0);
+      }, 0);
+      if (total > prompt.maxTotalPower) return false;
+    }
     return (
       unique.size === action.cards.length &&
       action.cards.length >= prompt.min &&
@@ -142,7 +151,7 @@ function playActions(state: GameState, player: PlayerId): Action[] {
 function activateActions(state: GameState, player: PlayerId): Action[] {
   const actions: Action[] = [];
   for (const card of fieldCards(state, player)) {
-    (definitionOf(state, card).effects ?? []).forEach((effect, index) => {
+    effectsOf(state, card).forEach((effect, index) => {
       if (effect.timing !== "activateMain") return;
       if (effect.oncePerTurn && state.usedThisTurn.includes(`${card.uid}:${index}`)) return;
       if (!conditionsMet(state, player, card, effect.conditions)) return;
