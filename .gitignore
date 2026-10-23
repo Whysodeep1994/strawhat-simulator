@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.env
+.env.*
+
+# Card images and official card text are never committed (see docs/CARD_ASSETS.md).
+card-assets/
