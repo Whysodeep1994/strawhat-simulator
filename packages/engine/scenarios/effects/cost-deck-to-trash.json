@@ -1,0 +1,26 @@
+{
+  "name": "Trash 2 cards from the top of your deck as a cost; then a trash count condition",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-DECK-TRASH"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p1.trash": 3,
+    "p1.hand": 1,
+    "p1.deck": 17
+  }
+}

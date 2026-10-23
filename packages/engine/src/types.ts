@@ -106,6 +106,8 @@ export type Frame =
       revealed?: string[];
       /** How many cards the previous step moved, for "for every card trashed". */
       previous?: number;
+      /** The cards the last removal step moved, for "a different color than the returned Character". */
+      moved?: string[];
       answer: string[] | boolean | null;
       /** `replaceRemoval` only: the card the replacement would save. */
       replacing?: string;

@@ -1,0 +1,37 @@
+{
+  "name": "\"When a Character is K.O.'d\" works for your opponent's Characters, once per turn",
+  "rules": ["10-2-13"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-KO-WATCHER"],
+      "hand": ["TEST-EVENT-KO", "TEST-EVENT-KO"],
+      "don": {
+        "active": 2
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C2-3000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    },
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p2.characters": 0,
+    "p1.hand": 1
+  }
+}

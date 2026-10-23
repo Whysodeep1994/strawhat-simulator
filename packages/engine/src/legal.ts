@@ -2,6 +2,7 @@ import type { Action } from "./actions.js";
 import {
   canPayCosts,
   conditionsMet,
+  counterOf,
   definitionOf,
   fieldCards,
   findOnField,
@@ -221,7 +222,7 @@ function counterActions(state: GameState, player: PlayerId): Action[] {
   const actions: Action[] = [];
   for (const card of p.hand) {
     const def = definitionOf(state, card);
-    if (def.category === "character" && def.counter) {
+    if (def.category === "character" && counterOf(state, player, card) > 0) {
       for (const target of targets)
         actions.push({ type: "counter", player, card: card.uid, target });
     }

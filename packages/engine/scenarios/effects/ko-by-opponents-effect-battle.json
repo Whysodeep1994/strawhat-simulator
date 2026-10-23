@@ -1,0 +1,30 @@
+{
+  "name": "\"When K.O.'d by your opponent's effect\" doesn't happen for a K.O. in battle",
+  "rules": ["10-2-1"],
+  "setup": {
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-OPP-KO-LIFE",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 4,
+    "p2.characters": 0
+  }
+}

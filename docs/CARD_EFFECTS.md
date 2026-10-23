@@ -41,6 +41,8 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `characterRestedByYourEffect` | "If a Character is rested by your effect"                    | 8-1-3-1 |
 | `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                    | 8-1-3-4 |
 | `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."  | 8-1-3-1 |
+| `characterKOd`                | "When a Character is K.O.'d" (either player's, any K.O.)     | 8-1-3-1 |
+| `koByOpponentsEffect`         | "When this Character is K.O.'d by your opponent's effect"    | 10-2-1  |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -100,6 +102,7 @@ played on this turn"), plus:
 | `{ "lifeAtMostOpponents": true }`                | "If the number of your Life cards is equal to or less than your opponent's" |
 | `{ "leaderMulticolored": true }`                 | "If your Leader is multicolored"                                            |
 | `{ "opponentDonOnFieldAtLeast": 5 }`             | "If your opponent has 5 or more DON!! cards on their field"                 |
+| `{ "trashAtLeast": 30 }`                         | "If you have 30 or more cards in your trash"                                |
 
 `count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`)
 and `filter`, and `atLeast` (default 1) and/or `atMost`. "If you do not have 5 Characters with a
@@ -119,7 +122,12 @@ your hand; `"from": "topOrBottom"` lets the player take the bottom one), `trashL
 the top of your Life), `lifeFaceUp` (turn the top Life card face-up; it must be face-down),
 `trashToDeckBottom` (place cards from your trash at the bottom of your deck), `returnGivenDon`
 ("return N of your currently given DON!! cards to your cost area rested"; the player picks which
-cards).
+cards), `handToDeckBottom` (place cards from your hand at the bottom of your deck),
+`thisToDeckBottom` ("place this card ... at the bottom of your deck"), `deckToTrash` ("trash 2
+cards from the top of your deck"), and `activeLeaderPower` ("give your 1 active Leader −5000
+power during this turn"; the Leader must be active). `returnOwnCharacter` takes
+`"to": "deckBottom"` for "place 1 of your Characters ... at the bottom of your deck", and
+`trashToDeckBottom` takes a `filter`.
 
 Face-up Life cards are open to both players (rule 3-10-2-1): `viewFor` shows them in `life`, and
 a card is face-down again once it leaves the Life area.
@@ -129,7 +137,8 @@ a card is face-down again once it leaves the Life area.
 `{ "side": "self" | "opponent" | "this" | "any", "zone": "leader" | "characters" | "leaderOrCharacters" | "stage", "filter": {...}, "count": 1, "upTo": true }`
 
 `"any"` means either player's cards, for wording like "return up to 1 Character with a cost of 4
-or less" that doesn't say whose.
+or less" that doesn't say whose. Add `"chooser": "opponent"` when your opponent picks ("your
+opponent returns 1 of their active Characters").
 
 Filters: `category`, `costAtMost`, `costAtLeast`, `powerAtMost`, `powerAtLeast`, `type`, `name`,
 `nameIncludes`, `color`, `rested`, `costAtMostOpponentLife` ("a cost equal to or less than the
@@ -142,6 +151,7 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `costAtMostTotalLife`: "a cost equal to or less than the total of your and your opponent's Life cards".
 - `typeIncludes`: a type containing some text, e.g. `"Baroque Works"`.
 - `anyOf`: a list of filters, any of which may match ("{Cross Guild} type or ...").
+- `noCounter`: "Character cards without a Counter".
 
 When there's no real choice (for example, exactly one valid target and no "up to"), the engine
 picks automatically, so players are only asked about meaningful decisions.
@@ -192,11 +202,20 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `handToLife`                     | "Add up to 1 card from your hand to the top of your Life cards."                                                                                                                                  |
 | `revealedToDeckTop`              | Place the cards revealed by a `revealFromHand` cost at the top of your deck.                                                                                                                      |
 | `setBasePower`                   | "[Leader]'s base power becomes 7000", with an optional `duration`.                                                                                                                                |
+| `grantCounter`                   | Permanent only: matching Character cards in your hand have +`amount` Counter.                                                                                                                     |
+| `deckTopToBottom`                | Place cards from the top of your deck at the bottom.                                                                                                                                              |
+| `copyPower`                      | "This Character's base power becomes the same as the selected Character's power during this turn."                                                                                                |
+| `redirectAttack`                 | "Change the attack target to the selected Character."                                                                                                                                             |
+| `reorderLife`                    | Look at all of your (`side`) Life cards and place them back in any order.                                                                                                                         |
+| `lifeFaceDown`                   | Turn all of your Life cards face-down.                                                                                                                                                            |
+| `trashLifeDownTo`                | "Trash cards from the top of your Life cards until you have 1 Life card."                                                                                                                         |
 | `if`                             | Only do the nested steps if the conditions hold.                                                                                                                                                  |
 | `grantStatus`                    | "Cannot attack", "cannot be K.O.'d ...", and so on. See below.                                                                                                                                    |
 | `costChange`                     | Change cost (negative for "−"), for the turn or as a permanent effect.                                                                                                                            |
 
-`powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash".
+`powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash" (add
+`trashFilter` to count only some cards, e.g. `{ "category": "event" }` for "every 2 Events in
+your trash"), and `perRestedDon: 3` for "for every 3 of your rested DON!! cards".
 
 Durations (`duration` on `negateOnPlay`, `powerUp`, `grantKeyword`, `grantStatus`, `costChange`, `noBlockers`):
 `"turn"` (the default), `"battle"`, and `"opponentsNextTurn"` for "until the end of your
@@ -212,6 +231,11 @@ Step options:
   opponent's next Refresh Phase", and `"ifYouDo": [steps]` for "you may rest ...: If you do,
   ..." (use `"upTo": true` on its target so the player can decline).
 - `playFromHand` and `playFromTrash` take `"rested": true` for "play ... rested".
+- `playFromHand` takes `"orTrash": true` for "from your hand or trash", and
+  `"differentColor": true` for "a different color than the returned Character" (the cards the
+  previous removal step moved).
+- `searchDeck` takes `"play": true` for "look at 5 cards ... and play up to 1 ...": the picked
+  Character or Stage is played (with `rested` if it says so) and the rest go to the bottom.
 
 `powerUp` takes `perTrash: 4` for "+X power for every 4 cards in your trash".
 

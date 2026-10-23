@@ -1,0 +1,31 @@
+{
+  "name": "Rest this Stage and place your 1000-power Character at the bottom of your deck: draw 1",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "stage": "TEST-MERRY",
+      "characters": ["TEST-C2-3000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.stage",
+      "effect": 0
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.characters.0.cardId": "TEST-C2-3000",
+    "p1.hand": 1,
+    "p1.deck": 20,
+    "p1.deck.19.cardId": "TEST-FILLER",
+    "p1.stage.rested": true
+  }
+}

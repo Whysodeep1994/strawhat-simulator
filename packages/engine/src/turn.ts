@@ -5,6 +5,7 @@ import {
   conditionsMet,
   definitionOf,
   effectOf,
+  fieldCards,
   findOnField,
   hasStatus,
   leaveField,
@@ -69,16 +70,21 @@ export function startTurn(state: GameState, player: PlayerId): void {
 
 /**
  * Rules 10-2-1-2 and 10-2-17: [On K.O.] conditions are checked while the card
- * is still on the field; the effect then resolves from the trash. `byEffect`
- * is false for a K.O. in battle.
+ * is still on the field; the effect then resolves from the trash. `byEffectOf`
+ * is the player whose effect K.O.'d it, or undefined for a K.O. in battle.
  */
-export function knockOut(state: GameState, uid: string, byEffect = false): void {
+export function knockOut(state: GameState, uid: string, byEffectOf?: PlayerId): void {
   for (const player of ["p1", "p2"] as const) {
     const p = state.players[player];
     const card = p.characters.find((c) => c.uid === uid);
     if (!card) continue;
     (definitionOf(state, card).effects ?? []).forEach((effect, index) => {
-      const timingMet = effect.timing === "onKO" || (effect.timing === "koByEffect" && byEffect);
+      const timingMet =
+        effect.timing === "onKO" ||
+        (effect.timing === "koByEffect" && byEffectOf !== undefined) ||
+        (effect.timing === "koByOpponentsEffect" &&
+          byEffectOf !== undefined &&
+          byEffectOf !== player);
       if (timingMet && conditionsMet(state, player, card, effect.conditions)) {
         state.pendingEffects.push({ controller: player, source: card.uid, effect: index });
       }
@@ -86,6 +92,10 @@ export function knockOut(state: GameState, uid: string, byEffect = false): void 
     p.characters = p.characters.filter((c) => c.uid !== uid);
     leaveField(state, card);
     p.trash.unshift(card);
+    // "When a Character is K.O.'d" on either player's field.
+    for (const owner of ["p1", "p2"] as const)
+      for (const holder of fieldCards(state, owner))
+        queueEffects(state, owner, holder, "characterKOd");
   }
 }
 
