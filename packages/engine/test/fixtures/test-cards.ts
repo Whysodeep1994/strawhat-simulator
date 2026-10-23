@@ -566,7 +566,7 @@ const cards: CardDefinition[] = [
       {
         timing: "permanent",
         zone: "hand",
-        conditions: [{ count: { side: "opponent", filter: { powerAtLeast: 6000 } }, atLeast: 1 }],
+        conditions: [{ count: { side: "opponent", filter: { powerAtLeast: 6000 } } }],
         steps: [{ do: "costChange", target: { side: "this" }, amount: -4 }],
       },
     ],

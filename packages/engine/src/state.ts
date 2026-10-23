@@ -213,7 +213,9 @@ export function conditionsMet(
     if ("anyOf" in c) return c.anyOf.some((one) => conditionsMet(state, controller, source, [one]));
     if ("count" in c) {
       const n = countCards(state, controller, source, c.count);
-      return n >= (c.atLeast ?? 0) && n <= (c.atMost ?? Infinity);
+      // atLeast defaults to 1, unless only atMost is given ("if you do not have 5 ...").
+      const atLeast = c.atLeast ?? (c.atMost === undefined ? 1 : 0);
+      return n >= atLeast && n <= (c.atMost ?? Infinity);
     }
     if ("donRestedAtLeast" in c) return me.donRested >= c.donRestedAtLeast;
     if ("restedCardsAtLeast" in c) {
