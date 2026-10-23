@@ -1,0 +1,22 @@
+{
+  "name": "Declining a battle replacement effect lets the K.O. happen",
+  "rules": ["8-1-3-4-1"],
+  "setup": {
+    "p1": { "characters": ["TEST-C5-6000"] },
+    "p2": {
+      "characters": [{ "card": "TEST-SAVE-IN-BATTLE", "rested": true }],
+      "hand": ["TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.characters.0"
+    },
+    { "type": "pass", "player": "p2" },
+    { "type": "confirm", "player": "p2", "accept": false }
+  ],
+  "expect": { "p2.characters": 0, "p2.hand": 1 }
+}

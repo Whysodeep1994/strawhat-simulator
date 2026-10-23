@@ -54,6 +54,10 @@ const TIMING_NAMES: Record<Timing, string> = {
   characterRestedByYourEffect: "(If a Character is rested by your effect)",
   replaceRemoval: "",
   donReturned: "When DON!! cards on your field are returned to your DON!! deck,",
+  drawOutsideDrawPhase: "When you draw a card outside of your Draw Phase,",
+  lifeAddedToHand: "When a card is added to your hand from your Life,",
+  lifeBecomesZero: "When your number of Life cards becomes 0,",
+  triggerActivated: "When a [Trigger] activates,",
   permanent: "",
 };
 
@@ -132,6 +136,16 @@ function conditionText(condition: Condition): string {
   if ("leaderMulticolored" in condition) return "(If your Leader is multicolored)";
   if ("opponentDonOnFieldAtLeast" in condition)
     return `(If your opponent has ${condition.opponentDonOnFieldAtLeast} or more DON!! cards on their field)`;
+  if ("thisPowerAtLeast" in condition)
+    return `(If this Character has ${condition.thisPowerAtLeast} power or more)`;
+  if ("opponentHasMoreDon" in condition)
+    return "(If your opponent has more DON!! cards on their field than you)";
+  if ("handAtLeast" in condition)
+    return `(If you have ${condition.handAtLeast} or more cards in hand)`;
+  if ("opponentHandAtLeast" in condition)
+    return `(If your opponent has ${condition.opponentHandAtLeast} or more cards in hand)`;
+  if ("trashAtLeast" in condition)
+    return `(If you have ${condition.trashAtLeast} or more cards in your trash)`;
   return `(If the top card of your deck is a${filterText(condition.deckTopMatches)} card)`;
 }
 
@@ -163,6 +177,13 @@ function costText(cost: Cost): string {
   if ("trashToDeckBottom" in cost) {
     return `place ${cost.trashToDeckBottom} card(s) from your trash at the bottom of your deck`;
   }
+  if ("toDeckBottom" in cost)
+    return `place ${cost.toDeckBottom} of your ${cost.zone === "stage" ? "Stages" : `Characters${withFilter(cost.filter)}`} at the bottom of your deck`;
+  if ("trashToDeck" in cost)
+    return `return ${cost.trashToDeck} cards from your trash to your deck and shuffle it`;
+  if ("koOwnCharacter" in cost)
+    return `K.O. ${cost.koOwnCharacter} of your Characters${withFilter(cost.filter)}`;
+  if ("playFromHand" in cost) return `play 1${filterText(cost.playFromHand)} card from your hand`;
   return "rest this card";
 }
 
@@ -248,6 +269,18 @@ function stepText(step: Step): string {
       return `${step.side === "self" ? "Your" : "Your opponent's"} [On Play] effects are negated${durationText(step.duration)}.`;
     case "setBasePower":
       return `${capital(targetText(step.target))}'s base power becomes ${step.power}${durationText(step.duration)}.`;
+    case "trashThis":
+      return "Trash this card.";
+    case "handDownTo":
+      return `${step.both ? "You and your opponent trash" : "Trash"} cards from your hand until you have ${step.count} cards.`;
+    case "trashToDeckBottom":
+      return `${step.side === "self" ? "Place" : "Your opponent places"} ${step.count} card(s) from the trash at the bottom of the deck.`;
+    case "deckToTrash":
+      return `Trash ${step.count} card(s) from the top of your deck.`;
+    case "handCostChange":
+      return `The cost of playing${filterText(step.filter)} cards from your hand changes by ${step.amount}.`;
+    case "extraTurn":
+      return "Take an extra turn after this one.";
     case "if":
       return `If ${step.conditions.map(conditionText).join(" and ")}, ${step.steps.map(stepText).join(" ")}`;
   }
@@ -255,6 +288,7 @@ function stepText(step: Step): string {
 
 function targetText(target: Target): string {
   if (target.side === "this") return "this card";
+  if (target.side === "that") return "that card";
   const owner = target.side === "self" ? "your" : target.side === "any" ? "the" : "your opponent's";
   const zone = target.zone ?? "characters";
   const count = target.count ?? 1;

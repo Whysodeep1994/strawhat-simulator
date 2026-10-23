@@ -39,6 +39,8 @@ export interface Replacement {
   removal: "ko" | "remove";
   /** Only effects of the opponent ("by your opponent's effect"). */
   byOpponent?: boolean;
+  /** Also replaces a K.O. in battle ("If ... would be K.O.'d", without "by an effect"). */
+  battle?: boolean;
 }
 
 export type Timing =
@@ -61,6 +63,14 @@ export type Timing =
   | "replaceRemoval"
   /** "When ... DON!! cards on your field are returned to your DON!! deck". See `returnedAtLeast`. */
   | "donReturned"
+  /** "When you draw a card outside of your Draw Phase". */
+  | "drawOutsideDrawPhase"
+  /** "When a card is added to your hand from your Life". */
+  | "lifeAddedToHand"
+  /** "When your number of Life cards becomes 0". */
+  | "lifeBecomesZero"
+  /** "When a [Trigger] activates" (one of yours). */
+  | "triggerActivated"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -100,7 +110,15 @@ export type Condition =
   /** "If your opponent has 5 or more DON!! cards on their field". */
   | { opponentDonOnFieldAtLeast: number }
   /** "If your Leader's type includes "Whitebeard Pirates"". */
-  | { leaderTypeIncludes: string };
+  | { leaderTypeIncludes: string }
+  /** "If this Character has 7000 power or more". */
+  | { thisPowerAtLeast: number }
+  /** "If your opponent has more DON!! cards on their field than you". */
+  | { opponentHasMoreDon: true }
+  | { handAtLeast: number }
+  | { opponentHandAtLeast: number }
+  /** "If you have 10 or more cards in your trash". */
+  | { trashAtLeast: number };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -139,18 +157,31 @@ export type Cost =
   /** Trash this card from the field. Not a K.O. */
   | { trashThis: true }
   /** "Return N total of your currently given DON!! cards to your cost area rested." */
-  | { returnGivenDon: number };
+  | { returnGivenDon: number }
+  /** "Place 1 of your Characters (or Stages) at the bottom of your deck". */
+  | { toDeckBottom: number; zone?: "characters" | "stage"; filter?: Filter }
+  /** "Return 20 cards from your trash to your deck and shuffle it". */
+  | { trashToDeck: number }
+  /** "K.O. 1 of your Characters other than this Character". */
+  | { koOwnCharacter: number; filter?: Filter }
+  /** "Play 1 [Kotori] from your hand". */
+  | { playFromHand: Filter };
 
 /** Which cards a step can pick from. */
 export interface Target {
-  /** "this" means the card the effect is on. "any" means either player's cards. */
-  side: "self" | "opponent" | "this" | "any";
+  /**
+   * "this" means the card the effect is on. "any" means either player's cards. "that" means
+   * the cards the previous step picked, or the card a replacement effect saves ("that Character").
+   */
+  side: "self" | "opponent" | "this" | "any" | "that";
   zone?: "leader" | "characters" | "leaderOrCharacters" | "stage";
   filter?: Filter;
   /** How many to pick. Defaults to 1. */
   count?: number;
   /** "Up to": the player may pick fewer, even 0 (rule 4-8). */
   upTo?: boolean;
+  /** "Up to 2 ... with a total power of 4000 or less". */
+  totalPowerAtMost?: number;
 }
 
 export interface Filter {
@@ -169,6 +200,8 @@ export interface Filter {
   basePowerAtMost?: number;
   basePowerAtLeast?: number;
   type?: string;
+  /** Not of this type. */
+  notType?: string;
   /** A type containing this text, e.g. "Baroque Works". */
   typeIncludes?: string;
   /** Matches card names containing this text (rule 2-1-2-1). */
@@ -247,7 +280,22 @@ export type Step =
   | { do: "addDon"; count: number; rested?: boolean }
   | { do: "setDonActive"; count: number }
   /** The effect's player trashes cards from their hand. */
-  | { do: "trashFromHand"; count: number; upTo?: boolean; filter?: Filter }
+  /** `ifYouDo`: "you may trash ...: If you do, ..." (with `upTo`). */
+  | { do: "trashFromHand"; count: number; upTo?: boolean; filter?: Filter; ifYouDo?: Step[] }
+  /** "Trash this Stage" (or Character) as part of the effect. Not a K.O. */
+  | { do: "trashThis" }
+  /** "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent". */
+  | { do: "handDownTo"; count: number; both?: boolean }
+  /** "Your opponent places 3 cards from their trash at the bottom of their deck". */
+  | { do: "trashToDeckBottom"; side: "self" | "opponent"; count: number }
+  /** "Trash 1 card from the top of your deck". */
+  | { do: "deckToTrash"; count: number }
+  /**
+   * On a permanent field effect: "The cost of playing ... from your hand will be reduced by 1".
+   */
+  | { do: "handCostChange"; filter?: Filter; amount: number }
+  /** "Take an extra turn after this one". */
+  | { do: "extraTurn" }
   /** Place cards from your hand at the top of your deck. */
   | { do: "handToDeckTop"; count: number }
   /** Place cards from your hand at the bottom of your deck. */

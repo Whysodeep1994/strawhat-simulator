@@ -119,6 +119,16 @@ export function playCostOf(state: GameState, player: PlayerId, card: CardInstanc
     if (!conditionsMet(state, player, card, effect.conditions)) continue;
     for (const step of effect.steps) if (step.do === "costChange") cost += step.amount;
   }
+  // "The cost of playing ... from your hand will be reduced by 1" on your field.
+  for (const source of fieldCards(state, player)) {
+    for (const effect of definitionOf(state, source).effects ?? []) {
+      if (effect.timing !== "permanent" || effect.zone === "hand") continue;
+      if (!conditionsMet(state, player, source, effect.conditions)) continue;
+      for (const step of effect.steps)
+        if (step.do === "handCostChange" && matchesFilter(state, card, step.filter, source, false))
+          cost += step.amount;
+    }
+  }
   return Math.max(0, cost);
 }
 
@@ -283,6 +293,12 @@ export function conditionsMet(
     if ("leaderMulticolored" in c) return definitionOf(state, me.leader).colors.length > 1;
     if ("opponentDonOnFieldAtLeast" in c)
       return donOnField(state, opponentOf(controller)) >= c.opponentDonOnFieldAtLeast;
+    if ("thisPowerAtLeast" in c) return powerOf(state, source) >= c.thisPowerAtLeast;
+    if ("opponentHasMoreDon" in c)
+      return donOnField(state, opponentOf(controller)) > donOnField(state, controller);
+    if ("handAtLeast" in c) return me.hand.length >= c.handAtLeast;
+    if ("opponentHandAtLeast" in c) return them.hand.length >= c.opponentHandAtLeast;
+    if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
     return false;
   });
 }
@@ -318,6 +334,7 @@ export function matchesFilter(
   if (filter.basePowerAtMost !== undefined && basePower > filter.basePowerAtMost) return false;
   if (filter.basePowerAtLeast !== undefined && basePower < filter.basePowerAtLeast) return false;
   if (filter.type && !(def.types ?? []).includes(filter.type)) return false;
+  if (filter.notType && (def.types ?? []).includes(filter.notType)) return false;
   if (filter.typeIncludes && !(def.types ?? []).some((t) => t.includes(filter.typeIncludes ?? "")))
     return false;
   if (filter.name && def.name !== filter.name) return false;
@@ -400,6 +417,26 @@ export function canPayCosts(
     if ("lifeFaceUp" in cost && (!p.life[0] || p.life[0].faceUp)) return false;
     if ("trashToDeckBottom" in cost) fromTrash += cost.trashToDeckBottom;
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
+    if ("toDeckBottom" in cost) {
+      const own =
+        cost.zone === "stage"
+          ? p.stage
+            ? [p.stage]
+            : []
+          : p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      if (own.length < cost.toDeckBottom) return false;
+    }
+    if ("trashToDeck" in cost) fromTrash += cost.trashToDeck;
+    if ("koOwnCharacter" in cost) {
+      const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      if (own.length < cost.koOwnCharacter) return false;
+    }
+    if ("playFromHand" in cost) {
+      const matching = hand.filter((c) =>
+        matchesFilter(state, c, cost.playFromHand, source, false),
+      );
+      if (matching.length === 0) return false;
+    }
   }
   return (
     restDon <= p.donActive &&

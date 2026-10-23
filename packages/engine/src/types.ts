@@ -109,8 +109,15 @@ export type Frame =
       answer: string[] | boolean | null;
       /** `replaceRemoval` only: the card the replacement would save. */
       replacing?: string;
+      /** The cards the last targeting step picked, for "that Character" (`side: "that"`). */
+      targets?: string[];
     }
-  | { kind: "battle"; step: "attack" | "block" | "counter" | "damage" | "end" }
+  | {
+      kind: "battle";
+      step: "attack" | "block" | "counter" | "damage" | "ko" | "end";
+      /** The losing Character a replacement effect may save from a K.O. in battle. */
+      saving?: string;
+    }
   | {
       kind: "damage";
       defender: PlayerId;
@@ -177,6 +184,8 @@ export interface GameState {
   prevented?: string[];
   /** A [Trigger] card being activated belongs to no area (rule 10-1-5-3). */
   limbo: CardInstance | null;
+  /** A player who takes an extra turn after this one ("take an extra turn"). */
+  extraTurn?: PlayerId;
   /** Seeded random state, so a game can be replayed exactly. */
   rng: number;
   nextUid: number;
