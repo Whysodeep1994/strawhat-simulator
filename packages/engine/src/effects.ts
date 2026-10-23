@@ -22,6 +22,8 @@ export interface EffectDefinition {
   zone?: "field" | "hand";
   /** `replaceRemoval` only: what the effect replaces. */
   replaces?: Replacement;
+  /** `donReturned` only: how many DON!! must be returned at once ("when 2 or more ..."). */
+  returnedAtLeast?: number;
   steps: Step[];
 }
 
@@ -57,6 +59,8 @@ export type Timing =
   | "characterRestedByYourEffect"
   /** "If ... would be K.O.'d ... instead" (rule 8-1-3-4). See `replaces`. */
   | "replaceRemoval"
+  /** "When ... DON!! cards on your field are returned to your DON!! deck". See `returnedAtLeast`. */
+  | "donReturned"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -90,7 +94,11 @@ export type Condition =
   /** Rested DON!! cards in your cost area. */
   | { donRestedAtLeast: number }
   /** Rested cards you have: DON!! in the cost area plus Leader, Characters, and Stage. */
-  | { restedCardsAtLeast: number };
+  | { restedCardsAtLeast: number }
+  /** "If your Leader is multicolored". */
+  | { leaderMulticolored: true }
+  /** "If your opponent has 5 or more DON!! cards on their field". */
+  | { opponentDonOnFieldAtLeast: number };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -103,8 +111,11 @@ export interface CardCount {
 export type Cost =
   /** ①: rest this many active DON!! (rule 8-3-1-5). */
   | { restDon: number }
-  /** DON!! −X: return DON!! from the field to the DON!! deck (rule 8-3-1-6). */
-  | { donMinus: number }
+  /**
+   * DON!! −X: return DON!! from the field to the DON!! deck (rule 8-3-1-6). With `orMore`,
+   * "return 1 or more DON!! cards": the player picks how many, at least `donMinus`.
+   */
+  | { donMinus: number; orMore?: boolean }
   | { trashFromHand: number; filter?: Filter }
   /** Place cards from your hand at the top of your deck. */
   | { handToDeckTop: number }
@@ -298,4 +309,6 @@ export type Step =
   /** "At the end of this turn": the steps happen in this turn's End Phase. */
   | { do: "atEndOfTurn"; steps: Step[] }
   /** A whole sub-sequence that only happens "if" a condition holds (rule 8-3-3). */
-  | { do: "if"; conditions: Condition[]; steps: Step[] };
+  | { do: "if"; conditions: Condition[]; steps: Step[] }
+  /** "[Leader]'s base power becomes 7000": replaces the printed power (rule 2-6-1). */
+  | { do: "setBasePower"; target: Target; power: number; duration?: Duration };

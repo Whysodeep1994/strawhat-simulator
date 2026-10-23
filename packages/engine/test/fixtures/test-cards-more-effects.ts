@@ -313,4 +313,87 @@ export const MORE_EFFECT_CARDS: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-DON-RETURN-LEADER",
+    name: "Test DON!! Return Leader",
+    category: "leader",
+    colors: ["purple", "black"],
+    power: 5000,
+    life: 4,
+    effects: [
+      {
+        timing: "donReturned",
+        returnedAtLeast: 2,
+        conditions: [{ yourTurn: true }],
+        oncePerTurn: true,
+        steps: [
+          { do: "addDon", count: 1 },
+          { do: "addDon", count: 1, rested: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-DON-MINUS-OR-MORE",
+    name: "Test Return 1 or More DON!!",
+    category: "character",
+    colors: ["purple"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "activateMain",
+        costs: [{ donMinus: 1, orMore: true }],
+        steps: [{ do: "draw", count: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-BASE-POWER",
+    name: "Test Base Power",
+    category: "character",
+    colors: ["purple"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "activateMain",
+        steps: [
+          {
+            do: "if",
+            conditions: [{ leaderMulticolored: true }, { opponentDonOnFieldAtLeast: 5 }],
+            steps: [
+              {
+                do: "setBasePower",
+                target: { side: "self", zone: "leader" },
+                power: 7000,
+                duration: "opponentsNextTurn",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-COUNTER-DON-MINUS",
+    name: "Test Counter DON!! Minus",
+    category: "event",
+    colors: ["red"],
+    cost: 0,
+    effects: [
+      {
+        timing: "counter",
+        costs: [{ donMinus: 2 }],
+        steps: [
+          {
+            do: "powerUp",
+            target: { side: "self", zone: "leader" },
+            amount: 4000,
+            duration: "battle",
+          },
+        ],
+      },
+    ],
+  },
 ];

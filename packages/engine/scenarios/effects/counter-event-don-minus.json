@@ -1,0 +1,28 @@
+{
+  "name": "A [Counter] Event with DON!! −2 can be used with 2 DON!!",
+  "rules": ["8-3-1-6"],
+  "setup": {
+    "turn": 4,
+    "turnPlayer": "p2",
+    "p1": {
+      "hand": ["TEST-COUNTER-DON-MINUS"],
+      "don": {
+        "active": 2
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p2",
+      "attacker": "p2.characters.0",
+      "target": "p1.leader"
+    }
+  ],
+  "expect": {
+    "legal.p1.counterEvent": 1
+  }
+}

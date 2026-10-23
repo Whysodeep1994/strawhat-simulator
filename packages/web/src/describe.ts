@@ -53,6 +53,7 @@ const TIMING_NAMES: Record<Timing, string> = {
   endOfOpponentsTurn: "[End of Your Opponent's Turn]",
   characterRestedByYourEffect: "(If a Character is rested by your effect)",
   replaceRemoval: "",
+  donReturned: "When DON!! cards on your field are returned to your DON!! deck,",
   permanent: "",
 };
 
@@ -126,12 +127,18 @@ function conditionText(condition: Condition): string {
     return `(If you have ${condition.donRestedAtLeast} or more rested DON!! cards)`;
   if ("restedCardsAtLeast" in condition)
     return `(If you have ${condition.restedCardsAtLeast} or more rested cards)`;
+  if ("leaderMulticolored" in condition) return "(If your Leader is multicolored)";
+  if ("opponentDonOnFieldAtLeast" in condition)
+    return `(If your opponent has ${condition.opponentDonOnFieldAtLeast} or more DON!! cards on their field)`;
   return `(If the top card of your deck is a${filterText(condition.deckTopMatches)} card)`;
 }
 
 function costText(cost: Cost): string {
   if ("restDon" in cost) return `①`.repeat(cost.restDon);
-  if ("donMinus" in cost) return `DON!! −${cost.donMinus}`;
+  if ("donMinus" in cost)
+    return cost.orMore
+      ? `return ${cost.donMinus} or more DON!! cards from your field to your DON!! deck`
+      : `DON!! −${cost.donMinus}`;
   if ("trashFromHand" in cost)
     return `trash ${cost.trashFromHand}${filterText(cost.filter)} card(s) from your hand`;
   if ("handToDeckTop" in cost)
@@ -231,6 +238,8 @@ function stepText(step: Step): string {
       return "Play this card.";
     case "negateOnPlay":
       return `${step.side === "self" ? "Your" : "Your opponent's"} [On Play] effects are negated${durationText(step.duration)}.`;
+    case "setBasePower":
+      return `${capital(targetText(step.target))}'s base power becomes ${step.power}${durationText(step.duration)}.`;
     case "if":
       return `If ${step.conditions.map(conditionText).join(" and ")}, ${step.steps.map(stepText).join(" ")}`;
   }

@@ -40,8 +40,12 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `permanent`                   | Always-on text, e.g. "+1000 power"                           | 8-1-3-3 |
 | `characterRestedByYourEffect` | "If a Character is rested by your effect"                    | 8-1-3-1 |
 | `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                    | 8-1-3-4 |
+| `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."  | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
+
+`donReturned` effects set `returnedAtLeast` for "when 2 or more DON!! cards on your field are
+returned to your DON!! deck"; they trigger when one DON!! −X cost returns at least that many.
 
 A permanent effect with `"zone": "hand"` works while the card is in your hand. Use it with
 `costChange` for "give this card in your hand −3 cost":
@@ -85,13 +89,15 @@ card is..."), `donOnFieldAtLeast` and `donOnFieldAtMost` ("if you have 8 or more
 your field", counting active, rested and given DON!!), `playedThisTurn` ("if this Character was
 played on this turn"), plus:
 
-| Condition                          | Card wording                                                     |
-| ---------------------------------- | ---------------------------------------------------------------- |
-| `{ "leaderIs": "Buggy" }`          | "If your Leader is [Buggy]"                                      |
-| `{ "anyOf": [ ... ] }`             | "If your Leader has the {X} type or is [Y]"                      |
-| `{ "count": {...}, "atLeast": 2 }` | "If you have 2 or more Characters with a base cost of 5 or more" |
-| `{ "donRestedAtLeast": 6 }`        | "If you have 6 or more rested DON!! cards"                       |
-| `{ "restedCardsAtLeast": 6 }`      | "If you have 6 or more rested cards" (DON!! and field cards)     |
+| Condition                            | Card wording                                                     |
+| ------------------------------------ | ---------------------------------------------------------------- |
+| `{ "leaderIs": "Buggy" }`            | "If your Leader is [Buggy]"                                      |
+| `{ "anyOf": [ ... ] }`               | "If your Leader has the {X} type or is [Y]"                      |
+| `{ "count": {...}, "atLeast": 2 }`   | "If you have 2 or more Characters with a base cost of 5 or more" |
+| `{ "donRestedAtLeast": 6 }`          | "If you have 6 or more rested DON!! cards"                       |
+| `{ "restedCardsAtLeast": 6 }`        | "If you have 6 or more rested cards" (DON!! and field cards)     |
+| `{ "leaderMulticolored": true }`     | "If your Leader is multicolored"                                 |
+| `{ "opponentDonOnFieldAtLeast": 5 }` | "If your opponent has 5 or more DON!! cards on their field"      |
 
 `count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`)
 and `filter`, and `atLeast` (default 1) and/or `atMost`. "If you do not have 5 Characters with a
@@ -99,7 +105,8 @@ cost of 5 or more" is `{ "count": { "side": "self", "filter": { "costAtLeast": 5
 
 ## Costs
 
-`restDon` (①), `donMinus` (DON!! −X), `trashFromHand` (with an optional `filter`, e.g.
+`restDon` (①), `donMinus` (DON!! −X; add `"orMore": true` for "you may return 1 or more DON!!
+cards", where the player picks how many), `trashFromHand` (with an optional `filter`, e.g.
 `{ "trashFromHand": 1, "filter": { "type": "FILM" } }`), `handToDeckTop` (place cards from your
 hand at the top of your deck), `returnOwnCharacter` (return your Characters to your hand),
 `restOwn` (rest 1 of your active Leader, Characters or Stage matching a filter, e.g.
@@ -176,6 +183,7 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `chooseOne`                      | "Choose one": `options` are `{ "label", "steps" }`; `"chooser": "opponent"` for "your opponent chooses". The player answers with `{ "type": "chooseOne", "option": index }`.                      |
 | `restOpponentDon`                | Rest up to `count` of your opponent's active DON!! cards.                                                                                                                                         |
 | `atEndOfTurn`                    | The nested steps happen at the end of this turn.                                                                                                                                                  |
+| `setBasePower`                   | "[Leader]'s base power becomes 7000", with an optional `duration`.                                                                                                                                |
 | `if`                             | Only do the nested steps if the conditions hold.                                                                                                                                                  |
 | `grantStatus`                    | "Cannot attack", "cannot be K.O.'d ...", and so on. See below.                                                                                                                                    |
 | `costChange`                     | Change cost (negative for "−"), for the turn or as a permanent effect.                                                                                                                            |

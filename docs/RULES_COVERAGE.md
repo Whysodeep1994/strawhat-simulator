@@ -88,7 +88,7 @@ Comprehensive Rules version 1.2.1.
 | 2-5-6 | 2-5 Attribute | Phase 4 (effects) | 0 |
 | 2-5-7 | 2-5 Attribute | Phase 4 (effects) | 0 |
 | 2-6 | 2-6 Power | Section heading | 0 |
-| 2-6-1 | 2-6 Power | Tested | 1 |
+| 2-6-1 | 2-6 Power | Tested | 2 |
 | 2-6-2 | 2-6 Power | Phase 4 (card data) | 0 |
 | 2-6-3 | 2-6 Power | Tested | 1 |
 | 2-7 | 2-7 Cost | Tested | 1 |
@@ -336,11 +336,11 @@ Comprehensive Rules version 1.2.1.
 | 8-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-2 | 8-1 Effects | Tested | 3 |
 | 8-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
-| 8-1-3-1 | 8-1 Effects | Tested | 1 |
+| 8-1-3-1 | 8-1 Effects | Tested | 3 |
 | 8-1-3-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-3-1-2 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
-| 8-1-3-2 | 8-1 Effects | Tested | 2 |
+| 8-1-3-2 | 8-1 Effects | Tested | 3 |
 | 8-1-3-2-1 | 8-1 Effects | Tested | 1 |
 | 8-1-3-2-2 | 8-1 Effects | Tested | 1 |
 | 8-1-3-3 | 8-1 Effects | Tested | 6 |
@@ -372,11 +372,11 @@ Comprehensive Rules version 1.2.1.
 | 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 10 |
 | 8-3-1-1 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-1-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
-| 8-3-1-3 | 8-3 Activation Cost and Conditions | Tested | 9 |
+| 8-3-1-3 | 8-3 Activation Cost and Conditions | Tested | 10 |
 | 8-3-1-3-1 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-4 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-1-5 | 8-3 Activation Cost and Conditions | Tested | 1 |
-| 8-3-1-6 | 8-3 Activation Cost and Conditions | Tested | 1 |
+| 8-3-1-6 | 8-3 Activation Cost and Conditions | Tested | 4 |
 | 8-3-1-7 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-8 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2 | 8-3 Activation Cost and Conditions | Tested | 1 |
@@ -385,7 +385,7 @@ Comprehensive Rules version 1.2.1.
 | 8-3-2-3 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-4 | 8-3 Activation Cost and Conditions | Tested | 1 |
 | 8-3-2-5 | 8-3 Activation Cost and Conditions | Tested | 1 |
-| 8-3-3 | 8-3 Activation Cost and Conditions | Tested | 9 |
+| 8-3-3 | 8-3 Activation Cost and Conditions | Tested | 10 |
 | 8-4 | 8-4 Activation and Resolution | Section heading | 0 |
 | 8-4-1 | 8-4 Activation and Resolution | Tested | 2 |
 | 8-4-1-1 | 8-4 Activation and Resolution | Tested | 1 |

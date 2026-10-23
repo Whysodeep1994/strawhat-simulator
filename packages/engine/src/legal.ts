@@ -225,9 +225,18 @@ function counterActions(state: GameState, player: PlayerId): Action[] {
       for (const target of targets)
         actions.push({ type: "counter", player, card: card.uid, target });
     }
-    if (def.category === "event" && playCostOf(state, player, card) <= p.donActive) {
+    const cost = playCostOf(state, player, card);
+    if (def.category === "event" && cost <= p.donActive) {
       const effect = (def.effects ?? []).find((e) => e.timing === "counter");
-      if (effect && conditionsMet(state, player, card, effect.conditions)) {
+      const afterCost = {
+        ...state,
+        players: { ...state.players, [player]: { ...p, donActive: p.donActive - cost } },
+      };
+      if (
+        effect &&
+        conditionsMet(state, player, card, effect.conditions) &&
+        (effect.optional || canPayCosts(afterCost, player, card, effect.costs ?? []))
+      ) {
         actions.push({ type: "counterEvent", player, card: card.uid });
       }
     }
