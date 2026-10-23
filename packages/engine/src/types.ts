@@ -21,6 +21,8 @@ export interface CardInstance {
   givenDon: number;
   /** Turn this card was played, used by rule 3-7-4. `null` when not on the field. */
   playedTurn: number | null;
+  /** A face-up Life card, which both players can see (rule 3-10-2-1). */
+  faceUp?: boolean;
 }
 
 export interface PlayerState {
@@ -115,7 +117,16 @@ export type Prompt =
       /** Extra cards only the chooser sees, e.g. every card looked at in a search (rule 11-3-1). */
       revealed?: string[];
     }
-  | { kind: "confirm"; player: PlayerId; reason: "optional" | "trigger"; source: string }
+  | {
+      kind: "confirm";
+      player: PlayerId;
+      /**
+       * "optional" and "trigger": yes or no. "lifeFromBottom" and "lifeToBottom": yes
+       * means the bottom of the Life cards.
+       */
+      reason: "optional" | "trigger" | "lifeFromBottom" | "lifeToBottom";
+      source: string;
+    }
   | { kind: "gameOver" };
 
 export interface GameState {

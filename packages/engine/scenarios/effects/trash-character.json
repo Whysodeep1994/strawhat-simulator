@@ -1,0 +1,32 @@
+{
+  "name": "Trashing a Character is not a K.O., so [On K.O.] doesn't happen",
+  "rules": ["10-2-17"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-TRASH-CHAR"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "characters": ["TEST-ONKO-DRAW", "TEST-C4-5000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    }
+  ],
+  "expect": {
+    "p2.characters": 1,
+    "p2.trash.0.cardId": "TEST-ONKO-DRAW",
+    "p2.hand": 0
+  }
+}

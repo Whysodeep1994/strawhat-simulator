@@ -496,6 +496,195 @@ const cards: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-DON8-DRAW",
+    name: "Test 8 DON!! Draw",
+    category: "character",
+    colors: ["purple"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          { do: "if", conditions: [{ donOnFieldAtLeast: 8 }], steps: [{ do: "draw", count: 1 }] },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-NO-DON-DRAW",
+    name: "Test No DON!! Draw",
+    category: "character",
+    colors: ["purple"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "activateMain",
+        oncePerTurn: true,
+        steps: [
+          { do: "if", conditions: [{ donOnFieldAtMost: 0 }], steps: [{ do: "draw", count: 1 }] },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-PLAYED-DRAW",
+    name: "Test Played This Turn Draw",
+    category: "character",
+    colors: ["black"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "activateMain",
+        oncePerTurn: true,
+        steps: [
+          { do: "if", conditions: [{ playedThisTurn: true }], steps: [{ do: "draw", count: 1 }] },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-LIFE-COST",
+    name: "Test Life Cost",
+    category: "character",
+    colors: ["yellow"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "activateMain",
+        oncePerTurn: true,
+        optional: true,
+        costs: [{ lifeToHand: 1 }],
+        steps: [{ do: "addDon", count: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-LIFE-COST-EITHER",
+    name: "Test Life Cost Top or Bottom",
+    category: "character",
+    colors: ["yellow"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "onPlay",
+        optional: true,
+        costs: [{ lifeToHand: 1, from: "topOrBottom" }],
+        steps: [{ do: "addDon", count: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRASH-LIFE-COST",
+    name: "Test Trash Life Cost",
+    category: "event",
+    colors: ["yellow"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        optional: true,
+        costs: [{ trashLife: 1 }],
+        steps: [{ do: "draw", count: 2 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-FACE-UP",
+    name: "Test Face-Up Life",
+    category: "character",
+    colors: ["yellow"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "activateMain",
+        optional: true,
+        costs: [{ lifeFaceUp: 1 }],
+        steps: [{ do: "draw", count: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRASH-TO-DECK",
+    name: "Test Trash to Deck",
+    category: "character",
+    colors: ["black"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "activateMain",
+        oncePerTurn: true,
+        optional: true,
+        costs: [{ trashToDeckBottom: 1 }],
+        steps: [{ do: "addDon", count: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRASH-OPP-LIFE",
+    name: "Test Trash Opponent's Life",
+    category: "character",
+    colors: ["yellow"],
+    cost: 2,
+    power: 2000,
+    effects: [{ timing: "onPlay", steps: [{ do: "trashLife", side: "opponent", count: 1 }] }],
+  },
+  {
+    id: "TEST-ARRANGE-LIFE",
+    name: "Test Arrange Life",
+    category: "character",
+    colors: ["yellow"],
+    cost: 2,
+    power: 2000,
+    effects: [{ timing: "onPlay", steps: [{ do: "arrangeLife" }] }],
+  },
+  {
+    id: "TEST-TRIGGER-TO-HAND",
+    name: "Test Trigger to Hand",
+    category: "character",
+    colors: ["yellow"],
+    cost: 3,
+    power: 3000,
+    effects: [{ timing: "trigger", steps: [{ do: "addThisToHand" }] }],
+  },
+  {
+    id: "TEST-TRASH-CHAR",
+    name: "Test Trash Character",
+    category: "event",
+    colors: ["black"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "trashCharacter",
+            target: { side: "opponent", filter: { costAtMost: 2 }, upTo: true },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-SEARCH-TRASH",
+    name: "Test Search, Trash the Rest",
+    category: "event",
+    colors: ["black"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [{ do: "searchDeck", look: 3, take: 1, filter: { costAtLeast: 2 }, rest: "trash" }],
+      },
+    ],
+  },
 ];
 
 export const TEST_CATALOG: CardCatalog = Object.fromEntries(cards.map((c) => [c.id, c]));

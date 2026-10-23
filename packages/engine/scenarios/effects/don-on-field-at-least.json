@@ -1,0 +1,27 @@
+{
+  "name": "\"If you have 8 or more DON!! cards on your field\" counts active, rested, and given DON!!",
+  "rules": ["8-3-3", "6-5-5-1"],
+  "setup": {
+    "p1": {
+      "leader": {
+        "card": "TEST-LEADER",
+        "don": 2
+      },
+      "hand": ["TEST-DON8-DRAW"],
+      "don": {
+        "active": 3,
+        "rested": 3
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

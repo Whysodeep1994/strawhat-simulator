@@ -1,0 +1,35 @@
+{
+  "name": "Turning the top Life card face-up shows it to both players, and it can't be turned again",
+  "rules": ["3-10-2-1", "8-3-1-3"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-FACE-UP"],
+      "life": ["TEST-C2-3000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    },
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0,
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "p1.life.0.faceUp": true,
+    "p1.hand": 1,
+    "legal.p1.activate": 0
+  }
+}

@@ -45,7 +45,12 @@ export type Condition =
   | { opponentLifeAtMost: number }
   | { leaderHasType: string }
   | { charactersAtLeast: number }
-  | { handAtMost: number };
+  | { handAtMost: number }
+  /** "If you have X or more DON!! cards on your field": active, rested, and given (rule 3-6-1). */
+  | { donOnFieldAtLeast: number }
+  | { donOnFieldAtMost: number }
+  /** "If this Character was played on this turn". */
+  | { playedThisTurn: true };
 
 export type Cost =
   /** ①: rest this many active DON!! (rule 8-3-1-5). */
@@ -53,7 +58,15 @@ export type Cost =
   /** DON!! −X: return DON!! from the field to the DON!! deck (rule 8-3-1-6). */
   | { donMinus: number }
   | { trashFromHand: number }
-  | { restThis: true };
+  | { restThis: true }
+  /** Add Life cards to your hand, from the top or (player's choice) the top or bottom. */
+  | { lifeToHand: number; from?: "top" | "topOrBottom" }
+  /** Trash cards from the top of your Life cards. */
+  | { trashLife: number }
+  /** Turn the top card of your Life cards face-up. It must be face-down. */
+  | { lifeFaceUp: number }
+  /** Place cards from your trash at the bottom of your deck. */
+  | { trashToDeckBottom: number };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -112,12 +125,23 @@ export type Step =
   /** The opponent trashes cards from their hand. */
   | { do: "opponentTrashesFromHand"; count: number }
   /** Look at the top cards, reveal and add matching ones to hand, rest to the bottom. */
-  | { do: "searchDeck"; look: number; take: number; filter?: Filter }
+  | { do: "searchDeck"; look: number; take: number; filter?: Filter; rest?: "bottom" | "trash" }
   /** Play a card from hand for free. */
   | { do: "playFromHand"; filter?: Filter }
   | { do: "playFromTrash"; filter?: Filter }
   | { do: "lifeToHand"; count: number }
   | { do: "deckToLife"; count: number }
+  /** Trash cards from the top of your (or your opponent's) Life cards. */
+  | { do: "trashLife"; side: "self" | "opponent"; count: number }
+  /**
+   * "Look at up to 1 card from the top of your or your opponent's Life cards,
+   * and place it at the top or bottom of the Life cards."
+   */
+  | { do: "arrangeLife" }
+  /** Trigger only: add this card to your hand. */
+  | { do: "addThisToHand" }
+  /** Trash Characters from the field. This is not a K.O. (rule 10-2-14). */
+  | { do: "trashCharacter"; target: Target }
   /** Trigger only: play this card instead of trashing it. */
   | { do: "playThis" }
   /** A whole sub-sequence that only happens "if" a condition holds (rule 8-3-3). */

@@ -43,11 +43,19 @@ Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you ma
 ## Conditions
 
 `donAtLeast` ([DON!! xX]), `yourTurn`, `opponentsTurn`, `lifeAtMost`, `lifeAtLeast`,
-`opponentLifeAtMost`, `leaderHasType`, `charactersAtLeast`, `handAtMost`.
+`opponentLifeAtMost`, `leaderHasType`, `charactersAtLeast`, `handAtMost`, `donOnFieldAtLeast` and
+`donOnFieldAtMost` ("if you have 8 or more DON!! cards on your field", counting active, rested
+and given DON!!), `playedThisTurn` ("if this Character was played on this turn").
 
 ## Costs
 
-`restDon` (①), `donMinus` (DON!! −X), `trashFromHand`, `restThis`.
+`restDon` (①), `donMinus` (DON!! −X), `trashFromHand`, `restThis`, `lifeToHand` (add Life cards to
+your hand; `"from": "topOrBottom"` lets the player take the bottom one), `trashLife` (trash from
+the top of your Life), `lifeFaceUp` (turn the top Life card face-up; it must be face-down),
+`trashToDeckBottom` (place cards from your trash at the bottom of your deck).
+
+Face-up Life cards are open to both players (rule 3-10-2-1): `viewFor` shows them in `life`, and
+a card is face-down again once it leaves the Life area.
 
 ## Targets
 
@@ -78,9 +86,14 @@ picks automatically, so players are only asked about meaningful decisions.
 | `trashFromHand`                  | You trash cards from your hand.                                       |
 | `opponentTrashesFromHand`        | Your opponent trashes cards from their hand.                          |
 | `searchDeck`                     | Look at the top cards, add matching ones to hand, rest to the bottom. |
+|                                  | `"rest": "trash"` trashes the rest instead.                           |
 | `playFromHand` / `playFromTrash` | Play a card for free.                                                 |
 | `lifeToHand` / `deckToLife`      | Move cards between Life, hand, and deck.                              |
+| `trashLife`                      | Trash the top of your (`"side": "self"`) or the opponent's Life.      |
+| `arrangeLife`                    | Look at the top Life card of either player; place it top or bottom.   |
+| `trashCharacter`                 | Trash Characters from the field. Not a K.O., so no [On K.O.].         |
 | `playThis`                       | [Trigger] only: play this card.                                       |
+| `addThisToHand`                  | [Trigger] only: add this card to your hand.                           |
 | `if`                             | Only do the nested steps if the conditions hold.                      |
 
 Each block is tested in `packages/engine/scenarios/effects/` using made-up `TEST-` cards.

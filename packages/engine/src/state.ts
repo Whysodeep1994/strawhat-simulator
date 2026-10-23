@@ -138,6 +138,9 @@ export function conditionsMet(
       return (definitionOf(state, me.leader).types ?? []).includes(c.leaderHasType);
     if ("charactersAtLeast" in c) return me.characters.length >= c.charactersAtLeast;
     if ("handAtMost" in c) return me.hand.length <= c.handAtMost;
+    if ("donOnFieldAtLeast" in c) return donOnField(state, controller) >= c.donOnFieldAtLeast;
+    if ("donOnFieldAtMost" in c) return donOnField(state, controller) <= c.donOnFieldAtMost;
+    if ("playedThisTurn" in c) return source.playedTurn === state.turn;
     return false;
   });
 }
@@ -183,6 +186,14 @@ export function leaveField(state: GameState, card: CardInstance): void {
   state.usedThisTurn = state.usedThisTurn.filter((k) => !k.startsWith(`${card.uid}:`));
 }
 
+/** DON!! cards on a player's field: active and rested in the cost area, plus given ones (rule 6-5-5). */
+export function donOnField(state: GameState, player: PlayerId): number {
+  const p = state.players[player];
+  return (
+    p.donActive + p.donRested + [p.leader, ...p.characters].reduce((n, c) => n + c.givenDon, 0)
+  );
+}
+
 /** Rule 8-3-1-3: costs must be fully payable to activate. */
 export function canPayCosts(
   state: GameState,
@@ -191,16 +202,27 @@ export function canPayCosts(
   costs: Cost[],
 ): boolean {
   const p = state.players[player];
-  const fieldDon =
-    p.donActive + p.donRested + [p.leader, ...p.characters].reduce((n, c) => n + c.givenDon, 0);
+  const hand = p.hand.filter((c) => c.uid !== source.uid);
   let restDon = 0;
   let donMinus = 0;
   let trash = 0;
+  let life = 0;
+  let fromTrash = 0;
   for (const cost of costs) {
     if ("restDon" in cost) restDon += cost.restDon;
     if ("donMinus" in cost) donMinus += cost.donMinus;
     if ("trashFromHand" in cost) trash += cost.trashFromHand;
     if ("restThis" in cost && source.rested) return false;
+    if ("lifeToHand" in cost) life += cost.lifeToHand;
+    if ("trashLife" in cost) life += cost.trashLife;
+    if ("lifeFaceUp" in cost && (!p.life[0] || p.life[0].faceUp)) return false;
+    if ("trashToDeckBottom" in cost) fromTrash += cost.trashToDeckBottom;
   }
-  return restDon <= p.donActive && donMinus <= fieldDon && trash <= p.hand.length;
+  return (
+    restDon <= p.donActive &&
+    donMinus <= donOnField(state, player) &&
+    trash <= hand.length &&
+    life <= p.life.length &&
+    fromTrash <= p.trash.filter((c) => c.uid !== source.uid).length
+  );
 }

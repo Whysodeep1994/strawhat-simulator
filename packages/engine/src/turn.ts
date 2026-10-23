@@ -103,7 +103,7 @@ export function putOnField(
 }
 
 /** Trashing by rule (3-7-6-1-1, 3-8-5-1) is not a K.O. */
-function moveFieldCardToTrash(state: GameState, card: CardInstance): void {
+export function moveFieldCardToTrash(state: GameState, card: CardInstance): void {
   const p = state.players[card.owner];
   if (p.stage?.uid === card.uid) p.stage = null;
   p.characters = p.characters.filter((c) => c.uid !== card.uid);
