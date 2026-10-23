@@ -4,13 +4,14 @@ import {
   parseDeckList,
   searchCards,
   searchOptions,
-  setOf,
   type CardCatalog,
   type CardCategory,
   type Color,
 } from "@strawhat/engine";
-import { useMemo, useState, type ReactNode } from "react";
-import { officialText, setLabel, type Card, type CardData } from "./card-data.js";
+import { useMemo, useRef, useState, type ReactNode } from "react";
+import { setLabel, type Card, type CardData } from "./card-data.js";
+import { CATEGORY_NAMES, COLOR_NAMES, CardPrint } from "./CardPrint.js";
+import { SORT_NAMES, sortCards, type SortKey } from "./card-sort.js";
 import { CardView } from "./CardView.js";
 import { cardList, fromList, problemsOf, type SavedDeck } from "./my-decks.js";
 
@@ -27,20 +28,8 @@ interface Props {
 /** Results render in pages, so a library of thousands of cards stays quick. */
 const PAGE = 60;
 
-const CATEGORY_NAMES: Record<CardCategory, string> = {
-  leader: "Leader",
-  character: "Character",
-  event: "Event",
-  stage: "Stage",
-};
-const COLOR_NAMES: Record<Color, string> = {
-  red: "Red",
-  green: "Green",
-  blue: "Blue",
-  purple: "Purple",
-  black: "Black",
-  yellow: "Yellow",
-};
+/** How long a finger rests on a card before its details open (touch screens). */
+const LONG_PRESS_MS = 450;
 
 export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone }: Props) {
   const catalog = data.catalog as CardCatalog;
@@ -58,6 +47,11 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
   const [dialog, setDialog] = useState<"paste" | "copy" | "delete" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [deckOpen, setDeckOpen] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("number");
+  const [descending, setDescending] = useState(false);
+  /** The library card under the pointer; its details replace the deck panel while hovered. */
+  const [hovered, setHovered] = useState<Card | null>(null);
+  const press = useRef<{ timer: number; fired: boolean } | null>(null);
 
   const leader = deck.leader ? data.catalog[deck.leader] : undefined;
   const choosingLeader = !leader;
@@ -76,7 +70,11 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
       ...(!choosingLeader && forLeader && deck.leader ? { leader: deck.leader } : {}),
     }) as Card[];
     const query = text.trim().toLowerCase();
-    const matching = query ? found.filter((card) => matchesText(card, query)) : found;
+    const matching = sortCards(
+      query ? found.filter((card) => matchesText(card, query)) : found,
+      sortKey,
+      descending,
+    );
     // Cards the format allows come first; the rest stay visible so you can see why they're out.
     const usable = (card: Card) =>
       card.category === "leader" || copyLimit(data.format, catalog, card.id) > 0;
@@ -95,6 +93,8 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
     forLeader,
     deck.leader,
     choosingLeader,
+    sortKey,
+    descending,
   ]);
 
   const filtersOn =
@@ -137,6 +137,26 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
   function remove(cardId: string) {
     setNotice(null);
     setCount(cardId, (deck.cards[cardId] ?? 0) - 1);
+  }
+
+  function cancelPress() {
+    if (press.current && !press.current.fired) {
+      window.clearTimeout(press.current.timer);
+      press.current = null;
+    }
+  }
+
+  function countOf(card: Card): number {
+    if (card.category === "leader") return card.id === deck.leader ? 1 : 0;
+    return deck.cards[card.id] ?? 0;
+  }
+
+  function legalityOf(card: Card): string {
+    const name = data.format.name;
+    const limit = copyLimit(data.format, catalog, card.id);
+    if (limit > 0)
+      return card.category === "leader" ? `Legal in ${name}` : `Up to ${limit} in ${name}`;
+    return data.format.banned?.includes(card.id) ? `Banned in ${name}` : `Not legal in ${name}`;
   }
 
   const toggle = <T,>(list: T[], value: T) =>
@@ -261,6 +281,24 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
                 Clear filters
               </button>
             ) : null}
+            <label className="sort">
+              <span>Sort by</span>
+              <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
+                {(Object.keys(SORT_NAMES) as SortKey[]).map((key) => (
+                  <option key={key} value={key}>
+                    {SORT_NAMES[key]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              className="small sort-direction"
+              onClick={() => setDescending(!descending)}
+              aria-label={descending ? "Sorted high to low" : "Sorted low to high"}
+              title={descending ? "High to low" : "Low to high"}
+            >
+              {descending ? "↓ High–low" : "↑ Low–high"}
+            </button>
             <span className="count">
               {results.length} {results.length === 1 ? "card" : "cards"}
             </span>
@@ -278,7 +316,7 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
           </p>
         )}
 
-        <div className="library">
+        <div className="library" onMouseLeave={() => setHovered(null)}>
           {results.slice(0, shown).map((card) => {
             const count =
               card.category === "leader"
@@ -288,11 +326,35 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
                 : (deck.cards[card.id] ?? 0);
             const limit = card.category === "leader" ? 1 : copyLimit(data.format, catalog, card.id);
             return (
-              <div key={card.id} className={`library-card ${limit === 0 ? "banned" : ""}`}>
+              <div
+                key={card.id}
+                className={`library-card ${limit === 0 ? "banned" : ""}`}
+                onFocus={() => setHovered(card)}
+                onPointerDown={(e) => {
+                  if (e.pointerType !== "touch") return;
+                  const timer = window.setTimeout(() => {
+                    if (press.current) press.current.fired = true;
+                    setDetail(card);
+                  }, LONG_PRESS_MS);
+                  press.current = { timer, fired: false };
+                }}
+                onPointerUp={cancelPress}
+                onPointerLeave={cancelPress}
+                onPointerCancel={cancelPress}
+                onContextMenu={(e) => e.preventDefault()}
+              >
                 <CardView
                   def={card}
                   image={data.imageUrl(card)}
-                  onClick={() => add(card)}
+                  onHover={() => setHovered(card)}
+                  onClick={() => {
+                    // A long press opens the details; it shouldn't also add the card.
+                    if (press.current?.fired) {
+                      press.current = null;
+                      return;
+                    }
+                    add(card);
+                  }}
                   label={`Add ${card.name} (${card.id})`}
                   glow={count > 0 ? "selected" : null}
                 />
@@ -341,77 +403,93 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
         )}
       </section>
 
-      <aside className="builder-deck" aria-label="Your deck">
-        <div className="deck-head">
-          {leader ? (
-            <div className="deck-leader">
-              <CardView
-                def={leader}
-                image={data.imageUrl(leader)}
-                size="small"
-                showName={false}
-                onClick={() => setDetail(leader)}
-              />
-              <div>
-                <strong>{leader.name}</strong>
-                <span>
-                  {leader.id} · {leader.colors.map((c) => COLOR_NAMES[c]).join("/")} Leader
-                </span>
-                <button
-                  className="ghost small"
-                  onClick={() => onChange(fromList(deck, undefined, cardList(deck)))}
-                >
-                  Change Leader
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p className="note">No Leader yet. Tap one in the library.</p>
-          )}
-          <div className="deck-count">
-            <div className="meter" aria-hidden="true">
-              <span
-                style={{ width: `${Math.min(100, (total / 50) * 100)}%` }}
-                className={total > 50 ? "over" : ""}
-              />
-            </div>
-            <span>
-              <strong>{total}</strong> / 50 cards
-            </span>
+      <aside
+        className="builder-deck"
+        aria-label={hovered ? `${hovered.name} details` : "Your deck"}
+      >
+        {hovered ? (
+          <div className="preview-pane">
+            <CardPrint card={hovered} image={data.imageUrl(hovered)} legality={legalityOf(hovered)}>
+              <p className="note">
+                In your deck: {countOf(hovered)}. Click to add
+                {hovered.category === "leader" ? " as your Leader" : " a copy"}.
+              </p>
+            </CardPrint>
           </div>
-          <CostCurve deck={deck} data={data} />
-        </div>
+        ) : (
+          <>
+            <div className="deck-head">
+              {leader ? (
+                <div className="deck-leader">
+                  <CardView
+                    def={leader}
+                    image={data.imageUrl(leader)}
+                    size="small"
+                    showName={false}
+                    onClick={() => setDetail(leader)}
+                  />
+                  <div>
+                    <strong>{leader.name}</strong>
+                    <span>
+                      {leader.id} · {leader.colors.map((c) => COLOR_NAMES[c]).join("/")} Leader
+                    </span>
+                    <button
+                      className="ghost small"
+                      onClick={() => onChange(fromList(deck, undefined, cardList(deck)))}
+                    >
+                      Change Leader
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="note">No Leader yet. Tap one in the library.</p>
+              )}
+              <div className="deck-count">
+                <div className="meter" aria-hidden="true">
+                  <span
+                    style={{ width: `${Math.min(100, (total / 50) * 100)}%` }}
+                    className={total > 50 ? "over" : ""}
+                  />
+                </div>
+                <span>
+                  <strong>{total}</strong> / 50 cards
+                </span>
+              </div>
+              <CostCurve deck={deck} data={data} />
+            </div>
 
-        <DeckList deck={deck} data={data} onAdd={add} onRemove={remove} onRead={setDetail} />
+            <DeckList deck={deck} data={data} onAdd={add} onRemove={remove} onRead={setDetail} />
 
-        <div className={`deck-check ${problems.length ? "bad" : "good"}`}>
-          {problems.length === 0 ? (
-            <p>✓ Ready to play: legal in {data.format.name}.</p>
-          ) : (
-            <ul>
-              {problems.slice(0, 6).map((p) => (
-                <li key={p.message}>{p.message}</li>
-              ))}
-              {problems.length > 6 && <li>…and {problems.length - 6} more</li>}
-            </ul>
-          )}
-          {!data.formatLoaded && (
-            <p className="note">
-              The official banned and restricted list isn't loaded yet, so only the basic deck rules
-              are checked (50 cards, up to 4 copies, Leader colours).
-            </p>
-          )}
-        </div>
+            <div className={`deck-check ${problems.length ? "bad" : "good"}`}>
+              {problems.length === 0 ? (
+                <p>✓ Ready to play: legal in {data.format.name}.</p>
+              ) : (
+                <ul>
+                  {problems.slice(0, 6).map((p) => (
+                    <li key={p.message}>{p.message}</li>
+                  ))}
+                  {problems.length > 6 && <li>…and {problems.length - 6} more</li>}
+                </ul>
+              )}
+              {!data.formatLoaded && (
+                <p className="note">
+                  The official banned and restricted list isn't loaded yet, so only the basic deck
+                  rules are checked (50 cards, up to 4 copies, Leader colours).
+                </p>
+              )}
+            </div>
 
-        <div className="row deck-buttons">
-          <button onClick={() => setDialog("paste")}>Paste a list</button>
-          <button onClick={() => setDialog("copy")} disabled={!leader}>
-            Copy list
-          </button>
-          <button className="ghost danger-text" onClick={() => setDialog("delete")}>
-            Delete deck
-          </button>
-        </div>
+            <div className="row deck-buttons">
+              <button onClick={() => setDialog("paste")}>Paste a list</button>
+              <button onClick={() => setDialog("copy")} disabled={!leader}>
+                Copy list
+              </button>
+              <button className="ghost danger-text" onClick={() => setDialog("delete")}>
+                Delete deck
+              </button>
+            </div>
+          </>
+        )}
       </aside>
 
       <button className="deck-toggle primary" onClick={() => setDeckOpen(!deckOpen)}>
@@ -420,42 +498,17 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
 
       {detail && (
         <Dialog title={detail.name} onClose={() => setDetail(null)}>
-          <div className="read-card">
-            <CardView def={detail} image={data.imageUrl(detail)} size="large" />
-            <div className="read-text">
-              <p className="meta">
-                <span className="card-id">{detail.id}</span> · {CATEGORY_NAMES[detail.category]} ·{" "}
-                {detail.colors.map((c) => COLOR_NAMES[c]).join("/")}
-                {detail.cost !== undefined ? ` · cost ${detail.cost}` : ""}
-                {detail.power !== undefined ? ` · ${detail.power} power` : ""}
-                {detail.counter ? ` · counter +${detail.counter}` : ""}
-                {detail.life !== undefined ? ` · ${detail.life} Life` : ""}
-              </p>
-              {detail.types?.length ? <p className="types">{detail.types.join(" / ")}</p> : null}
-              <ul className="effect-text">
-                {officialText(detail).map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-              <p className="meta">Set: {setLabel(setOf(detail.id))}</p>
-              <div className="row">
-                <button className="primary" onClick={() => add(detail)}>
-                  {detail.category === "leader" ? "Use as Leader" : "Add 1"}
-                </button>
-                {(deck.cards[detail.id] ?? 0) > 0 && (
-                  <button onClick={() => remove(detail.id)}>Remove 1</button>
-                )}
-                <span className="count">
-                  In deck:{" "}
-                  {detail.category === "leader"
-                    ? detail.id === deck.leader
-                      ? 1
-                      : 0
-                    : (deck.cards[detail.id] ?? 0)}
-                </span>
-              </div>
+          <CardPrint card={detail} image={data.imageUrl(detail)} legality={legalityOf(detail)}>
+            <div className="row">
+              <button className="primary" onClick={() => add(detail)}>
+                {detail.category === "leader" ? "Use as Leader" : "Add 1"}
+              </button>
+              {(deck.cards[detail.id] ?? 0) > 0 && (
+                <button onClick={() => remove(detail.id)}>Remove 1</button>
+              )}
+              <span className="count">In deck: {countOf(detail)}</span>
             </div>
-          </div>
+          </CardPrint>
         </Dialog>
       )}
 

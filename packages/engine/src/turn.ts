@@ -96,6 +96,10 @@ export function knockOut(state: GameState, uid: string, byEffectOf?: PlayerId): 
     for (const owner of ["p1", "p2"] as const)
       for (const holder of fieldCards(state, owner))
         queueEffects(state, owner, holder, "characterKOd");
+    // "When a Character is K.O.'d" effects on either player's field.
+    for (const watcher of ["p1", "p2"] as const)
+      for (const source of fieldCards(state, watcher))
+        queueEffects(state, watcher, source, "characterKOd");
   }
 }
 

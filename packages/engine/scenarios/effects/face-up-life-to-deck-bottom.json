@@ -1,0 +1,46 @@
+{
+  "name": "Face-up Life cards go to the bottom of the deck instead of the hand on damage",
+  "rules": ["7-1-4-1-1-2"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-LEADER-FACE-UP-RULES",
+      "hand": ["TEST-C5-6000", "TEST-FILLER"]
+    },
+    "p2": {
+      "characters": ["TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.leader",
+      "effect": 1
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.0"]
+    },
+    {
+      "type": "endTurn",
+      "player": "p1"
+    },
+    {
+      "type": "attack",
+      "player": "p2",
+      "attacker": "p2.characters.0",
+      "target": "p1.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p1.life": 4,
+    "p1.hand": 1,
+    "p1.deck": 21,
+    "p1.deck.20.cardId": "TEST-C5-6000"
+  }
+}
