@@ -72,4 +72,16 @@ describe("legal actions", () => {
     expect(legalActions(state, "p2")).toEqual([{ type: "concede", player: "p2" }]);
     expect(legalActions(state, "p1").length).toBeGreaterThan(1);
   });
+
+  it("shows the current power of every Leader and Character, which is public", () => {
+    const withDon = buildScenarioState(
+      { p1: { leader: { card: "TEST-LEADER", don: 2 }, characters: ["TEST-C2-3000"] } },
+      TEST_CATALOG,
+    );
+    const view = viewFor(withDon, "p2");
+    const p1 = withDon.players.p1;
+    expect(view.powers[p1.leader.uid]).toBe(7000);
+    expect(view.powers[p1.characters[0]!.uid]).toBe(3000);
+    expect(view.powers[withDon.players.p2.leader.uid]).toBe(5000);
+  });
 });

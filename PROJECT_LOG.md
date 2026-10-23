@@ -7,6 +7,7 @@ at the end. Newest entries go at the top of each section.
 
 **Phase 4: Cards and effects** (effect library merged; ST-01 card import in review).
 Deck builder search and deck list import (Phase 7 logic) started early at the owner's request.
+**Phase 5: Local prototype** in progress: a playable browser game against the computer.
 
 ## Roadmap
 
@@ -18,7 +19,7 @@ Each phase has a check the project owner can do without reading code.
 | 2. Project setup       | Open the repo and see a green check mark on the latest change.             | Done        |
 | 3. Core rules engine   | Open a coverage report listing rules sections with pass counts, all green. | Done        |
 | 4. Cards and effects   | See every card in one starter deck marked "tested".                        | In progress |
-| 5. Local prototype     | Play a full game in a browser, mulligan to winner, on one computer.        | Not started |
+| 5. Local prototype     | Play a full game in a browser, mulligan to winner, on one computer.        | In progress |
 | 6. Online multiplayer  | Play a friend on two devices; their hand never shows on your screen.       | Not started |
 | 7. Deck builder        | Build a deck, see an illegal card flagged, import and export a list.       | Started     |
 | 8. Polish              | A new player finishes the tutorial; the app opens in under 3 seconds.      | Not started |
@@ -27,6 +28,12 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-23: Phase 5, first playable prototype (packages/web). React board in the Master
+  Duel style: legal plays glow, tap a card for its actions, pop-ups for turn order, redraw,
+  Blocker, Counter, Trigger, and effect choices, plus a game log and a card reader. You play
+  against a simple computer opponent (`chooseBotAction` in the engine) with two made-up demo
+  decks. `pnpm build` also makes a single-file version of the game. The player view now
+  includes each field card's current power.
 - 2026-10-23: Phase 4, starter deck ST-01 (Straw Hat Crew). All 17 cards imported into
   strawhat-card-data with official text, art and card numbers, effects as data, and 43 scenarios;
   its STATUS.md shows 17 of 17 tested. The engine gained a `noBlockers` step and a `keyword`
@@ -61,7 +68,8 @@ Each phase has a check the project owner can do without reading code.
    card data pull request in strawhat-card-data. After the engine merges, point
    strawhat-card-data's engine.json at the merged main commit.
 2. Find a reliable ST-01 deck list (copies per card) to add as a playable deck.
-3. Resolve Rules Questions #3 to #5 (player choices for DON!! −X and effect order).
+3. Load the real ST-01 cards from strawhat-card-data into the web app, with card art.
+4. Resolve Rules Questions #3 to #5 (player choices for DON!! −X and effect order).
 
 ## Decisions
 
