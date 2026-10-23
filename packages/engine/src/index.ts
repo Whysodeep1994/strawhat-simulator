@@ -1,8 +1,12 @@
 export type { Action } from "./actions.js";
 export { applyAction, IllegalActionError } from "./apply.js";
+export { normalizeCardId, searchCards, searchOptions, setOf } from "./card-search.js";
+export type { CardSearch, SearchOptions } from "./card-search.js";
 export { hasKeyword } from "./cards.js";
 export type { CardCatalog, CardCategory, CardDefinition, Color, Keyword } from "./cards.js";
 export { validateDeck } from "./deck.js";
+export { formatDeckList, parseDeckList } from "./deck-list.js";
+export type { ParsedDeckList } from "./deck-list.js";
 export { legalActions } from "./legal.js";
 export { PHASES, cardsToDraw, donToPlace, nextPhase } from "./phases.js";
 export type { Phase } from "./phases.js";
