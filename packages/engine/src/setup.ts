@@ -75,6 +75,7 @@ export function createGame(options: NewGameOptions): GameState {
     pendingEffects: [],
     modifiers: [],
     usedThisTurn: [],
+    delayed: [],
     limbo: null,
     rng,
     nextUid,

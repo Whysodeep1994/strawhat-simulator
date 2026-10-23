@@ -1,0 +1,22 @@
+{
+  "name": "Returning given DON!! can't be paid without enough given DON!!",
+  "rules": ["8-3-1-3"],
+  "setup": {
+    "p1": {
+      "characters": [{ "card": "TEST-RETURN-DON", "don": 1 }],
+      "don": { "active": 3 }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0,
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "legal.p1.activate": 0
+  }
+}

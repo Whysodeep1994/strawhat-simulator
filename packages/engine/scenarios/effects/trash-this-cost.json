@@ -1,0 +1,27 @@
+{
+  "name": "\"You may trash this Character\" as a cost trashes it without a K.O.",
+  "rules": ["8-3-1-1", "10-2-14"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-TRASH-SELF"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p1.characters": 0,
+    "p1.trash": 1,
+    "p1.hand": 2
+  }
+}

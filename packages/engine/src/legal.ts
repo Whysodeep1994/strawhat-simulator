@@ -6,7 +6,9 @@ import {
   fieldCards,
   findOnField,
   hasKeywordNow,
+  hasStatus,
   matchesFilter,
+  playCostOf,
 } from "./state.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
 
@@ -53,6 +55,11 @@ export function legalActions(state: GameState, player?: PlayerId): Action[] {
         for (const cards of combinations(prompt.options, prompt.min, prompt.max, 64)) {
           actions.push({ type: "choose", player: who, cards });
         }
+        break;
+      case "chooseOne":
+        prompt.labels.forEach((_, option) =>
+          actions.push({ type: "chooseOne", player: who, option }),
+        );
         break;
       case "confirm":
         actions.push(
@@ -109,7 +116,7 @@ function playActions(state: GameState, player: PlayerId): Action[] {
   const actions: Action[] = [];
   for (const card of p.hand) {
     const def = definitionOf(state, card);
-    const cost = def.cost ?? 0;
+    const cost = playCostOf(state, player, card);
     if (cost > p.donActive) continue;
     if (def.category === "event") {
       const effect = (def.effects ?? []).find((e) => e.timing === "main");
@@ -159,10 +166,14 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
   if (p.turnsTaken <= 1) return [];
   const opponent = state.players[opponentOf(player)];
   const restedCharacters = opponent.characters.filter((c) => c.rested).map((c) => c.uid);
+  const allCharacters = opponent.characters.map((c) => c.uid);
   const actions: Action[] = [];
   for (const attacker of [p.leader, ...p.characters]) {
-    if (attacker.rested) continue;
-    const targets = attackTargets(state, attacker, opponent.leader.uid, restedCharacters);
+    if (attacker.rested || hasStatus(state, attacker, "cannotAttack")) continue;
+    const attackable = hasKeywordNow(state, attacker, "canAttackActive")
+      ? allCharacters
+      : restedCharacters;
+    const targets = attackTargets(state, attacker, opponent.leader.uid, attackable);
     for (const target of targets)
       actions.push({ type: "attack", player, attacker: attacker.uid, target });
   }
@@ -198,6 +209,7 @@ export function eligibleBlockers(state: GameState, player: PlayerId): CardInstan
       !c.rested &&
       c.uid !== battle.target &&
       hasKeywordNow(state, c, "blocker") &&
+      !hasStatus(state, c, "cannotBlock") &&
       !bans.some((m) => matchesFilter(state, c, m.noBlockers, null)),
   );
 }
@@ -213,7 +225,7 @@ function counterActions(state: GameState, player: PlayerId): Action[] {
       for (const target of targets)
         actions.push({ type: "counter", player, card: card.uid, target });
     }
-    if (def.category === "event" && (def.cost ?? 0) <= p.donActive) {
+    if (def.category === "event" && playCostOf(state, player, card) <= p.donActive) {
       const effect = (def.effects ?? []).find((e) => e.timing === "counter");
       if (effect && conditionsMet(state, player, card, effect.conditions)) {
         actions.push({ type: "counterEvent", player, card: card.uid });

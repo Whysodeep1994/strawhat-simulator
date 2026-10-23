@@ -1,5 +1,5 @@
 import type { CardCatalog, Keyword } from "./cards.js";
-import type { Duration, Filter, Step } from "./effects.js";
+import type { Filter, Status, Step } from "./effects.js";
 import type { Phase } from "./phases.js";
 
 export type PlayerId = "p1" | "p2";
@@ -21,6 +21,8 @@ export interface CardInstance {
   givenDon: number;
   /** Turn this card was played, used by rule 3-7-4. `null` when not on the field. */
   playedTurn: number | null;
+  /** A face-up Life card, which both players can see (rule 3-10-2-1). */
+  faceUp?: boolean;
 }
 
 export interface PlayerState {
@@ -52,10 +54,18 @@ export interface Battle {
 export interface Modifier {
   target: string;
   power?: number;
+  cost?: number;
   keyword?: Keyword;
+  status?: Status;
   /** The opponent can't activate [Blocker] Characters matching this when the target attacks. */
   noBlockers?: Filter;
-  until: Duration;
+  /** The target is a Leader: its player's [On Play] effects are negated. */
+  negateOnPlay?: boolean;
+  /** On a Leader: its player can't add Life cards to their hand with their own effects. */
+  noLifeToHand?: boolean;
+  until: "turn" | "battle";
+  /** For "turn": the last turn it lasts. Defaults to the current turn. */
+  endsTurn?: number;
 }
 
 /** An auto effect whose timing was met and is waiting to resolve (rule 8-6). */
@@ -63,6 +73,14 @@ export interface QueuedEffect {
   controller: PlayerId;
   source: string;
   effect: number;
+}
+
+/** Steps of an effect that happen at the end of the turn. */
+export interface DelayedEffect {
+  controller: PlayerId;
+  source: string;
+  effect: number;
+  steps: Step[];
 }
 
 /**
@@ -82,7 +100,11 @@ export type Frame =
       steps: Step[];
       /** Scratch space for a step that needs more than one decision. */
       memo: string[];
+      /** How many cards the previous step moved, for "for every card trashed". */
+      previous?: number;
       answer: string[] | boolean | null;
+      /** `replaceRemoval` only: the card the replacement would save. */
+      replacing?: string;
     }
   | { kind: "battle"; step: "attack" | "block" | "counter" | "damage" | "end" }
   | {
@@ -115,7 +137,18 @@ export type Prompt =
       /** Extra cards only the chooser sees, e.g. every card looked at in a search (rule 11-3-1). */
       revealed?: string[];
     }
-  | { kind: "confirm"; player: PlayerId; reason: "optional" | "trigger"; source: string }
+  | {
+      kind: "confirm";
+      player: PlayerId;
+      /**
+       * "optional" and "trigger": yes or no. "lifeFromBottom" and "lifeToBottom": yes
+       * means the bottom of the Life cards.
+       */
+      reason: "optional" | "trigger" | "lifeFromBottom" | "lifeToBottom";
+      source: string;
+    }
+  /** "Choose one": answered with the index of one of `labels`. */
+  | { kind: "chooseOne"; player: PlayerId; labels: string[]; source: string }
   | { kind: "gameOver" };
 
 export interface GameState {
@@ -134,6 +167,10 @@ export interface GameState {
   modifiers: Modifier[];
   /** "uid:effect" keys of [Once Per Turn] effects used this turn (rule 10-2-13). */
   usedThisTurn: string[];
+  /** Steps waiting for the End Phase ("at the end of this turn"). */
+  delayed: DelayedEffect[];
+  /** Cards whose pending removal a replacement effect prevented (rule 8-1-3-4). */
+  prevented?: string[];
   /** A [Trigger] card being activated belongs to no area (rule 10-1-5-3). */
   limbo: CardInstance | null;
   /** Seeded random state, so a game can be replayed exactly. */

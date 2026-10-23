@@ -1,0 +1,32 @@
+{
+  "name": "Cost: place a card from your hand at the top of your deck",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-HAND-TO-DECK"],
+      "hand": ["TEST-C2-3000"],
+      "don": {
+        "rested": 2
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p1.hand": 0,
+    "p1.deck": 21,
+    "p1.deck.0.cardId": "TEST-C2-3000",
+    "p1.leader.givenDon": 2
+  }
+}

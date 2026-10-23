@@ -1,0 +1,23 @@
+{
+  "name": "\"You cannot add Life cards to your hand using your own effects\" stops later effects this turn",
+  "rules": ["4-6-3-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-NO-LIFE"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.life": 4,
+    "p1.hand": 0
+  }
+}

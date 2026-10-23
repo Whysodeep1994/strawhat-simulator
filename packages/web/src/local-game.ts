@@ -153,6 +153,11 @@ function describeAction(
       }
       return null;
     }
+    case "chooseOne": {
+      const prompt = state.prompt;
+      const label = prompt.kind === "chooseOne" ? prompt.labels[action.option] : undefined;
+      return label ? say(`chose: ${label}.`) : null;
+    }
     case "pass":
       return state.prompt.kind === "block" ? say("didn't block.") : null;
     case "concede":

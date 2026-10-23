@@ -1,0 +1,32 @@
+{
+  "name": "\"If this Character was played on this turn\" holds the turn it was played",
+  "rules": ["8-3-3"],
+  "setup": {
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-PLAYED-DRAW",
+          "playedThisTurn": true
+        },
+        "TEST-PLAYED-DRAW"
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.1",
+      "effect": 0
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

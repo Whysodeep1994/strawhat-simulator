@@ -1,0 +1,19 @@
+{
+  "name": "A cost limit equal to your opponent's Life count, if they have 3 or more Life",
+  "rules": ["8-3-2-1", "10-2-6"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-KO-OPPONENT-LIFE"],
+      "don": { "active": 3 }
+    },
+    "p2": {
+      "characters": ["TEST-C5-6000", "TEST-C2-3000"],
+      "life": 3
+    }
+  },
+  "actions": [{ "type": "playCard", "player": "p1", "card": "p1.hand.0" }],
+  "expect": {
+    "prompt.kind": "choose",
+    "prompt.options": 1
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "Your opponent chooses one",
+  "rules": ["8-4-4-4"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-OPPONENT-CHOOSES"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "chooseOne",
+      "player": "p1",
+      "option": 0,
+      "illegal": true
+    },
+    {
+      "type": "chooseOne",
+      "player": "p2",
+      "option": 0
+    }
+  ],
+  "expect": {
+    "p1.hand": 2
+  }
+}

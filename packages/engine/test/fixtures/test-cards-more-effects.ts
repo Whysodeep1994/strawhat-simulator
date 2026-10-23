@@ -1,0 +1,316 @@
+import type { CardDefinition } from "../../src/index.js";
+
+/** Made-up cards for the effect blocks added for starter decks ST-15 to ST-17. */
+export const MORE_EFFECT_CARDS: CardDefinition[] = [
+  {
+    id: "TEST-RETURN-ANY",
+    name: "Test Return Any",
+    category: "event",
+    colors: ["blue"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          { do: "returnToHand", target: { side: "any", filter: { costAtMost: 3 }, upTo: true } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRASH-CREW-COST",
+    name: "Test Trash Crew Cost",
+    category: "character",
+    colors: ["green"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "activateMain",
+        optional: true,
+        costs: [{ trashFromHand: 1, filter: { type: "Test Crew" } }],
+        steps: [{ do: "draw", count: 2 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-HAND-TO-DECK",
+    name: "Test Hand To Deck",
+    category: "character",
+    colors: ["blue"],
+    cost: 2,
+    power: 3000,
+    effects: [
+      {
+        timing: "activateMain",
+        oncePerTurn: true,
+        optional: true,
+        costs: [{ handToDeckTop: 1 }],
+        steps: [{ do: "giveRestedDon", target: { side: "self", zone: "leader" }, count: 2 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-RETURN-OWN-COST",
+    name: "Test Return Own Cost",
+    category: "character",
+    colors: ["blue"],
+    cost: 3,
+    power: 4000,
+    effects: [
+      {
+        timing: "onPlay",
+        optional: true,
+        costs: [{ returnOwnCharacter: 1 }],
+        steps: [{ do: "draw", count: 2 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-REST-OWN",
+    name: "Test Rest Own",
+    category: "event",
+    colors: ["green"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        optional: true,
+        costs: [{ restOwn: { name: "Test Leader" } }],
+        steps: [{ do: "restOpponentDon", count: 2 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-NO-LIFE",
+    name: "Test No Life",
+    category: "event",
+    colors: ["red"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [{ do: "noLifeToHand" }, { do: "lifeToHand", count: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRASH-TO-HAND",
+    name: "Test Trash To Hand",
+    category: "character",
+    colors: ["blue"],
+    cost: 4,
+    power: 5000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [{ do: "trashToHand", filter: { category: "character", costAtMost: 2 } }],
+      },
+    ],
+  },
+  {
+    id: "TEST-ARRANGE",
+    name: "Test Arrange",
+    category: "character",
+    colors: ["blue"],
+    cost: 1,
+    power: 2000,
+    effects: [{ timing: "onPlay", steps: [{ do: "arrangeDeckTop", look: 3 }] }],
+  },
+  {
+    id: "TEST-ARRANGE-BOTTOM",
+    name: "Test Arrange Bottom",
+    category: "character",
+    colors: ["blue"],
+    cost: 1,
+    power: 2000,
+    effects: [{ timing: "onPlay", steps: [{ do: "arrangeDeckTop", look: 3, bottom: true }] }],
+  },
+  {
+    id: "TEST-SEARCH-TOP-BOTTOM",
+    name: "Test Search Top Bottom",
+    category: "character",
+    colors: ["blue"],
+    cost: 1,
+    power: 2000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "searchDeck",
+            look: 2,
+            take: 1,
+            filter: { type: "Test Crew" },
+            rest: "topOrBottom",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-PLAY-DECK-TOP",
+    name: "Test Play Deck Top",
+    category: "character",
+    colors: ["blue"],
+    cost: 3,
+    power: 4000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [{ do: "playFromDeckTop", filter: { costAtMost: 4 }, rested: true }],
+      },
+    ],
+  },
+  {
+    id: "TEST-REVEAL-DRAW",
+    name: "Test Reveal Draw",
+    category: "character",
+    colors: ["blue"],
+    cost: 4,
+    power: 5000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "if",
+            conditions: [{ deckTopMatches: { type: "Test Crew" } }],
+            steps: [
+              { do: "draw", count: 2 },
+              { do: "handToDeckTop", count: 1 },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-ONKO-COMEBACK",
+    name: "Test On K.O. Comeback",
+    category: "character",
+    colors: ["red"],
+    cost: 4,
+    power: 5000,
+    effects: [{ timing: "onKO", steps: [{ do: "playThis", rested: true }] }],
+  },
+  {
+    id: "TEST-KO-BY-EFFECT",
+    name: "Test K.O. By Effect",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 4000,
+    effects: [
+      {
+        timing: "koByEffect",
+        steps: [
+          { do: "powerUp", target: { side: "self", zone: "leader", upTo: true }, amount: 2000 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-KO-EVENT",
+    name: "Test K.O. Event",
+    category: "event",
+    colors: ["red"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [{ do: "ko", target: { side: "opponent", upTo: true } }],
+      },
+    ],
+  },
+  {
+    id: "TEST-CHOOSE-ONE",
+    name: "Test Choose One",
+    category: "event",
+    colors: ["green"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "chooseOne",
+            options: [
+              { label: "Draw 1 card", steps: [{ do: "draw", count: 1 }] },
+              {
+                label: "K.O. up to 1 of your opponent's rested Characters",
+                steps: [
+                  { do: "ko", target: { side: "opponent", filter: { rested: true }, upTo: true } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-OPPONENT-CHOOSES",
+    name: "Test Opponent Chooses",
+    category: "event",
+    colors: ["yellow"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "chooseOne",
+            chooser: "opponent",
+            options: [
+              { label: "Your opponent draws 2 cards", steps: [{ do: "draw", count: 2 }] },
+              {
+                label: "Your opponent adds DON!!",
+                steps: [{ do: "addDon", count: 1 }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-PER-TRASHED",
+    name: "Test Per Trashed",
+    category: "event",
+    colors: ["green"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          { do: "trashFromHand", count: 5, upTo: true, filter: { type: "Test Crew" } },
+          {
+            do: "powerUp",
+            target: { side: "self", zone: "leader" },
+            amount: 1000,
+            perPrevious: true,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-AT-END",
+    name: "Test At End Of Turn",
+    category: "event",
+    colors: ["green"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "atEndOfTurn",
+            steps: [{ do: "setActive", target: { side: "self", count: 5 } }],
+          },
+        ],
+      },
+    ],
+  },
+];

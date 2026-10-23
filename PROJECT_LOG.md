@@ -28,19 +28,9 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
-- 2026-10-23: Deck builder in the app (Phase 7, early, at the owner's request). Search every card
-  (name, type, effect text, card number, set, colour, card type, cost range), build and name
-  decks, paste and copy lists, and save them in the browser. Decks are checked against Standard
-  as you build (`checkDeck` in the engine): 50 cards, 4 copies, Leader colours, legal blocks and
-  their exceptions, banned cards, restricted cards, and banned pairs, using strawhat-card-data's
-  formats/standard.json from Bandai's official pages. Your own decks can be played once legal.
-- 2026-10-23: Phase 5, real cards on an official-style table. The app loads cards, decks and
-  art from strawhat-card-data (copied in by `packages/web/scripts/card-data.mjs`). Each side of
-  the table follows the official playmat: Life on the left, Character Area on top, Leader in the
-  middle with the Stage beside it, Deck and Trash on the right, DON!! deck and cost area along the
-  bottom. Players can upload a picture as their playmat (kept in their browser). New home screen
-  with an animated, original sea scene, a deck picker with leader art, and an opponent choice.
-  Sets without an official deck list yet get a practice deck built from the set's cards.
+- 2026-10-23: Engine blocks for starter decks ST-15 (Edward.Newgate), ST-16 (Uta), ST-17
+  (Doflamingo): either-player targets, more costs, deck arranging, reveal-and-play, choose one,
+  "at the end of this turn", "cannot add Life cards", "K.O.'d by an effect". 24 new scenarios.
 - 2026-10-23: Phase 5, first playable prototype (packages/web). React board in the Master
   Duel style: legal plays glow, tap a card for its actions, pop-ups for turn order, redraw,
   Blocker, Counter, Trigger, and effect choices, plus a game log and a card reader. You play
