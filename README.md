@@ -16,7 +16,8 @@ An unofficial, open-source simulator for the One Piece Card Game.
 
 ## Status
 
-Building the rules engine. See [PROJECT_LOG.md](PROJECT_LOG.md) for what's done and what's next,
+The rules engine works, and a first playable prototype runs in the browser: you against a simple
+computer opponent, with made-up demo cards until real card data is loaded. See [PROJECT_LOG.md](PROJECT_LOG.md) for what's done and what's next,
 and [docs/RULES_COVERAGE.md](docs/RULES_COVERAGE.md) for which rules are tested.
 
 ## Project layout
@@ -24,6 +25,7 @@ and [docs/RULES_COVERAGE.md](docs/RULES_COVERAGE.md) for which rules are tested.
 | Folder            | What it holds                                    |
 | ----------------- | ------------------------------------------------ |
 | `packages/engine` | The rules engine: pure game logic, no graphics.  |
+| `packages/web`    | The browser app: game board and computer player. |
 | `docs`            | Contributor docs, asset policy, rules questions. |
 | `.github`         | Automatic checks (CI) and issue/PR templates.    |
 
@@ -36,6 +38,8 @@ pnpm install   # download the tools
 pnpm check     # format check, lint, typecheck, and tests
 pnpm test      # tests only
 pnpm coverage:rules  # rebuild docs/RULES_COVERAGE.md
+pnpm --filter @strawhat/web dev  # play in your browser at the address it prints
+pnpm build     # build everything; the game becomes packages/web/dist/strawhat-simulator.html
 ```
 
 `pnpm check` also runs automatically before every commit.
