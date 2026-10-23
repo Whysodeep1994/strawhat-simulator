@@ -1,3 +1,4 @@
+import { hasRule } from "./state.js";
 import type { GameState, PlayerId } from "./types.js";
 
 /**
@@ -10,6 +11,11 @@ export function processRules(state: GameState, leaderDamagedAtZeroLife: PlayerId
     (p) => leaderDamagedAtZeroLife.includes(p) || state.players[p].deck.length === 0,
   );
   if (losers.length === 0) return;
+  // "When your deck is reduced to 0, you win the game instead of losing" (P-117).
+  const deckOutWinner = losers.find(
+    (p) => state.players[p].deck.length === 0 && hasRule(state, p, "winOnDeckOut"),
+  );
+  if (deckOutWinner) return endGame(state, deckOutWinner);
   endGame(state, losers.length === 2 ? "draw" : losers[0] === "p1" ? "p2" : "p1");
 }
 

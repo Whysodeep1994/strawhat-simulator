@@ -200,6 +200,25 @@ export function powerAmount(
   return step.amount * Math.floor(state.players[controller].trash.length / step.perTrash);
 }
 
+/**
+ * Whether one of `player`'s permanent effects sets a game rule right now, such as
+ * `faceUpLifeToDeckBottom` or `winOnDeckOut`.
+ */
+export function hasRule(
+  state: GameState,
+  player: PlayerId,
+  rule: "faceUpLifeToDeckBottom" | "winOnDeckOut",
+): boolean {
+  return fieldCards(state, player).some((source) =>
+    (definitionOf(state, source).effects ?? []).some(
+      (effect) =>
+        effect.timing === "permanent" &&
+        effect.steps.some((s) => s.do === rule) &&
+        conditionsMet(state, player, source, effect.conditions),
+    ),
+  );
+}
+
 /** Whether `player`'s [On Play] effects are negated right now. */
 export function onPlayNegated(state: GameState, player: PlayerId): boolean {
   const leader = state.players[player].leader.uid;
@@ -290,6 +309,7 @@ export function conditionsMet(
       const rested = fieldCards(state, controller).filter((card) => card.rested).length;
       return me.donRested + rested >= c.restedCardsAtLeast;
     }
+    if ("lifeAtMostOpponents" in c) return me.life.length <= them.life.length;
     if ("leaderTypeIncludes" in c)
       return (definitionOf(state, me.leader).types ?? []).some((t) =>
         t.includes(c.leaderTypeIncludes),
@@ -321,7 +341,8 @@ export function matchesFilter(
   const cost =
     filter.costAtMost !== undefined ||
     filter.costAtLeast !== undefined ||
-    filter.costAtMostOpponentLife
+    filter.costAtMostOpponentLife ||
+    filter.costAtMostTotalLife
       ? costOf(state, card)
       : baseCost;
   const power = usePower && findOnField(state, card.uid) ? powerOf(state, card) : basePower;
@@ -331,6 +352,11 @@ export function matchesFilter(
   if (filter.costAtMostOpponentLife && source) {
     if (cost > state.players[opponentOf(source.owner)].life.length) return false;
   }
+  if (
+    filter.costAtMostTotalLife &&
+    cost > state.players.p1.life.length + state.players.p2.life.length
+  )
+    return false;
   if (filter.baseCostAtMost !== undefined && baseCost > filter.baseCostAtMost) return false;
   if (filter.baseCostAtLeast !== undefined && baseCost < filter.baseCostAtLeast) return false;
   if (filter.powerAtMost !== undefined && power > filter.powerAtMost) return false;
@@ -349,6 +375,8 @@ export function matchesFilter(
   if (filter.hasTrigger && !(def.effects ?? []).some((e) => e.timing === "trigger")) return false;
   if (filter.keyword && !hasKeywordNow(state, card, filter.keyword)) return false;
   if (filter.anyOf && !filter.anyOf.some((f) => matchesFilter(state, card, f, source, usePower)))
+    return false;
+  if (filter.noBaseEffect && ((def.effects ?? []).length > 0 || (def.keywords ?? []).length > 0))
     return false;
   return true;
 }
@@ -421,6 +449,10 @@ export function canPayCosts(
     if ("lifeFaceUp" in cost && (!p.life[0] || p.life[0].faceUp)) return false;
     if ("trashToDeckBottom" in cost) fromTrash += cost.trashToDeckBottom;
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
+    if ("characterToLife" in cost) {
+      const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      if (own.length < cost.characterToLife) return false;
+    }
   }
   return (
     restDon <= p.donActive &&

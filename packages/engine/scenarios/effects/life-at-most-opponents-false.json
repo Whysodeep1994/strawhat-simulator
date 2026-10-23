@@ -1,0 +1,17 @@
+{
+  "name": "\"If you have equal or fewer Life cards than your opponent\" fails with more Life",
+  "rules": ["8-3-2"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-LIFE-COMPARE"],
+      "life": 3
+    },
+    "p2": {
+      "life": 2
+    }
+  },
+  "actions": [],
+  "expect": {
+    "legal.p1.activate": 0
+  }
+}
