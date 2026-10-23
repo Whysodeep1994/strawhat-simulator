@@ -1,0 +1,31 @@
+{
+  "name": "Add cost 5 Characters from hand and trash to the top of your Life face-up",
+  "rules": ["3-10-2-1"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-LEADER-FACE-UP-RULES",
+      "hand": ["TEST-C5-6000", "TEST-FILLER"],
+      "trash": ["TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.leader",
+      "effect": 1
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.0", "p1.trash.0"]
+    }
+  ],
+  "expect": {
+    "p1.life": 6,
+    "p1.life.0.faceUp": true,
+    "p1.life.1.faceUp": true,
+    "p1.hand": 1,
+    "p1.trash": 0
+  }
+}

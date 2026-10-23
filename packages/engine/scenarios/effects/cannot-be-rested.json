@@ -1,0 +1,35 @@
+{
+  "name": "A Character that \"cannot be rested\" isn't rested by effects and can't attack in its owner's next turn",
+  "rules": ["8-3-1", "7-1-1-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-NO-REST"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    },
+    {
+      "type": "endTurn",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p2.characters.0.rested": false,
+    "legal.p2.attack": 1
+  }
+}

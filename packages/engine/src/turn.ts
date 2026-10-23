@@ -5,6 +5,7 @@ import {
   conditionsMet,
   definitionOf,
   effectOf,
+  fieldCards,
   findOnField,
   hasStatus,
   leaveField,
@@ -95,6 +96,10 @@ export function knockOut(state: GameState, uid: string, byEffect = false): void 
     p.characters = p.characters.filter((c) => c.uid !== uid);
     leaveField(state, card);
     p.trash.unshift(card);
+    // "When a Character is K.O.'d" effects on either player's field.
+    for (const watcher of ["p1", "p2"] as const)
+      for (const source of fieldCards(state, watcher))
+        queueEffects(state, watcher, source, "characterKOd");
   }
 }
 

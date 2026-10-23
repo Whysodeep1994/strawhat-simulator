@@ -71,6 +71,8 @@ export type Timing =
   | "lifeBecomesZero"
   /** "When a [Trigger] activates" (one of yours). */
   | "triggerActivated"
+  /** "When this Character becomes rested" (by attacking, blocking, a cost or an effect). */
+  | "becomesRested"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -120,13 +122,21 @@ export type Condition =
   /** "If you have 10 or more cards in your trash". */
   | { trashAtLeast: number }
   /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
-  | { lifeAtMostOpponents: true };
+  | { lifeAtMostOpponents: true }
+  /** "If you have a total of 3 or more given DON!! cards" (Leader and Characters). */
+  | { givenDonAtLeast: number }
+  /** "If your Leader has the <Slash> attribute". */
+  | { leaderAttribute: string }
+  /** "If your opponent has 6 or more cards in their hand". */
+  | { opponentHandAtLeast: number }
+  /** "During the turn in which a card in your hand is trashed by an effect". */
+  | { handTrashedByEffectThisTurn: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
   side: "self" | "opponent";
-  /** Defaults to "characters". */
-  zone?: "leader" | "characters" | "leaderOrCharacters" | "stage";
+  /** Defaults to "characters". "field" is the Leader, Characters, and Stage. */
+  zone?: "leader" | "characters" | "leaderOrCharacters" | "stage" | "field";
   filter?: Filter;
 }
 
@@ -152,8 +162,14 @@ export type Cost =
   | { lifeToHand: number; from?: "top" | "topOrBottom" }
   /** Trash cards from the top of your Life cards. */
   | { trashLife: number }
-  /** Turn the top card of your Life cards face-up. It must be face-down. */
-  | { lifeFaceUp: number }
+  /** Turn the top (or, with `from: "topOrBottom"`, top or bottom) Life card face-up. It must be face-down. */
+  | { lifeFaceUp: number; from?: "top" | "topOrBottom" }
+  /** Turn a face-up Life card at the top (or bottom) face-down. */
+  | { lifeFaceDown: number; from?: "top" | "topOrBottom" }
+  /** Trash cards from the top of your deck. */
+  | { trashFromDeckTop: number }
+  /** "Rest your Leader or 1 of your DON!! cards": the player pays one of these. */
+  | { oneOf: Cost[] }
   /** Place cards from your trash at the bottom of your deck. */
   | { trashToDeckBottom: number }
   /** Trash this card from the field. Not a K.O. */
@@ -168,6 +184,8 @@ export type Cost =
   | { koOwnCharacter: number; filter?: Filter }
   /** "Play 1 [Kotori] from your hand". */
   | { playFromHand: Filter };
+  /** "Add 1 of your Characters ... to the top of your Life cards (face-up)". */
+  | { characterToLife: number; filter?: Filter; faceUp?: boolean };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -220,8 +238,12 @@ export interface Filter {
   hasTrigger?: boolean;
   /** The card has this keyword right now, e.g. [Blocker]. */
   keyword?: Keyword;
+  /** The printed attribute includes this, e.g. "Slash". */
+  attribute?: string;
   /** At least one of these filters matches ("{Cross Guild} type or ..."). */
   anyOf?: Filter[];
+  /** "With no base effect": a card without card text (rule 2-8-5), so no effects or keywords. */
+  noBaseEffect?: boolean;
 }
 
 /**
@@ -240,7 +262,9 @@ export type Status =
   | "cannotBeKOdByEffects"
   | "cannotBeKOdByOpponentsEffects"
   /** Doesn't become active in its owner's next Refresh Phase. */
-  | "noRefresh";
+  | "noRefresh"
+  /** "Cannot be rested": it can't attack, block, or be rested by effects or costs. */
+  | "cannotBeRested";
 
 export type Step =
   | { do: "draw"; count: number }
@@ -255,6 +279,8 @@ export type Step =
       duration?: Duration;
       perPrevious?: boolean;
       perTrash?: number;
+      /** "For every {Straw Hat Crew} type card on your field": amount × the count. */
+      perCount?: CardCount;
     }
   | { do: "grantKeyword"; target: Target; keyword: Keyword; duration?: Duration }
   | { do: "grantStatus"; target: Target; status: Status; duration?: Duration }
@@ -262,7 +288,14 @@ export type Step =
    * Change cost (negative for "−"). As a permanent effect with `zone: "hand"`
    * it changes the cost to play the card.
    */
-  | { do: "costChange"; target: Target; amount: number; duration?: Duration; perTrash?: number }
+  | {
+      do: "costChange";
+      target: Target;
+      amount: number;
+      duration?: Duration;
+      perTrash?: number;
+      perCount?: CardCount;
+    }
   | { do: "ko"; target: Target }
   /**
    * `stayRested`: "and that Character will not become active in your
@@ -304,6 +337,8 @@ export type Step =
   | { do: "handToDeckTop"; count: number }
   /** Place cards from your hand at the bottom of your deck. */
   | { do: "handToDeckBottom"; count: number }
+  /** "Change the target of the attack to ...": the chosen card becomes the attack's target. */
+  | { do: "redirectAttack"; target: Target }
   /** "Add up to 1 card from your hand to the top of your Life cards." */
   | { do: "handToLife"; count: number }
   /** Place the cards revealed by a `revealFromHand` cost at the top of your deck. */
@@ -323,6 +358,8 @@ export type Step =
       take: number;
       filter?: Filter;
       rest?: "bottom" | "trash" | "topOrBottom";
+      /** "Add ... to the top of your Life cards face-up" instead of to your hand. */
+      to?: "lifeFaceUp";
     }
   /**
    * Look at the top cards and put them back on top in any order. With `bottom`,

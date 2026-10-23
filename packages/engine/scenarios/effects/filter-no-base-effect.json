@@ -1,0 +1,34 @@
+{
+  "name": "\"With no base effect\" only matches Characters without card text",
+  "rules": ["2-8-5"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-LEADER-VANILLA-BOOST",
+      "characters": ["TEST-ONPLAY-DRAW", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.leader",
+      "effect": 0
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.characters.0"],
+      "illegal": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.characters.1"]
+    }
+  ],
+  "expect": {
+    "modifiers": 1,
+    "modifiers.0.power": 2000,
+    "modifiers.0.target": "c3"
+  }
+}

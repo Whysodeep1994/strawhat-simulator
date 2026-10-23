@@ -1,0 +1,32 @@
+{
+  "name": "\"When this card's attack deals damage\" can be declined",
+  "rules": ["8-1-2"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-LEADER-EAST",
+      "deck": 2
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": false
+    }
+  ],
+  "expect": {
+    "winner": null,
+    "p1.deck": 2,
+    "p2.life": 3
+  }
+}

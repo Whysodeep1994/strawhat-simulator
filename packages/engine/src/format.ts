@@ -1,4 +1,5 @@
 import type { CardCatalog, Color } from "./cards.js";
+import type { Step } from "./effects.js";
 
 /**
  * A tournament format's deck rules on top of the base rules (rule 5-1-2): which blocks are
@@ -78,6 +79,10 @@ export function checkDeck(
   const problems: DeckProblem[] = [];
   if (deck.length !== size) problems.push(sizeProblem(deck.length, size));
 
+  // "You can only include {East Blue} type cards in your deck" (P-117).
+  const onlyType = (leader.effects ?? [])
+    .flatMap((e) => (e.timing === "permanent" ? e.steps : []))
+    .find((s): s is Extract<Step, { do: "deckOnlyType" }> => s.do === "deckOnlyType")?.type;
   const copies = new Map<string, number>();
   for (const id of deck) copies.set(id, (copies.get(id) ?? 0) + 1);
   for (const id of copies.keys()) {
@@ -88,6 +93,11 @@ export function checkDeck(
       problems.push({ card: id, message: `${name} (${id}) is a Leader; it can't go in the deck` });
     } else if (!card.colors.every((c) => leader.colors.includes(c))) {
       problems.push({ card: id, message: `${name} (${id}) isn't ${colorList(leader.colors)}` });
+    } else if (onlyType && !(card.types ?? []).includes(onlyType)) {
+      problems.push({
+        card: id,
+        message: `${name} (${id}) isn't {${onlyType}} type; ${leader.name} only allows {${onlyType}} cards`,
+      });
     }
   }
   for (const id of [leaderId, ...copies.keys()]) {
