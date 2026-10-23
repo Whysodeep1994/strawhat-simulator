@@ -188,7 +188,7 @@ Comprehensive Rules version 1.2.1.
 | 3-10 | 3-10 Life Area | Tested | 1 |
 | 3-10-1 | 3-10 Life Area | Tested | 1 |
 | 3-10-2 | 3-10 Life Area | Tested | 6 |
-| 3-10-2-1 | 3-10 Life Area | Tested | 2 |
+| 3-10-2-1 | 3-10 Life Area | Tested | 5 |
 | 3-10-3 | 3-10 Life Area | Tested | 2 |
 | 4-1 | 4-1 Effects | Section heading | 0 |
 | 4-1-1 | 4-1 Effects | Phase 4 (effects) | 0 |

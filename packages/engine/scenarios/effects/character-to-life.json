@@ -1,0 +1,23 @@
+{
+  "name": "Adding a Character to the bottom of your Life face-up",
+  "rules": ["3-10-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-CHARACTER-TO-LIFE"],
+      "characters": ["TEST-C1-0", "TEST-FILLER"],
+      "don": { "active": 1 },
+      "life": 2
+    }
+  },
+  "actions": [
+    { "type": "playCard", "player": "p1", "card": "p1.hand.0" },
+    { "type": "choose", "player": "p1", "cards": ["p1.characters.0"] },
+    { "type": "confirm", "player": "p1", "accept": true }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.life": 3,
+    "p1.life.2.cardId": "TEST-C1-0",
+    "p1.life.2.faceUp": true
+  }
+}

@@ -10,6 +10,7 @@ import {
   findCard,
   findOnField,
   hasKeywordNow,
+  leaveField,
   hasStatus,
   matchesFilter,
   onPlayNegated,
@@ -605,6 +606,40 @@ function runStep(
       trashFromLife(state, step.side === "self" ? controller : opponentOf(controller), step.count);
       return "continue";
 
+    case "characterToLife":
+      return characterToLife(state, frame, source, step);
+
+    case "lifeToDeckTop": {
+      if (frame.memo.length === 0) {
+        const chosen = choose(state, frame, controller, p.life, 1, 1, "lifeToDeckTop");
+        if (chosen === "wait") return "wait";
+        const index = p.life.findIndex((c) => c.uid === chosen[0]);
+        const card = index >= 0 ? takeLife(p.life, index) : undefined;
+        if (!card) return "continue";
+        p.deck.unshift(card);
+        frame.memo = [card.uid];
+      }
+      // "Place the rest back in your Life area in any order": first picked is the new top.
+      if (p.life.length > 1) {
+        if (!Array.isArray(frame.answer)) {
+          state.prompt = {
+            kind: "choose",
+            player: controller,
+            options: p.life.map((c) => c.uid),
+            min: p.life.length,
+            max: p.life.length,
+            reason: "lifeOrder",
+            source: frame.source,
+          };
+          return "wait";
+        }
+        const order = frame.answer;
+        frame.answer = null;
+        p.life = order.map((uid) => p.life.find((c) => c.uid === uid) as CardInstance);
+      }
+      return "continue";
+    }
+
     case "arrangeLife":
       return arrangeLife(state, frame);
 
@@ -893,6 +928,45 @@ function takeLife(life: CardInstance[], index: number): CardInstance | undefined
 function trashFromLife(state: GameState, player: PlayerId, count: number): void {
   const p = state.players[player];
   for (let i = 0; i < count && p.life.length > 0; i++) p.trash.unshift(takeLife(p.life, 0)!);
+}
+
+/** Moves a Character to the top or bottom of its owner's Life cards (rule 3-10-2-1 for face-up). */
+function characterToLife(
+  state: GameState,
+  frame: FrameOf<"effect">,
+  source: CardInstance,
+  step: Extract<Step, { do: "characterToLife" }>,
+): Outcome {
+  if (frame.memo.length === 0) {
+    const picked = chooseTargets(state, frame, source, step.target, step.do);
+    if (picked === "wait") return "wait";
+    if (picked.length === 0) return "continue";
+    frame.memo = picked;
+  }
+  const location = findOnField(state, frame.memo[0] as string);
+  if (location?.zone !== "characters") return "continue";
+  const card = location.card;
+  const owner = state.players[card.owner];
+  let toBottom = false;
+  if (owner.life.length > 0) {
+    if (frame.answer === null) {
+      state.prompt = {
+        kind: "confirm",
+        player: frame.controller,
+        reason: "lifeToBottom",
+        source: card.uid,
+      };
+      return "wait";
+    }
+    toBottom = frame.answer === true;
+    frame.answer = null;
+  }
+  owner.characters = owner.characters.filter((c) => c.uid !== card.uid);
+  leaveField(state, card);
+  if (step.faceUp) card.faceUp = true;
+  if (toBottom) owner.life.push(card);
+  else owner.life.unshift(card);
+  return "continue";
 }
 
 /**

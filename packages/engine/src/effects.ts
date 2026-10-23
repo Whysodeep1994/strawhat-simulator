@@ -274,6 +274,13 @@ export type Step =
    * and place it at the top or bottom of the Life cards."
    */
   | { do: "arrangeLife" }
+  /**
+   * "Add up to 1 of your Characters ... to the top or bottom of the owner's Life cards face-up."
+   * The player picks the Character, then top or bottom.
+   */
+  | { do: "characterToLife"; target: Target; faceUp?: boolean }
+  /** "Look at all your Life cards; place 1 at the top of your deck and the rest back in any order." */
+  | { do: "lifeToDeckTop" }
   /** Trigger only: add this card to your hand. */
   | { do: "addThisToHand" }
   /** Trash Characters from the field. This is not a K.O. (rule 10-2-14). */

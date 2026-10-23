@@ -1183,6 +1183,41 @@ const cards: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-CHARACTER-TO-LIFE",
+    name: "Test Character to Life",
+    category: "event",
+    colors: ["yellow"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "characterToLife",
+            faceUp: true,
+            target: { side: "self", filter: { powerAtMost: 0 }, upTo: true },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-C1-0",
+    name: "Test 0 Power",
+    category: "character",
+    colors: ["yellow"],
+    cost: 1,
+    power: 0,
+  },
+  {
+    id: "TEST-LIFE-TO-DECK",
+    name: "Test Life to Deck",
+    category: "event",
+    colors: ["yellow"],
+    cost: 1,
+    effects: [{ timing: "main", steps: [{ do: "lifeToDeckTop" }] }],
+  },
 ];
 
 export const TEST_CATALOG: CardCatalog = Object.fromEntries(

@@ -221,6 +221,10 @@ function stepText(step: Step): string {
       return "Look at up to 1 card from the top of your or your opponent's Life cards, and place it at the top or bottom of the Life cards.";
     case "trashCharacter":
       return `Trash ${targetText(step.target)}.`;
+    case "characterToLife":
+      return `Add ${targetText(step.target)} to the top or bottom of the owner's Life cards${step.faceUp ? " face-up" : ""}.`;
+    case "lifeToDeckTop":
+      return "Look at all your Life cards; place 1 at the top of your deck and the rest back in your Life area in any order.";
     case "addThisToHand":
       return "Add this card to your hand.";
     case "playThis":
