@@ -105,7 +105,7 @@ export type Cost =
   | { handToDeckTop: number }
   /** Return this many of your Characters to your hand. */
   | { returnOwnCharacter: number }
-  /** Rest 1 of your active Leader or Characters matching the filter (e.g. "rest 1 of your [Uta] cards"). */
+  /** Rest 1 of your active Leader, Characters or Stage matching the filter (e.g. "rest 1 of your [Uta] cards"). */
   | { restOwn: Filter }
   | { restThis: true }
   /** Trash this card from the field. Not a K.O. */

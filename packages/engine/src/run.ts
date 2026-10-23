@@ -215,7 +215,7 @@ function payCost(
     if (chosen === "wait") return "wait";
     for (const uid of chosen) removeFromField(state, uid, "hand");
   } else if ("restOwn" in cost) {
-    const options = [p.leader, ...p.characters].filter(
+    const options = fieldCards(state, frame.controller).filter(
       (c) => !c.rested && matchesFilter(state, c, cost.restOwn, source),
     );
     const chosen = choose(state, frame, frame.controller, options, 1, 1, "rest");

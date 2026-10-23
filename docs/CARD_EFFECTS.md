@@ -100,7 +100,7 @@ cost of 5 or more" is `{ "count": { "side": "self", "filter": { "costAtLeast": 5
 `restDon` (①), `donMinus` (DON!! −X), `trashFromHand` (with an optional `filter`, e.g.
 `{ "trashFromHand": 1, "filter": { "type": "FILM" } }`), `handToDeckTop` (place cards from your
 hand at the top of your deck), `returnOwnCharacter` (return your Characters to your hand),
-`restOwn` (rest 1 of your active Leader or Characters matching a filter, e.g.
+`restOwn` (rest 1 of your active Leader, Characters or Stage matching a filter, e.g.
 `{ "restOwn": { "name": "Uta" } }`), `restThis`, `trashThis` ("trash this Character", not a K.O.).
 
 ## Targets

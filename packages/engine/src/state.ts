@@ -309,7 +309,7 @@ export function canPayCosts(
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
     if ("returnOwnCharacter" in cost) returned += cost.returnOwnCharacter;
     if ("restOwn" in cost) {
-      const own = [p.leader, ...p.characters].filter(
+      const own = fieldCards(state, player).filter(
         (c) => !c.rested && matchesFilter(state, c, cost.restOwn, source),
       );
       if (own.length === 0) return false;
