@@ -1,0 +1,31 @@
+{
+  "name": "Returning only 1 DON!! doesn't trigger \"when 2 or more DON!! cards are returned\"",
+  "rules": ["8-1-3-1"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-DON-RETURN-LEADER",
+      "characters": ["TEST-DON-MINUS-OR-MORE"],
+      "don": {
+        "active": 3
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "chooseOne",
+      "player": "p1",
+      "option": 0
+    }
+  ],
+  "expect": {
+    "p1.donDeck": 1,
+    "p1.donActive": 2,
+    "p1.donRested": 0
+  }
+}

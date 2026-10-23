@@ -54,6 +54,8 @@ export interface Battle {
 export interface Modifier {
   target: string;
   power?: number;
+  /** "Base power becomes X": replaces the printed power. */
+  basePower?: number;
   cost?: number;
   keyword?: Keyword;
   status?: Status;

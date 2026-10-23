@@ -1,0 +1,30 @@
+{
+  "name": "\"Return 1 or more DON!! cards\": the player picks how many",
+  "rules": ["8-3-1-6"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-DON-MINUS-OR-MORE"],
+      "don": {
+        "active": 3
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "chooseOne",
+      "player": "p1",
+      "option": 1
+    }
+  ],
+  "expect": {
+    "p1.donDeck": 2,
+    "p1.donActive": 1,
+    "p1.hand": 1
+  }
+}

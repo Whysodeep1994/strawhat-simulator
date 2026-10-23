@@ -5,6 +5,7 @@ import {
   canPayCosts,
   conditionsMet,
   definitionOf,
+  donOnField,
   effectOf,
   fieldCards,
   findCard,
@@ -113,6 +114,7 @@ const ON_FIELD_TIMINGS = new Set([
   "endOfOpponentsTurn",
   "characterRestedByYourEffect",
   "replaceRemoval",
+  "donReturned",
 ]);
 
 function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
@@ -189,20 +191,25 @@ function payCost(
     p.donActive -= cost.restDon;
     p.donRested += cost.restDon;
   } else if ("donMinus" in cost) {
-    // Rule 8-3-1-6. The engine returns rested DON!! first, then active, then given ones.
-    let left = cost.donMinus;
-    const fromRested = Math.min(left, p.donRested);
-    p.donRested -= fromRested;
-    left -= fromRested;
-    const fromActive = Math.min(left, p.donActive);
-    p.donActive -= fromActive;
-    left -= fromActive;
-    for (const card of [...p.characters, p.leader]) {
-      const taken = Math.min(left, card.givenDon);
-      card.givenDon -= taken;
-      left -= taken;
+    let count = cost.donMinus;
+    const most = donOnField(state, frame.controller);
+    if (cost.orMore && most > count) {
+      // "Return 1 or more DON!! cards": the player picks how many.
+      if (!Array.isArray(frame.answer)) {
+        const labels = [];
+        for (let n = count; n <= most; n++) labels.push(`Return ${n} DON!!`);
+        state.prompt = {
+          kind: "chooseOne",
+          player: frame.controller,
+          labels,
+          source: frame.source,
+        };
+        return "wait";
+      }
+      count += Number(frame.answer[0]);
+      frame.answer = null;
     }
-    p.donDeck += cost.donMinus - left;
+    returnDon(state, frame.controller, count);
   } else if ("trashFromHand" in cost) {
     const options = p.hand.filter((c) => matchesFilter(state, c, cost.filter, source, false));
     const n = cost.trashFromHand;
@@ -292,6 +299,35 @@ function payCost(
     moveFieldCardToTrash(state, source);
   }
   return "continue";
+}
+
+/**
+ * DON!! −X (rule 8-3-1-6). The engine returns rested DON!! first, then active, then given
+ * ones (Rules Question #3). Returning 2 or more at once can trigger `donReturned` effects.
+ */
+function returnDon(state: GameState, player: PlayerId, count: number): void {
+  const p = state.players[player];
+  let left = count;
+  const fromRested = Math.min(left, p.donRested);
+  p.donRested -= fromRested;
+  left -= fromRested;
+  const fromActive = Math.min(left, p.donActive);
+  p.donActive -= fromActive;
+  left -= fromActive;
+  for (const card of [...p.characters, p.leader]) {
+    const taken = Math.min(left, card.givenDon);
+    card.givenDon -= taken;
+    left -= taken;
+  }
+  p.donDeck += count - left;
+  const returned = count - left;
+  if (returned === 0) return;
+  for (const card of fieldCards(state, player)) {
+    (definitionOf(state, card).effects ?? []).forEach((effect, index) => {
+      if (effect.timing === "donReturned" && returned >= (effect.returnedAtLeast ?? 1))
+        state.pendingEffects.push({ controller: player, source: card.uid, effect: index });
+    });
+  }
 }
 
 /**
@@ -391,6 +427,7 @@ function runStep(
     case "rest":
     case "setActive":
     case "noBlockers":
+    case "setBasePower":
     case "giveRestedDon": {
       if (step.do === "giveRestedDon" && p.donRested === 0) return "continue";
       const targets = chooseTargets(state, frame, source, step.target, step.do);
@@ -863,6 +900,13 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
       state.modifiers.push({
         target: uid,
         cost: powerAmount(state, controller, step),
+        ...lasting(state, controller, step.duration),
+      });
+      return;
+    case "setBasePower":
+      state.modifiers.push({
+        target: uid,
+        basePower: step.power,
         ...lasting(state, controller, step.duration),
       });
       return;

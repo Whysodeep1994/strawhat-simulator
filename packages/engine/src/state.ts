@@ -70,11 +70,17 @@ export function fieldCards(state: GameState, player: PlayerId): CardInstance[] {
  * during its owner's turn (rule 6-5-5-2), plus effects and counters.
  */
 export function powerOf(state: GameState, card: CardInstance): number {
-  let power = definitionOf(state, card).power ?? 0;
+  let power = basePowerOf(state, card);
   if (card.owner === state.turnPlayer) power += card.givenDon * 1000;
   for (const m of state.modifiers) if (m.target === card.uid) power += m.power ?? 0;
   for (const grant of permanentGrants(state, card, "powerUp")) power += grant.power ?? 0;
   return power;
+}
+
+/** Printed power, unless an effect says "base power becomes X" (the latest one wins). */
+export function basePowerOf(state: GameState, card: CardInstance): number {
+  const set = state.modifiers.filter((m) => m.target === card.uid && m.basePower !== undefined);
+  return set.at(-1)?.basePower ?? definitionOf(state, card).power ?? 0;
 }
 
 /** Printed keywords plus any gained from effects. */
@@ -270,6 +276,9 @@ export function conditionsMet(
       const rested = fieldCards(state, controller).filter((card) => card.rested).length;
       return me.donRested + rested >= c.restedCardsAtLeast;
     }
+    if ("leaderMulticolored" in c) return definitionOf(state, me.leader).colors.length > 1;
+    if ("opponentDonOnFieldAtLeast" in c)
+      return donOnField(state, opponentOf(controller)) >= c.opponentDonOnFieldAtLeast;
     return false;
   });
 }
@@ -284,7 +293,7 @@ export function matchesFilter(
   if (!filter) return true;
   const def = definitionOf(state, card);
   const baseCost = def.cost ?? 0;
-  const basePower = def.power ?? 0;
+  const basePower = findOnField(state, card.uid) ? basePowerOf(state, card) : (def.power ?? 0);
   const cost =
     filter.costAtMost !== undefined ||
     filter.costAtLeast !== undefined ||
