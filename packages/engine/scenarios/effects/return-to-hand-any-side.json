@@ -1,0 +1,39 @@
+{
+  "name": "\"Return up to 1 Character\" can pick either player's Characters",
+  "rules": ["8-4-4-4"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-RETURN-ANY"],
+      "don": {
+        "active": 1
+      },
+      "characters": ["TEST-C2-3000"]
+    },
+    "p2": {
+      "characters": ["TEST-C2-3000", "TEST-C4-5000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.1"],
+      "illegal": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    }
+  ],
+  "expect": {
+    "p2.hand": 1,
+    "p2.characters": 1,
+    "p1.characters": 1
+  }
+}

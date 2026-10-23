@@ -40,6 +40,7 @@ const TIMING_NAMES: Record<Timing, string> = {
   onOpponentsAttack: "[On Your Opponent's Attack]",
   onBlock: "[On Block]",
   onKO: "[On K.O.]",
+  koByEffect: "When this Character is K.O.'d by an effect,",
   activateMain: "[Activate: Main]",
   main: "[Main]",
   counter: "[Counter]",
@@ -84,13 +85,21 @@ function conditionText(condition: Condition): string {
   if ("charactersAtLeast" in condition) {
     return `(If you have ${condition.charactersAtLeast} or more Characters)`;
   }
-  return `(If you have ${condition.handAtMost} or less cards in hand)`;
+  if ("handAtMost" in condition)
+    return `(If you have ${condition.handAtMost} or less cards in hand)`;
+  return `(If the top card of your deck is a${filterText(condition.deckTopMatches)} card)`;
 }
 
 function costText(cost: Cost): string {
   if ("restDon" in cost) return `①`.repeat(cost.restDon);
   if ("donMinus" in cost) return `DON!! −${cost.donMinus}`;
-  if ("trashFromHand" in cost) return `trash ${cost.trashFromHand} card(s) from your hand`;
+  if ("trashFromHand" in cost)
+    return `trash ${cost.trashFromHand}${filterText(cost.filter)} card(s) from your hand`;
+  if ("handToDeckTop" in cost)
+    return `place ${cost.handToDeckTop} card(s) from your hand at the top of your deck`;
+  if ("returnOwnCharacter" in cost)
+    return `return ${cost.returnOwnCharacter} of your Characters to the owner's hand`;
+  if ("restOwn" in cost) return `rest 1 of your${filterText(cost.restOwn)} cards`;
   return "rest this card";
 }
 
@@ -99,7 +108,7 @@ function stepText(step: Step): string {
     case "draw":
       return `Draw ${step.count} card${step.count === 1 ? "" : "s"}.`;
     case "powerUp":
-      return `Give ${targetText(step.target)} ${step.amount >= 0 ? "+" : "−"}${Math.abs(step.amount)} power${durationText(step.duration)}.`;
+      return `Give ${targetText(step.target)} ${step.amount >= 0 ? "+" : "−"}${Math.abs(step.amount)} power${durationText(step.duration)}${step.perPrevious ? " for every card moved" : ""}.`;
     case "grantKeyword":
       return `${capital(targetText(step.target))} gains [${KEYWORD_NAMES[step.keyword]}]${durationText(step.duration)}.`;
     case "ko":
@@ -121,7 +130,23 @@ function stepText(step: Step): string {
     case "setDonActive":
       return `Set up to ${step.count} of your DON!! cards as active.`;
     case "trashFromHand":
-      return `Trash ${step.upTo ? "up to " : ""}${step.count} card(s) from your hand.`;
+      return `Trash ${step.upTo ? "up to " : ""}${step.count}${filterText(step.filter)} card(s) from your hand.`;
+    case "handToDeckTop":
+      return `Place ${step.count} card(s) from your hand at the top of your deck.`;
+    case "trashToHand":
+      return `Add up to ${step.count ?? 1}${filterText(step.filter)} card(s) from your trash to your hand.`;
+    case "arrangeDeckTop":
+      return `Look at ${step.look} cards from the top of your deck and place them at the top${step.bottom ? " or bottom" : ""} of your deck in any order.`;
+    case "playFromDeckTop":
+      return `You may play the top card of your deck if it is a${filterText(step.filter)} card${step.rested ? ", rested" : ""}.`;
+    case "noLifeToHand":
+      return "You cannot add Life cards to your hand using your own effects during this turn.";
+    case "chooseOne":
+      return `${step.chooser === "opponent" ? "Your opponent chooses" : "Choose"} one: ${step.options.map((o) => o.label).join(" / ")}.`;
+    case "restOpponentDon":
+      return `Rest up to ${step.count} of your opponent's DON!! cards.`;
+    case "atEndOfTurn":
+      return `At the end of this turn: ${step.steps.map(stepText).join(" ")}`;
     case "opponentTrashesFromHand":
       return `Your opponent trashes ${step.count} card(s) from their hand.`;
     case "searchDeck":
@@ -143,7 +168,7 @@ function stepText(step: Step): string {
 
 function targetText(target: Target): string {
   if (target.side === "this") return "this card";
-  const owner = target.side === "self" ? "your" : "your opponent's";
+  const owner = target.side === "self" ? "your" : target.side === "any" ? "the" : "your opponent's";
   const zone = target.zone ?? "characters";
   const count = target.count ?? 1;
   const noun =

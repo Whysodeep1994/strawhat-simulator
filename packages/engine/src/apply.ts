@@ -65,10 +65,14 @@ function perform(state: GameState, action: Action): void {
       setBattleStep(state, state.prompt.kind === "block" ? "counter" : "damage");
       return;
     case "choose":
-    case "confirm": {
+    case "confirm":
+    case "chooseOne": {
       const frame = state.stack.at(-1);
-      if (frame && (frame.kind === "effect" || frame.kind === "damage")) {
-        frame.answer = action.type === "choose" ? action.cards : action.accept;
+      if (frame?.kind === "effect" && action.type === "chooseOne") {
+        frame.answer = [String(action.option)];
+      } else if (frame && (frame.kind === "effect" || frame.kind === "damage")) {
+        if (action.type === "choose" && frame.kind === "effect") frame.answer = action.cards;
+        if (action.type === "confirm") frame.answer = action.accept;
       }
       return;
     }

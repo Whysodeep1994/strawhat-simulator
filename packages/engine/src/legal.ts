@@ -54,6 +54,11 @@ export function legalActions(state: GameState, player?: PlayerId): Action[] {
           actions.push({ type: "choose", player: who, cards });
         }
         break;
+      case "chooseOne":
+        prompt.labels.forEach((_, option) =>
+          actions.push({ type: "chooseOne", player: who, option }),
+        );
+        break;
       case "confirm":
         actions.push(
           { type: "confirm", player: who, accept: true },

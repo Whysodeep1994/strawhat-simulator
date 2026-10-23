@@ -55,6 +55,8 @@ export interface Modifier {
   keyword?: Keyword;
   /** The opponent can't activate [Blocker] Characters matching this when the target attacks. */
   noBlockers?: Filter;
+  /** On a Leader: its player can't add Life cards to their hand with their own effects. */
+  noLifeToHand?: boolean;
   until: Duration;
 }
 
@@ -63,6 +65,14 @@ export interface QueuedEffect {
   controller: PlayerId;
   source: string;
   effect: number;
+}
+
+/** Steps of an effect that happen at the end of the turn. */
+export interface DelayedEffect {
+  controller: PlayerId;
+  source: string;
+  effect: number;
+  steps: Step[];
 }
 
 /**
@@ -82,6 +92,8 @@ export type Frame =
       steps: Step[];
       /** Scratch space for a step that needs more than one decision. */
       memo: string[];
+      /** How many cards the previous step moved, for "for every card trashed". */
+      previous?: number;
       answer: string[] | boolean | null;
     }
   | { kind: "battle"; step: "attack" | "block" | "counter" | "damage" | "end" }
@@ -116,6 +128,8 @@ export type Prompt =
       revealed?: string[];
     }
   | { kind: "confirm"; player: PlayerId; reason: "optional" | "trigger"; source: string }
+  /** "Choose one": answered with the index of one of `labels`. */
+  | { kind: "chooseOne"; player: PlayerId; labels: string[]; source: string }
   | { kind: "gameOver" };
 
 export interface GameState {
@@ -134,6 +148,8 @@ export interface GameState {
   modifiers: Modifier[];
   /** "uid:effect" keys of [Once Per Turn] effects used this turn (rule 10-2-13). */
   usedThisTurn: string[];
+  /** Steps waiting for the End Phase ("at the end of this turn"). */
+  delayed: DelayedEffect[];
   /** A [Trigger] card being activated belongs to no area (rule 10-1-5-3). */
   limbo: CardInstance | null;
   /** Seeded random state, so a game can be replayed exactly. */

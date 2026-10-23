@@ -23,35 +23,45 @@ opponent's Characters with a cost of 3 or less" is written as:
 
 ## Timings
 
-| Timing               | Card wording                       | Rules   |
-| -------------------- | ---------------------------------- | ------- |
-| `onPlay`             | [On Play]                          | 10-2-6  |
-| `whenAttacking`      | [When Attacking]                   | 10-2-5  |
-| `onOpponentsAttack`  | [On Your Opponent's Attack]        | 10-2-16 |
-| `onBlock`            | [On Block]                         | 10-2-15 |
-| `onKO`               | [On K.O.]                          | 10-2-17 |
-| `activateMain`       | [Activate: Main]                   | 10-2-2  |
-| `main`               | [Main] on Events                   | 10-2-3  |
-| `counter`            | [Counter] on Events                | 10-2-4  |
-| `trigger`            | [Trigger]                          | 10-1-5  |
-| `endOfYourTurn`      | [End of Your Turn]                 | 10-2-7  |
-| `endOfOpponentsTurn` | [End of Your Opponent's Turn]      | 10-2-8  |
-| `permanent`          | Always-on text, e.g. "+1000 power" | 8-1-3-3 |
+| Timing               | Card wording                                                 | Rules   |
+| -------------------- | ------------------------------------------------------------ | ------- |
+| `onPlay`             | [On Play]                                                    | 10-2-6  |
+| `whenAttacking`      | [When Attacking]                                             | 10-2-5  |
+| `onOpponentsAttack`  | [On Your Opponent's Attack]                                  | 10-2-16 |
+| `onBlock`            | [On Block]                                                   | 10-2-15 |
+| `onKO`               | [On K.O.]                                                    | 10-2-17 |
+| `koByEffect`         | "When this Character is K.O.'d by an effect" (not in battle) | 10-2-1  |
+| `activateMain`       | [Activate: Main]                                             | 10-2-2  |
+| `main`               | [Main] on Events                                             | 10-2-3  |
+| `counter`            | [Counter] on Events                                          | 10-2-4  |
+| `trigger`            | [Trigger]                                                    | 10-1-5  |
+| `endOfYourTurn`      | [End of Your Turn]                                           | 10-2-7  |
+| `endOfOpponentsTurn` | [End of Your Opponent's Turn]                                | 10-2-8  |
+| `permanent`          | Always-on text, e.g. "+1000 power"                           | 8-1-3-3 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
 ## Conditions
 
 `donAtLeast` ([DON!! xX]), `yourTurn`, `opponentsTurn`, `lifeAtMost`, `lifeAtLeast`,
-`opponentLifeAtMost`, `leaderHasType`, `charactersAtLeast`, `handAtMost`.
+`opponentLifeAtMost`, `leaderHasType`, `charactersAtLeast`, `handAtMost`, `deckTopMatches`
+(a filter for the top card of your deck, for "Reveal 1 card from the top of your deck. If that
+card is...").
 
 ## Costs
 
-`restDon` (①), `donMinus` (DON!! −X), `trashFromHand`, `restThis`.
+`restDon` (①), `donMinus` (DON!! −X), `trashFromHand` (with an optional `filter`, e.g.
+`{ "trashFromHand": 1, "filter": { "type": "FILM" } }`), `handToDeckTop` (place cards from your
+hand at the top of your deck), `returnOwnCharacter` (return your Characters to your hand),
+`restOwn` (rest 1 of your active Leader or Characters matching a filter, e.g.
+`{ "restOwn": { "name": "Uta" } }`), `restThis`.
 
 ## Targets
 
-`{ "side": "self" | "opponent" | "this", "zone": "leader" | "characters" | "leaderOrCharacters" | "stage", "filter": {...}, "count": 1, "upTo": true }`
+`{ "side": "self" | "opponent" | "this" | "any", "zone": "leader" | "characters" | "leaderOrCharacters" | "stage", "filter": {...}, "count": 1, "upTo": true }`
+
+`"any"` means either player's cards, for wording like "return up to 1 Character with a cost of 4
+or less" that doesn't say whose.
 
 Filters: `category`, `costAtMost`, `costAtLeast`, `powerAtMost`, `powerAtLeast`, `type`, `name`,
 `nameIncludes`, `color`, `rested`, `notThis`, `hasTrigger`, `keyword` (for example
@@ -62,25 +72,33 @@ picks automatically, so players are only asked about meaningful decisions.
 
 ## Steps
 
-| Step                             | What it does                                                          |
-| -------------------------------- | --------------------------------------------------------------------- |
-| `draw`                           | Draw cards.                                                           |
-| `powerUp`                        | Change power (negative for "−"), for the turn or the battle.          |
-| `grantKeyword`                   | Give [Rush], [Blocker], [Double Attack], and so on.                   |
-| `ko`                             | K.O. Characters.                                                      |
-| `rest` / `setActive`             | Rest or set active.                                                   |
-| `returnToHand`                   | Return to the owner's hand.                                           |
-| `returnToDeckBottom`             | Place at the bottom of the owner's deck.                              |
-| `noBlockers`                     | "Your opponent cannot activate [Blocker]" when the target attacks.    |
-| `giveRestedDon`                  | Give rested DON!! from the cost area.                                 |
-| `addDon`                         | Add DON!! from the DON!! deck, active or rested.                      |
-| `setDonActive`                   | Set rested DON!! as active.                                           |
-| `trashFromHand`                  | You trash cards from your hand.                                       |
-| `opponentTrashesFromHand`        | Your opponent trashes cards from their hand.                          |
-| `searchDeck`                     | Look at the top cards, add matching ones to hand, rest to the bottom. |
-| `playFromHand` / `playFromTrash` | Play a card for free.                                                 |
-| `lifeToHand` / `deckToLife`      | Move cards between Life, hand, and deck.                              |
-| `playThis`                       | [Trigger] only: play this card.                                       |
-| `if`                             | Only do the nested steps if the conditions hold.                      |
+| Step                             | What it does                                                                                                                                                                     |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `draw`                           | Draw cards.                                                                                                                                                                      |
+| `powerUp`                        | Change power (negative for "−"), for the turn or the battle. With `perPrevious`, the amount counts once for every card the previous step moved ("+1000 for every card trashed"). |
+| `grantKeyword`                   | Give [Rush], [Blocker], [Double Attack], and so on.                                                                                                                              |
+| `ko`                             | K.O. Characters.                                                                                                                                                                 |
+| `rest` / `setActive`             | Rest or set active.                                                                                                                                                              |
+| `returnToHand`                   | Return to the owner's hand.                                                                                                                                                      |
+| `returnToDeckBottom`             | Place at the bottom of the owner's deck.                                                                                                                                         |
+| `noBlockers`                     | "Your opponent cannot activate [Blocker]" when the target attacks.                                                                                                               |
+| `giveRestedDon`                  | Give rested DON!! from the cost area.                                                                                                                                            |
+| `addDon`                         | Add DON!! from the DON!! deck, active or rested.                                                                                                                                 |
+| `setDonActive`                   | Set rested DON!! as active.                                                                                                                                                      |
+| `trashFromHand`                  | You trash cards from your hand (optional `filter`).                                                                                                                              |
+| `handToDeckTop`                  | Place cards from your hand at the top of your deck.                                                                                                                              |
+| `trashToHand`                    | Add up to `count` matching cards from your trash to your hand.                                                                                                                   |
+| `opponentTrashesFromHand`        | Your opponent trashes cards from their hand.                                                                                                                                     |
+| `searchDeck`                     | Look at the top cards, add matching ones to hand, rest to the bottom. `"rest": "topOrBottom"` lets the player put the rest at the top or bottom in any order.                    |
+| `arrangeDeckTop`                 | Look at the top `look` cards and put them back on top in any order; with `bottom`, any can go to the bottom instead. The player answers with the cards in order, top first.      |
+| `playFromDeckTop`                | "You may play" the top card of your deck if it matches; `rested` plays it rested.                                                                                                |
+| `playFromHand` / `playFromTrash` | Play a card for free.                                                                                                                                                            |
+| `lifeToHand` / `deckToLife`      | Move cards between Life, hand, and deck.                                                                                                                                         |
+| `playThis`                       | Play this card: a [Trigger] card, or this card from the trash (e.g. [On K.O.]). `rested` plays it rested.                                                                        |
+| `noLifeToHand`                   | "You cannot add Life cards to your hand using your own effects during this turn."                                                                                                |
+| `chooseOne`                      | "Choose one": `options` are `{ "label", "steps" }`; `"chooser": "opponent"` for "your opponent chooses". The player answers with `{ "type": "chooseOne", "option": index }`.     |
+| `restOpponentDon`                | Rest up to `count` of your opponent's active DON!! cards.                                                                                                                        |
+| `atEndOfTurn`                    | The nested steps happen at the end of this turn.                                                                                                                                 |
+| `if`                             | Only do the nested steps if the conditions hold.                                                                                                                                 |
 
 Each block is tested in `packages/engine/scenarios/effects/` using made-up `TEST-` cards.

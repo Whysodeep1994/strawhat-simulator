@@ -18,5 +18,7 @@ export type Action =
   | { type: "counterEvent"; player: PlayerId; card: string }
   | { type: "choose"; player: PlayerId; cards: string[] }
   | { type: "confirm"; player: PlayerId; accept: boolean }
+  /** Answers a "choose one" prompt with the option's index. */
+  | { type: "chooseOne"; player: PlayerId; option: number }
   | { type: "pass"; player: PlayerId }
   | { type: "concede"; player: PlayerId };
