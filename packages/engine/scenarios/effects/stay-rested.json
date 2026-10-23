@@ -1,0 +1,35 @@
+{
+  "name": "\"That Character will not become active in your opponent's next Refresh Phase\"",
+  "rules": ["6-2-4"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-FREEZE"]
+    },
+    "p2": {
+      "characters": ["TEST-C2-3000", "TEST-FILLER"],
+      "don": {
+        "deck": 10
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    },
+    {
+      "type": "endTurn",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p2.characters.0.rested": true,
+    "p2.characters.1.rested": false
+  }
+}

@@ -496,6 +496,408 @@ const cards: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-KO-BASE-POWER",
+    name: "Test K.O. Base Power",
+    category: "event",
+    colors: ["red"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "ko",
+            target: { side: "opponent", filter: { basePowerAtMost: 3000 }, upTo: true },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-POWER-DOWN",
+    name: "Test Power Down",
+    category: "event",
+    colors: ["red"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [{ do: "powerUp", target: { side: "opponent" }, amount: -3000 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-COST-DOWN",
+    name: "Test Cost Down",
+    category: "event",
+    colors: ["red"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [{ do: "costChange", target: { side: "opponent" }, amount: -2 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-COST-UP",
+    name: "Test Cost Up",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 3000,
+    effects: [
+      {
+        timing: "permanent",
+        conditions: [{ count: { side: "self", filter: { baseCostAtLeast: 4 } }, atLeast: 1 }],
+        steps: [{ do: "costChange", target: { side: "this" }, amount: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-HAND-COST",
+    name: "Test Hand Cost",
+    category: "character",
+    colors: ["red"],
+    cost: 6,
+    power: 6000,
+    effects: [
+      {
+        timing: "permanent",
+        zone: "hand",
+        conditions: [{ count: { side: "opponent", filter: { powerAtLeast: 6000 } }, atLeast: 1 }],
+        steps: [{ do: "costChange", target: { side: "this" }, amount: -4 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-SEARCH-ANY",
+    name: "Test Search Any",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "searchDeck",
+            look: 3,
+            take: 1,
+            filter: {
+              anyOf: [{ type: "Test Crew" }, { typeIncludes: "Works" }],
+              notName: "Test Search Any",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-WORKS",
+    name: "Test Works",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    types: ["Former Test Works"],
+  },
+  {
+    id: "TEST-LEADER-NAMED",
+    name: "Test Captain",
+    category: "leader",
+    colors: ["red"],
+    power: 5000,
+    life: 5,
+  },
+  {
+    id: "TEST-LEADER-IS",
+    name: "Test Leader Is",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        conditions: [{ anyOf: [{ leaderHasType: "Nobody" }, { leaderIs: "Test Captain" }] }],
+        steps: [{ do: "draw", count: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-RESTED-COUNT",
+    name: "Test Rested Count",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        conditions: [{ restedCardsAtLeast: 3 }],
+        steps: [{ do: "draw", count: 1 }],
+      },
+      {
+        timing: "permanent",
+        conditions: [{ donRestedAtLeast: 2 }],
+        steps: [{ do: "powerUp", target: { side: "this" }, amount: 1000 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-LONG-POWER",
+    name: "Test Long Power",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "powerUp",
+            target: { side: "self", zone: "leader" },
+            amount: 2000,
+            duration: "opponentsNextTurn",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-NO-ATTACK",
+    name: "Test No Attack",
+    category: "character",
+    colors: ["red"],
+    cost: 5,
+    power: 8000,
+    effects: [
+      {
+        timing: "permanent",
+        steps: [{ do: "grantStatus", target: { side: "this" }, status: "cannotAttack" }],
+      },
+      {
+        timing: "permanent",
+        steps: [
+          {
+            do: "grantStatus",
+            target: { side: "opponent", zone: "characters", filter: { costAtMost: 2 } },
+            status: "cannotAttack",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-STOP-BLOCKER",
+    name: "Test Stop Blocker",
+    category: "event",
+    colors: ["red"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "grantStatus",
+            target: { side: "opponent", filter: { keyword: "blocker" }, upTo: true },
+            status: "cannotBlock",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-BATTLE-PROOF",
+    name: "Test Battle Proof",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 1000,
+    effects: [
+      {
+        timing: "permanent",
+        steps: [{ do: "grantStatus", target: { side: "this" }, status: "cannotBeKOdInBattle" }],
+      },
+    ],
+  },
+  {
+    id: "TEST-GUARD",
+    name: "Test Guard",
+    category: "character",
+    colors: ["red"],
+    cost: 4,
+    power: 4000,
+    effects: [
+      {
+        timing: "permanent",
+        steps: [
+          {
+            do: "grantStatus",
+            target: { side: "self", zone: "characters", filter: { costAtMost: 3 } },
+            status: "cannotBeKOdByOpponentsEffects",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-KO-ANY",
+    name: "Test K.O. Any",
+    category: "event",
+    colors: ["red"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [{ do: "ko", target: { side: "opponent", upTo: true } }],
+      },
+    ],
+  },
+  {
+    id: "TEST-KO-OWN",
+    name: "Test K.O. Own",
+    category: "event",
+    colors: ["red"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [{ do: "ko", target: { side: "self", upTo: true } }],
+      },
+    ],
+  },
+  {
+    id: "TEST-FREEZE",
+    name: "Test Freeze",
+    category: "event",
+    colors: ["red"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [{ do: "rest", target: { side: "opponent", upTo: true }, stayRested: true }],
+      },
+    ],
+  },
+  {
+    id: "TEST-PLAY-RESTED",
+    name: "Test Play Rested",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [{ do: "playFromHand", filter: { costAtMost: 4 }, rested: true }],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRASH-SELF",
+    name: "Test Trash Self",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "activateMain",
+        optional: true,
+        costs: [{ trashThis: true }],
+        steps: [{ do: "draw", count: 2 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-REST-IF",
+    name: "Test Rest If You Do",
+    category: "event",
+    colors: ["red"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "rest",
+            target: { side: "self", upTo: true },
+            ifYouDo: [{ do: "rest", target: { side: "opponent", upTo: true } }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-REST-WATCHER",
+    name: "Test Rest Watcher",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 3000,
+    effects: [
+      {
+        timing: "characterRestedByYourEffect",
+        conditions: [{ yourTurn: true }],
+        oncePerTurn: true,
+        steps: [{ do: "draw", count: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-PROTECTED",
+    name: "Test Protected",
+    category: "character",
+    colors: ["red"],
+    cost: 4,
+    power: 5000,
+  },
+  {
+    id: "TEST-BODYGUARD",
+    name: "Test Bodyguard",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 4000,
+    effects: [
+      {
+        timing: "replaceRemoval",
+        replaces: { side: "self", filter: { name: "Test Protected" }, removal: "ko" },
+        optional: true,
+        costs: [{ trashThis: true }],
+        steps: [],
+      },
+    ],
+  },
+  {
+    id: "TEST-HAND-SHIELD",
+    name: "Test Hand Shield",
+    category: "character",
+    colors: ["red"],
+    cost: 5,
+    power: 6000,
+    types: ["Test Crew"],
+    effects: [
+      {
+        timing: "replaceRemoval",
+        replaces: {
+          side: "self",
+          filter: { type: "Test Crew" },
+          removal: "remove",
+          byOpponent: true,
+        },
+        oncePerTurn: true,
+        optional: true,
+        costs: [{ trashFromHand: 1 }],
+        steps: [],
+      },
+    ],
+  },
 ];
 
 export const TEST_CATALOG: CardCatalog = Object.fromEntries(cards.map((c) => [c.id, c]));

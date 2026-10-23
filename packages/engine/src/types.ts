@@ -1,5 +1,5 @@
 import type { CardCatalog, Keyword } from "./cards.js";
-import type { Duration, Filter, Step } from "./effects.js";
+import type { Filter, Status, Step } from "./effects.js";
 import type { Phase } from "./phases.js";
 
 export type PlayerId = "p1" | "p2";
@@ -52,10 +52,14 @@ export interface Battle {
 export interface Modifier {
   target: string;
   power?: number;
+  cost?: number;
   keyword?: Keyword;
+  status?: Status;
   /** The opponent can't activate [Blocker] Characters matching this when the target attacks. */
   noBlockers?: Filter;
-  until: Duration;
+  until: "turn" | "battle";
+  /** For "turn": the last turn it lasts. Defaults to the current turn. */
+  endsTurn?: number;
 }
 
 /** An auto effect whose timing was met and is waiting to resolve (rule 8-6). */
@@ -83,6 +87,8 @@ export type Frame =
       /** Scratch space for a step that needs more than one decision. */
       memo: string[];
       answer: string[] | boolean | null;
+      /** `replaceRemoval` only: the card the replacement would save. */
+      replacing?: string;
     }
   | { kind: "battle"; step: "attack" | "block" | "counter" | "damage" | "end" }
   | {
@@ -134,6 +140,8 @@ export interface GameState {
   modifiers: Modifier[];
   /** "uid:effect" keys of [Once Per Turn] effects used this turn (rule 10-2-13). */
   usedThisTurn: string[];
+  /** Cards whose pending removal a replacement effect prevented (rule 8-1-3-4). */
+  prevented?: string[];
   /** A [Trigger] card being activated belongs to no area (rule 10-1-5-3). */
   limbo: CardInstance | null;
   /** Seeded random state, so a game can be replayed exactly. */
