@@ -105,6 +105,13 @@ function conditionText(condition: Condition): string {
   }
   if ("handAtMost" in condition)
     return `(If you have ${condition.handAtMost} or less cards in hand)`;
+  if ("donOnFieldAtLeast" in condition) {
+    return `(If you have ${condition.donOnFieldAtLeast} or more DON!! cards on your field)`;
+  }
+  if ("donOnFieldAtMost" in condition) {
+    return `(If you have ${condition.donOnFieldAtMost} or less DON!! cards on your field)`;
+  }
+  if ("playedThisTurn" in condition) return "(If this Character was played on this turn)";
   if ("leaderIs" in condition) return `(If your Leader is [${condition.leaderIs}])`;
   if ("anyOf" in condition) return condition.anyOf.map(conditionText).join(" or ");
   if ("count" in condition) {
@@ -135,6 +142,16 @@ function costText(cost: Cost): string {
   if ("trashThis" in cost) return "trash this card";
   if ("returnGivenDon" in cost)
     return `return ${cost.returnGivenDon} of your given DON!! cards to your cost area rested`;
+  if ("lifeToHand" in cost) {
+    const from = cost.from === "topOrBottom" ? "top or bottom" : "top";
+    return `add ${cost.lifeToHand} card(s) from the ${from} of your Life cards to your hand`;
+  }
+  if ("trashLife" in cost) return `trash ${cost.trashLife} card(s) from the top of your Life cards`;
+  if ("lifeFaceUp" in cost)
+    return `turn ${cost.lifeFaceUp} card(s) from the top of your Life cards face-up`;
+  if ("trashToDeckBottom" in cost) {
+    return `place ${cost.trashToDeckBottom} card(s) from your trash at the bottom of your deck`;
+  }
   return "rest this card";
 }
 
@@ -189,7 +206,7 @@ function stepText(step: Step): string {
     case "opponentTrashesFromHand":
       return `Your opponent trashes ${step.count} card(s) from their hand.`;
     case "searchDeck":
-      return `Look at ${step.look} cards from the top of your deck; reveal up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"} and add ${step.take === 1 ? "it" : "them"} to your hand. Then, place the rest at the bottom of your deck in any order.`;
+      return `Look at ${step.look} cards from the top of your deck; reveal up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"} and add ${step.take === 1 ? "it" : "them"} to your hand. Then, ${step.rest === "trash" ? "trash the rest" : "place the rest at the bottom of your deck in any order"}.`;
     case "playFromHand":
       return `Play up to 1${filterText(step.filter)} card from your hand${step.rested ? " rested" : ""}.`;
     case "playFromTrash":
@@ -198,6 +215,14 @@ function stepText(step: Step): string {
       return `Add ${step.count} card(s) from the top of your Life cards to your hand.`;
     case "deckToLife":
       return `Add up to ${step.count} card(s) from the top of your deck to the top of your Life cards.`;
+    case "trashLife":
+      return `Trash ${step.count} card(s) from the top of ${step.side === "self" ? "your" : "your opponent's"} Life cards.`;
+    case "arrangeLife":
+      return "Look at up to 1 card from the top of your or your opponent's Life cards, and place it at the top or bottom of the Life cards.";
+    case "trashCharacter":
+      return `Trash ${targetText(step.target)}.`;
+    case "addThisToHand":
+      return "Add this card to your hand.";
     case "playThis":
       return "Play this card.";
     case "negateOnPlay":

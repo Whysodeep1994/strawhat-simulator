@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildScenarioState, legalActions, viewFor } from "../src/index.js";
+import { applyAction, buildScenarioState, legalActions, viewFor } from "../src/index.js";
 import { TEST_CATALOG } from "./fixtures/test-cards.js";
 
 const state = buildScenarioState(
@@ -60,6 +60,31 @@ describe("hidden information", () => {
   it("3-4, 3-10, 3-10-1, 3-2, 3-2-1: hand, Life, and deck stay secret from the opponent", () => {
     const seen = viewFor(state, "p1").players.p2;
     expect([seen.hand, seen.handCount, seen.lifeCount, seen.deckCount]).toEqual([null, 2, 4, 20]);
+  });
+
+  it("3-10-2-1: a face-up Life card is shown to both players and is face-down again once it leaves", () => {
+    let board = buildScenarioState(
+      {
+        turn: 4,
+        turnPlayer: "p2",
+        p1: { life: ["TEST-C2-3000", "TEST-FILLER"] },
+        p2: { characters: ["TEST-C4-5000"] },
+      },
+      TEST_CATALOG,
+    );
+    const [top, under] = board.players.p1.life;
+    top!.faceUp = true;
+    const seen = viewFor(board, "p2").players.p1;
+    expect(seen.life.map((c) => c?.cardId ?? null)).toEqual(["TEST-C2-3000", null]);
+    expect(JSON.stringify(seen)).not.toContain(`"${under!.uid}"`);
+
+    const attacker = board.players.p2.characters[0]!.uid;
+    const leader = board.players.p1.leader.uid;
+    board = applyAction(board, { type: "attack", player: "p2", attacker, target: leader });
+    board = applyAction(board, { type: "pass", player: "p1" });
+    expect(board.players.p1.hand.map((c) => [c.cardId, c.faceUp])).toEqual([
+      ["TEST-C2-3000", undefined],
+    ]);
   });
 
   it("never includes the random seed, which would reveal future shuffles", () => {

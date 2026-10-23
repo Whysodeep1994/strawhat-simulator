@@ -13,6 +13,8 @@ export interface PlayerView {
   /** Deck and Life contents are hidden from both players (rules 3-2-2, 3-10-2). */
   deckCount: number;
   lifeCount: number;
+  /** Life cards top first: face-up ones are shown to both players, face-down ones are `null` (rule 3-10-2-1). */
+  life: (CardInstance | null)[];
   donDeck: number;
   donActive: number;
   donRested: number;
@@ -57,6 +59,7 @@ export function viewFor(state: GameState, viewer: PlayerId): GameView {
       handCount: p.hand.length,
       deckCount: p.deck.length,
       lifeCount: p.life.length,
+      life: p.life.map((c) => (c.faceUp ? c : null)),
       donDeck: p.donDeck,
       donActive: p.donActive,
       donRested: p.donRested,

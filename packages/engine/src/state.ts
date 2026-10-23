@@ -250,6 +250,9 @@ export function conditionsMet(
       return (definitionOf(state, me.leader).types ?? []).includes(c.leaderHasType);
     if ("charactersAtLeast" in c) return me.characters.length >= c.charactersAtLeast;
     if ("handAtMost" in c) return me.hand.length <= c.handAtMost;
+    if ("donOnFieldAtLeast" in c) return donOnField(state, controller) >= c.donOnFieldAtLeast;
+    if ("donOnFieldAtMost" in c) return donOnField(state, controller) <= c.donOnFieldAtMost;
+    if ("playedThisTurn" in c) return source.playedTurn === state.turn;
     if ("deckTopMatches" in c) {
       const top = me.deck[0];
       return !!top && matchesFilter(state, top, c.deckTopMatches, source, false);
@@ -331,6 +334,14 @@ export function leaveField(state: GameState, card: CardInstance): void {
   state.usedThisTurn = state.usedThisTurn.filter((k) => !k.startsWith(`${card.uid}:`));
 }
 
+/** DON!! cards on a player's field: active and rested in the cost area, plus given ones (rule 6-5-5). */
+export function donOnField(state: GameState, player: PlayerId): number {
+  const p = state.players[player];
+  return (
+    p.donActive + p.donRested + [p.leader, ...p.characters].reduce((n, c) => n + c.givenDon, 0)
+  );
+}
+
 /** Rule 8-3-1-3: costs must be fully payable to activate. */
 export function canPayCosts(
   state: GameState,
@@ -339,19 +350,20 @@ export function canPayCosts(
   costs: Cost[],
 ): boolean {
   const p = state.players[player];
-  const fieldDon =
-    p.donActive + p.donRested + [p.leader, ...p.characters].reduce((n, c) => n + c.givenDon, 0);
+  const hand = p.hand.filter((c) => c.uid !== source.uid);
   let restDon = 0;
   let donMinus = 0;
   let fromHand = 0;
   let returned = 0;
   let returnGiven = 0;
+  let life = 0;
+  let fromTrash = 0;
   for (const cost of costs) {
     if ("restDon" in cost) restDon += cost.restDon;
     if ("donMinus" in cost) donMinus += cost.donMinus;
     if ("trashFromHand" in cost) {
       fromHand += cost.trashFromHand;
-      const matching = p.hand.filter((c) => matchesFilter(state, c, cost.filter, source, false));
+      const matching = hand.filter((c) => matchesFilter(state, c, cost.filter, source, false));
       if (matching.length < cost.trashFromHand) return false;
     }
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
@@ -364,13 +376,19 @@ export function canPayCosts(
     }
     if ("restThis" in cost && source.rested) return false;
     if ("returnGivenDon" in cost) returnGiven += cost.returnGivenDon;
+    if ("lifeToHand" in cost) life += cost.lifeToHand;
+    if ("trashLife" in cost) life += cost.trashLife;
+    if ("lifeFaceUp" in cost && (!p.life[0] || p.life[0].faceUp)) return false;
+    if ("trashToDeckBottom" in cost) fromTrash += cost.trashToDeckBottom;
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
   }
   return (
     restDon <= p.donActive &&
-    donMinus <= fieldDon &&
-    fromHand <= p.hand.length &&
+    donMinus <= donOnField(state, player) &&
+    fromHand <= hand.length &&
     returned <= p.characters.length &&
+    life <= p.life.length &&
+    fromTrash <= p.trash.filter((c) => c.uid !== source.uid).length &&
     returnGiven <= [p.leader, ...p.characters].reduce((n, c) => n + c.givenDon, 0)
   );
 }

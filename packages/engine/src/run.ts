@@ -245,6 +245,48 @@ function payCost(
       frame.memo.push(card.uid);
     }
     frame.memo = [];
+  } else if ("lifeToHand" in cost) {
+    for (let i = frame.memo.length; i < cost.lifeToHand; i++) {
+      let fromBottom = false;
+      if (cost.from === "topOrBottom" && p.life.length > 1) {
+        if (frame.answer === null) {
+          state.prompt = {
+            kind: "confirm",
+            player: frame.controller,
+            reason: "lifeFromBottom",
+            source: frame.source,
+          };
+          return "wait";
+        }
+        fromBottom = frame.answer === true;
+        frame.answer = null;
+      }
+      const card = takeLife(p.life, fromBottom ? p.life.length - 1 : 0);
+      if (card) p.hand.push(card);
+      frame.memo.push(card?.uid ?? "");
+    }
+    frame.memo = [];
+  } else if ("trashLife" in cost) {
+    trashFromLife(state, frame.controller, cost.trashLife);
+  } else if ("lifeFaceUp" in cost) {
+    for (const card of p.life.slice(0, cost.lifeFaceUp)) card.faceUp = true;
+  } else if ("trashToDeckBottom" in cost) {
+    const pile = p.trash.filter((c) => c.uid !== source.uid);
+    const chosen = choose(
+      state,
+      frame,
+      frame.controller,
+      pile,
+      cost.trashToDeckBottom,
+      cost.trashToDeckBottom,
+      "trashToDeckBottom",
+    );
+    if (chosen === "wait") return "wait";
+    for (const uid of chosen) {
+      const index = p.trash.findIndex((c) => c.uid === uid);
+      const [card] = p.trash.splice(index, 1);
+      if (card) p.deck.push(card);
+    }
   } else if ("trashThis" in cost) {
     moveFieldCardToTrash(state, source);
   }
@@ -442,7 +484,8 @@ function runStep(
       const rest = looked.filter((c) => !chosen.includes(c.uid));
       p.deck = p.deck.slice(looked.length);
       p.hand.push(...looked.filter((c) => chosen.includes(c.uid)));
-      if (step.rest === "topOrBottom") {
+      if (step.rest === "trash") p.trash.unshift(...rest.reverse());
+      else if (step.rest === "topOrBottom") {
         // The rest go back on top, then the player arranges them.
         p.deck.unshift(...rest);
         if (rest.length > 0)
@@ -515,7 +558,8 @@ function runStep(
 
     case "lifeToHand": {
       const blocked = state.modifiers.some((m) => m.target === p.leader.uid && m.noLifeToHand);
-      if (!blocked) p.hand.push(...p.life.splice(0, step.count));
+      if (!blocked)
+        for (let i = 0; i < step.count && p.life.length > 0; i++) p.hand.push(takeLife(p.life, 0)!);
       return "continue";
     }
 
@@ -556,6 +600,31 @@ function runStep(
         steps: structuredClone(step.steps),
       });
       return "continue";
+
+    case "trashLife":
+      trashFromLife(state, step.side === "self" ? controller : opponentOf(controller), step.count);
+      return "continue";
+
+    case "arrangeLife":
+      return arrangeLife(state, frame);
+
+    case "addThisToHand": {
+      const card = state.limbo;
+      if (!card) return "continue";
+      state.limbo = null;
+      p.hand.push(card);
+      return "continue";
+    }
+
+    case "trashCharacter": {
+      const targets = chooseTargets(state, frame, source, step.target, step.do);
+      if (targets === "wait") return "wait";
+      for (const uid of targets) {
+        const location = findOnField(state, uid);
+        if (location?.zone === "characters") moveFieldCardToTrash(state, location.card);
+      }
+      return "continue";
+    }
 
     case "deckToLife":
       p.life.unshift(...p.deck.splice(0, step.count));
@@ -814,6 +883,55 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
   }
 }
 
+/** Removes a card from a Life area. It is no longer face-up once it leaves (rule 3-10-2-1). */
+function takeLife(life: CardInstance[], index: number): CardInstance | undefined {
+  const [card] = life.splice(index, 1);
+  if (card) delete card.faceUp;
+  return card;
+}
+
+function trashFromLife(state: GameState, player: PlayerId, count: number): void {
+  const p = state.players[player];
+  for (let i = 0; i < count && p.life.length > 0; i++) p.trash.unshift(takeLife(p.life, 0)!);
+}
+
+/**
+ * "Look at up to 1 card from the top of your or your opponent's Life cards, and
+ * place it at the top or bottom of the Life cards." The player first picks whose
+ * Life by choosing that player's Leader, then sees the card and picks top or bottom.
+ */
+function arrangeLife(state: GameState, frame: FrameOf<"effect">): Outcome {
+  if (frame.memo.length === 0) {
+    const leaders = (["p1", "p2"] as const)
+      .filter((id) => state.players[id].life.length > 0)
+      .map((id) => state.players[id].leader);
+    const picked =
+      leaders.length === 0
+        ? []
+        : choose(state, frame, frame.controller, leaders, 0, 1, "arrangeLife");
+    if (picked === "wait") return "wait";
+    if (picked.length === 0) return "continue";
+    frame.memo = picked;
+  }
+  const owner = findOnField(state, frame.memo[0] as string)?.player;
+  const life = owner ? state.players[owner].life : [];
+  const top = life[0];
+  if (!top) return "continue";
+  if (frame.answer === null) {
+    state.prompt = {
+      kind: "confirm",
+      player: frame.controller,
+      reason: "lifeToBottom",
+      source: top.uid,
+    };
+    return "wait";
+  }
+  const toBottom = frame.answer === true;
+  frame.answer = null;
+  if (toBottom) life.push(life.shift() as CardInstance);
+  return "continue";
+}
+
 /** Returns a Character or Stage to its owner's hand or the bottom of their deck. */
 function removeFromField(state: GameState, uid: string, to: "hand" | "deckBottom"): void {
   const location = findOnField(state, uid);
@@ -931,9 +1049,9 @@ function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
     if (!top) return "done";
     const hasTrigger = (definitionOf(state, top).effects ?? []).some((e) => e.timing === "trigger");
     if (frame.banish) {
-      p.trash.unshift(p.life.shift() as CardInstance);
+      p.trash.unshift(takeLife(p.life, 0) as CardInstance);
     } else if (!hasTrigger) {
-      p.hand.push(p.life.shift() as CardInstance);
+      p.hand.push(takeLife(p.life, 0) as CardInstance);
     } else if (frame.answer === null) {
       state.prompt = {
         kind: "confirm",
@@ -943,7 +1061,7 @@ function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
       };
       return "wait";
     } else {
-      const card = p.life.shift() as CardInstance;
+      const card = takeLife(p.life, 0) as CardInstance;
       const activate = frame.answer;
       frame.answer = null;
       frame.remaining -= 1;
