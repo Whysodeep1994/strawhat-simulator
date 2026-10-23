@@ -71,6 +71,11 @@ export function createGame(options: NewGameOptions): GameState {
     prompt: { kind: "chooseTurnOrder", player: chooser },
     battle: null,
     winner: null,
+    stack: [],
+    pendingEffects: [],
+    modifiers: [],
+    usedThisTurn: [],
+    limbo: null,
     rng,
     nextUid,
   };

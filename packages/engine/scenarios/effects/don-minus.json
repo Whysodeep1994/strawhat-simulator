@@ -1,0 +1,27 @@
+{
+  "name": "DON!! \u2212X returns DON!! to the DON!! deck",
+  "rules": ["10-2-10", "10-2-10-1", "8-3-1-6"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-DON-MINUS"],
+      "don": {
+        "active": 1,
+        "rested": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    }
+  ],
+  "expect": {
+    "p1.donDeck": 2,
+    "p1.donActive": 0,
+    "p1.donRested": 0,
+    "p1.hand": 2
+  }
+}

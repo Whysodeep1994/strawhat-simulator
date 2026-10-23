@@ -1,0 +1,32 @@
+{
+  "name": "An effect can give [Rush] for the turn",
+  "rules": ["10-1-1-1", "8-1-4-2"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-RUSH-GRANT"],
+      "don": {
+        "active": 3
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 3
+  }
+}

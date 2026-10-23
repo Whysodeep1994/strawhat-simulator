@@ -1,0 +1,16 @@
+{
+  "name": "A [Counter] Event can't be played in the Main Phase",
+  "rules": ["10-2-4-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-EVENT-COUNTER"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [],
+  "expect": {
+    "legal.p1.playCard": 0
+  }
+}

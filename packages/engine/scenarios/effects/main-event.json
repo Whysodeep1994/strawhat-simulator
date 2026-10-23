@@ -1,0 +1,39 @@
+{
+  "name": "A [Main] Event is paid for, trashed, then resolved",
+  "rules": [
+    "10-2-3",
+    "10-2-3-1",
+    "2-7-3",
+    "8-4-2",
+    "8-5",
+    "8-5-1",
+    "8-5-2",
+    "2-2-5",
+    "3-5-1",
+    "8-5-3"
+  ],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-EVENT-KO"],
+      "don": {
+        "active": 2
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C2-3000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.trash": 1,
+    "p1.donActive": 1,
+    "p2.characters": 0,
+    "p2.trash": 1
+  }
+}

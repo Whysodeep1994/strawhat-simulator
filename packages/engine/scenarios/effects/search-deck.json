@@ -1,0 +1,44 @@
+{
+  "name": "Look at the top 5, add a matching card to hand, the rest go to the bottom",
+  "rules": ["8-4-4-4", "11-2-1", "11-3", "11-3-1", "11-3-2"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-SEARCH"],
+      "don": {
+        "active": 1
+      },
+      "deck": [
+        "TEST-FILLER",
+        "TEST-C2-3000",
+        "TEST-C4-5000",
+        "TEST-FILLER",
+        "TEST-FILLER",
+        "TEST-C5-6000"
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.deck.2"],
+      "illegal": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.deck.1"]
+    }
+  ],
+  "expect": {
+    "p1.hand": 1,
+    "p1.hand.0.cardId": "TEST-C2-3000",
+    "p1.deck": 5,
+    "p1.deck.0.cardId": "TEST-C5-6000"
+  }
+}

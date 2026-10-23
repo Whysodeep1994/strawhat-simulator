@@ -1,0 +1,23 @@
+{
+  "name": "An 'if' clause that fails skips what follows",
+  "rules": ["4-10-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-IF"],
+      "don": {
+        "active": 2
+      },
+      "life": 3
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 0
+  }
+}

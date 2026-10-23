@@ -1,0 +1,37 @@
+{
+  "name": "[Once Per Turn] is available again next turn",
+  "rules": ["10-2-13-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-ACTIVATE"],
+      "don": {
+        "active": 3
+      }
+    },
+    "p2": {
+      "don": {
+        "deck": 10
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "endTurn",
+      "player": "p1"
+    },
+    {
+      "type": "endTurn",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "turnPlayer": "p1",
+    "legal.p1.activate": 1
+  }
+}

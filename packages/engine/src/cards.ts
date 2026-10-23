@@ -1,3 +1,5 @@
+import type { EffectDefinition } from "./effects.js";
+
 /** Card data the engine needs. Real cards use their official card number as `id` (e.g. "OP13-001"). */
 
 export type CardCategory = "leader" | "character" | "event" | "stage";
@@ -28,6 +30,7 @@ export interface CardDefinition {
   life?: number;
   keywords?: Keyword[];
   types?: string[];
+  effects?: EffectDefinition[];
 }
 
 export type CardCatalog = Record<string, CardDefinition>;
