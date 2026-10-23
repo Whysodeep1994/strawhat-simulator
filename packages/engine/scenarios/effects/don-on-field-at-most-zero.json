@@ -1,0 +1,20 @@
+{
+  "name": "With no DON!! on the field, a 0-DON!! condition holds",
+  "rules": ["8-3-3"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-NO-DON-DRAW"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

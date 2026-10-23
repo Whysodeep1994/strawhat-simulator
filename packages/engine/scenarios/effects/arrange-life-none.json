@@ -1,0 +1,28 @@
+{
+  "name": "\"Up to 1\": the player can look at no Life card",
+  "rules": ["4-8-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-ARRANGE-LIFE"],
+      "don": {
+        "active": 2
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": []
+    }
+  ],
+  "expect": {
+    "prompt.kind": "main",
+    "p1.characters": 1
+  }
+}

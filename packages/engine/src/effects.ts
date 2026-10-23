@@ -73,9 +73,13 @@ export type Condition =
   | { leaderHasType: string }
   | { charactersAtLeast: number }
   | { handAtMost: number }
+  /** "If you have X or more DON!! cards on your field": active, rested, and given (rule 3-6-1). */
+  | { donOnFieldAtLeast: number }
+  | { donOnFieldAtMost: number }
+  /** "If this Character was played on this turn". */
+  | { playedThisTurn: true }
   /** The top card of your deck matches, as in "Reveal 1 card from the top of your deck. If that card is..." */
   | { deckTopMatches: Filter }
-
   /** "If your Leader is [Buggy]": the Leader's name. */
   | { leaderIs: string }
   /** True if any of the listed conditions holds ("has the {X} type or is [Y]"). */
@@ -108,6 +112,14 @@ export type Cost =
   /** Rest 1 of your active Leader, Characters or Stage matching the filter (e.g. "rest 1 of your [Uta] cards"). */
   | { restOwn: Filter }
   | { restThis: true }
+  /** Add Life cards to your hand, from the top or (player's choice) the top or bottom. */
+  | { lifeToHand: number; from?: "top" | "topOrBottom" }
+  /** Trash cards from the top of your Life cards. */
+  | { trashLife: number }
+  /** Turn the top card of your Life cards face-up. It must be face-down. */
+  | { lifeFaceUp: number }
+  /** Place cards from your trash at the bottom of your deck. */
+  | { trashToDeckBottom: number }
   /** Trash this card from the field. Not a K.O. */
   | { trashThis: true };
 
@@ -213,8 +225,17 @@ export type Step =
   /** The opponent trashes cards from their hand. */
   | { do: "opponentTrashesFromHand"; count: number }
   /** Look at the top cards, reveal and add matching ones to hand, rest to the bottom. */
-  /** With `rest: "topOrBottom"`, the rest go to the top or bottom of the deck in any order. */
-  | { do: "searchDeck"; look: number; take: number; filter?: Filter; rest?: "topOrBottom" }
+  /**
+   * The rest go to the bottom; with `rest: "trash"` they are trashed, and with
+   * `rest: "topOrBottom"` they go to the top or bottom of the deck in any order.
+   */
+  | {
+      do: "searchDeck";
+      look: number;
+      take: number;
+      filter?: Filter;
+      rest?: "bottom" | "trash" | "topOrBottom";
+    }
   /**
    * Look at the top cards and put them back on top in any order. With `bottom`,
    * any of them can go to the bottom instead ("at the top or bottom of the deck in any order").
@@ -229,6 +250,17 @@ export type Step =
   | { do: "noLifeToHand" }
   | { do: "lifeToHand"; count: number }
   | { do: "deckToLife"; count: number }
+  /** Trash cards from the top of your (or your opponent's) Life cards. */
+  | { do: "trashLife"; side: "self" | "opponent"; count: number }
+  /**
+   * "Look at up to 1 card from the top of your or your opponent's Life cards,
+   * and place it at the top or bottom of the Life cards."
+   */
+  | { do: "arrangeLife" }
+  /** Trigger only: add this card to your hand. */
+  | { do: "addThisToHand" }
+  /** Trash Characters from the field. This is not a K.O. (rule 10-2-14). */
+  | { do: "trashCharacter"; target: Target }
   /** Play this card: a [Trigger] card instead of trashing it, or this card from the trash (e.g. [On K.O.]). */
   | { do: "playThis"; rested?: boolean }
   /** "Choose one": the chooser picks one option, whose steps then happen. */

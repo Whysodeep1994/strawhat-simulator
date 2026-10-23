@@ -1,0 +1,27 @@
+{
+  "name": "Trashing the top card of the opponent's Life cards",
+  "rules": ["3-10-2"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-TRASH-OPP-LIFE"],
+      "don": {
+        "active": 2
+      }
+    },
+    "p2": {
+      "life": ["TEST-C4-5000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p2.life": 1,
+    "p2.trash.0.cardId": "TEST-C4-5000",
+    "p2.hand": 0
+  }
+}

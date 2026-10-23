@@ -7,7 +7,7 @@ Comprehensive Rules version 1.2.1.
 | Group | Tested | Total | Coverage |
 | --- | --- | --- | --- |
 | Core rules (no card effects needed) | 146 | 148 | 99% |
-| All rules with gameplay effect | 262 | 410 | 64% |
+| All rules with gameplay effect | 264 | 410 | 64% |
 
 **Phase 4** rules need the card effect library or the card data format. Section headings and rules with no gameplay effect (copyright line, rarity, and so on) aren't counted.
 
@@ -187,9 +187,9 @@ Comprehensive Rules version 1.2.1.
 | 3-9-3 | 3-9 Cost Area | Tested | 1 |
 | 3-10 | 3-10 Life Area | Tested | 1 |
 | 3-10-1 | 3-10 Life Area | Tested | 1 |
-| 3-10-2 | 3-10 Life Area | Tested | 2 |
-| 3-10-2-1 | 3-10 Life Area | Phase 4 (effects) | 0 |
-| 3-10-3 | 3-10 Life Area | Phase 4 (effects) | 0 |
+| 3-10-2 | 3-10 Life Area | Tested | 6 |
+| 3-10-2-1 | 3-10 Life Area | Tested | 2 |
+| 3-10-3 | 3-10 Life Area | Tested | 2 |
 | 4-1 | 4-1 Effects | Section heading | 0 |
 | 4-1-1 | 4-1 Effects | Phase 4 (effects) | 0 |
 | 4-1-2 | 4-1 Effects | Phase 4 (effects) | 0 |
@@ -224,7 +224,7 @@ Comprehensive Rules version 1.2.1.
 | 4-7-1 | 4-7 Play a Card | Tested | 2 |
 | 4-7-2 | 4-7 Play a Card | Tested | 1 |
 | 4-8 | 4-8 Up to X Card(s) | Tested | 1 |
-| 4-8-1 | 4-8 Up to X Card(s) | Tested | 2 |
+| 4-8-1 | 4-8 Up to X Card(s) | Tested | 4 |
 | 4-8-2 | 4-8 Up to X Card(s) | Phase 4 (effects) | 0 |
 | 4-9 | 4-9 “Base” | Section heading | 0 |
 | 4-9-1 | 4-9 “Base” | Phase 4 (effects) | 0 |
@@ -286,7 +286,7 @@ Comprehensive Rules version 1.2.1.
 | 6-5-4 | 6-5 Main Phase | Tested | 1 |
 | 6-5-4-1 | 6-5 Main Phase | Tested | 1 |
 | 6-5-5 | 6-5 Main Phase | Tested | 1 |
-| 6-5-5-1 | 6-5 Main Phase | Tested | 2 |
+| 6-5-5-1 | 6-5 Main Phase | Tested | 3 |
 | 6-5-5-2 | 6-5 Main Phase | Tested | 3 |
 | 6-5-5-3 | 6-5 Main Phase | Tested | 1 |
 | 6-5-5-4 | 6-5 Main Phase | Tested | 1 |
@@ -369,10 +369,10 @@ Comprehensive Rules version 1.2.1.
 | 8-2-3 | 8-2 Valid and Invalid Effects | Phase 4 (effects) | 0 |
 | 8-2-4 | 8-2 Valid and Invalid Effects | Phase 4 (effects) | 0 |
 | 8-3 | 8-3 Activation Cost and Conditions | Section heading | 0 |
-| 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 5 |
+| 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 9 |
 | 8-3-1-1 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-1-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
-| 8-3-1-3 | 8-3 Activation Cost and Conditions | Tested | 4 |
+| 8-3-1-3 | 8-3 Activation Cost and Conditions | Tested | 7 |
 | 8-3-1-3-1 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-4 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-1-5 | 8-3 Activation Cost and Conditions | Tested | 1 |
@@ -385,7 +385,7 @@ Comprehensive Rules version 1.2.1.
 | 8-3-2-3 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-4 | 8-3 Activation Cost and Conditions | Tested | 1 |
 | 8-3-2-5 | 8-3 Activation Cost and Conditions | Tested | 1 |
-| 8-3-3 | 8-3 Activation Cost and Conditions | Tested | 4 |
+| 8-3-3 | 8-3 Activation Cost and Conditions | Tested | 9 |
 | 8-4 | 8-4 Activation and Resolution | Section heading | 0 |
 | 8-4-1 | 8-4 Activation and Resolution | Tested | 2 |
 | 8-4-1-1 | 8-4 Activation and Resolution | Tested | 1 |
@@ -429,10 +429,10 @@ Comprehensive Rules version 1.2.1.
 | 10-1-3-1 | 10-1 Keyword Effects | Tested | 2 |
 | 10-1-4 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-4-1 | 10-1 Keyword Effects | Tested | 6 |
-| 10-1-5 | 10-1 Keyword Effects | Tested | 1 |
+| 10-1-5 | 10-1 Keyword Effects | Tested | 2 |
 | 10-1-5-1 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-5-2 | 10-1 Keyword Effects | Tested | 1 |
-| 10-1-5-3 | 10-1 Keyword Effects | Tested | 2 |
+| 10-1-5-3 | 10-1 Keyword Effects | Tested | 3 |
 | 10-1-6 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-6-1 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-7 | 10-1 Keyword Effects | Tested | 1 |
@@ -479,7 +479,7 @@ Comprehensive Rules version 1.2.1.
 | 10-2-15-1 | 10-2 Keywords | Tested | 1 |
 | 10-2-16 | 10-2 Keywords | Tested | 1 |
 | 10-2-16-1 | 10-2 Keywords | Tested | 1 |
-| 10-2-17 | 10-2 Keywords | Tested | 2 |
+| 10-2-17 | 10-2 Keywords | Tested | 3 |
 | 10-2-17-1 | 10-2 Keywords | Tested | 1 |
 | 10-2-17-2 | 10-2 Keywords | Tested | 1 |
 | 11-1 | 11-1 Infinite Loops | Section heading | 0 |
@@ -491,6 +491,6 @@ Comprehensive Rules version 1.2.1.
 | 11-2-1 | 11-2 Revealing Cards | Tested | 4 |
 | 11-2-2 | 11-2 Revealing Cards | Phase 4 (effects) | 0 |
 | 11-3 | 11-3 Viewing Secret Areas | Tested | 4 |
-| 11-3-1 | 11-3 Viewing Secret Areas | Tested | 3 |
+| 11-3-1 | 11-3 Viewing Secret Areas | Tested | 4 |
 | 11-3-2 | 11-3 Viewing Secret Areas | Tested | 1 |
 | 11-3-3 | 11-3 Viewing Secret Areas | Phase 4 (effects) | 0 |

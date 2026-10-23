@@ -81,7 +81,9 @@ never replaced.
 `donAtLeast` ([DON!! xX]), `yourTurn`, `opponentsTurn`, `lifeAtMost`, `lifeAtLeast`,
 `opponentLifeAtMost`, `leaderHasType`, `charactersAtLeast`, `handAtMost`, `deckTopMatches`
 (a filter for the top card of your deck, for "Reveal 1 card from the top of your deck. If that
-card is..."), plus:
+card is..."), `donOnFieldAtLeast` and `donOnFieldAtMost` ("if you have 8 or more DON!! cards on
+your field", counting active, rested and given DON!!), `playedThisTurn` ("if this Character was
+played on this turn"), plus:
 
 | Condition                          | Card wording                                                     |
 | ---------------------------------- | ---------------------------------------------------------------- |
@@ -101,7 +103,13 @@ cost of 5 or more" is `{ "count": { "side": "self", "filter": { "costAtLeast": 5
 `{ "trashFromHand": 1, "filter": { "type": "FILM" } }`), `handToDeckTop` (place cards from your
 hand at the top of your deck), `returnOwnCharacter` (return your Characters to your hand),
 `restOwn` (rest 1 of your active Leader, Characters or Stage matching a filter, e.g.
-`{ "restOwn": { "name": "Uta" } }`), `restThis`, `trashThis` ("trash this Character", not a K.O.).
+`{ "restOwn": { "name": "Uta" } }`), `restThis`, `trashThis` ("trash this Character", not a K.O.), `lifeToHand` (add Life cards to
+your hand; `"from": "topOrBottom"` lets the player take the bottom one), `trashLife` (trash from
+the top of your Life), `lifeFaceUp` (turn the top Life card face-up; it must be face-down),
+`trashToDeckBottom` (place cards from your trash at the bottom of your deck).
+
+Face-up Life cards are open to both players (rule 3-10-2-1): `viewFor` shows them in `life`, and
+a card is face-down again once it leaves the Life area.
 
 ## Targets
 
@@ -125,36 +133,40 @@ picks automatically, so players are only asked about meaningful decisions.
 
 ## Steps
 
-| Step                             | What it does                                                                                                                                                                     |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `draw`                           | Draw cards.                                                                                                                                                                      |
-| `powerUp`                        | Change power (negative for "−"), for the turn or the battle. With `perPrevious`, the amount counts once for every card the previous step moved ("+1000 for every card trashed"). |
-| `grantKeyword`                   | Give [Rush], [Blocker], [Double Attack], and so on.                                                                                                                              |
-| `ko`                             | K.O. Characters.                                                                                                                                                                 |
-| `rest` / `setActive`             | Rest or set active.                                                                                                                                                              |
-| `returnToHand`                   | Return to the owner's hand.                                                                                                                                                      |
-| `returnToDeckBottom`             | Place at the bottom of the owner's deck.                                                                                                                                         |
-| `noBlockers`                     | "Your opponent cannot activate [Blocker]" when the target attacks.                                                                                                               |
-| `giveRestedDon`                  | Give rested DON!! from the cost area.                                                                                                                                            |
-| `addDon`                         | Add DON!! from the DON!! deck, active or rested.                                                                                                                                 |
-| `setDonActive`                   | Set rested DON!! as active.                                                                                                                                                      |
-| `trashFromHand`                  | You trash cards from your hand (optional `filter`).                                                                                                                              |
-| `opponentTrashesFromHand`        | Your opponent trashes cards from their hand.                                                                                                                                     |
-| `searchDeck`                     | Look at the top cards, add matching ones to hand, rest to the bottom. `"rest": "topOrBottom"` lets the player put the rest at the top or bottom in any order.                    |
-| `playFromHand` / `playFromTrash` | Play a card for free.                                                                                                                                                            |
-| `lifeToHand` / `deckToLife`      | Move cards between Life, hand, and deck.                                                                                                                                         |
-| `playThis`                       | Play this card: a [Trigger] card, or this card from the trash (e.g. [On K.O.]). `rested` plays it rested.                                                                        |
-| `handToDeckTop`                  | Place cards from your hand at the top of your deck.                                                                                                                              |
-| `trashToHand`                    | Add up to `count` matching cards from your trash to your hand.                                                                                                                   |
-| `arrangeDeckTop`                 | Look at the top `look` cards and put them back on top in any order; with `bottom`, any can go to the bottom instead. The player answers with the cards in order, top first.      |
-| `playFromDeckTop`                | "You may play" the top card of your deck if it matches; `rested` plays it rested.                                                                                                |
-| `noLifeToHand`                   | "You cannot add Life cards to your hand using your own effects during this turn."                                                                                                |
-| `chooseOne`                      | "Choose one": `options` are `{ "label", "steps" }`; `"chooser": "opponent"` for "your opponent chooses". The player answers with `{ "type": "chooseOne", "option": index }`.     |
-| `restOpponentDon`                | Rest up to `count` of your opponent's active DON!! cards.                                                                                                                        |
-| `atEndOfTurn`                    | The nested steps happen at the end of this turn.                                                                                                                                 |
-| `if`                             | Only do the nested steps if the conditions hold.                                                                                                                                 |
-| `grantStatus`                    | "Cannot attack", "cannot be K.O.'d ...", and so on. See below.                                                                                                                   |
-| `costChange`                     | Change cost (negative for "−"), for the turn or as a permanent effect.                                                                                                           |
+| Step                             | What it does                                                                                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `draw`                           | Draw cards.                                                                                                                                                                                       |
+| `powerUp`                        | Change power (negative for "−"), for the turn or the battle. With `perPrevious`, the amount counts once for every card the previous step moved ("+1000 for every card trashed").                  |
+| `grantKeyword`                   | Give [Rush], [Blocker], [Double Attack], and so on.                                                                                                                                               |
+| `ko`                             | K.O. Characters.                                                                                                                                                                                  |
+| `rest` / `setActive`             | Rest or set active.                                                                                                                                                                               |
+| `returnToHand`                   | Return to the owner's hand.                                                                                                                                                                       |
+| `returnToDeckBottom`             | Place at the bottom of the owner's deck.                                                                                                                                                          |
+| `noBlockers`                     | "Your opponent cannot activate [Blocker]" when the target attacks.                                                                                                                                |
+| `giveRestedDon`                  | Give rested DON!! from the cost area.                                                                                                                                                             |
+| `addDon`                         | Add DON!! from the DON!! deck, active or rested.                                                                                                                                                  |
+| `setDonActive`                   | Set rested DON!! as active.                                                                                                                                                                       |
+| `trashFromHand`                  | You trash cards from your hand (optional `filter`).                                                                                                                                               |
+| `opponentTrashesFromHand`        | Your opponent trashes cards from their hand.                                                                                                                                                      |
+| `searchDeck`                     | Look at the top cards, add matching ones to hand, rest to the bottom. `"rest": "trash"` trashes the rest; `"rest": "topOrBottom"` lets the player put the rest at the top or bottom in any order. |
+| `playFromHand` / `playFromTrash` | Play a card for free.                                                                                                                                                                             |
+| `lifeToHand` / `deckToLife`      | Move cards between Life, hand, and deck.                                                                                                                                                          |
+| `trashLife`                      | Trash the top of your (`"side": "self"`) or the opponent's Life.                                                                                                                                  |
+| `arrangeLife`                    | Look at the top Life card of either player; place it top or bottom.                                                                                                                               |
+| `trashCharacter`                 | Trash Characters from the field. Not a K.O., so no [On K.O.].                                                                                                                                     |
+| `addThisToHand`                  | [Trigger] only: add this card to your hand.                                                                                                                                                       |
+| `playThis`                       | Play this card: a [Trigger] card, or this card from the trash (e.g. [On K.O.]). `rested` plays it rested.                                                                                         |
+| `handToDeckTop`                  | Place cards from your hand at the top of your deck.                                                                                                                                               |
+| `trashToHand`                    | Add up to `count` matching cards from your trash to your hand.                                                                                                                                    |
+| `arrangeDeckTop`                 | Look at the top `look` cards and put them back on top in any order; with `bottom`, any can go to the bottom instead. The player answers with the cards in order, top first.                       |
+| `playFromDeckTop`                | "You may play" the top card of your deck if it matches; `rested` plays it rested.                                                                                                                 |
+| `noLifeToHand`                   | "You cannot add Life cards to your hand using your own effects during this turn."                                                                                                                 |
+| `chooseOne`                      | "Choose one": `options` are `{ "label", "steps" }`; `"chooser": "opponent"` for "your opponent chooses". The player answers with `{ "type": "chooseOne", "option": index }`.                      |
+| `restOpponentDon`                | Rest up to `count` of your opponent's active DON!! cards.                                                                                                                                         |
+| `atEndOfTurn`                    | The nested steps happen at the end of this turn.                                                                                                                                                  |
+| `if`                             | Only do the nested steps if the conditions hold.                                                                                                                                                  |
+| `grantStatus`                    | "Cannot attack", "cannot be K.O.'d ...", and so on. See below.                                                                                                                                    |
+| `costChange`                     | Change cost (negative for "−"), for the turn or as a permanent effect.                                                                                                                            |
 
 Durations (`duration` on `powerUp`, `grantKeyword`, `grantStatus`, `costChange`, `noBlockers`):
 `"turn"` (the default), `"battle"`, and `"opponentsNextTurn"` for "until the end of your
