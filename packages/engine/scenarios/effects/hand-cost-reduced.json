@@ -1,0 +1,27 @@
+{
+  "name": "\"Give this card in your hand \u22124 cost\" applies only while its condition holds",
+  "rules": ["2-7-1", "2-7-6"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-HAND-COST", "TEST-HAND-COST"],
+      "don": {
+        "active": 2
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.donActive": 0,
+    "p1.donRested": 2
+  }
+}

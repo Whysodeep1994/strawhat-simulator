@@ -1,0 +1,35 @@
+{
+  "name": "\"When this Character is K.O.'d by an effect\" doesn't resolve after a battle K.O.",
+  "rules": ["10-2-1-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C5-6000"]
+    },
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-KO-BY-EFFECT",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.characters": 0,
+    "p2.trash": 1,
+    "modifiers": 0,
+    "prompt.kind": "main"
+  }
+}

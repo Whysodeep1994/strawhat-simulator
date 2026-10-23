@@ -1,7 +1,14 @@
 import type { Timing } from "./effects.js";
 import { cardsToDraw, donToPlace } from "./phases.js";
 import { processRules } from "./rules.js";
-import { conditionsMet, definitionOf, effectOf, findOnField, leaveField } from "./state.js";
+import {
+  conditionsMet,
+  definitionOf,
+  effectOf,
+  findOnField,
+  hasStatus,
+  leaveField,
+} from "./state.js";
 import type { CardInstance, Frame, GameState, PlayerId } from "./types.js";
 
 /** Rules 4-5-1 to 4-5-3. Drawing from an empty deck does nothing; rule 9-2-1-2 already ended the game. */
@@ -39,7 +46,7 @@ export function startTurn(state: GameState, player: PlayerId): void {
     card.givenDon = 0;
   }
   for (const card of [p.leader, ...p.characters, ...(p.stage ? [p.stage] : [])])
-    card.rested = false;
+    if (!hasStatus(state, card, "noRefresh")) card.rested = false;
   p.donActive += p.donRested;
   p.donRested = 0;
 
@@ -62,15 +69,17 @@ export function startTurn(state: GameState, player: PlayerId): void {
 
 /**
  * Rules 10-2-1-2 and 10-2-17: [On K.O.] conditions are checked while the card
- * is still on the field; the effect then resolves from the trash.
+ * is still on the field; the effect then resolves from the trash. `byEffect`
+ * is false for a K.O. in battle.
  */
-export function knockOut(state: GameState, uid: string): void {
+export function knockOut(state: GameState, uid: string, byEffect = false): void {
   for (const player of ["p1", "p2"] as const) {
     const p = state.players[player];
     const card = p.characters.find((c) => c.uid === uid);
     if (!card) continue;
     (definitionOf(state, card).effects ?? []).forEach((effect, index) => {
-      if (effect.timing === "onKO" && conditionsMet(state, player, card, effect.conditions)) {
+      const timingMet = effect.timing === "onKO" || (effect.timing === "koByEffect" && byEffect);
+      if (timingMet && conditionsMet(state, player, card, effect.conditions)) {
         state.pendingEffects.push({ controller: player, source: card.uid, effect: index });
       }
     });
@@ -102,8 +111,8 @@ export function putOnField(
   queueEffects(state, player, card, "onPlay");
 }
 
-/** Trashing by rule (3-7-6-1-1, 3-8-5-1) is not a K.O. */
-function moveFieldCardToTrash(state: GameState, card: CardInstance): void {
+/** Trashing by rule (3-7-6-1-1, 3-8-5-1) or by a "trash this Character" cost is not a K.O. */
+export function moveFieldCardToTrash(state: GameState, card: CardInstance): void {
   const p = state.players[card.owner];
   if (p.stage?.uid === card.uid) p.stage = null;
   p.characters = p.characters.filter((c) => c.uid !== card.uid);

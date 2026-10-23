@@ -3,7 +3,7 @@ import { isLegal } from "./legal.js";
 import { endGame, processRules } from "./rules.js";
 import { advance } from "./run.js";
 import { shuffleInPlace } from "./rng.js";
-import { definitionOf, fieldCards, findOnField } from "./state.js";
+import { definitionOf, fieldCards, findOnField, playCostOf } from "./state.js";
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
 import { drawCards, pushEffect, putOnField, queueEffects, startTurn } from "./turn.js";
 
@@ -65,10 +65,14 @@ function perform(state: GameState, action: Action): void {
       setBattleStep(state, state.prompt.kind === "block" ? "counter" : "damage");
       return;
     case "choose":
-    case "confirm": {
+    case "confirm":
+    case "chooseOne": {
       const frame = state.stack.at(-1);
-      if (frame && (frame.kind === "effect" || frame.kind === "damage")) {
-        frame.answer = action.type === "choose" ? action.cards : action.accept;
+      if (frame?.kind === "effect" && action.type === "chooseOne") {
+        frame.answer = [String(action.option)];
+      } else if (frame && (frame.kind === "effect" || frame.kind === "damage")) {
+        if (action.type === "choose" && frame.kind === "effect") frame.answer = action.cards;
+        if (action.type === "confirm") frame.answer = action.accept;
       }
       return;
     }
@@ -117,13 +121,14 @@ function finishMulligan(state: GameState, player: PlayerId, redraw: boolean): vo
 /** Rules 6-5-3-1, 2-7-2 to 2-7-4, 3-7-6-1, 3-8-5-1, 8-4-2. */
 function playCard(state: GameState, player: PlayerId, uid: string, trash?: string): void {
   const p = state.players[player];
-  const [card] = p.hand.splice(
-    p.hand.findIndex((c) => c.uid === uid),
-    1,
-  );
+  const position = p.hand.findIndex((c) => c.uid === uid);
+  const inHand = p.hand[position];
+  if (!inHand) return;
+  // Rule 6-5-3-1: the cost is worked out while the card is still in hand.
+  const cost = playCostOf(state, player, inHand);
+  const [card] = p.hand.splice(position, 1);
   if (!card) return;
   const def = definitionOf(state, card);
-  const cost = def.cost ?? 0;
   p.donActive -= cost;
   p.donRested += cost;
 
@@ -191,13 +196,13 @@ function counter(state: GameState, player: PlayerId, uid: string, target: string
 /** Rules 7-1-3-1-2, 10-2-4. */
 function counterEvent(state: GameState, player: PlayerId, uid: string): void {
   const p = state.players[player];
-  const [card] = p.hand.splice(
-    p.hand.findIndex((c) => c.uid === uid),
-    1,
-  );
+  const position = p.hand.findIndex((c) => c.uid === uid);
+  const inHand = p.hand[position];
+  if (!inHand) return;
+  const cost = playCostOf(state, player, inHand);
+  const [card] = p.hand.splice(position, 1);
   if (!card) return;
   const def = definitionOf(state, card);
-  const cost = def.cost ?? 0;
   p.donActive -= cost;
   p.donRested += cost;
   p.trash.unshift(card);

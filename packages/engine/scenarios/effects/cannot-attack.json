@@ -1,0 +1,38 @@
+{
+  "name": "\"This Character cannot attack\", and a permanent effect stopping opponent's cost 2 or less Characters",
+  "rules": ["8-1-3-3"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-NO-ATTACK"]
+    },
+    "p2": {
+      "characters": ["TEST-FILLER", "TEST-C4-5000"],
+      "don": {
+        "deck": 10
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader",
+      "illegal": true
+    },
+    {
+      "type": "endTurn",
+      "player": "p1"
+    },
+    {
+      "type": "attack",
+      "player": "p2",
+      "attacker": "p2.characters.0",
+      "target": "p1.leader",
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "legal.p2.attack": 2
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "A cost filter reads the current cost: \u22122 cost lets a cost 3 or less K.O. hit a cost 4 Character",
+  "rules": ["2-7-6"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-COST-DOWN", "TEST-ONPLAY-KO"],
+      "don": {
+        "active": 4
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C4-5000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    }
+  ],
+  "expect": {
+    "p2.characters": 0,
+    "p2.trash": 1
+  }
+}
