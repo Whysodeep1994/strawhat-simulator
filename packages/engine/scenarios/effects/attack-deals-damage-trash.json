@@ -1,0 +1,32 @@
+{
+  "name": "\"When this card's attack deals damage\" trashes the top card of the deck",
+  "rules": ["8-1-3-1"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-LEADER-EAST",
+      "deck": 3
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "winner": null,
+    "p1.deck": 2,
+    "p1.trash": 1
+  }
+}

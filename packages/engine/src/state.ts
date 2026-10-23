@@ -187,6 +187,25 @@ export function powerAmount(
   return step.amount * Math.floor(state.players[controller].trash.length / step.perTrash);
 }
 
+/**
+ * Whether one of `player`'s permanent effects sets a game rule right now, such as
+ * `faceUpLifeToDeckBottom` or `winOnDeckOut`.
+ */
+export function hasRule(
+  state: GameState,
+  player: PlayerId,
+  rule: "faceUpLifeToDeckBottom" | "winOnDeckOut",
+): boolean {
+  return fieldCards(state, player).some((source) =>
+    (definitionOf(state, source).effects ?? []).some(
+      (effect) =>
+        effect.timing === "permanent" &&
+        effect.steps.some((s) => s.do === rule) &&
+        conditionsMet(state, player, source, effect.conditions),
+    ),
+  );
+}
+
 /** Whether `player`'s [On Play] effects are negated right now. */
 export function onPlayNegated(state: GameState, player: PlayerId): boolean {
   const leader = state.players[player].leader.uid;
@@ -348,6 +367,8 @@ export function matchesFilter(
   if (filter.attribute && !(def.attribute ?? "").includes(filter.attribute)) return false;
   if (filter.anyOf && !filter.anyOf.some((f) => matchesFilter(state, card, f, source, usePower)))
     return false;
+  if (filter.noBaseEffect && ((def.effects ?? []).length > 0 || (def.keywords ?? []).length > 0))
+    return false;
   return true;
 }
 
@@ -432,6 +453,10 @@ export function canPayCosts(
       return false;
     if ("trashToDeckBottom" in cost) fromTrash += cost.trashToDeckBottom;
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
+    if ("characterToLife" in cost) {
+      const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      if (own.length < cost.characterToLife) return false;
+    }
   }
   return (
     restDon <= p.donActive &&

@@ -157,7 +157,9 @@ export type Cost =
   /** Trash this card from the field. Not a K.O. */
   | { trashThis: true }
   /** "Return N total of your currently given DON!! cards to your cost area rested." */
-  | { returnGivenDon: number };
+  | { returnGivenDon: number }
+  /** "Add 1 of your Characters ... to the top of your Life cards (face-up)". */
+  | { characterToLife: number; filter?: Filter; faceUp?: boolean };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -207,6 +209,8 @@ export interface Filter {
   attribute?: string;
   /** At least one of these filters matches ("{Cross Guild} type or ..."). */
   anyOf?: Filter[];
+  /** "With no base effect": a card without card text (rule 2-8-5), so no effects or keywords. */
+  noBaseEffect?: boolean;
 }
 
 /**
@@ -306,6 +310,8 @@ export type Step =
       take: number;
       filter?: Filter;
       rest?: "bottom" | "trash" | "topOrBottom";
+      /** "Add ... to the top of your Life cards face-up" instead of to your hand. */
+      to?: "lifeFaceUp";
     }
   /**
    * Look at the top cards and put them back on top in any order. With `bottom`,

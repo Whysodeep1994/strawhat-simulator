@@ -129,7 +129,8 @@ of costs the player pays one of, e.g. "rest your Leader or 1 of your DON!! cards
 `{ "oneOf": [{ "restOwn": { "category": "leader" } }, { "restDon": 1 }] }`),
 `trashToDeckBottom` (place cards from your trash at the bottom of your deck), `returnGivenDon`
 ("return N of your currently given DON!! cards to your cost area rested"; the player picks which
-cards).
+cards), `characterToLife` ("add 1 of your Characters with ... to the top of your Life cards
+face-up": `{ "characterToLife": 1, "filter": {...}, "faceUp": true }`).
 
 Face-up Life cards are open to both players (rule 3-10-2-1): `viewFor` shows them in `life`, and
 a card is face-down again once it leaves the Life area.
@@ -153,6 +154,8 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `typeIncludes`: a type containing some text, e.g. `"Baroque Works"`.
 - `attribute`: the printed attribute includes this, e.g. `"Slash"` (cards set `attribute`).
 - `anyOf`: a list of filters, any of which may match ("{Cross Guild} type or ...").
+- `noBaseEffect`: "with no base effect", a card without card text (rule 2-8-5): no effects and
+  no keywords.
 
 When there's no real choice (for example, exactly one valid target and no "up to"), the engine
 picks automatically, so players are only asked about meaningful decisions.
@@ -200,7 +203,9 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `restOpponentDon`                | Rest up to `count` of your opponent's active DON!! cards.                                                                                                                                         |
 | `atEndOfTurn`                    | The nested steps happen at the end of this turn.                                                                                                                                                  |
 | `handToDeckBottom`               | Place cards from your hand at the bottom of your deck.                                                                                                                                            |
-| `handToLife`                     | "Add up to 1 card from your hand to the top of your Life cards."                                                                                                                                  |
+| `handToLife`                     | "Add up to 1 card from your hand to the top of your Life cards." Optional `filter`, `fromTrash` ("from your hand or trash") and `faceUp`.                                                         |
+| `trashFaceUpLife`                | Trash all of your face-up Life cards.                                                                                                                                                             |
+| `trashDeckTop`                   | Trash cards from the top of your deck.                                                                                                                                                            |
 | `revealedToDeckTop`              | Place the cards revealed by a `revealFromHand` cost at the top of your deck.                                                                                                                      |
 | `setBasePower`                   | "[Leader]'s base power becomes 7000", with an optional `duration`.                                                                                                                                |
 | `if`                             | Only do the nested steps if the conditions hold.                                                                                                                                                  |
@@ -229,5 +234,17 @@ Step options:
 - `playFromHand` and `playFromTrash` take `"rested": true` for "play ... rested".
 
 `powerUp` takes `perTrash: 4` for "+X power for every 4 cards in your trash".
+
+`searchDeck` takes `"to": "lifeFaceUp"` for "add ... to the top of your Life cards face-up".
+
+### Game rules on a card
+
+Some Leaders change the rules of the game. Write them as steps in a `permanent` effect:
+
+- `faceUpLifeToDeckBottom`: "Your face-up Life cards are placed at the bottom of your deck
+  instead of being added to your hand, according to the rules" (damage only; no [Trigger] check).
+- `winOnDeckOut`: "when your deck is reduced to 0, you win the game instead of losing".
+- `deckOnlyType` (`"type": "East Blue"`): "you can only include {East Blue} type cards in your
+  deck". `checkDeck` flags other cards.
 
 Each block is tested in `packages/engine/scenarios/effects/` using made-up `TEST-` cards.
