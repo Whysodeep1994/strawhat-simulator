@@ -1,0 +1,35 @@
+{
+  "name": "A [Trigger] that plays the card puts it on the field instead of the trash",
+  "rules": ["10-1-5-3"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C4-5000"]
+    },
+    "p2": {
+      "life": ["TEST-TRIGGER-PLAY"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    },
+    {
+      "type": "confirm",
+      "player": "p2",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p2.characters": 1,
+    "p2.trash": 0,
+    "p2.life": 0,
+    "winner": null
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "[End of Your Turn] effects resolve in the End Phase",
+  "rules": ["10-2-7", "10-2-7-1", "6-6-1-1", "6-6-1-1-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-END-TURN"],
+      "don": {
+        "rested": 3
+      }
+    },
+    "p2": {
+      "don": {
+        "deck": 10
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "endTurn",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p1.donActive": 1,
+    "p1.donRested": 2,
+    "turnPlayer": "p2"
+  }
+}

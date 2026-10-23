@@ -40,6 +40,7 @@ export interface ScenarioCharacter {
 }
 
 export interface ScenarioPlayer {
+  /** A Leader can be a card id or `{ "card": "...", "don": 1 }`. */
   leader?: string | ScenarioCharacter;
   characters?: (string | ScenarioCharacter)[];
   stage?: string | null;
@@ -109,6 +110,11 @@ export function buildScenarioState(setup: ScenarioSetup, catalog: CardCatalog): 
     prompt: { kind: "main", player: turnPlayer },
     battle: null,
     winner: null,
+    stack: [],
+    pendingEffects: [],
+    modifiers: [],
+    usedThisTurn: [],
+    limbo: null,
     rng: 1,
     nextUid,
   };
@@ -127,6 +133,11 @@ export function runScenario(scenario: Scenario, catalog: CardCatalog): string[] 
     for (const field of CARD_FIELDS) {
       const ref = action[field];
       if (typeof ref === "string" && /^p[12]\./.test(ref)) action[field] = resolveCard(state, ref);
+    }
+    if (Array.isArray(action.cards)) {
+      action.cards = action.cards.map((ref: unknown) =>
+        typeof ref === "string" && /^p[12]\./.test(ref) ? resolveCard(state, ref) : ref,
+      );
     }
     try {
       state = applyAction(state, action as Action);

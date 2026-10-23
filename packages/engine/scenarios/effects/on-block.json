@@ -1,0 +1,33 @@
+{
+  "name": "[On Block] resolves after the [Blocker] is activated",
+  "rules": ["10-2-15", "10-2-15-1", "7-1-2-2"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C4-5000"]
+    },
+    "p2": {
+      "characters": ["TEST-BLOCK-DRAW"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "block",
+      "player": "p2",
+      "blocker": "p2.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.hand": 1,
+    "p2.characters": 0
+  }
+}

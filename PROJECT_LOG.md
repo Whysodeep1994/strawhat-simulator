@@ -5,7 +5,7 @@ at the end. Newest entries go at the top of each section.
 
 ## Current phase
 
-**Phase 3: Core rules engine** (in progress; first slice in review)
+**Phase 4: Cards and effects** (effect library in review; card import next)
 
 ## Roadmap
 
@@ -15,8 +15,8 @@ Each phase has a check the project owner can do without reading code.
 | ---------------------- | -------------------------------------------------------------------------- | ----------- |
 | 1. Audit and decision  | Approve the direction.                                                     | Done        |
 | 2. Project setup       | Open the repo and see a green check mark on the latest change.             | Done        |
-| 3. Core rules engine   | Open a coverage report listing rules sections with pass counts, all green. | In progress |
-| 4. Cards and effects   | See every card in one starter deck marked "tested".                        | Not started |
+| 3. Core rules engine   | Open a coverage report listing rules sections with pass counts, all green. | Done        |
+| 4. Cards and effects   | See every card in one starter deck marked "tested".                        | In progress |
 | 5. Local prototype     | Play a full game in a browser, mulligan to winner, on one computer.        | Not started |
 | 6. Online multiplayer  | Play a friend on two devices; their hand never shows on your screen.       | Not started |
 | 7. Deck builder        | Build a deck, see an illegal card flagged, import and export a list.       | Not started |
@@ -26,6 +26,13 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-23: Phase 4, effect library. Card effects are data (timing, conditions, costs,
+  steps) documented in docs/CARD_EFFECTS.md. The engine now runs effects through a stack, so
+  it can stop for a player's choice mid-effect: On Play, When Attacking, On Your Opponent's
+  Attack, On Block, On K.O., Activate: Main, Main and Counter Events, Trigger, End of Turn,
+  permanent effects, Once Per Turn, DON!! xX, optional "you may" costs. 39 new scenarios;
+  random games now include effect cards.
+- 2026-10-23: Phase 3 part 1 merged (PR #2).
 - 2026-10-23: Phase 3, first slice. Game state, setup and redraw, turn phases, playing
   Characters and Stages, giving DON!!, full battle (block, counter, damage, K.O.), Rush,
   Rush: Character, Double Attack, Banish, Blocker, Unblockable, defeat checks, conceding, a
@@ -40,10 +47,11 @@ Each phase has a check the project owner can do without reading code.
 
 ## Next
 
-1. Owner merges the Phase 3 first-slice pull request.
-2. Phase 4: card data format in strawhat-card-data (real card numbers), effect library
-   (On Play, When Attacking, On K.O., Activate: Main, Trigger, Counter events, Once Per Turn,
-   end-of-turn effects), then one starter deck fully tested.
+1. Owner merges the effect library pull request.
+2. In a fresh session (the new cloud environment allows en.onepiece-cardgame.com): import one
+   starter deck into strawhat-card-data with exact text, art links, and effects as data;
+   test every card.
+3. Resolve Rules Questions #3 to #5 (player choices for DON!! −X and effect order).
 
 ## Decisions
 
@@ -64,7 +72,8 @@ Each phase has a check the project owner can do without reading code.
 
 ## Known bugs
 
-- None yet.
+- Performance: each action copies the whole game state and re-lists legal moves. A random
+  game takes about 70 ms. Fine for now; optimize in Phase 8.
 
 ## Rules questions
 

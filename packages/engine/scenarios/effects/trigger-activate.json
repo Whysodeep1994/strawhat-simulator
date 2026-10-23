@@ -1,0 +1,36 @@
+{
+  "name": "A [Trigger] can be activated instead of adding the Life card to hand, then it's trashed",
+  "rules": ["10-1-5", "10-1-5-1", "10-1-5-3", "2-11", "2-11-1", "4-6-3", "8-6-2", "8-6-2-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C4-5000"]
+    },
+    "p2": {
+      "life": ["TEST-TRIGGER-DRAW", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    },
+    {
+      "type": "confirm",
+      "player": "p2",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p2.life": 1,
+    "p2.hand": 2,
+    "p2.trash": 1,
+    "p2.trash.0.cardId": "TEST-TRIGGER-DRAW",
+    "limbo": null
+  }
+}

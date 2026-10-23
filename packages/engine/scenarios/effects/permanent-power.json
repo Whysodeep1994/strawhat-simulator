@@ -1,0 +1,38 @@
+{
+  "name": "A permanent [DON!! x1] [Your Turn] power boost applies only when both hold",
+  "rules": [
+    "8-1-3-3",
+    "8-1-3-3-1",
+    "8-1-3-3-2",
+    "8-1-3-3-4",
+    "8-3-2-4",
+    "10-2-11",
+    "10-2-11-1",
+    "8-1-4-2"
+  ],
+  "setup": {
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-PERMANENT",
+          "don": 1
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 3
+  }
+}

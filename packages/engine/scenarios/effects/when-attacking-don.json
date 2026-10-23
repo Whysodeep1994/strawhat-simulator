@@ -1,0 +1,38 @@
+{
+  "name": "[When Attacking] with [DON!! x1] adds power before blockers",
+  "rules": ["10-2-5", "10-2-5-1", "7-1-1-3", "8-3-2", "8-3-2-1", "8-3-2-3", "10-2-9", "10-2-9-1"],
+  "setup": {
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-ATTACK-POWER",
+          "don": 1
+        }
+      ]
+    },
+    "p2": {
+      "hand": ["TEST-C4-5000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "counter",
+      "player": "p2",
+      "card": "p2.hand.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 3
+  }
+}

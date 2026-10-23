@@ -1,0 +1,29 @@
+{
+  "name": "Play a Character from hand for free, triggering its [On Play]",
+  "rules": ["4-7-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-PLAY-FROM-HAND", "TEST-ONPLAY-DRAW"],
+      "don": {
+        "active": 3
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.0"]
+    }
+  ],
+  "expect": {
+    "p1.characters": 2,
+    "p1.donActive": 0,
+    "p1.hand": 1
+  }
+}

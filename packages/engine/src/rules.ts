@@ -18,4 +18,6 @@ export function endGame(state: GameState, winner: PlayerId | "draw"): void {
   state.phase = "gameOver";
   state.prompt = { kind: "gameOver" };
   state.battle = null;
+  state.stack = [];
+  state.pendingEffects = [];
 }

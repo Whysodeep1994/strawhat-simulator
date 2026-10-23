@@ -1,0 +1,32 @@
+{
+  "name": "'During this turn' power ends at the End Phase",
+  "rules": ["6-6-1-2", "6-6-1-3"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-ACTIVATE"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "don": {
+        "deck": 10
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "endTurn",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "modifiers": 0
+  }
+}

@@ -34,6 +34,7 @@ const cards: CardDefinition[] = [
     cost: 2,
     power: 3000,
     counter: 1000,
+    types: ["Test Crew"],
   },
   {
     id: "TEST-C4-5000",
@@ -125,6 +126,327 @@ const cards: CardDefinition[] = [
     colors: ["red", "green"],
     cost: 1,
     power: 2000,
+  },
+
+  // Cards with effects, one or two building blocks each.
+  {
+    id: "TEST-ONPLAY-DRAW",
+    name: "Test On Play Draw",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 2000,
+    effects: [{ timing: "onPlay", steps: [{ do: "draw", count: 1 }] }],
+  },
+  {
+    id: "TEST-ONPLAY-KO",
+    name: "Test On Play K.O.",
+    category: "character",
+    colors: ["red"],
+    cost: 4,
+    power: 4000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [{ do: "ko", target: { side: "opponent", filter: { costAtMost: 3 }, upTo: true } }],
+      },
+    ],
+  },
+  {
+    id: "TEST-ATTACK-POWER",
+    name: "Test When Attacking",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 4000,
+    effects: [
+      {
+        timing: "whenAttacking",
+        conditions: [{ donAtLeast: 1 }],
+        steps: [{ do: "powerUp", target: { side: "this" }, amount: 2000, duration: "battle" }],
+      },
+    ],
+  },
+  {
+    id: "TEST-ONKO-DRAW",
+    name: "Test On K.O. Draw",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 3000,
+    effects: [{ timing: "onKO", steps: [{ do: "draw", count: 1 }] }],
+  },
+  {
+    id: "TEST-ACTIVATE",
+    name: "Test Activate",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 3000,
+    effects: [
+      {
+        timing: "activateMain",
+        oncePerTurn: true,
+        costs: [{ restDon: 1 }],
+        steps: [{ do: "powerUp", target: { side: "self", zone: "leader" }, amount: 1000 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-ACTIVATE-REST",
+    name: "Test Activate Rest",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      { timing: "activateMain", costs: [{ restThis: true }], steps: [{ do: "draw", count: 1 }] },
+    ],
+  },
+  {
+    id: "TEST-EVENT-KO",
+    name: "Test Event K.O.",
+    category: "event",
+    colors: ["red"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [{ do: "ko", target: { side: "opponent", filter: { costAtMost: 2 } } }],
+      },
+    ],
+  },
+  {
+    id: "TEST-EVENT-COUNTER",
+    name: "Test Counter Event",
+    category: "event",
+    colors: ["red"],
+    cost: 1,
+    effects: [
+      {
+        timing: "counter",
+        steps: [
+          {
+            do: "powerUp",
+            target: { side: "self", zone: "leaderOrCharacters", upTo: true },
+            amount: 4000,
+            duration: "battle",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRIGGER-DRAW",
+    name: "Test Trigger Draw",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 4000,
+    effects: [{ timing: "trigger", steps: [{ do: "draw", count: 2 }] }],
+  },
+  {
+    id: "TEST-TRIGGER-PLAY",
+    name: "Test Trigger Play",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 4000,
+    effects: [{ timing: "trigger", steps: [{ do: "playThis" }] }],
+  },
+  {
+    id: "TEST-PERMANENT",
+    name: "Test Permanent",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "permanent",
+        conditions: [{ donAtLeast: 1 }, { yourTurn: true }],
+        steps: [{ do: "powerUp", target: { side: "this" }, amount: 2000 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-SEARCH",
+    name: "Test Search",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [{ do: "searchDeck", look: 5, take: 1, filter: { type: "Test Crew" } }],
+      },
+    ],
+  },
+  {
+    id: "TEST-OPTIONAL",
+    name: "Test Optional Cost",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        optional: true,
+        costs: [{ trashFromHand: 1 }],
+        steps: [{ do: "draw", count: 2 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-END-TURN",
+    name: "Test End of Turn",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 2000,
+    effects: [{ timing: "endOfYourTurn", steps: [{ do: "setDonActive", count: 1 }] }],
+  },
+  {
+    id: "TEST-BLOCK-DRAW",
+    name: "Test On Block",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 2000,
+    keywords: ["blocker"],
+    effects: [{ timing: "onBlock", steps: [{ do: "draw", count: 1 }] }],
+  },
+  {
+    id: "TEST-GIVE-DON",
+    name: "Test Give DON!!",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "giveRestedDon",
+            target: { side: "self", zone: "leaderOrCharacters", upTo: true },
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-BOUNCE",
+    name: "Test Bounce",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 3000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "returnToHand",
+            target: { side: "opponent", filter: { costAtMost: 3 }, upTo: true },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-PLAY-FROM-HAND",
+    name: "Test Play From Hand",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 3000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [{ do: "playFromHand", filter: { costAtMost: 2, category: "character" } }],
+      },
+    ],
+  },
+  {
+    id: "TEST-IF",
+    name: "Test If",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [{ do: "if", conditions: [{ lifeAtMost: 2 }], steps: [{ do: "draw", count: 1 }] }],
+      },
+    ],
+  },
+  {
+    id: "TEST-RUSH-GRANT",
+    name: "Test Grant Rush",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 5000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [{ do: "grantKeyword", target: { side: "this" }, keyword: "rush" }],
+      },
+    ],
+  },
+  {
+    id: "TEST-OPP-ATTACK",
+    name: "Test On Opponent's Attack",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "onOpponentsAttack",
+        oncePerTurn: true,
+        steps: [
+          {
+            do: "powerUp",
+            target: { side: "self", zone: "leader" },
+            amount: 2000,
+            duration: "battle",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-DON-MINUS",
+    name: "Test DON!! Minus",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      { timing: "activateMain", costs: [{ donMinus: 2 }], steps: [{ do: "draw", count: 2 }] },
+    ],
+  },
+  {
+    id: "TEST-RETURN-OWN",
+    name: "Test Return Own",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 2000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          { do: "returnToHand", target: { side: "self", filter: { notThis: true }, upTo: true } },
+        ],
+      },
+    ],
   },
 ];
 

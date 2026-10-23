@@ -1,0 +1,24 @@
+{
+  "name": "[DON!! x1] isn't met without a given DON!!",
+  "rules": ["8-3-2-3", "8-4-1-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-ATTACK-POWER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 4
+  }
+}

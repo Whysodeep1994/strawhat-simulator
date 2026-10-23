@@ -1,0 +1,28 @@
+{
+  "name": "Declining a 'you may' effect skips it",
+  "rules": ["8-1-2", "8-3-1-4"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-OPTIONAL", "TEST-FILLER"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": false
+    }
+  ],
+  "expect": {
+    "p1.hand": 1,
+    "p1.trash": 0
+  }
+}

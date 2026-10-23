@@ -1,0 +1,29 @@
+{
+  "name": "[Banish] stops [Trigger] from activating",
+  "rules": ["10-1-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-BANISH"]
+    },
+    "p2": {
+      "life": ["TEST-TRIGGER-DRAW"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.trash": 1,
+    "p2.hand": 0,
+    "prompt.kind": "main"
+  }
+}

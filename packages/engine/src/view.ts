@@ -1,4 +1,5 @@
-import type { Battle, CardInstance, GameState, PlayerId, Prompt } from "./types.js";
+import { findCard } from "./state.js";
+import type { Battle, CardInstance, GameState, Modifier, PlayerId, Prompt } from "./types.js";
 
 /** A face-up card, or just a count for a face-down pile. */
 export interface PlayerView {
@@ -28,6 +29,14 @@ export interface GameView {
   prompt: Prompt;
   battle: Battle | null;
   winner: GameState["winner"];
+  modifiers: Modifier[];
+  /**
+   * Cards the viewer needs to see to answer their prompt, such as the top of
+   * their deck during a search or the Life card with a [Trigger].
+   */
+  promptCards: CardInstance[];
+  /** A [Trigger] card being resolved is revealed to both players (rule 10-1-5-1). */
+  limbo: CardInstance | null;
 }
 
 /**
@@ -62,5 +71,21 @@ export function viewFor(state: GameState, viewer: PlayerId): GameView {
     prompt: state.prompt,
     battle: state.battle,
     winner: state.winner,
+    modifiers: state.modifiers,
+    promptCards: promptCardsFor(state, viewer),
+    limbo: state.limbo,
   });
+}
+
+function promptCardsFor(state: GameState, viewer: PlayerId): CardInstance[] {
+  const prompt = state.prompt;
+  if (prompt.kind === "choose" && prompt.player === viewer) {
+    const uids = [...new Set([...(prompt.revealed ?? []), ...prompt.options])];
+    return uids.map((uid) => findCard(state, uid)).filter((c): c is CardInstance => c !== null);
+  }
+  if (prompt.kind === "confirm" && prompt.player === viewer) {
+    const card = findCard(state, prompt.source);
+    return card ? [card] : [];
+  }
+  return [];
 }

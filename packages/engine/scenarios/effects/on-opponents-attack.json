@@ -1,0 +1,27 @@
+{
+  "name": "[On Your Opponent's Attack] resolves after the attack is declared",
+  "rules": ["10-2-16", "10-2-16-1", "8-6-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C5-6000"]
+    },
+    "p2": {
+      "characters": ["TEST-OPP-ATTACK"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 4
+  }
+}

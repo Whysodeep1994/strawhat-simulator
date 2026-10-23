@@ -1,0 +1,30 @@
+{
+  "name": "[Activate: Main] can't be used during a battle",
+  "rules": ["10-2-2-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-ACTIVATE"],
+      "don": {
+        "active": 3
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.leader"
+    },
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0,
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "prompt.kind": "counter"
+  }
+}
