@@ -1,0 +1,44 @@
+{
+  "name": "\"You may rest 1 of your Characters. If you do, rest ...\": nothing happens if you don't",
+  "rules": ["8-3-3"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-REST-IF", "TEST-REST-IF"],
+      "characters": ["TEST-FILLER"]
+    },
+    "p2": {
+      "characters": ["TEST-C2-3000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": []
+    },
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.characters.0"]
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    }
+  ],
+  "expect": {
+    "p1.characters.0.rested": true,
+    "p2.characters.0.rested": true
+  }
+}

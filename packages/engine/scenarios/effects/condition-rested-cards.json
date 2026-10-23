@@ -1,0 +1,30 @@
+{
+  "name": "Rested cards count DON!! in the cost area and rested field cards",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-FILLER",
+          "rested": true
+        }
+      ],
+      "hand": ["TEST-RESTED-COUNT"],
+      "don": {
+        "active": 1,
+        "rested": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 1,
+    "p1.characters.1.cardId": "TEST-RESTED-COUNT"
+  }
+}

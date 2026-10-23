@@ -15,7 +15,28 @@ export interface EffectDefinition {
   oncePerTurn?: boolean;
   /** "You may": the player can decline (rule 8-1-2). */
   optional?: boolean;
+  /**
+   * Where a permanent effect works. "hand" is for text like "give this card in
+   * your hand −3 cost". Defaults to the field.
+   */
+  zone?: "field" | "hand";
+  /** `replaceRemoval` only: what the effect replaces. */
+  replaces?: Replacement;
   steps: Step[];
+}
+
+/**
+ * "If [card] would be K.O.'d / removed from the field by an effect, you may
+ * [costs] instead" (rule 8-1-3-4). Paying the effect's costs prevents the removal.
+ */
+export interface Replacement {
+  /** Which of the effect owner's cards are protected. "this" means only the card itself. */
+  side: "self" | "this";
+  filter?: Filter;
+  /** "ko" for "would be K.O.'d"; "remove" for "would be removed from the field" (K.O., return, and so on). */
+  removal: "ko" | "remove";
+  /** Only effects of the opponent ("by your opponent's effect"). */
+  byOpponent?: boolean;
 }
 
 export type Timing =
@@ -30,6 +51,10 @@ export type Timing =
   | "trigger"
   | "endOfYourTurn"
   | "endOfOpponentsTurn"
+  /** "If a Character is rested by your effect" (any Character, either side). */
+  | "characterRestedByYourEffect"
+  /** "If ... would be K.O.'d ... instead" (rule 8-1-3-4). See `replaces`. */
+  | "replaceRemoval"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -45,7 +70,25 @@ export type Condition =
   | { opponentLifeAtMost: number }
   | { leaderHasType: string }
   | { charactersAtLeast: number }
-  | { handAtMost: number };
+  | { handAtMost: number }
+  /** "If your Leader is [Buggy]": the Leader's name. */
+  | { leaderIs: string }
+  /** True if any of the listed conditions holds ("has the {X} type or is [Y]"). */
+  | { anyOf: Condition[] }
+  /** "If you have 2 or more Characters with a base cost of 5 or more", and so on. */
+  | { count: CardCount; atLeast?: number; atMost?: number }
+  /** Rested DON!! cards in your cost area. */
+  | { donRestedAtLeast: number }
+  /** Rested cards you have: DON!! in the cost area plus Leader, Characters, and Stage. */
+  | { restedCardsAtLeast: number };
+
+/** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
+export interface CardCount {
+  side: "self" | "opponent";
+  /** Defaults to "characters". */
+  zone?: "leader" | "characters" | "leaderOrCharacters" | "stage";
+  filter?: Filter;
+}
 
 export type Cost =
   /** ①: rest this many active DON!! (rule 8-3-1-5). */
@@ -53,7 +96,9 @@ export type Cost =
   /** DON!! −X: return DON!! from the field to the DON!! deck (rule 8-3-1-6). */
   | { donMinus: number }
   | { trashFromHand: number }
-  | { restThis: true };
+  | { restThis: true }
+  /** Trash this card from the field. Not a K.O. */
+  | { trashThis: true };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -69,14 +114,25 @@ export interface Target {
 
 export interface Filter {
   category?: CardCategory;
+  /** Current cost, after effects such as "+1 cost". */
   costAtMost?: number;
   costAtLeast?: number;
+  /** Printed cost ("base cost", rule 2-7-1). */
+  baseCostAtMost?: number;
+  baseCostAtLeast?: number;
   powerAtMost?: number;
   powerAtLeast?: number;
+  /** Printed power ("base power", rule 2-6-1). */
+  basePowerAtMost?: number;
+  basePowerAtLeast?: number;
   type?: string;
+  /** A type containing this text, e.g. "Baroque Works". */
+  typeIncludes?: string;
   /** Matches card names containing this text (rule 2-1-2-1). */
   nameIncludes?: string;
   name?: string;
+  /** "Other than [X]". */
+  notName?: string;
   color?: Color;
   rested?: boolean;
   notThis?: boolean;
@@ -84,16 +140,45 @@ export interface Filter {
   hasTrigger?: boolean;
   /** The card has this keyword right now, e.g. [Blocker]. */
   keyword?: Keyword;
+  /** At least one of these filters matches ("{Cross Guild} type or ..."). */
+  anyOf?: Filter[];
 }
 
-export type Duration = "turn" | "battle";
+/**
+ * "turn" and "battle" end with the turn or battle. "opponentsNextTurn" lasts
+ * until the end of the effect player's opponent's next turn ("until the end of
+ * your opponent's next End Phase").
+ */
+export type Duration = "turn" | "battle" | "opponentsNextTurn";
+
+/** Things a card can or can't do, given by `grantStatus`. */
+export type Status =
+  | "cannotAttack"
+  /** Your opponent cannot activate this [Blocker]. */
+  | "cannotBlock"
+  | "cannotBeKOdInBattle"
+  | "cannotBeKOdByEffects"
+  | "cannotBeKOdByOpponentsEffects"
+  /** Doesn't become active in its owner's next Refresh Phase. */
+  | "noRefresh";
 
 export type Step =
   | { do: "draw"; count: number }
   | { do: "powerUp"; target: Target; amount: number; duration?: Duration }
   | { do: "grantKeyword"; target: Target; keyword: Keyword; duration?: Duration }
+  | { do: "grantStatus"; target: Target; status: Status; duration?: Duration }
+  /**
+   * Change cost (negative for "−"). As a permanent effect with `zone: "hand"`
+   * it changes the cost to play the card.
+   */
+  | { do: "costChange"; target: Target; amount: number; duration?: Duration }
   | { do: "ko"; target: Target }
-  | { do: "rest"; target: Target }
+  /**
+   * `stayRested`: "and that Character will not become active in your
+   * opponent's next Refresh Phase". `ifYouDo`: steps that happen only if at
+   * least one card was rested ("you may rest ...: If you do, ...").
+   */
+  | { do: "rest"; target: Target; stayRested?: boolean; ifYouDo?: Step[] }
   | { do: "setActive"; target: Target }
   | { do: "returnToHand"; target: Target }
   | { do: "returnToDeckBottom"; target: Target }
@@ -113,9 +198,9 @@ export type Step =
   | { do: "opponentTrashesFromHand"; count: number }
   /** Look at the top cards, reveal and add matching ones to hand, rest to the bottom. */
   | { do: "searchDeck"; look: number; take: number; filter?: Filter }
-  /** Play a card from hand for free. */
-  | { do: "playFromHand"; filter?: Filter }
-  | { do: "playFromTrash"; filter?: Filter }
+  /** Play a card from hand for free. `rested`: "play ... rested". */
+  | { do: "playFromHand"; filter?: Filter; rested?: boolean }
+  | { do: "playFromTrash"; filter?: Filter; rested?: boolean }
   | { do: "lifeToHand"; count: number }
   | { do: "deckToLife"; count: number }
   /** Trigger only: play this card instead of trashing it. */

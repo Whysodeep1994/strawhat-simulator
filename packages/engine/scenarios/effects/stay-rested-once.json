@@ -1,0 +1,45 @@
+{
+  "name": "A Character kept rested becomes active again at the following Refresh Phase",
+  "rules": ["6-2-4"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-FREEZE"],
+      "don": {
+        "deck": 10
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C2-3000"],
+      "don": {
+        "deck": 10
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    },
+    {
+      "type": "endTurn",
+      "player": "p1"
+    },
+    {
+      "type": "endTurn",
+      "player": "p2"
+    },
+    {
+      "type": "endTurn",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p2.characters.0.rested": false
+  }
+}

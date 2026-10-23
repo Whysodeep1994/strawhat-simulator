@@ -1,0 +1,34 @@
+{
+  "name": "\"[Your Turn] [Once Per Turn] If a Character is rested by your effect\" draws once",
+  "rules": ["10-2-13"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-REST-IF"],
+      "characters": ["TEST-REST-WATCHER", "TEST-FILLER"]
+    },
+    "p2": {
+      "characters": ["TEST-C2-3000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.characters.1"]
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    }
+  ],
+  "expect": {
+    "p1.hand": 1,
+    "p2.characters.0.rested": true
+  }
+}

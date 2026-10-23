@@ -1,0 +1,36 @@
+{
+  "name": "A Character that cannot be K.O.'d in battle survives losing a battle",
+  "rules": ["7-1-4-2"],
+  "setup": {
+    "p1": {
+      "leader": {
+        "card": "TEST-LEADER",
+        "don": 0
+      }
+    },
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-BATTLE-PROOF",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.characters": 1,
+    "p2.trash": 0
+  }
+}
