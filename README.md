@@ -16,8 +16,10 @@ An unofficial, open-source simulator for the One Piece Card Game.
 
 ## Status
 
-The rules engine works, and a first playable prototype runs in the browser: you against a simple
-computer opponent, with made-up demo cards until real card data is loaded. See [PROJECT_LOG.md](PROJECT_LOG.md) for what's done and what's next,
+The rules engine works, and a playable game runs in the browser: you against a simple computer
+opponent, with the official cards and art from
+[strawhat-card-data](https://github.com/Whysodeep1994/strawhat-card-data), on a table laid out
+like the official playmat. Each player can upload a picture to use as their playmat. See [PROJECT_LOG.md](PROJECT_LOG.md) for what's done and what's next,
 and [docs/RULES_COVERAGE.md](docs/RULES_COVERAGE.md) for which rules are tested.
 
 ## Project layout
@@ -41,6 +43,17 @@ pnpm coverage:rules  # rebuild docs/RULES_COVERAGE.md
 pnpm --filter @strawhat/web dev  # play in your browser at the address it prints
 pnpm build     # build everything; the game becomes packages/web/dist/strawhat-simulator.html
 ```
+
+The app needs the card data next to it. Clone
+[strawhat-card-data](https://github.com/Whysodeep1994/strawhat-card-data) and copy its cards,
+decks and images into the app (they are not stored in this repo):
+
+```sh
+node packages/web/scripts/card-data.mjs ../strawhat-card-data
+```
+
+The single-file build loads them from a `card-data` folder beside it, so serve both from the
+same place.
 
 `pnpm check` also runs automatically before every commit.
 

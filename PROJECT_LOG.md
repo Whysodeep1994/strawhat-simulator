@@ -28,6 +28,13 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-23: Phase 5, real cards on an official-style table. The app loads cards, decks and
+  art from strawhat-card-data (copied in by `packages/web/scripts/card-data.mjs`). Each side of
+  the table follows the official playmat: Life on the left, Character Area on top, Leader in the
+  middle with the Stage beside it, Deck and Trash on the right, DON!! deck and cost area along the
+  bottom. Players can upload a picture as their playmat (kept in their browser). New home screen
+  with an animated, original sea scene, a deck picker with leader art, and an opponent choice.
+  Sets without an official deck list yet get a practice deck built from the set's cards.
 - 2026-10-23: Phase 5, first playable prototype (packages/web). React board in the Master
   Duel style: legal plays glow, tap a card for its actions, pop-ups for turn order, redraw,
   Blocker, Counter, Trigger, and effect choices, plus a game log and a card reader. You play
@@ -68,23 +75,26 @@ Each phase has a check the project owner can do without reading code.
    card data pull request in strawhat-card-data. After the engine merges, point
    strawhat-card-data's engine.json at the merged main commit.
 2. Find a reliable ST-01 deck list (copies per card) to add as a playable deck.
-3. Load the real ST-01 cards from strawhat-card-data into the web app, with card art.
+3. Add the official deck lists for ST-01 and the 11 modern starter decks (ST-15 to ST-28 picks)
+   to strawhat-card-data, so the deck picker has 12 official decks.
 4. Resolve Rules Questions #3 to #5 (player choices for DON!! −X and effect order).
 
 ## Decisions
 
-| Date       | Decision                                                                                                                                 | Why                                                         |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| 2026-10-23 | No in-app deck lists from third-party sites without their permission; players paste lists themselves.                                    | Owner's decision; we have no permission.                    |
-| 2026-10-23 | Card data tests run against an engine commit pinned in strawhat-card-data's engine.json.                                                 | A new engine change can't silently break tested cards.      |
-| 2026-10-23 | Exact card art and text, real card numbers, stored in the separate strawhat-card-data repo.                                              | Owner's choice; a takedown can't hit the engine repo.       |
-| 2026-10-23 | The engine always asks for the Counter Step, even with no counters in hand.                                                              | Skipping would leak hand information (Rules Question #2).   |
-| 2026-10-23 | UI and feel modeled on Yu-Gi-Oh! Master Duel: highlight only legal plays, one-tap actions, auto-prompts for responses, quick animations. | Owner's direction: simple to play and polished.             |
-| 2026-10-23 | Project name: Strawhat Simulator.                                                                                                        | Owner's choice.                                             |
-| 2026-10-23 | License: AGPL-3.0-or-later.                                                                                                              | Keeps hosted forks open source.                             |
-| 2026-10-23 | Stack: TypeScript, pnpm workspace, Vitest, ESLint, Prettier, GitHub CI.                                                                  | One language for engine, server, and web app; widely known. |
-| 2026-10-23 | Planned: Node.js WebSocket server (authoritative), React web client.                                                                     | Server hides private info; runs in any browser.             |
-| 2026-10-23 | Rebuild from scratch; OPTCGSim is reference only.                                                                                        | OPTCGSim has no source code or license.                     |
+| Date       | Decision                                                                                                                                 | Why                                                                                   |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 2026-10-23 | Home screen scenery and default playmats are original art, drawn in code, not One Piece fan art.                                         | Fan art belongs to its artists; using it needs their permission.                      |
+| 2026-10-23 | Uploaded playmats stay in the player's own browser.                                                                                      | Nothing to host or moderate; online play will send each player's mat with their seat. |
+| 2026-10-23 | No in-app deck lists from third-party sites without their permission; players paste lists themselves.                                    | Owner's decision; we have no permission.                                              |
+| 2026-10-23 | Card data tests run against an engine commit pinned in strawhat-card-data's engine.json.                                                 | A new engine change can't silently break tested cards.                                |
+| 2026-10-23 | Exact card art and text, real card numbers, stored in the separate strawhat-card-data repo.                                              | Owner's choice; a takedown can't hit the engine repo.                                 |
+| 2026-10-23 | The engine always asks for the Counter Step, even with no counters in hand.                                                              | Skipping would leak hand information (Rules Question #2).                             |
+| 2026-10-23 | UI and feel modeled on Yu-Gi-Oh! Master Duel: highlight only legal plays, one-tap actions, auto-prompts for responses, quick animations. | Owner's direction: simple to play and polished.                                       |
+| 2026-10-23 | Project name: Strawhat Simulator.                                                                                                        | Owner's choice.                                                                       |
+| 2026-10-23 | License: AGPL-3.0-or-later.                                                                                                              | Keeps hosted forks open source.                                                       |
+| 2026-10-23 | Stack: TypeScript, pnpm workspace, Vitest, ESLint, Prettier, GitHub CI.                                                                  | One language for engine, server, and web app; widely known.                           |
+| 2026-10-23 | Planned: Node.js WebSocket server (authoritative), React web client.                                                                     | Server hides private info; runs in any browser.                                       |
+| 2026-10-23 | Rebuild from scratch; OPTCGSim is reference only.                                                                                        | OPTCGSim has no source code or license.                                               |
 
 ## Open decisions
 

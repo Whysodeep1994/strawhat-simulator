@@ -3,3 +3,4 @@ pnpm-lock.yaml
 dist
 coverage
 docs/RULES_COVERAGE.md
+packages/web/public
