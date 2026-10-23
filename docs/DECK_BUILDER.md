@@ -41,10 +41,3 @@ the result before playing.
 
 `formatDeckList({ leader, deck })` writes a deck back out in the same format, so players can
 share decks with other sites.
-
-## Tournament decks from Egman Events
-
-Egman Events collects top tournament deck lists. For now, the app links to Egman: players copy
-a list there and paste it in. We are asking Egman for permission and an API so winning decks
-can be listed inside the app. Until they say yes, the app does not fetch data from Egman
-automatically.
