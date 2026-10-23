@@ -287,6 +287,7 @@ function runStep(
     case "setActive":
     case "returnToHand":
     case "returnToDeckBottom":
+    case "noBlockers":
     case "giveRestedDon": {
       if (step.do === "giveRestedDon" && p.donRested === 0) return "continue";
       const targets = chooseTargets(state, frame, source, step.target, step.do);
@@ -433,6 +434,13 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
       return;
     case "grantKeyword":
       state.modifiers.push({ target: uid, keyword: step.keyword, until: step.duration ?? "turn" });
+      return;
+    case "noBlockers":
+      state.modifiers.push({
+        target: uid,
+        noBlockers: step.blockers ?? {},
+        until: step.duration ?? "turn",
+      });
       return;
     case "ko":
       if (location.zone === "characters") knockOut(state, uid);

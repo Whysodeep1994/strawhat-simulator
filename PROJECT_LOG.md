@@ -5,7 +5,7 @@ at the end. Newest entries go at the top of each section.
 
 ## Current phase
 
-**Phase 4: Cards and effects** (effect library merged; card import next, in a fresh session).
+**Phase 4: Cards and effects** (effect library merged; ST-01 card import in review).
 Deck builder search and deck list import (Phase 7 logic) started early at the owner's request.
 
 ## Roadmap
@@ -27,6 +27,11 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-23: Phase 4, starter deck ST-01 (Straw Hat Crew). All 17 cards imported into
+  strawhat-card-data with official text, art and card numbers, effects as data, and 43 scenarios;
+  its STATUS.md shows 17 of 17 tested. The engine gained a `noBlockers` step and a `keyword`
+  filter for it. The official site doesn't list how many copies of each card the deck has, so
+  there is no ST-01 deck list yet.
 - 2026-10-23: Deck builder logic, started early. Card search by set, colour, category, type,
   card number, free text and a cost range (for the slider), plus pasting and copying deck lists
   in the common "4xOP01-016" format. See docs/DECK_BUILDER.md.
@@ -52,17 +57,18 @@ Each phase has a check the project owner can do without reading code.
 
 ## Next
 
-1. Owner merges the deck builder search pull request, and sends Egman Events the permission
-   request.
-2. In a fresh session (the new cloud environment allows en.onepiece-cardgame.com): import one
-   starter deck into strawhat-card-data with exact text, art links, and effects as data;
-   test every card.
-3. Resolve Rules Questions #3 to #5 (player choices for DON!! −X and effect order).
+1. Owner sends Egman Events the permission request.
+2. Owner merges the ST-01 engine additions (`noBlockers`, `keyword` filter), then the ST-01
+   card data pull request in strawhat-card-data. After the engine merges, point
+   strawhat-card-data's engine.json at the merged main commit.
+3. Find a reliable ST-01 deck list (copies per card) to add as a playable deck.
+4. Resolve Rules Questions #3 to #5 (player choices for DON!! −X and effect order).
 
 ## Decisions
 
 | Date       | Decision                                                                                                                                 | Why                                                         |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 2026-10-23 | Card data tests run against an engine commit pinned in strawhat-card-data's engine.json.                                                 | A new engine change can't silently break tested cards.      |
 | 2026-10-23 | Pro decks: paste-import plus a link to Egman Events; ask Egman for an API before any in-app fetching.                                    | Egman has no public API or terms for reuse; owner's choice. |
 | 2026-10-23 | Exact card art and text, real card numbers, stored in the separate strawhat-card-data repo.                                              | Owner's choice; a takedown can't hit the engine repo.       |
 | 2026-10-23 | The engine always asks for the Counter Step, even with no counters in hand.                                                              | Skipping would leak hand information (Rules Question #2).   |

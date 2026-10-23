@@ -327,7 +327,7 @@ Comprehensive Rules version 1.2.1.
 | 7-1-4-1-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-4-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-5 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
-| 7-1-5-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 2 |
+| 7-1-5-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 3 |
 | 7-1-5-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Phase 4 (effects) | 0 |
 | 7-1-5-3 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-5-4 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
@@ -399,7 +399,7 @@ Comprehensive Rules version 1.2.1.
 | 8-4-4-1 | 8-4 Activation and Resolution | Tested | 2 |
 | 8-4-4-2 | 8-4 Activation and Resolution | Phase 4 (effects) | 0 |
 | 8-4-4-3 | 8-4 Activation and Resolution | Phase 4 (effects) | 0 |
-| 8-4-4-4 | 8-4 Activation and Resolution | Tested | 1 |
+| 8-4-4-4 | 8-4 Activation and Resolution | Tested | 2 |
 | 8-4-5 | 8-4 Activation and Resolution | Tested | 1 |
 | 8-4-6 | 8-4 Activation and Resolution | Phase 4 (effects) | 0 |
 | 8-5 | 8-5 Card Activation and Effect Activation | Tested | 1 |
@@ -428,7 +428,7 @@ Comprehensive Rules version 1.2.1.
 | 10-1-3 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-3-1 | 10-1 Keyword Effects | Tested | 2 |
 | 10-1-4 | 10-1 Keyword Effects | Tested | 1 |
-| 10-1-4-1 | 10-1 Keyword Effects | Tested | 3 |
+| 10-1-4-1 | 10-1 Keyword Effects | Tested | 5 |
 | 10-1-5 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-5-1 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-5-2 | 10-1 Keyword Effects | Tested | 1 |
