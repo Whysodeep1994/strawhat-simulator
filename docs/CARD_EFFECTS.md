@@ -23,26 +23,25 @@ opponent's Characters with a cost of 3 or less" is written as:
 
 ## Timings
 
-| Timing                        | Card wording                                                   | Rules   |
-| ----------------------------- | -------------------------------------------------------------- | ------- |
-| `onPlay`                      | [On Play]                                                      | 10-2-6  |
-| `whenAttacking`               | [When Attacking]                                               | 10-2-5  |
-| `onOpponentsAttack`           | [On Your Opponent's Attack]                                    | 10-2-16 |
-| `onBlock`                     | [On Block]                                                     | 10-2-15 |
-| `onKO`                        | [On K.O.]                                                      | 10-2-17 |
-| `koByEffect`                  | "When this Character is K.O.'d by an effect" (not in battle)   | 10-2-1  |
-| `activateMain`                | [Activate: Main]                                               | 10-2-2  |
-| `main`                        | [Main] on Events                                               | 10-2-3  |
-| `counter`                     | [Counter] on Events                                            | 10-2-4  |
-| `trigger`                     | [Trigger]                                                      | 10-1-5  |
-| `endOfYourTurn`               | [End of Your Turn]                                             | 10-2-7  |
-| `endOfOpponentsTurn`          | [End of Your Opponent's Turn]                                  | 10-2-8  |
-| `permanent`                   | Always-on text, e.g. "+1000 power"                             | 8-1-3-3 |
-| `characterRestedByYourEffect` | "If a Character is rested by your effect"                      | 8-1-3-1 |
-| `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                      | 8-1-3-4 |
-| `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."    | 8-1-3-1 |
-| `characterKOd`                | "When a Character is K.O.'d" (either player's, any K.O.)       | 8-1-3-1 |
-| `attackDealsDamage`           | "When this card's attack deals damage to your opponent's Life" | 8-1-3-1 |
+| Timing                        | Card wording                                                         | Rules   |
+| ----------------------------- | -------------------------------------------------------------------- | ------- |
+| `onPlay`                      | [On Play]                                                            | 10-2-6  |
+| `whenAttacking`               | [When Attacking]                                                     | 10-2-5  |
+| `onOpponentsAttack`           | [On Your Opponent's Attack]                                          | 10-2-16 |
+| `onBlock`                     | [On Block]                                                           | 10-2-15 |
+| `onKO`                        | [On K.O.]                                                            | 10-2-17 |
+| `koByEffect`                  | "When this Character is K.O.'d by an effect" (not in battle)         | 10-2-1  |
+| `activateMain`                | [Activate: Main]                                                     | 10-2-2  |
+| `main`                        | [Main] on Events                                                     | 10-2-3  |
+| `counter`                     | [Counter] on Events                                                  | 10-2-4  |
+| `trigger`                     | [Trigger]                                                            | 10-1-5  |
+| `endOfYourTurn`               | [End of Your Turn]                                                   | 10-2-7  |
+| `endOfOpponentsTurn`          | [End of Your Opponent's Turn]                                        | 10-2-8  |
+| `permanent`                   | Always-on text, e.g. "+1000 power"                                   | 8-1-3-3 |
+| `characterRestedByYourEffect` | "If a Character is rested by your effect"                            | 8-1-3-1 |
+| `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                            | 8-1-3-4 |
+| `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."          | 8-1-3-1 |
+| `becomesRested`               | "When this Character becomes rested" (attack, block, cost or effect) | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -102,8 +101,13 @@ played on this turn"), plus:
 | `{ "lifeAtMostOpponents": true }`                | "If the number of your Life cards is equal to or less than your opponent's" |
 | `{ "leaderMulticolored": true }`                 | "If your Leader is multicolored"                                            |
 | `{ "opponentDonOnFieldAtLeast": 5 }`             | "If your opponent has 5 or more DON!! cards on their field"                 |
+| `{ "givenDonAtLeast": 3 }`                       | "If you have a total of 3 or more given DON!! cards"                        |
+| `{ "leaderAttribute": "Slash" }`                 | "If your Leader has the <Slash> attribute"                                  |
+| `{ "opponentHandAtLeast": 6 }`                   | "If your opponent has 6 or more cards in their hand"                        |
+| `{ "handTrashedByEffectThisTurn": true }`        | "During the turn in which a card in your hand is trashed by an effect"      |
 
-`count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`)
+`count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`;
+`"field"` is the Leader, Characters and Stage)
 and `filter`, and `atLeast` (default 1) and/or `atMost`. "If you do not have 5 Characters with a
 cost of 5 or more" is `{ "count": { "side": "self", "filter": { "costAtLeast": 5 } }, "atMost": 4 }`.
 
@@ -119,6 +123,10 @@ type including ... from your hand"; they stay in hand, with an optional `filter`
 `{ "restOwn": { "name": "Uta" } }`), `restThis`, `trashThis` ("trash this Character", not a K.O.), `lifeToHand` (add Life cards to
 your hand; `"from": "topOrBottom"` lets the player take the bottom one), `trashLife` (trash from
 the top of your Life), `lifeFaceUp` (turn the top Life card face-up; it must be face-down),
+`lifeFaceDown` (turn a face-up Life card face-down; both take `"from": "topOrBottom"` to let the
+player pick the end), `trashFromDeckTop` (trash cards from the top of your deck), `oneOf` (a list
+of costs the player pays one of, e.g. "rest your Leader or 1 of your DON!! cards":
+`{ "oneOf": [{ "restOwn": { "category": "leader" } }, { "restDon": 1 }] }`),
 `trashToDeckBottom` (place cards from your trash at the bottom of your deck), `returnGivenDon`
 ("return N of your currently given DON!! cards to your cost area rested"; the player picks which
 cards), `characterToLife` ("add 1 of your Characters with ... to the top of your Life cards
@@ -144,6 +152,7 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `notName`: "other than [X]".
 - `costAtMostTotalLife`: "a cost equal to or less than the total of your and your opponent's Life cards".
 - `typeIncludes`: a type containing some text, e.g. `"Baroque Works"`.
+- `attribute`: the printed attribute includes this, e.g. `"Slash"` (cards set `attribute`).
 - `anyOf`: a list of filters, any of which may match ("{Cross Guild} type or ...").
 - `noBaseEffect`: "with no base effect", a card without card text (rule 2-8-5): no effects and
   no keywords.
@@ -200,10 +209,13 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `revealedToDeckTop`              | Place the cards revealed by a `revealFromHand` cost at the top of your deck.                                                                                                                      |
 | `setBasePower`                   | "[Leader]'s base power becomes 7000", with an optional `duration`.                                                                                                                                |
 | `if`                             | Only do the nested steps if the conditions hold.                                                                                                                                                  |
+| `redirectAttack`                 | "Change the target of the attack to ..." the chosen card.                                                                                                                                         |
 | `grantStatus`                    | "Cannot attack", "cannot be K.O.'d ...", and so on. See below.                                                                                                                                    |
 | `costChange`                     | Change cost (negative for "−"), for the turn or as a permanent effect.                                                                                                                            |
 
-`powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash".
+`powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash", or
+`perCount` (a `count`-style `{ "side", "zone", "filter" }`) for "for every {Straw Hat Crew} type
+card on your field".
 
 Durations (`duration` on `negateOnPlay`, `powerUp`, `grantKeyword`, `grantStatus`, `costChange`, `noBlockers`):
 `"turn"` (the default), `"battle"`, and `"opponentsNextTurn"` for "until the end of your
@@ -211,7 +223,8 @@ opponent's next turn" or "... next End Phase".
 
 Statuses for `grantStatus`: `cannotAttack`, `cannotBlock` ("your opponent cannot activate
 [Blocker]" on a chosen Character), `cannotBeKOdInBattle`, `cannotBeKOdByEffects`,
-`cannotBeKOdByOpponentsEffects`, and `noRefresh`.
+`cannotBeKOdByOpponentsEffects`, `noRefresh`, and `cannotBeRested` (it can't attack, block, or
+be rested by costs or effects).
 
 Step options:
 

@@ -116,8 +116,7 @@ const ON_FIELD_TIMINGS = new Set([
   "characterRestedByYourEffect",
   "replaceRemoval",
   "donReturned",
-  "characterKOd",
-  "attackDealsDamage",
+  "becomesRested",
 ]);
 
 function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
@@ -241,18 +240,19 @@ function payCost(
     frame.revealed = chosen;
   } else if ("restOwn" in cost) {
     const options = fieldCards(state, frame.controller).filter(
-      (c) => !c.rested && matchesFilter(state, c, cost.restOwn, source),
+      (c) =>
+        !c.rested &&
+        !hasStatus(state, c, "cannotBeRested") &&
+        matchesFilter(state, c, cost.restOwn, source),
     );
     const chosen = choose(state, frame, frame.controller, options, 1, 1, "rest");
     if (chosen === "wait") return "wait";
     for (const uid of chosen) {
       const card = findOnField(state, uid)?.card;
-      if (card) card.rested = true;
+      if (card) restCard(state, frame.controller, card, false);
     }
   } else if ("restThis" in cost) {
-    if (!source.rested && findOnField(state, source.uid)?.zone === "characters")
-      characterRested(state, frame.controller);
-    source.rested = true;
+    restCard(state, frame.controller, source, true);
   } else if ("returnGivenDon" in cost) {
     // One DON!! at a time, so the player picks which cards they come from.
     while (frame.memo.length < cost.returnGivenDon) {
@@ -289,8 +289,58 @@ function payCost(
     frame.memo = [];
   } else if ("trashLife" in cost) {
     trashFromLife(state, frame.controller, cost.trashLife);
-  } else if ("lifeFaceUp" in cost) {
-    for (const card of p.life.slice(0, cost.lifeFaceUp)) card.faceUp = true;
+  } else if ("lifeFaceUp" in cost || "lifeFaceDown" in cost) {
+    const faceUp = "lifeFaceUp" in cost;
+    const count = faceUp ? cost.lifeFaceUp : cost.lifeFaceDown;
+    for (let i = frame.memo.length; i < count; i++) {
+      // Only a card that isn't already facing that way can be turned.
+      const top = p.life[0];
+      const bottom = p.life.at(-1);
+      const topOk = !!top && !!top.faceUp !== faceUp;
+      const bottomOk = cost.from === "topOrBottom" && !!bottom && !!bottom.faceUp !== faceUp;
+      let card = topOk ? top : bottomOk ? bottom : undefined;
+      if (topOk && bottomOk && p.life.length > 1) {
+        if (frame.answer === null) {
+          state.prompt = {
+            kind: "confirm",
+            player: frame.controller,
+            reason: "lifeFromBottom",
+            source: frame.source,
+          };
+          return "wait";
+        }
+        if (frame.answer === true) card = bottom;
+        frame.answer = null;
+      }
+      if (card) card.faceUp = faceUp;
+      frame.memo.push(card?.uid ?? "");
+    }
+    frame.memo = [];
+  } else if ("trashFromDeckTop" in cost) {
+    p.trash.unshift(...p.deck.splice(0, cost.trashFromDeckTop).reverse());
+  } else if ("oneOf" in cost) {
+    if (frame.picked === undefined) {
+      const payable = cost.oneOf
+        .map((one, index) => ({ one, index }))
+        .filter(({ one }) => canPayCosts(state, frame.controller, source, [one]));
+      if (payable.length === 1) frame.picked = payable[0]?.index ?? 0;
+      else {
+        if (!Array.isArray(frame.answer)) {
+          state.prompt = {
+            kind: "chooseOne",
+            player: frame.controller,
+            labels: payable.map(({ one }) => costLabel(one)),
+            source: frame.source,
+          };
+          return "wait";
+        }
+        frame.picked = payable[Number(frame.answer[0])]?.index ?? 0;
+        frame.answer = null;
+      }
+    }
+    const outcome = payCost(state, frame, source, cost.oneOf[frame.picked ?? 0] as Cost);
+    if (outcome === "wait") return "wait";
+    delete frame.picked;
   } else if ("trashToDeckBottom" in cost) {
     const pile = p.trash.filter((c) => c.uid !== source.uid);
     const chosen = choose(
@@ -325,6 +375,17 @@ function payCost(
     }
   }
   return "continue";
+}
+
+/** A short label for a cost option in a "pay one of these" prompt. */
+function costLabel(cost: Cost): string {
+  if ("restDon" in cost) return `Rest ${cost.restDon} DON!!`;
+  if ("donMinus" in cost) return `DON!! −${cost.donMinus}`;
+  if ("restThis" in cost) return "Rest this card";
+  if ("restOwn" in cost)
+    return cost.restOwn.category === "leader" ? "Rest your Leader" : "Rest 1 of your cards";
+  if ("trashFromHand" in cost) return `Trash ${cost.trashFromHand} from your hand`;
+  return Object.keys(cost)[0] ?? "Pay";
 }
 
 /**
@@ -518,6 +579,14 @@ function runStep(
       const cards = chosen.map((uid) => p.hand.find((c) => c.uid === uid)).filter((c) => !!c);
       p.hand = p.hand.filter((c) => !chosen.includes(c.uid));
       p.deck.push(...cards);
+      return "continue";
+    }
+
+    case "redirectAttack": {
+      if (!state.battle) return "continue";
+      const chosen = chooseTargets(state, frame, source, step.target, step.do);
+      if (chosen === "wait") return "wait";
+      if (chosen[0]) state.battle.target = chosen[0];
       return "continue";
     }
 
@@ -952,6 +1021,24 @@ function findReplacement(
   return null;
 }
 
+/**
+ * Rests a field card by a cost or effect. `byEffect` also fires "If a Character is
+ * rested by your effect"; "When this Character becomes rested" fires either way.
+ */
+function restCard(
+  state: GameState,
+  controller: PlayerId,
+  card: CardInstance,
+  byEffect: boolean,
+): void {
+  if (card.rested) return;
+  card.rested = true;
+  const location = findOnField(state, card.uid);
+  if (location?.zone !== "characters") return;
+  if (byEffect) characterRested(state, controller);
+  queueEffects(state, location.player, card, "becomesRested");
+}
+
 /** "If a Character is rested by your effect" (OP07-031). */
 function characterRested(state: GameState, controller: PlayerId): void {
   for (const card of fieldCards(state, controller))
@@ -1021,8 +1108,8 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
         knockOut(state, uid, true);
       return;
     case "rest":
-      if (!card.rested && location.zone === "characters") characterRested(state, controller);
-      card.rested = true;
+      if (hasStatus(state, card, "cannotBeRested")) return;
+      restCard(state, controller, card, true);
       if (step.stayRested)
         state.modifiers.push({
           target: uid,
@@ -1161,8 +1248,10 @@ function moveFromHandToDeckTop(state: GameState, player: PlayerId, uids: string[
   p.deck.unshift(...cards);
 }
 
+/** Only effects trash from the hand this way, which `handTrashedByEffectThisTurn` tracks. */
 function moveFromHandToTrash(state: GameState, player: PlayerId, uids: string[]): void {
   const p = state.players[player];
+  if (uids.length > 0) (state.handTrashedTurn ??= {})[player] = state.turn;
   for (const uid of uids) {
     const index = p.hand.findIndex((c) => c.uid === uid);
     const [card] = p.hand.splice(index, 1);

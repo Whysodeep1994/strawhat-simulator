@@ -61,10 +61,8 @@ export type Timing =
   | "replaceRemoval"
   /** "When ... DON!! cards on your field are returned to your DON!! deck". See `returnedAtLeast`. */
   | "donReturned"
-  /** "When a Character is K.O.'d": any Character, either player's, in battle or by an effect. */
-  | "characterKOd"
-  /** "When this card's attack deals damage to your opponent's Life". */
-  | "attackDealsDamage"
+  /** "When this Character becomes rested" (by attacking, blocking, a cost or an effect). */
+  | "becomesRested"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -106,13 +104,21 @@ export type Condition =
   /** "If your Leader's type includes "Whitebeard Pirates"". */
   | { leaderTypeIncludes: string }
   /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
-  | { lifeAtMostOpponents: true };
+  | { lifeAtMostOpponents: true }
+  /** "If you have a total of 3 or more given DON!! cards" (Leader and Characters). */
+  | { givenDonAtLeast: number }
+  /** "If your Leader has the <Slash> attribute". */
+  | { leaderAttribute: string }
+  /** "If your opponent has 6 or more cards in their hand". */
+  | { opponentHandAtLeast: number }
+  /** "During the turn in which a card in your hand is trashed by an effect". */
+  | { handTrashedByEffectThisTurn: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
   side: "self" | "opponent";
-  /** Defaults to "characters". */
-  zone?: "leader" | "characters" | "leaderOrCharacters" | "stage";
+  /** Defaults to "characters". "field" is the Leader, Characters, and Stage. */
+  zone?: "leader" | "characters" | "leaderOrCharacters" | "stage" | "field";
   filter?: Filter;
 }
 
@@ -138,8 +144,14 @@ export type Cost =
   | { lifeToHand: number; from?: "top" | "topOrBottom" }
   /** Trash cards from the top of your Life cards. */
   | { trashLife: number }
-  /** Turn the top card of your Life cards face-up. It must be face-down. */
-  | { lifeFaceUp: number }
+  /** Turn the top (or, with `from: "topOrBottom"`, top or bottom) Life card face-up. It must be face-down. */
+  | { lifeFaceUp: number; from?: "top" | "topOrBottom" }
+  /** Turn a face-up Life card at the top (or bottom) face-down. */
+  | { lifeFaceDown: number; from?: "top" | "topOrBottom" }
+  /** Trash cards from the top of your deck. */
+  | { trashFromDeckTop: number }
+  /** "Rest your Leader or 1 of your DON!! cards": the player pays one of these. */
+  | { oneOf: Cost[] }
   /** Place cards from your trash at the bottom of your deck. */
   | { trashToDeckBottom: number }
   /** Trash this card from the field. Not a K.O. */
@@ -193,6 +205,8 @@ export interface Filter {
   hasTrigger?: boolean;
   /** The card has this keyword right now, e.g. [Blocker]. */
   keyword?: Keyword;
+  /** The printed attribute includes this, e.g. "Slash". */
+  attribute?: string;
   /** At least one of these filters matches ("{Cross Guild} type or ..."). */
   anyOf?: Filter[];
   /** "With no base effect": a card without card text (rule 2-8-5), so no effects or keywords. */
@@ -215,7 +229,9 @@ export type Status =
   | "cannotBeKOdByEffects"
   | "cannotBeKOdByOpponentsEffects"
   /** Doesn't become active in its owner's next Refresh Phase. */
-  | "noRefresh";
+  | "noRefresh"
+  /** "Cannot be rested": it can't attack, block, or be rested by effects or costs. */
+  | "cannotBeRested";
 
 export type Step =
   | { do: "draw"; count: number }
@@ -230,6 +246,8 @@ export type Step =
       duration?: Duration;
       perPrevious?: boolean;
       perTrash?: number;
+      /** "For every {Straw Hat Crew} type card on your field": amount × the count. */
+      perCount?: CardCount;
     }
   | { do: "grantKeyword"; target: Target; keyword: Keyword; duration?: Duration }
   | { do: "grantStatus"; target: Target; status: Status; duration?: Duration }
@@ -237,7 +255,14 @@ export type Step =
    * Change cost (negative for "−"). As a permanent effect with `zone: "hand"`
    * it changes the cost to play the card.
    */
-  | { do: "costChange"; target: Target; amount: number; duration?: Duration; perTrash?: number }
+  | {
+      do: "costChange";
+      target: Target;
+      amount: number;
+      duration?: Duration;
+      perTrash?: number;
+      perCount?: CardCount;
+    }
   | { do: "ko"; target: Target }
   /**
    * `stayRested`: "and that Character will not become active in your
@@ -264,24 +289,10 @@ export type Step =
   | { do: "handToDeckTop"; count: number }
   /** Place cards from your hand at the bottom of your deck. */
   | { do: "handToDeckBottom"; count: number }
-  /**
-   * "Add up to 1 card from your hand to the top of your Life cards." `fromTrash` also offers
-   * matching cards in your trash ("from your hand or trash"); `faceUp` adds them face-up.
-   */
-  | { do: "handToLife"; count: number; filter?: Filter; fromTrash?: boolean; faceUp?: boolean }
-  /** Trash all of your face-up Life cards. */
-  | { do: "trashFaceUpLife" }
-  /** Trash cards from the top of your deck. */
-  | { do: "trashDeckTop"; count: number }
-  /**
-   * Permanent only: "Your face-up Life cards are placed at the bottom of your deck instead of
-   * being added to your hand, according to the rules" (damage, rule 7-1-4-1-1-2).
-   */
-  | { do: "faceUpLifeToDeckBottom" }
-  /** Permanent, on a Leader: "when your deck is reduced to 0, you win the game instead of losing". */
-  | { do: "winOnDeckOut" }
-  /** Permanent, on a Leader: "you can only include {type} type cards in your deck". Checked by `checkDeck`. */
-  | { do: "deckOnlyType"; type: string }
+  /** "Change the target of the attack to ...": the chosen card becomes the attack's target. */
+  | { do: "redirectAttack"; target: Target }
+  /** "Add up to 1 card from your hand to the top of your Life cards." */
+  | { do: "handToLife"; count: number }
   /** Place the cards revealed by a `revealFromHand` cost at the top of your deck. */
   | { do: "revealedToDeckTop" }
   /** Add up to `count` (default 1) matching cards from your trash to your hand. */
