@@ -1,6 +1,8 @@
 import {
+  BASE_RULES,
   setOf,
   validateDeck,
+  type DeckFormat,
   type CardCatalog,
   type CardDefinition,
   type DeckList,
@@ -29,11 +31,17 @@ export interface PlayableDeck extends DeckList {
   name: string;
   /** False for a practice deck built while the official list isn't in the card data yet. */
   official: boolean;
+  /** A deck the player built and saved. */
+  mine?: boolean;
 }
 
 export interface CardData {
   catalog: Record<string, Card>;
   decks: PlayableDeck[];
+  /** The Standard format: the official banned and restricted lists, when the card data has them. */
+  format: DeckFormat;
+  /** False until the card data has the official Standard rules; only the base rules apply. */
+  formatLoaded: boolean;
   imageUrl: (card: Card | undefined) => string | undefined;
 }
 
@@ -41,18 +49,21 @@ export interface CardData {
 export const CARD_DATA_URL = "./card-data/";
 
 export async function loadCardData(base = CARD_DATA_URL): Promise<CardData> {
-  const [cards, decks] = await Promise.all([
+  const [cards, decks, formats] = await Promise.all([
     fetchJson<Card[]>(`${base}cards.json`),
     fetchJson<OfficialDeck[]>(`${base}decks.json`).catch(() => []),
+    fetchJson<DeckFormat[]>(`${base}formats.json`).catch(() => []),
   ]);
-  return buildCardData(cards, decks, base);
+  return buildCardData(cards, decks, base, formats);
 }
 
 export function buildCardData(
   cards: Card[],
   officialDecks: OfficialDeck[],
   base: string,
+  formats: DeckFormat[] = [],
 ): CardData {
+  const standard = formats.find((f) => f.id === "standard");
   const catalog: Record<string, Card> = Object.fromEntries(cards.map((c) => [c.id, c]));
   const decks: PlayableDeck[] = [];
   for (const deck of officialDecks) {
@@ -73,6 +84,8 @@ export function buildCardData(
   return {
     catalog,
     decks,
+    format: standard ?? { ...BASE_RULES, id: "standard", name: "Standard" },
+    formatLoaded: standard !== undefined,
     imageUrl: (card) => (card?.image ? `${base}${card.image}` : undefined),
   };
 }

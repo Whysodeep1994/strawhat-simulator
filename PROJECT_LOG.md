@@ -28,6 +28,12 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-23: Deck builder in the app (Phase 7, early, at the owner's request). Search every card
+  (name, type, effect text, card number, set, colour, card type, cost range), build and name
+  decks, paste and copy lists, and save them in the browser. Decks are checked against Standard
+  as you build (`checkDeck` in the engine): 50 cards, 4 copies, Leader colours, legal blocks and
+  their exceptions, banned cards, restricted cards, and banned pairs, using strawhat-card-data's
+  formats/standard.json from Bandai's official pages. Your own decks can be played once legal.
 - 2026-10-23: Phase 5, real cards on an official-style table. The app loads cards, decks and
   art from strawhat-card-data (copied in by `packages/web/scripts/card-data.mjs`). Each side of
   the table follows the official playmat: Life on the left, Character Area on top, Leader in the
