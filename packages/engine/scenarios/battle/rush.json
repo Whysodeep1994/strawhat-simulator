@@ -1,0 +1,30 @@
+{
+  "name": "[Rush] Characters can attack the turn they're played",
+  "rules": ["10-1-1", "10-1-1-1"],
+  "setup": {
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-RUSH",
+          "playedThisTurn": true,
+          "don": 1
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 3
+  }
+}

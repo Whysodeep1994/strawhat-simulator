@@ -1,0 +1,29 @@
+{
+  "name": "[Double Attack] against 1 Life takes the last card but doesn't win (Rules Question #1)",
+  "rules": ["10-1-2-1", "7-1-4-1-1-3"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-DOUBLE"]
+    },
+    "p2": {
+      "life": 1
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 0,
+    "p2.hand": 1,
+    "winner": null
+  }
+}

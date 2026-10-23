@@ -1,0 +1,39 @@
+{
+  "name": "Refresh Phase returns given DON!! and sets everything active",
+  "rules": ["6-2", "6-2-3", "6-2-4", "4-4-2", "4-4-1", "4-4-1-1"],
+  "setup": {
+    "p2": {
+      "leader": {
+        "card": "TEST-LEADER",
+        "rested": true,
+        "don": 1
+      },
+      "characters": [
+        {
+          "card": "TEST-C2-3000",
+          "rested": true,
+          "don": 2
+        }
+      ],
+      "stage": "TEST-STAGE",
+      "don": {
+        "rested": 3,
+        "deck": 2
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "endTurn",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p2.leader.rested": false,
+    "p2.leader.givenDon": 0,
+    "p2.characters.0.rested": false,
+    "p2.characters.0.givenDon": 0,
+    "p2.donActive": 8,
+    "p2.donRested": 0
+  }
+}

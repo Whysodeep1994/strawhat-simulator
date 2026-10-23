@@ -1,0 +1,18 @@
+{
+  "name": "The second player can't attack on their first turn either",
+  "rules": ["6-5-6-1"],
+  "setup": {
+    "turn": 2,
+    "turnPlayer": "p2",
+    "p2": {
+      "turnsTaken": 1
+    },
+    "p1": {
+      "turnsTaken": 1
+    }
+  },
+  "actions": [],
+  "expect": {
+    "legal.p2.attack": 0
+  }
+}

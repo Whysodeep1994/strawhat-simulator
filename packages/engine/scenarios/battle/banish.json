@@ -1,0 +1,26 @@
+{
+  "name": "[Banish] trashes the Life card instead of adding it to hand",
+  "rules": ["10-1-3", "10-1-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-BANISH"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 3,
+    "p2.hand": 0,
+    "p2.trash": 1
+  }
+}

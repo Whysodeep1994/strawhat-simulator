@@ -1,0 +1,21 @@
+{
+  "name": "The Leader can attack",
+  "rules": ["7-1-1-1", "4-4-1-2"],
+  "setup": {},
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 3,
+    "p1.leader.rested": true
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "A card can't be played without enough active DON!!",
+  "rules": ["4-7-2", "2-7-2"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-C2-3000"],
+      "don": {
+        "active": 1,
+        "rested": 5
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0",
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "legal.p1.playCard": 0
+  }
+}

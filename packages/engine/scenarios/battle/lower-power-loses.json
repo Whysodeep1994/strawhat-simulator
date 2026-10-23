@@ -1,0 +1,26 @@
+{
+  "name": "An attacker with less power loses and nothing happens",
+  "rules": ["7-1-4-2"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C2-3000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 4,
+    "p2.hand": 0,
+    "prompt.kind": "main"
+  }
+}

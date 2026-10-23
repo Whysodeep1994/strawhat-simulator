@@ -1,0 +1,39 @@
+{
+  "name": "Each given DON!! adds 1000 power during your turn",
+  "rules": ["6-5-5", "6-5-5-1", "6-5-5-2", "6-5-5-3"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C2-3000"],
+      "don": {
+        "active": 2
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "giveDon",
+      "player": "p1",
+      "target": "p1.characters.0"
+    },
+    {
+      "type": "giveDon",
+      "player": "p1",
+      "target": "p1.characters.0"
+    },
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 3,
+    "p1.donActive": 0,
+    "p1.characters.0.givenDon": 2
+  }
+}

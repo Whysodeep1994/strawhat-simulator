@@ -2,9 +2,9 @@
 
 An unofficial, open-source simulator for the One Piece Card Game.
 
-> **Not affiliated with Bandai.** This is a fan project. "ONE PIECE" and the One Piece Card Game
-> are trademarks of their owners. This repository contains no card images, logos, or official
-> card text; see [docs/CARD_ASSETS.md](docs/CARD_ASSETS.md).
+> **Not affiliated with Bandai.** This is a free, non-commercial fan project. "ONE PIECE" and the
+> One Piece Card Game are trademarks of their owners. Card data lives in a separate repository;
+> see [docs/CARD_ASSETS.md](docs/CARD_ASSETS.md).
 
 ## Goals
 
@@ -16,7 +16,8 @@ An unofficial, open-source simulator for the One Piece Card Game.
 
 ## Status
 
-Early setup. See [PROJECT_LOG.md](PROJECT_LOG.md) for what's done and what's next.
+Building the rules engine. See [PROJECT_LOG.md](PROJECT_LOG.md) for what's done and what's next,
+and [docs/RULES_COVERAGE.md](docs/RULES_COVERAGE.md) for which rules are tested.
 
 ## Project layout
 
@@ -34,6 +35,7 @@ You need [Node.js 22](https://nodejs.org/) and [pnpm](https://pnpm.io/installati
 pnpm install   # download the tools
 pnpm check     # format check, lint, typecheck, and tests
 pnpm test      # tests only
+pnpm coverage:rules  # rebuild docs/RULES_COVERAGE.md
 ```
 
 `pnpm check` also runs automatically before every commit.

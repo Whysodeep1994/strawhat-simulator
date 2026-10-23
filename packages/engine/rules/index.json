@@ -1,0 +1,2410 @@
+{
+  "rulesVersion": "1.2.1",
+  "rules": [
+    {
+      "id": "1-1",
+      "topic": "1-1 Number of Players",
+      "scope": "heading"
+    },
+    {
+      "id": "1-1-1",
+      "topic": "1-1 Number of Players",
+      "scope": "no-gameplay"
+    },
+    {
+      "id": "1-2",
+      "topic": "1-2 Ending the Game",
+      "scope": "heading"
+    },
+    {
+      "id": "1-2-1",
+      "topic": "1-2 Ending the Game",
+      "scope": "engine"
+    },
+    {
+      "id": "1-2-1-1",
+      "topic": "1-2 Ending the Game",
+      "scope": "engine"
+    },
+    {
+      "id": "1-2-1-1-1",
+      "topic": "1-2 Ending the Game",
+      "scope": "engine"
+    },
+    {
+      "id": "1-2-1-1-2",
+      "topic": "1-2 Ending the Game",
+      "scope": "engine"
+    },
+    {
+      "id": "1-2-2",
+      "topic": "1-2 Ending the Game",
+      "scope": "engine"
+    },
+    {
+      "id": "1-2-2-1",
+      "topic": "1-2 Ending the Game",
+      "scope": "engine"
+    },
+    {
+      "id": "1-2-2-2",
+      "topic": "1-2 Ending the Game",
+      "scope": "engine"
+    },
+    {
+      "id": "1-2-3",
+      "topic": "1-2 Ending the Game",
+      "scope": "engine"
+    },
+    {
+      "id": "1-2-4",
+      "topic": "1-2 Ending the Game",
+      "scope": "effects"
+    },
+    {
+      "id": "1-2-5",
+      "topic": "1-2 Ending the Game",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "heading"
+    },
+    {
+      "id": "1-3-1",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-2",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-2-1",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-2-2",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-3",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-4",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-5",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-5-1",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-6",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-6-1",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-6-1-1",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-6-2",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-6-2-1",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-7",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-8",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-9",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-9-1",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-9-2",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "1-3-10",
+      "topic": "1-3 Fundamental Principles",
+      "scope": "effects"
+    },
+    {
+      "id": "2-1",
+      "topic": "2-1 Card Name",
+      "scope": "heading"
+    },
+    {
+      "id": "2-1-1",
+      "topic": "2-1 Card Name",
+      "scope": "effects"
+    },
+    {
+      "id": "2-1-2",
+      "topic": "2-1 Card Name",
+      "scope": "effects"
+    },
+    {
+      "id": "2-1-2-1",
+      "topic": "2-1 Card Name",
+      "scope": "effects"
+    },
+    {
+      "id": "2-1-3",
+      "topic": "2-1 Card Name",
+      "scope": "effects"
+    },
+    {
+      "id": "2-2",
+      "topic": "2-2 Card Category",
+      "scope": "heading"
+    },
+    {
+      "id": "2-2-1",
+      "topic": "2-2 Card Category",
+      "scope": "cards"
+    },
+    {
+      "id": "2-2-2",
+      "topic": "2-2 Card Category",
+      "scope": "cards"
+    },
+    {
+      "id": "2-2-3",
+      "topic": "2-2 Card Category",
+      "scope": "cards"
+    },
+    {
+      "id": "2-2-3-1",
+      "topic": "2-2 Card Category",
+      "scope": "effects"
+    },
+    {
+      "id": "2-2-4",
+      "topic": "2-2 Card Category",
+      "scope": "cards"
+    },
+    {
+      "id": "2-2-4-1",
+      "topic": "2-2 Card Category",
+      "scope": "effects"
+    },
+    {
+      "id": "2-2-4-2",
+      "topic": "2-2 Card Category",
+      "scope": "effects"
+    },
+    {
+      "id": "2-2-4-3",
+      "topic": "2-2 Card Category",
+      "scope": "effects"
+    },
+    {
+      "id": "2-2-5",
+      "topic": "2-2 Card Category",
+      "scope": "cards"
+    },
+    {
+      "id": "2-2-5-1",
+      "topic": "2-2 Card Category",
+      "scope": "effects"
+    },
+    {
+      "id": "2-2-6",
+      "topic": "2-2 Card Category",
+      "scope": "cards"
+    },
+    {
+      "id": "2-2-6-1",
+      "topic": "2-2 Card Category",
+      "scope": "effects"
+    },
+    {
+      "id": "2-2-6-2",
+      "topic": "2-2 Card Category",
+      "scope": "effects"
+    },
+    {
+      "id": "2-3",
+      "topic": "2-3 Color",
+      "scope": "heading"
+    },
+    {
+      "id": "2-3-1",
+      "topic": "2-3 Color",
+      "scope": "cards"
+    },
+    {
+      "id": "2-3-2",
+      "topic": "2-3 Color",
+      "scope": "cards"
+    },
+    {
+      "id": "2-3-3",
+      "topic": "2-3 Color",
+      "scope": "cards"
+    },
+    {
+      "id": "2-3-3-1",
+      "topic": "2-3 Color",
+      "scope": "cards"
+    },
+    {
+      "id": "2-3-4",
+      "topic": "2-3 Color",
+      "scope": "cards"
+    },
+    {
+      "id": "2-3-5",
+      "topic": "2-3 Color",
+      "scope": "engine"
+    },
+    {
+      "id": "2-3-6",
+      "topic": "2-3 Color",
+      "scope": "effects"
+    },
+    {
+      "id": "2-4",
+      "topic": "2-4 Type",
+      "scope": "heading"
+    },
+    {
+      "id": "2-4-1",
+      "topic": "2-4 Type",
+      "scope": "effects"
+    },
+    {
+      "id": "2-4-2",
+      "topic": "2-4 Type",
+      "scope": "effects"
+    },
+    {
+      "id": "2-4-3",
+      "topic": "2-4 Type",
+      "scope": "effects"
+    },
+    {
+      "id": "2-4-3-1",
+      "topic": "2-4 Type",
+      "scope": "effects"
+    },
+    {
+      "id": "2-4-4",
+      "topic": "2-4 Type",
+      "scope": "effects"
+    },
+    {
+      "id": "2-5",
+      "topic": "2-5 Attribute",
+      "scope": "heading"
+    },
+    {
+      "id": "2-5-1",
+      "topic": "2-5 Attribute",
+      "scope": "effects"
+    },
+    {
+      "id": "2-5-2",
+      "topic": "2-5 Attribute",
+      "scope": "effects"
+    },
+    {
+      "id": "2-5-3",
+      "topic": "2-5 Attribute",
+      "scope": "effects"
+    },
+    {
+      "id": "2-5-4",
+      "topic": "2-5 Attribute",
+      "scope": "effects"
+    },
+    {
+      "id": "2-5-5",
+      "topic": "2-5 Attribute",
+      "scope": "effects"
+    },
+    {
+      "id": "2-5-6",
+      "topic": "2-5 Attribute",
+      "scope": "effects"
+    },
+    {
+      "id": "2-5-7",
+      "topic": "2-5 Attribute",
+      "scope": "effects"
+    },
+    {
+      "id": "2-6",
+      "topic": "2-6 Power",
+      "scope": "heading"
+    },
+    {
+      "id": "2-6-1",
+      "topic": "2-6 Power",
+      "scope": "cards"
+    },
+    {
+      "id": "2-6-2",
+      "topic": "2-6 Power",
+      "scope": "cards"
+    },
+    {
+      "id": "2-6-3",
+      "topic": "2-6 Power",
+      "scope": "effects"
+    },
+    {
+      "id": "2-7",
+      "topic": "2-7 Cost",
+      "scope": "heading"
+    },
+    {
+      "id": "2-7-1",
+      "topic": "2-7 Cost",
+      "scope": "engine"
+    },
+    {
+      "id": "2-7-2",
+      "topic": "2-7 Cost",
+      "scope": "engine"
+    },
+    {
+      "id": "2-7-3",
+      "topic": "2-7 Cost",
+      "scope": "effects"
+    },
+    {
+      "id": "2-7-4",
+      "topic": "2-7 Cost",
+      "scope": "engine"
+    },
+    {
+      "id": "2-7-5",
+      "topic": "2-7 Cost",
+      "scope": "cards"
+    },
+    {
+      "id": "2-7-6",
+      "topic": "2-7 Cost",
+      "scope": "effects"
+    },
+    {
+      "id": "2-8",
+      "topic": "2-8 Card Text",
+      "scope": "heading"
+    },
+    {
+      "id": "2-8-1",
+      "topic": "2-8 Card Text",
+      "scope": "effects"
+    },
+    {
+      "id": "2-8-2",
+      "topic": "2-8 Card Text",
+      "scope": "effects"
+    },
+    {
+      "id": "2-8-3",
+      "topic": "2-8 Card Text",
+      "scope": "effects"
+    },
+    {
+      "id": "2-8-4",
+      "topic": "2-8 Card Text",
+      "scope": "effects"
+    },
+    {
+      "id": "2-8-4-1",
+      "topic": "2-8 Card Text",
+      "scope": "effects"
+    },
+    {
+      "id": "2-8-4-2",
+      "topic": "2-8 Card Text",
+      "scope": "effects"
+    },
+    {
+      "id": "2-8-5",
+      "topic": "2-8 Card Text",
+      "scope": "effects"
+    },
+    {
+      "id": "2-9",
+      "topic": "2-9 Life",
+      "scope": "heading"
+    },
+    {
+      "id": "2-9-1",
+      "topic": "2-9 Life",
+      "scope": "cards"
+    },
+    {
+      "id": "2-9-2",
+      "topic": "2-9 Life",
+      "scope": "engine"
+    },
+    {
+      "id": "2-9-2-1",
+      "topic": "2-9 Life",
+      "scope": "engine"
+    },
+    {
+      "id": "2-9-3",
+      "topic": "2-9 Life",
+      "scope": "cards"
+    },
+    {
+      "id": "2-9-4",
+      "topic": "2-9 Life",
+      "scope": "effects"
+    },
+    {
+      "id": "2-10",
+      "topic": "2-10 (Symbol) Counter",
+      "scope": "heading"
+    },
+    {
+      "id": "2-10-1",
+      "topic": "2-10 (Symbol) Counter",
+      "scope": "engine"
+    },
+    {
+      "id": "2-10-2",
+      "topic": "2-10 (Symbol) Counter",
+      "scope": "engine"
+    },
+    {
+      "id": "2-10-3",
+      "topic": "2-10 (Symbol) Counter",
+      "scope": "effects"
+    },
+    {
+      "id": "2-10-4",
+      "topic": "2-10 (Symbol) Counter",
+      "scope": "effects"
+    },
+    {
+      "id": "2-11",
+      "topic": "2-11 [Trigger]",
+      "scope": "heading"
+    },
+    {
+      "id": "2-11-1",
+      "topic": "2-11 [Trigger]",
+      "scope": "effects"
+    },
+    {
+      "id": "2-11-2",
+      "topic": "2-11 [Trigger]",
+      "scope": "effects"
+    },
+    {
+      "id": "2-12",
+      "topic": "2-12 Copyright Notice",
+      "scope": "heading"
+    },
+    {
+      "id": "2-12-1",
+      "topic": "2-12 Copyright Notice",
+      "scope": "no-gameplay"
+    },
+    {
+      "id": "2-13",
+      "topic": "2-13 Rarity",
+      "scope": "heading"
+    },
+    {
+      "id": "2-13-1",
+      "topic": "2-13 Rarity",
+      "scope": "no-gameplay"
+    },
+    {
+      "id": "2-14",
+      "topic": "2-14 Card Number",
+      "scope": "heading"
+    },
+    {
+      "id": "2-14-1",
+      "topic": "2-14 Card Number",
+      "scope": "cards"
+    },
+    {
+      "id": "2-14-2",
+      "topic": "2-14 Card Number",
+      "scope": "engine"
+    },
+    {
+      "id": "2-14-3",
+      "topic": "2-14 Card Number",
+      "scope": "cards"
+    },
+    {
+      "id": "2-15",
+      "topic": "2-15 Block Symbol",
+      "scope": "heading"
+    },
+    {
+      "id": "2-15-1",
+      "topic": "2-15 Block Symbol",
+      "scope": "no-gameplay"
+    },
+    {
+      "id": "2-16",
+      "topic": "2-16 Illustration",
+      "scope": "heading"
+    },
+    {
+      "id": "2-16-1",
+      "topic": "2-16 Illustration",
+      "scope": "no-gameplay"
+    },
+    {
+      "id": "2-17",
+      "topic": "2-17 Illustrator\u2019s Name",
+      "scope": "heading"
+    },
+    {
+      "id": "2-17-1",
+      "topic": "2-17 Illustrator\u2019s Name",
+      "scope": "no-gameplay"
+    },
+    {
+      "id": "3-1",
+      "topic": "3-1 Areas",
+      "scope": "heading"
+    },
+    {
+      "id": "3-1-1",
+      "topic": "3-1 Areas",
+      "scope": "engine"
+    },
+    {
+      "id": "3-1-2",
+      "topic": "3-1 Areas",
+      "scope": "engine"
+    },
+    {
+      "id": "3-1-2-1",
+      "topic": "3-1 Areas",
+      "scope": "effects"
+    },
+    {
+      "id": "3-1-3",
+      "topic": "3-1 Areas",
+      "scope": "engine"
+    },
+    {
+      "id": "3-1-4",
+      "topic": "3-1 Areas",
+      "scope": "engine"
+    },
+    {
+      "id": "3-1-5",
+      "topic": "3-1 Areas",
+      "scope": "engine"
+    },
+    {
+      "id": "3-1-6",
+      "topic": "3-1 Areas",
+      "scope": "engine"
+    },
+    {
+      "id": "3-1-6-1",
+      "topic": "3-1 Areas",
+      "scope": "effects"
+    },
+    {
+      "id": "3-1-7",
+      "topic": "3-1 Areas",
+      "scope": "effects"
+    },
+    {
+      "id": "3-1-8",
+      "topic": "3-1 Areas",
+      "scope": "effects"
+    },
+    {
+      "id": "3-2",
+      "topic": "3-2 Deck",
+      "scope": "heading"
+    },
+    {
+      "id": "3-2-1",
+      "topic": "3-2 Deck",
+      "scope": "engine"
+    },
+    {
+      "id": "3-2-2",
+      "topic": "3-2 Deck",
+      "scope": "engine"
+    },
+    {
+      "id": "3-2-3",
+      "topic": "3-2 Deck",
+      "scope": "engine"
+    },
+    {
+      "id": "3-2-4",
+      "topic": "3-2 Deck",
+      "scope": "engine"
+    },
+    {
+      "id": "3-3",
+      "topic": "3-3 DON!! Deck",
+      "scope": "heading"
+    },
+    {
+      "id": "3-3-1",
+      "topic": "3-3 DON!! Deck",
+      "scope": "engine"
+    },
+    {
+      "id": "3-3-2",
+      "topic": "3-3 DON!! Deck",
+      "scope": "engine"
+    },
+    {
+      "id": "3-3-3",
+      "topic": "3-3 DON!! Deck",
+      "scope": "engine"
+    },
+    {
+      "id": "3-4",
+      "topic": "3-4 Hand",
+      "scope": "heading"
+    },
+    {
+      "id": "3-4-1",
+      "topic": "3-4 Hand",
+      "scope": "engine"
+    },
+    {
+      "id": "3-4-2",
+      "topic": "3-4 Hand",
+      "scope": "engine"
+    },
+    {
+      "id": "3-4-3",
+      "topic": "3-4 Hand",
+      "scope": "engine"
+    },
+    {
+      "id": "3-5",
+      "topic": "3-5 Trash",
+      "scope": "heading"
+    },
+    {
+      "id": "3-5-1",
+      "topic": "3-5 Trash",
+      "scope": "engine"
+    },
+    {
+      "id": "3-5-2",
+      "topic": "3-5 Trash",
+      "scope": "engine"
+    },
+    {
+      "id": "3-6",
+      "topic": "3-6 Leader Area",
+      "scope": "heading"
+    },
+    {
+      "id": "3-6-1",
+      "topic": "3-6 Leader Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-6-2",
+      "topic": "3-6 Leader Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-6-3",
+      "topic": "3-6 Leader Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-7",
+      "topic": "3-7 Character Area",
+      "scope": "heading"
+    },
+    {
+      "id": "3-7-1",
+      "topic": "3-7 Character Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-7-2",
+      "topic": "3-7 Character Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-7-3",
+      "topic": "3-7 Character Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-7-4",
+      "topic": "3-7 Character Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-7-5",
+      "topic": "3-7 Character Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-7-6",
+      "topic": "3-7 Character Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-7-6-1",
+      "topic": "3-7 Character Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-7-6-1-1",
+      "topic": "3-7 Character Area",
+      "scope": "effects"
+    },
+    {
+      "id": "3-8",
+      "topic": "3-8 Stage Area",
+      "scope": "heading"
+    },
+    {
+      "id": "3-8-1",
+      "topic": "3-8 Stage Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-8-2",
+      "topic": "3-8 Stage Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-8-3",
+      "topic": "3-8 Stage Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-8-4",
+      "topic": "3-8 Stage Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-8-5",
+      "topic": "3-8 Stage Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-8-5-1",
+      "topic": "3-8 Stage Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-9",
+      "topic": "3-9 Cost Area",
+      "scope": "heading"
+    },
+    {
+      "id": "3-9-1",
+      "topic": "3-9 Cost Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-9-2",
+      "topic": "3-9 Cost Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-9-3",
+      "topic": "3-9 Cost Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-10",
+      "topic": "3-10 Life Area",
+      "scope": "heading"
+    },
+    {
+      "id": "3-10-1",
+      "topic": "3-10 Life Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-10-2",
+      "topic": "3-10 Life Area",
+      "scope": "engine"
+    },
+    {
+      "id": "3-10-2-1",
+      "topic": "3-10 Life Area",
+      "scope": "effects"
+    },
+    {
+      "id": "3-10-3",
+      "topic": "3-10 Life Area",
+      "scope": "effects"
+    },
+    {
+      "id": "4-1",
+      "topic": "4-1 Effects",
+      "scope": "heading"
+    },
+    {
+      "id": "4-1-1",
+      "topic": "4-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "4-1-2",
+      "topic": "4-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "4-2",
+      "topic": "4-2 Player",
+      "scope": "heading"
+    },
+    {
+      "id": "4-2-1",
+      "topic": "4-2 Player",
+      "scope": "engine"
+    },
+    {
+      "id": "4-2-1-1",
+      "topic": "4-2 Player",
+      "scope": "engine"
+    },
+    {
+      "id": "4-2-2",
+      "topic": "4-2 Player",
+      "scope": "no-gameplay"
+    },
+    {
+      "id": "4-3",
+      "topic": "4-3 Turn Player and Non-Turn Player",
+      "scope": "heading"
+    },
+    {
+      "id": "4-3-1",
+      "topic": "4-3 Turn Player and Non-Turn Player",
+      "scope": "engine"
+    },
+    {
+      "id": "4-3-2",
+      "topic": "4-3 Turn Player and Non-Turn Player",
+      "scope": "engine"
+    },
+    {
+      "id": "4-4",
+      "topic": "4-4 Card States",
+      "scope": "heading"
+    },
+    {
+      "id": "4-4-1",
+      "topic": "4-4 Card States",
+      "scope": "engine"
+    },
+    {
+      "id": "4-4-1-1",
+      "topic": "4-4 Card States",
+      "scope": "engine"
+    },
+    {
+      "id": "4-4-1-2",
+      "topic": "4-4 Card States",
+      "scope": "engine"
+    },
+    {
+      "id": "4-4-2",
+      "topic": "4-4 Card States",
+      "scope": "engine"
+    },
+    {
+      "id": "4-5",
+      "topic": "4-5 Draw a Card",
+      "scope": "heading"
+    },
+    {
+      "id": "4-5-1",
+      "topic": "4-5 Draw a Card",
+      "scope": "engine"
+    },
+    {
+      "id": "4-5-2",
+      "topic": "4-5 Draw a Card",
+      "scope": "engine"
+    },
+    {
+      "id": "4-5-3",
+      "topic": "4-5 Draw a Card",
+      "scope": "engine"
+    },
+    {
+      "id": "4-5-4",
+      "topic": "4-5 Draw a Card",
+      "scope": "effects"
+    },
+    {
+      "id": "4-5-4-1",
+      "topic": "4-5 Draw a Card",
+      "scope": "effects"
+    },
+    {
+      "id": "4-5-4-2",
+      "topic": "4-5 Draw a Card",
+      "scope": "effects"
+    },
+    {
+      "id": "4-5-4-3",
+      "topic": "4-5 Draw a Card",
+      "scope": "effects"
+    },
+    {
+      "id": "4-6",
+      "topic": "4-6 Damage Processing",
+      "scope": "heading"
+    },
+    {
+      "id": "4-6-1",
+      "topic": "4-6 Damage Processing",
+      "scope": "engine"
+    },
+    {
+      "id": "4-6-2",
+      "topic": "4-6 Damage Processing",
+      "scope": "engine"
+    },
+    {
+      "id": "4-6-2-1",
+      "topic": "4-6 Damage Processing",
+      "scope": "engine"
+    },
+    {
+      "id": "4-6-2-2",
+      "topic": "4-6 Damage Processing",
+      "scope": "engine"
+    },
+    {
+      "id": "4-6-3",
+      "topic": "4-6 Damage Processing",
+      "scope": "effects"
+    },
+    {
+      "id": "4-6-3-1",
+      "topic": "4-6 Damage Processing",
+      "scope": "effects"
+    },
+    {
+      "id": "4-7",
+      "topic": "4-7 Play a Card",
+      "scope": "heading"
+    },
+    {
+      "id": "4-7-1",
+      "topic": "4-7 Play a Card",
+      "scope": "engine"
+    },
+    {
+      "id": "4-7-2",
+      "topic": "4-7 Play a Card",
+      "scope": "engine"
+    },
+    {
+      "id": "4-8",
+      "topic": "4-8 Up to X Card(s)",
+      "scope": "heading"
+    },
+    {
+      "id": "4-8-1",
+      "topic": "4-8 Up to X Card(s)",
+      "scope": "effects"
+    },
+    {
+      "id": "4-8-2",
+      "topic": "4-8 Up to X Card(s)",
+      "scope": "effects"
+    },
+    {
+      "id": "4-9",
+      "topic": "4-9 \u201cBase\u201d",
+      "scope": "heading"
+    },
+    {
+      "id": "4-9-1",
+      "topic": "4-9 \u201cBase\u201d",
+      "scope": "effects"
+    },
+    {
+      "id": "4-9-2",
+      "topic": "4-9 \u201cBase\u201d",
+      "scope": "effects"
+    },
+    {
+      "id": "4-9-2-1",
+      "topic": "4-9 \u201cBase\u201d",
+      "scope": "effects"
+    },
+    {
+      "id": "4-9-2-2",
+      "topic": "4-9 \u201cBase\u201d",
+      "scope": "effects"
+    },
+    {
+      "id": "4-10",
+      "topic": "4-10 \u201cIf\u201d and \u201cThen\u201d",
+      "scope": "heading"
+    },
+    {
+      "id": "4-10-1",
+      "topic": "4-10 \u201cIf\u201d and \u201cThen\u201d",
+      "scope": "effects"
+    },
+    {
+      "id": "4-10-2",
+      "topic": "4-10 \u201cIf\u201d and \u201cThen\u201d",
+      "scope": "effects"
+    },
+    {
+      "id": "4-11",
+      "topic": "4-11 \u201cRemove\u201d",
+      "scope": "heading"
+    },
+    {
+      "id": "4-11-1",
+      "topic": "4-11 \u201cRemove\u201d",
+      "scope": "effects"
+    },
+    {
+      "id": "4-11-2",
+      "topic": "4-11 \u201cRemove\u201d",
+      "scope": "effects"
+    },
+    {
+      "id": "4-12",
+      "topic": "4-12 \u00ab Set Power to 0 \u00bb",
+      "scope": "heading"
+    },
+    {
+      "id": "4-12-1",
+      "topic": "4-12 \u00ab Set Power to 0 \u00bb",
+      "scope": "effects"
+    },
+    {
+      "id": "4-12-2",
+      "topic": "4-12 \u00ab Set Power to 0 \u00bb",
+      "scope": "effects"
+    },
+    {
+      "id": "5-1",
+      "topic": "5-1 Preparing Leader Cards, Decks, and DON!! Decks",
+      "scope": "heading"
+    },
+    {
+      "id": "5-1-1",
+      "topic": "5-1 Preparing Leader Cards, Decks, and DON!! Decks",
+      "scope": "engine"
+    },
+    {
+      "id": "5-1-2",
+      "topic": "5-1 Preparing Leader Cards, Decks, and DON!! Decks",
+      "scope": "engine"
+    },
+    {
+      "id": "5-1-2-1",
+      "topic": "5-1 Preparing Leader Cards, Decks, and DON!! Decks",
+      "scope": "engine"
+    },
+    {
+      "id": "5-1-2-2",
+      "topic": "5-1 Preparing Leader Cards, Decks, and DON!! Decks",
+      "scope": "engine"
+    },
+    {
+      "id": "5-1-2-3",
+      "topic": "5-1 Preparing Leader Cards, Decks, and DON!! Decks",
+      "scope": "engine"
+    },
+    {
+      "id": "5-1-2-4",
+      "topic": "5-1 Preparing Leader Cards, Decks, and DON!! Decks",
+      "scope": "effects"
+    },
+    {
+      "id": "5-1-2-4-1",
+      "topic": "5-1 Preparing Leader Cards, Decks, and DON!! Decks",
+      "scope": "effects"
+    },
+    {
+      "id": "5-1-2-4-2",
+      "topic": "5-1 Preparing Leader Cards, Decks, and DON!! Decks",
+      "scope": "effects"
+    },
+    {
+      "id": "5-2",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "heading"
+    },
+    {
+      "id": "5-2-1",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "engine"
+    },
+    {
+      "id": "5-2-1-1",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "engine"
+    },
+    {
+      "id": "5-2-1-2",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "engine"
+    },
+    {
+      "id": "5-2-1-3",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "engine"
+    },
+    {
+      "id": "5-2-1-4",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "engine"
+    },
+    {
+      "id": "5-2-1-4-1",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "engine"
+    },
+    {
+      "id": "5-2-1-5",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "engine"
+    },
+    {
+      "id": "5-2-1-5-1",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "effects"
+    },
+    {
+      "id": "5-2-1-5-2",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "effects"
+    },
+    {
+      "id": "5-2-1-6",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "engine"
+    },
+    {
+      "id": "5-2-1-6-1",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "engine"
+    },
+    {
+      "id": "5-2-1-7",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "engine"
+    },
+    {
+      "id": "5-2-1-8",
+      "topic": "5-2 Pre-Game Preparations",
+      "scope": "engine"
+    },
+    {
+      "id": "6-1",
+      "topic": "6-1 Turn Flow",
+      "scope": "heading"
+    },
+    {
+      "id": "6-1-1",
+      "topic": "6-1 Turn Flow",
+      "scope": "engine"
+    },
+    {
+      "id": "6-1-2",
+      "topic": "6-1 Turn Flow",
+      "scope": "engine"
+    },
+    {
+      "id": "6-2",
+      "topic": "6-2 Refresh Phase",
+      "scope": "heading"
+    },
+    {
+      "id": "6-2-1",
+      "topic": "6-2 Refresh Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-2-2",
+      "topic": "6-2 Refresh Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-2-3",
+      "topic": "6-2 Refresh Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-2-4",
+      "topic": "6-2 Refresh Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-3",
+      "topic": "6-3 Draw Phase",
+      "scope": "heading"
+    },
+    {
+      "id": "6-3-1",
+      "topic": "6-3 Draw Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-4",
+      "topic": "6-4 DON!! Phase",
+      "scope": "heading"
+    },
+    {
+      "id": "6-4-1",
+      "topic": "6-4 DON!! Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-4-2",
+      "topic": "6-4 DON!! Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-4-3",
+      "topic": "6-4 DON!! Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5",
+      "topic": "6-5 Main Phase",
+      "scope": "heading"
+    },
+    {
+      "id": "6-5-1",
+      "topic": "6-5 Main Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-5-2",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5-2-1",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5-3",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5-3-1",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5-4",
+      "topic": "6-5 Main Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-5-4-1",
+      "topic": "6-5 Main Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-5-5",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5-5-1",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5-5-2",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5-5-3",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5-5-4",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5-6",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5-6-1",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-5-6-2",
+      "topic": "6-5 Main Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-6",
+      "topic": "6-6 End Phase",
+      "scope": "heading"
+    },
+    {
+      "id": "6-6-1",
+      "topic": "6-6 End Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "6-6-1-1",
+      "topic": "6-6 End Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-6-1-1-1",
+      "topic": "6-6 End Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-6-1-1-2",
+      "topic": "6-6 End Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-6-1-1-3",
+      "topic": "6-6 End Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-6-1-1-4",
+      "topic": "6-6 End Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-6-1-2",
+      "topic": "6-6 End Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-6-1-3",
+      "topic": "6-6 End Phase",
+      "scope": "effects"
+    },
+    {
+      "id": "6-6-1-4",
+      "topic": "6-6 End Phase",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "heading"
+    },
+    {
+      "id": "7-1-1",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-1-1",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-1-2",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-1-3",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "effects"
+    },
+    {
+      "id": "7-1-1-4",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "effects"
+    },
+    {
+      "id": "7-1-2",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-2-1",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-2-2",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "effects"
+    },
+    {
+      "id": "7-1-2-3",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "effects"
+    },
+    {
+      "id": "7-1-3",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-3-1",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-3-1-1",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-3-1-2",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "effects"
+    },
+    {
+      "id": "7-1-3-1-3",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "effects"
+    },
+    {
+      "id": "7-1-4",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-4-1",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-4-1-1",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-4-1-1-1",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-4-1-1-2",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-4-1-1-3",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-4-1-2",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-4-2",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-5",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-5-1",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "7-1-5-2",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "effects"
+    },
+    {
+      "id": "7-1-5-3",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "effects"
+    },
+    {
+      "id": "7-1-5-4",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "effects"
+    },
+    {
+      "id": "7-1-5-5",
+      "topic": "7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader",
+      "scope": "engine"
+    },
+    {
+      "id": "8-1",
+      "topic": "8-1 Effects",
+      "scope": "heading"
+    },
+    {
+      "id": "8-1-1",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-2",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-1",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-1-1",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-1-2",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-1-3",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-2",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-2-1",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-2-2",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-3",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-3-1",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-3-2",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-3-3",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-3-4",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-3-5",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-4",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-4-1",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-4-2",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-4-3",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-4-4",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-4-4-1",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-4-5",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-4-6",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-3-4-7",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-4",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-4-1",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-1-4-2",
+      "topic": "8-1 Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-2",
+      "topic": "8-2 Valid and Invalid Effects",
+      "scope": "heading"
+    },
+    {
+      "id": "8-2-1",
+      "topic": "8-2 Valid and Invalid Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-2-1-1",
+      "topic": "8-2 Valid and Invalid Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-2-1-2",
+      "topic": "8-2 Valid and Invalid Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-2-2",
+      "topic": "8-2 Valid and Invalid Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-2-3",
+      "topic": "8-2 Valid and Invalid Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-2-4",
+      "topic": "8-2 Valid and Invalid Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "heading"
+    },
+    {
+      "id": "8-3-1",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-1-1",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-1-2",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-1-3",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-1-3-1",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-1-4",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-1-5",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-1-6",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-1-7",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-1-8",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-2",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-2-1",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-2-2",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-2-3",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-2-4",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-2-5",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-3-3",
+      "topic": "8-3 Activation Cost and Conditions",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "heading"
+    },
+    {
+      "id": "8-4-1",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-1-1",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-1-2",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-1-3",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-1-4",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-1-5",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-2",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-3",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-4",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-4-1",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-4-2",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-4-3",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-4-4",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-5",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-4-6",
+      "topic": "8-4 Activation and Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-5",
+      "topic": "8-5 Card Activation and Effect Activation",
+      "scope": "heading"
+    },
+    {
+      "id": "8-5-1",
+      "topic": "8-5 Card Activation and Effect Activation",
+      "scope": "effects"
+    },
+    {
+      "id": "8-5-2",
+      "topic": "8-5 Card Activation and Effect Activation",
+      "scope": "effects"
+    },
+    {
+      "id": "8-5-3",
+      "topic": "8-5 Card Activation and Effect Activation",
+      "scope": "effects"
+    },
+    {
+      "id": "8-5-4",
+      "topic": "8-5 Card Activation and Effect Activation",
+      "scope": "effects"
+    },
+    {
+      "id": "8-6",
+      "topic": "8-6 Order of Effect Resolution",
+      "scope": "heading"
+    },
+    {
+      "id": "8-6-1",
+      "topic": "8-6 Order of Effect Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-6-1-1",
+      "topic": "8-6 Order of Effect Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-6-2",
+      "topic": "8-6 Order of Effect Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-6-2-1",
+      "topic": "8-6 Order of Effect Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "8-6-3",
+      "topic": "8-6 Order of Effect Resolution",
+      "scope": "effects"
+    },
+    {
+      "id": "9-1",
+      "topic": "9-1 Fundamental Rule Processing",
+      "scope": "heading"
+    },
+    {
+      "id": "9-1-1",
+      "topic": "9-1 Fundamental Rule Processing",
+      "scope": "engine"
+    },
+    {
+      "id": "9-1-2",
+      "topic": "9-1 Fundamental Rule Processing",
+      "scope": "engine"
+    },
+    {
+      "id": "9-2",
+      "topic": "9-2 Defeat Judgment Processing",
+      "scope": "heading"
+    },
+    {
+      "id": "9-2-1",
+      "topic": "9-2 Defeat Judgment Processing",
+      "scope": "engine"
+    },
+    {
+      "id": "9-2-1-1",
+      "topic": "9-2 Defeat Judgment Processing",
+      "scope": "engine"
+    },
+    {
+      "id": "9-2-1-2",
+      "topic": "9-2 Defeat Judgment Processing",
+      "scope": "engine"
+    },
+    {
+      "id": "10-1",
+      "topic": "10-1 Keyword Effects",
+      "scope": "heading"
+    },
+    {
+      "id": "10-1-1",
+      "topic": "10-1 Keyword Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "10-1-1-1",
+      "topic": "10-1 Keyword Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "10-1-2",
+      "topic": "10-1 Keyword Effects",
+      "scope": "engine"
+    },
+    {
+      "id": "10-1-2-1",
+      "topic": "10-1 Keyword Effects",
+      "scope": "engine"
+    },
+    {
+      "id": "10-1-3",
+      "topic": "10-1 Keyword Effects",
+      "scope": "engine"
+    },
+    {
+      "id": "10-1-3-1",
+      "topic": "10-1 Keyword Effects",
+      "scope": "engine"
+    },
+    {
+      "id": "10-1-4",
+      "topic": "10-1 Keyword Effects",
+      "scope": "engine"
+    },
+    {
+      "id": "10-1-4-1",
+      "topic": "10-1 Keyword Effects",
+      "scope": "engine"
+    },
+    {
+      "id": "10-1-5",
+      "topic": "10-1 Keyword Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "10-1-5-1",
+      "topic": "10-1 Keyword Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "10-1-5-2",
+      "topic": "10-1 Keyword Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "10-1-5-3",
+      "topic": "10-1 Keyword Effects",
+      "scope": "effects"
+    },
+    {
+      "id": "10-1-6",
+      "topic": "10-1 Keyword Effects",
+      "scope": "engine"
+    },
+    {
+      "id": "10-1-6-1",
+      "topic": "10-1 Keyword Effects",
+      "scope": "engine"
+    },
+    {
+      "id": "10-1-7",
+      "topic": "10-1 Keyword Effects",
+      "scope": "engine"
+    },
+    {
+      "id": "10-1-7-1",
+      "topic": "10-1 Keyword Effects",
+      "scope": "engine"
+    },
+    {
+      "id": "10-2",
+      "topic": "10-2 Keywords",
+      "scope": "heading"
+    },
+    {
+      "id": "10-2-1",
+      "topic": "10-2 Keywords",
+      "scope": "engine"
+    },
+    {
+      "id": "10-2-1-1",
+      "topic": "10-2 Keywords",
+      "scope": "engine"
+    },
+    {
+      "id": "10-2-1-2",
+      "topic": "10-2 Keywords",
+      "scope": "engine"
+    },
+    {
+      "id": "10-2-1-3",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-2",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-2-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-3",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-3-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-3-1-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-4",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-4-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-4-1-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-4-1-2",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-5",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-5-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-6",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-6-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-7",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-7-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-8",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-8-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-9",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-9-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-10",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-10-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-11",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-11-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-12",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-12-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-13",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-13-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-13-2",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-13-3",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-13-4",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-13-5",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-14",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-14-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-15",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-15-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-16",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-16-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-17",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-17-1",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "10-2-17-2",
+      "topic": "10-2 Keywords",
+      "scope": "effects"
+    },
+    {
+      "id": "11-1",
+      "topic": "11-1 Infinite Loops",
+      "scope": "heading"
+    },
+    {
+      "id": "11-1-1",
+      "topic": "11-1 Infinite Loops",
+      "scope": "effects"
+    },
+    {
+      "id": "11-1-1-1",
+      "topic": "11-1 Infinite Loops",
+      "scope": "effects"
+    },
+    {
+      "id": "11-1-1-2",
+      "topic": "11-1 Infinite Loops",
+      "scope": "effects"
+    },
+    {
+      "id": "11-1-1-3",
+      "topic": "11-1 Infinite Loops",
+      "scope": "effects"
+    },
+    {
+      "id": "11-2",
+      "topic": "11-2 Revealing Cards",
+      "scope": "heading"
+    },
+    {
+      "id": "11-2-1",
+      "topic": "11-2 Revealing Cards",
+      "scope": "effects"
+    },
+    {
+      "id": "11-2-2",
+      "topic": "11-2 Revealing Cards",
+      "scope": "effects"
+    },
+    {
+      "id": "11-3",
+      "topic": "11-3 Viewing Secret Areas",
+      "scope": "heading"
+    },
+    {
+      "id": "11-3-1",
+      "topic": "11-3 Viewing Secret Areas",
+      "scope": "effects"
+    },
+    {
+      "id": "11-3-2",
+      "topic": "11-3 Viewing Secret Areas",
+      "scope": "effects"
+    },
+    {
+      "id": "11-3-3",
+      "topic": "11-3 Viewing Secret Areas",
+      "scope": "effects"
+    }
+  ]
+}

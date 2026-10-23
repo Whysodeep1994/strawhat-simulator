@@ -1,0 +1,26 @@
+{
+  "name": "Characters can't attack the turn they're played",
+  "rules": ["3-7-4"],
+  "setup": {
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-C4-5000",
+          "playedThisTurn": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader",
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "legal.p1.attack": 1
+  }
+}

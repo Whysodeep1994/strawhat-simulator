@@ -1,0 +1,44 @@
+{
+  "name": "[Rush: Character] can attack only Characters the turn it's played",
+  "rules": ["10-1-6", "10-1-6-1"],
+  "setup": {
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-RUSH-CHAR",
+          "playedThisTurn": true
+        }
+      ]
+    },
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-C2-3000",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader",
+      "illegal": true
+    },
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.characters": 0
+  }
+}

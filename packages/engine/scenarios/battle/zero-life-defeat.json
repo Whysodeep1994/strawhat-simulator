@@ -1,0 +1,40 @@
+{
+  "name": "Damage to a Leader with 0 Life wins the game",
+  "rules": [
+    "7-1-4-1-1-1",
+    "1-2",
+    "1-2-1",
+    "1-2-1-1",
+    "1-2-1-1-1",
+    "1-2-2",
+    "1-2-2-1",
+    "9-1",
+    "9-1-1",
+    "9-1-2",
+    "9-2",
+    "9-2-1",
+    "9-2-1-1"
+  ],
+  "setup": {
+    "p2": {
+      "life": 0
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "winner": "p1",
+    "prompt.kind": "gameOver",
+    "legal.p1.endTurn": 0
+  }
+}

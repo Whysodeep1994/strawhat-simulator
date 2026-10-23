@@ -1,0 +1,35 @@
+{
+  "name": "Given DON!! don't add power on the opponent's turn, and return rested when the card leaves",
+  "rules": ["6-5-5-2", "6-5-5-4", "3-1-6"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C4-5000"]
+    },
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-C2-3000",
+          "rested": true,
+          "don": 3
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.characters": 0,
+    "p2.donRested": 3,
+    "p2.trash.0.givenDon": 0
+  }
+}
