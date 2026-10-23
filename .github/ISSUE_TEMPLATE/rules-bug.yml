@@ -1,0 +1,32 @@
+name: Rules bug
+description: The game did something the official rules don't allow, or a card effect is wrong.
+labels: ["rules"]
+body:
+  - type: textarea
+    id: cards
+    attributes:
+      label: Cards involved
+      description: Card numbers (for example OP01-001) and names.
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened
+    validations:
+      required: true
+  - type: input
+    id: rule
+    attributes:
+      label: Rule number or official ruling (if known)
+      placeholder: "e.g. 6-3-1, or a link to the official Q&A"
+  - type: input
+    id: version
+    attributes:
+      label: App version
