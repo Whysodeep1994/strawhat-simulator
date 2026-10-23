@@ -1,0 +1,23 @@
+{
+  "name": "\"If your Leader has the {X} type or is [Y]\" holds when either part holds",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-LEADER-NAMED",
+      "hand": ["TEST-LEADER-IS"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

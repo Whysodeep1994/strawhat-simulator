@@ -7,11 +7,14 @@ export { hasKeyword } from "./cards.js";
 export type { CardCatalog, CardCategory, CardDefinition, Color, Keyword } from "./cards.js";
 export { validateDeck } from "./deck.js";
 export type {
+  CardCount,
   Condition,
   Cost,
   Duration,
   EffectDefinition,
   Filter,
+  Replacement,
+  Status,
   Step,
   Target,
   Timing,
@@ -25,7 +28,15 @@ export { buildScenarioState, runScenario, DEFAULT_LEADER, FILLER_CARD } from "./
 export type { Scenario, ScenarioSetup, ScenarioPlayer, ScenarioCharacter } from "./scenario.js";
 export { createGame } from "./setup.js";
 export type { DeckList, NewGameOptions } from "./setup.js";
-export { definitionOf, findCard, keywordsOf, powerOf } from "./state.js";
+export {
+  costOf,
+  definitionOf,
+  findCard,
+  hasStatus,
+  keywordsOf,
+  playCostOf,
+  powerOf,
+} from "./state.js";
 export { PLAYER_IDS, opponentOf } from "./types.js";
 export type { Battle, CardInstance, GameState, PlayerId, PlayerState, Prompt } from "./types.js";
 export { viewFor } from "./view.js";

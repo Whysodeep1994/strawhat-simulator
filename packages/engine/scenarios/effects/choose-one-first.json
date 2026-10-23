@@ -1,0 +1,36 @@
+{
+  "name": "Choose one: the first option",
+  "rules": ["8-4-4-4"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-CHOOSE-ONE"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-C4-5000",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "chooseOne",
+      "player": "p1",
+      "option": 0
+    }
+  ],
+  "expect": {
+    "p2.characters": 1,
+    "p1.hand": 1
+  }
+}

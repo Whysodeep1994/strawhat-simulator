@@ -1,0 +1,37 @@
+{
+  "name": "\"When this Character is K.O.'d by an effect\" resolves after an effect K.O.",
+  "rules": ["10-2-1-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-KO-EVENT"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "characters": ["TEST-KO-BY-EFFECT"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    },
+    {
+      "type": "choose",
+      "player": "p2",
+      "cards": ["p2.leader"]
+    }
+  ],
+  "expect": {
+    "p2.characters": 0,
+    "modifiers": 1,
+    "modifiers.0.power": 2000
+  }
+}
