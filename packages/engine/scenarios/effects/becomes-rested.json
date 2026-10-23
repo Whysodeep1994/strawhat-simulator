@@ -1,0 +1,24 @@
+{
+  "name": "\"When this Character becomes rested\" happens when it attacks",
+  "rules": ["10-2-5"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-BECOMES-RESTED"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

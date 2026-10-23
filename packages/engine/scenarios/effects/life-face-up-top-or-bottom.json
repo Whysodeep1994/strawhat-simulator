@@ -1,0 +1,36 @@
+{
+  "name": "\"Turn 1 card from the top or bottom of your Life cards face-up\": the player picks the end",
+  "rules": ["3-10-2-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-REDIRECT"],
+      "life": 2,
+      "don": {
+        "rested": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 1
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p1.life.1.faceUp": true,
+    "p1.leader.givenDon": 1,
+    "p1.donRested": 0
+  }
+}

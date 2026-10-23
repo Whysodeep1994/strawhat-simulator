@@ -169,7 +169,12 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
   const allCharacters = opponent.characters.map((c) => c.uid);
   const actions: Action[] = [];
   for (const attacker of [p.leader, ...p.characters]) {
-    if (attacker.rested || hasStatus(state, attacker, "cannotAttack")) continue;
+    if (
+      attacker.rested ||
+      hasStatus(state, attacker, "cannotAttack") ||
+      hasStatus(state, attacker, "cannotBeRested")
+    )
+      continue;
     const attackable = hasKeywordNow(state, attacker, "canAttackActive")
       ? allCharacters
       : restedCharacters;
@@ -210,6 +215,7 @@ export function eligibleBlockers(state: GameState, player: PlayerId): CardInstan
       c.uid !== battle.target &&
       hasKeywordNow(state, c, "blocker") &&
       !hasStatus(state, c, "cannotBlock") &&
+      !hasStatus(state, c, "cannotBeRested") &&
       !bans.some((m) => matchesFilter(state, c, m.noBlockers, null)),
   );
 }
