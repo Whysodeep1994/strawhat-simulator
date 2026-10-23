@@ -57,19 +57,18 @@ Each phase has a check the project owner can do without reading code.
 
 ## Next
 
-1. Owner sends Egman Events the permission request.
-2. Owner merges the ST-01 engine additions (`noBlockers`, `keyword` filter), then the ST-01
+1. Owner merges the ST-01 engine additions (`noBlockers`, `keyword` filter), then the ST-01
    card data pull request in strawhat-card-data. After the engine merges, point
    strawhat-card-data's engine.json at the merged main commit.
-3. Find a reliable ST-01 deck list (copies per card) to add as a playable deck.
-4. Resolve Rules Questions #3 to #5 (player choices for DON!! −X and effect order).
+2. Find a reliable ST-01 deck list (copies per card) to add as a playable deck.
+3. Resolve Rules Questions #3 to #5 (player choices for DON!! −X and effect order).
 
 ## Decisions
 
 | Date       | Decision                                                                                                                                 | Why                                                         |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 2026-10-23 | No in-app deck lists from third-party sites without their permission; players paste lists themselves.                                    | Owner's decision; we have no permission.                    |
 | 2026-10-23 | Card data tests run against an engine commit pinned in strawhat-card-data's engine.json.                                                 | A new engine change can't silently break tested cards.      |
-| 2026-10-23 | Pro decks: paste-import plus a link to Egman Events; ask Egman for an API before any in-app fetching.                                    | Egman has no public API or terms for reuse; owner's choice. |
 | 2026-10-23 | Exact card art and text, real card numbers, stored in the separate strawhat-card-data repo.                                              | Owner's choice; a takedown can't hit the engine repo.       |
 | 2026-10-23 | The engine always asks for the Counter Step, even with no counters in hand.                                                              | Skipping would leak hand information (Rules Question #2).   |
 | 2026-10-23 | UI and feel modeled on Yu-Gi-Oh! Master Duel: highlight only legal plays, one-tap actions, auto-prompts for responses, quick animations. | Owner's direction: simple to play and polished.             |
