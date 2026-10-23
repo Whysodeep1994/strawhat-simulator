@@ -31,6 +31,7 @@ const readJsonFiles = (dir) =>
 
 const cards = readJsonFiles(join(source, "cards")).flat();
 const decks = readJsonFiles(join(source, "decks"));
+const formats = readJsonFiles(join(source, "formats"));
 
 mkdirSync(join(out, "images"), { recursive: true });
 let images = 0;
@@ -44,4 +45,7 @@ for (const card of cards) {
 }
 writeFileSync(join(out, "cards.json"), JSON.stringify(cards));
 writeFileSync(join(out, "decks.json"), JSON.stringify(decks));
-console.log(`Copied ${cards.length} cards, ${decks.length} decks, and ${images} images to ${out}`);
+writeFileSync(join(out, "formats.json"), JSON.stringify(formats));
+console.log(
+  `Copied ${cards.length} cards, ${decks.length} decks, ${formats.length} formats, and ${images} images to ${out}`,
+);

@@ -1,8 +1,18 @@
 import { setOf, type CardCatalog } from "@strawhat/engine";
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Board } from "./Board.js";
 import { loadCardData, setLabel, type CardData, type PlayableDeck } from "./card-data.js";
+import { DeckBuilder } from "./DeckBuilder.js";
 import { newLocalGame, type LocalGame } from "./local-game.js";
+import {
+  cardList,
+  loadDecks,
+  newDeck,
+  playable,
+  problemsOf,
+  saveDecks,
+  type SavedDeck,
+} from "./my-decks.js";
 import { loadMat, readMatImage, saveMat, type MatSeat } from "./playmat.js";
 import { Scenery } from "./Scenery.js";
 
@@ -20,6 +30,29 @@ export function App() {
     opponent: loadMat("opponent"),
   }));
   const [game, setGame] = useState<LocalGame | null>(null);
+  const [myDecks, setMyDecks] = useState<SavedDeck[]>(loadDecks);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
+
+  // Every deck that can start a game: the starter decks, then the player's own legal decks.
+  const decks = useMemo(
+    () =>
+      data
+        ? [
+            ...data.decks,
+            ...myDecks.flatMap((d) => {
+              const deck = playable(d, data);
+              return deck ? [deck] : [];
+            }),
+          ]
+        : [],
+    [data, myDecks],
+  );
+
+  const storeDecks = (next: SavedDeck[]) => {
+    setMyDecks(next);
+    setSaveFailed(!saveDecks(next));
+  };
 
   useEffect(() => {
     let live = true;
@@ -38,13 +71,13 @@ export function App() {
 
   const start = () => {
     if (!data) return;
-    const mine = data.decks.find((d) => d.id === deckId);
+    const mine = decks.find((d) => d.id === deckId);
     if (!mine) return;
     const others = data.decks.filter((d) => d.id !== mine.id);
     const theirs =
       opponentId === RANDOM
         ? (others[Math.floor(Math.random() * others.length)] ?? mine)
-        : (data.decks.find((d) => d.id === opponentId) ?? mine);
+        : (decks.find((d) => d.id === opponentId) ?? mine);
     const seed = Math.floor(Math.random() * 2 ** 31);
     setGame(newLocalGame(data.catalog as CardCatalog, { human: mine, bot: theirs }, seed));
   };
@@ -53,6 +86,31 @@ export function App() {
     setMats((m) => ({ ...m, [seat]: image }));
     return saveMat(seat, image);
   };
+
+  const editingDeck = myDecks.find((d) => d.id === editing);
+  if (editingDeck && data) {
+    return (
+      <DeckBuilder
+        data={data}
+        deck={editingDeck}
+        saveFailed={saveFailed}
+        onChange={(deck) => storeDecks(myDecks.map((d) => (d.id === deck.id ? deck : d)))}
+        onDelete={() => {
+          storeDecks(myDecks.filter((d) => d.id !== editingDeck.id));
+          setEditing(null);
+        }}
+        onDone={() => {
+          // An untouched new deck isn't worth keeping.
+          if (!editingDeck.leader && cardList(editingDeck).length === 0) {
+            storeDecks(myDecks.filter((d) => d.id !== editingDeck.id));
+          } else if (playable(editingDeck, data)) {
+            setDeckId(editingDeck.id);
+          }
+          setEditing(null);
+        }}
+      />
+    );
+  }
 
   if (game && data) {
     return (
@@ -92,7 +150,7 @@ export function App() {
           <div className="home-grid">
             <section className="panel decks" aria-labelledby="deck-heading">
               <div className="panel-head">
-                <h2 id="deck-heading">Choose your deck</h2>
+                <h2 id="deck-heading">Starter decks</h2>
                 <span className="count">{data.decks.length} ready</span>
               </div>
               <div className="deck-grid">
@@ -107,9 +165,50 @@ export function App() {
                 ))}
               </div>
               <p className="note">
-                More official starter decks are on their way. A practice deck is built from its
-                set's cards until the official list is added.
+                Starter decks are played as printed, even where their cards have rotated out of
+                Standard. More are on their way; a practice deck stands in until a set's official
+                list is added.
               </p>
+
+              <div className="panel-head">
+                <h2>My decks</h2>
+                <span className="count">Standard format</span>
+              </div>
+              <div className="deck-grid">
+                {myDecks.map((saved) => {
+                  const ready = playable(saved, data);
+                  return (
+                    <MyDeckTile
+                      key={saved.id}
+                      saved={saved}
+                      data={data}
+                      chosen={saved.id === deckId}
+                      problems={ready ? 0 : problemsOf(saved, data).length}
+                      onChoose={() => ready && setDeckId(saved.id)}
+                      onEdit={() => setEditing(saved.id)}
+                    />
+                  );
+                })}
+                <button
+                  className="deck-tile new-deck"
+                  onClick={() => {
+                    const deck = newDeck();
+                    storeDecks([...myDecks, deck]);
+                    setEditing(deck.id);
+                  }}
+                >
+                  <span className="plus" aria-hidden="true">
+                    +
+                  </span>
+                  <span className="deck-info">
+                    <strong>Build a deck</strong>
+                    <span>Search every card and save your own</span>
+                  </span>
+                </button>
+              </div>
+              {saveFailed && (
+                <p className="note">This browser isn't letting us save decks (private mode?).</p>
+              )}
             </section>
 
             <aside className="home-side">
@@ -119,7 +218,7 @@ export function App() {
                   <span>The computer plays</span>
                   <select value={opponentId} onChange={(e) => setOpponentId(e.target.value)}>
                     <option value={RANDOM}>A random deck</option>
-                    {data.decks.map((deck) => (
+                    {decks.map((deck) => (
                       <option key={deck.id} value={deck.id}>
                         {deckTitle(deck, data)} · {deckSubtitle(deck)}
                       </option>
@@ -167,7 +266,58 @@ function deckTitle(deck: PlayableDeck, data: CardData): string {
 }
 
 function deckSubtitle(deck: PlayableDeck): string {
+  if (deck.mine) return deck.name;
   return deck.official ? deck.name : `${setLabel(setOf(deck.leader))} practice`;
+}
+
+function MyDeckTile({
+  saved,
+  data,
+  chosen,
+  problems,
+  onChoose,
+  onEdit,
+}: {
+  saved: SavedDeck;
+  data: CardData;
+  chosen: boolean;
+  problems: number;
+  onChoose: () => void;
+  onEdit: () => void;
+}) {
+  const leader = saved.leader ? data.catalog[saved.leader] : undefined;
+  const art = data.imageUrl(leader);
+  const colors = leader?.colors ?? [];
+  const count = cardList(saved).length;
+  return (
+    <div className="my-deck">
+      <button
+        className={`deck-tile ${chosen ? "chosen" : ""} ${problems ? "unready" : ""}`}
+        onClick={problems ? onEdit : onChoose}
+        aria-pressed={chosen}
+        style={{
+          ["--deck-color" as string]: `var(--c-${colors[0] ?? "black"})`,
+          ["--deck-color-2" as string]: `var(--c-${colors[1] ?? colors[0] ?? "black"})`,
+        }}
+      >
+        <span className="deck-art">
+          {art ? <img src={art} alt="" loading="lazy" draggable={false} /> : null}
+        </span>
+        <span className="deck-info">
+          <strong>{saved.name}</strong>
+          <span>
+            {leader?.name ?? "No Leader yet"} · {count}/50
+          </span>
+        </span>
+        <span className={`badge ${problems ? "practice" : "official"}`}>
+          {problems ? `${problems} to fix` : "Mine"}
+        </span>
+      </button>
+      <button className="small edit-deck" onClick={onEdit}>
+        Edit
+      </button>
+    </div>
+  );
 }
 
 function DeckTile({

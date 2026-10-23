@@ -242,7 +242,7 @@ Comprehensive Rules version 1.2.1.
 | 4-12-2 | 4-12 « Set Power to 0 » | Phase 4 (effects) | 0 |
 | 5-1 | 5-1 Preparing Leader Cards, Decks, and DON!! Decks | Tested | 1 |
 | 5-1-1 | 5-1 Preparing Leader Cards, Decks, and DON!! Decks | Tested | 1 |
-| 5-1-2 | 5-1 Preparing Leader Cards, Decks, and DON!! Decks | Tested | 3 |
+| 5-1-2 | 5-1 Preparing Leader Cards, Decks, and DON!! Decks | Tested | 4 |
 | 5-1-2-1 | 5-1 Preparing Leader Cards, Decks, and DON!! Decks | Tested | 2 |
 | 5-1-2-2 | 5-1 Preparing Leader Cards, Decks, and DON!! Decks | Tested | 2 |
 | 5-1-2-3 | 5-1 Preparing Leader Cards, Decks, and DON!! Decks | Tested | 1 |
