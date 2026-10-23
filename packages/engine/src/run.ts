@@ -1,4 +1,4 @@
-import type { Cost, Step, Target } from "./effects.js";
+import type { Cost, Duration, Step, Target } from "./effects.js";
 import { eligibleBlockers } from "./legal.js";
 import { processRules } from "./rules.js";
 import {
@@ -10,20 +10,31 @@ import {
   findCard,
   findOnField,
   hasKeywordNow,
+  hasStatus,
   matchesFilter,
   powerOf,
 } from "./state.js";
-import { drawCards, knockOut, pushEffect, putOnField, queueEffects, startTurn } from "./turn.js";
+import {
+  drawCards,
+  knockOut,
+  moveFieldCardToTrash,
+  pushEffect,
+  putOnField,
+  queueEffects,
+  startTurn,
+} from "./turn.js";
 import {
   opponentOf,
   type CardInstance,
   type Frame,
   type GameState,
+  type Modifier,
   type PlayerId,
 } from "./types.js";
 
 type FrameOf<K extends Frame["kind"]> = Extract<Frame, { kind: K }>;
-type Outcome = "done" | "wait" | "continue";
+/** "yield": the frame pushed a new frame on top and resumes once that one is done. */
+type Outcome = "done" | "wait" | "continue" | "yield";
 
 /**
  * Runs the game forward until a player has to decide something. Effects
@@ -42,6 +53,7 @@ export function advance(state: GameState): void {
     }
     const outcome = runFrame(state, frame);
     if (outcome === "wait") return;
+    if (outcome === "yield") continue;
     const index = state.stack.lastIndexOf(frame);
     if (outcome === "done" && index >= 0) state.stack.splice(index, 1);
     processRules(state);
@@ -96,6 +108,8 @@ const ON_FIELD_TIMINGS = new Set([
   "activateMain",
   "endOfYourTurn",
   "endOfOpponentsTurn",
+  "characterRestedByYourEffect",
+  "replaceRemoval",
 ]);
 
 function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
@@ -144,12 +158,14 @@ function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
       frame.costIndex += 1;
     }
     if (effect.oncePerTurn) state.usedThisTurn.push(key);
+    // Rule 8-1-3-4: paying a replacement effect's costs prevents the removal.
+    if (frame.replacing) (state.prevented ??= []).push(frame.replacing);
     frame.stage = "steps";
   }
 
   while (frame.steps.length > 0) {
     const outcome = runStep(state, frame, source, frame.steps[0] as Step);
-    if (outcome === "wait") return "wait";
+    if (outcome === "wait" || outcome === "yield") return outcome;
     frame.steps.shift();
     frame.memo = [];
     if (state.winner !== null) return "done";
@@ -209,7 +225,11 @@ function payCost(
       if (card) card.rested = true;
     }
   } else if ("restThis" in cost) {
+    if (!source.rested && findOnField(state, source.uid)?.zone === "characters")
+      characterRested(state, frame.controller);
     source.rested = true;
+  } else if ("trashThis" in cost) {
+    moveFieldCardToTrash(state, source);
   }
   return "continue";
 }
@@ -299,13 +319,17 @@ function runStep(
       drawCards(state, controller, step.count);
       return "continue";
 
-    case "powerUp":
-    case "grantKeyword":
     case "ko":
-    case "rest":
-    case "setActive":
     case "returnToHand":
     case "returnToDeckBottom":
+      return runRemoval(state, frame, source, step);
+
+    case "powerUp":
+    case "grantKeyword":
+    case "grantStatus":
+    case "costChange":
+    case "rest":
+    case "setActive":
     case "noBlockers":
     case "giveRestedDon": {
       if (step.do === "giveRestedDon" && p.donRested === 0) return "continue";
@@ -317,6 +341,9 @@ function runStep(
           : step;
       for (const uid of targets) applyToTarget(state, controller, applied, uid);
       frame.previous = targets.length;
+      // "You may rest ...: If you do, ..."
+      if (step.do === "rest" && step.ifYouDo && targets.length > 0)
+        frame.steps.splice(1, 0, ...step.ifYouDo);
       return "continue";
     }
 
@@ -430,7 +457,14 @@ function runStep(
         if (picked.length === 0) return "continue";
         frame.memo = picked;
       }
-      return playChosen(state, frame, controller, pile, frame.memo[0] as string);
+      return playChosen(
+        state,
+        frame,
+        controller,
+        pile,
+        frame.memo[0] as string,
+        step.rested ?? false,
+      );
     }
 
     case "playThis": {
@@ -529,7 +563,7 @@ function playChosen(
   }
   pile.splice(index, 1);
   putOnField(state, controller, card, trash);
-  if (rested) card.rested = true;
+  card.rested = rested;
   return "continue";
 }
 
@@ -579,29 +613,162 @@ function arrangeDeckTop(
   return "continue";
 }
 
+type RemovalStep = Extract<Step, { do: "ko" | "returnToHand" | "returnToDeckBottom" }>;
+
+/**
+ * K.O. or return the chosen cards one at a time, so a replacement effect
+ * ("would be K.O.'d ... instead", rule 8-1-3-4) can be offered for each.
+ * `frame.memo` holds the cards still to go; "?uid" marks one whose
+ * replacement effect is resolving.
+ */
+function runRemoval(
+  state: GameState,
+  frame: FrameOf<"effect">,
+  source: CardInstance,
+  step: RemovalStep,
+): Outcome {
+  if (frame.memo[0] !== "removal") {
+    const targets = chooseTargets(state, frame, source, step.target, step.do);
+    if (targets === "wait") return "wait";
+    frame.memo = ["removal", ...targets];
+    frame.previous = targets.length;
+  }
+  while (frame.memo.length > 1) {
+    const next = frame.memo[1] as string;
+    if (next.startsWith("?")) {
+      const uid = next.slice(1);
+      frame.memo.splice(1, 1);
+      const saved = state.prevented?.includes(uid) ?? false;
+      state.prevented = (state.prevented ?? []).filter((u) => u !== uid);
+      if (!saved) applyToTarget(state, frame.controller, step, uid);
+      continue;
+    }
+    const replacement = findReplacement(state, frame.controller, step, next);
+    if (replacement) {
+      frame.memo[1] = `?${next}`;
+      pushEffect(state, replacement.player, replacement.source, replacement.effect);
+      const pushed = state.stack.at(-1);
+      if (pushed?.kind === "effect") pushed.replacing = next;
+      return "yield";
+    }
+    frame.memo.splice(1, 1);
+    applyToTarget(state, frame.controller, step, next);
+  }
+  return "continue";
+}
+
+/** Whether a removal step would really remove `uid`, before replacement effects. */
+function wouldRemove(state: GameState, controller: PlayerId, step: RemovalStep, uid: string) {
+  const location = findOnField(state, uid);
+  if (!location || location.zone === "leader") return false;
+  if (step.do !== "ko") return true;
+  return location.zone === "characters" && !cannotBeKOdBy(state, controller, location.card);
+}
+
+function cannotBeKOdBy(state: GameState, controller: PlayerId, card: CardInstance): boolean {
+  if (hasStatus(state, card, "cannotBeKOdByEffects")) return true;
+  return controller !== card.owner && hasStatus(state, card, "cannotBeKOdByOpponentsEffects");
+}
+
+/** The first usable replacement effect on the owner's field that would save `uid`. */
+function findReplacement(
+  state: GameState,
+  controller: PlayerId,
+  step: RemovalStep,
+  uid: string,
+): { player: PlayerId; source: string; effect: number } | null {
+  if (!wouldRemove(state, controller, step, uid)) return null;
+  const card = findOnField(state, uid)?.card;
+  if (!card) return null;
+  const owner = card.owner;
+  for (const holder of fieldCards(state, owner)) {
+    const effects = definitionOf(state, holder).effects ?? [];
+    for (const [index, effect] of effects.entries()) {
+      const r = effect.replaces;
+      if (effect.timing !== "replaceRemoval" || !r) continue;
+      if (r.removal === "ko" && step.do !== "ko") continue;
+      if (r.byOpponent && controller === owner) continue;
+      if (r.side === "this" ? holder.uid !== uid : !matchesFilter(state, card, r.filter, holder))
+        continue;
+      if (effect.oncePerTurn && state.usedThisTurn.includes(`${holder.uid}:${index}`)) continue;
+      if (!conditionsMet(state, owner, holder, effect.conditions)) continue;
+      if (!canPayCosts(state, owner, holder, effect.costs ?? [])) continue;
+      return { player: owner, source: holder.uid, effect: index };
+    }
+  }
+  return null;
+}
+
+/** "If a Character is rested by your effect" (OP07-031). */
+function characterRested(state: GameState, controller: PlayerId): void {
+  for (const card of fieldCards(state, controller))
+    queueEffects(state, controller, card, "characterRestedByYourEffect");
+}
+
+/** Converts a step's duration into when its modifier ends. */
+function lasting(
+  state: GameState,
+  controller: PlayerId,
+  duration: Duration = "turn",
+): Pick<Modifier, "until" | "endsTurn"> {
+  if (duration !== "opponentsNextTurn") return { until: duration };
+  // The opponent's next turn is the next turn if it's the controller's turn now.
+  return { until: "turn", endsTurn: state.turn + (state.turnPlayer === controller ? 1 : 2) };
+}
+
 function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: string): void {
   const location = findOnField(state, uid);
   if (!location) return;
   const card = location.card;
   switch (step.do) {
     case "powerUp":
-      state.modifiers.push({ target: uid, power: step.amount, until: step.duration ?? "turn" });
+      state.modifiers.push({
+        target: uid,
+        power: step.amount,
+        ...lasting(state, controller, step.duration),
+      });
+      return;
+    case "costChange":
+      state.modifiers.push({
+        target: uid,
+        cost: step.amount,
+        ...lasting(state, controller, step.duration),
+      });
       return;
     case "grantKeyword":
-      state.modifiers.push({ target: uid, keyword: step.keyword, until: step.duration ?? "turn" });
+      state.modifiers.push({
+        target: uid,
+        keyword: step.keyword,
+        ...lasting(state, controller, step.duration),
+      });
+      return;
+    case "grantStatus":
+      state.modifiers.push({
+        target: uid,
+        status: step.status,
+        ...lasting(state, controller, step.duration),
+      });
       return;
     case "noBlockers":
       state.modifiers.push({
         target: uid,
         noBlockers: step.blockers ?? {},
-        until: step.duration ?? "turn",
+        ...lasting(state, controller, step.duration),
       });
       return;
     case "ko":
-      if (location.zone === "characters") knockOut(state, uid, true);
+      if (location.zone === "characters" && !cannotBeKOdBy(state, controller, card))
+        knockOut(state, uid, true);
       return;
     case "rest":
+      if (!card.rested && location.zone === "characters") characterRested(state, controller);
       card.rested = true;
+      if (step.stayRested)
+        state.modifiers.push({
+          target: uid,
+          status: "noRefresh",
+          ...lasting(state, controller, "opponentsNextTurn"),
+        });
       return;
     case "setActive":
       card.rested = false;
@@ -702,7 +869,7 @@ function runBattle(state: GameState, frame: FrameOf<"battle">): Outcome {
       // Rules 7-1-4-1 and 7-1-4-2.
       if (powerOf(state, attacker.card) < powerOf(state, target.card)) return "continue";
       if (target.zone === "characters") {
-        knockOut(state, target.card.uid);
+        if (!hasStatus(state, target.card, "cannotBeKOdInBattle")) knockOut(state, target.card.uid);
         return "continue";
       }
       // Rule 7-1-4-1-1-1.
@@ -805,7 +972,9 @@ function runEndPhase(state: GameState, frame: FrameOf<"end-phase">): Outcome {
     return "continue";
   }
   // Rules 6-6-1-2, 6-6-1-3, 6-6-1-4.
-  state.modifiers = state.modifiers.filter((m) => m.until !== "turn");
+  state.modifiers = state.modifiers.filter(
+    (m) => m.until !== "turn" || (m.endsTurn ?? 0) > state.turn,
+  );
   state.stack.splice(state.stack.lastIndexOf(frame), 1);
   startTurn(state, other);
   return "continue";
