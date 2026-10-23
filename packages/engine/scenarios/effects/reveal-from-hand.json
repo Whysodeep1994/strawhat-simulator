@@ -1,0 +1,29 @@
+{
+  "name": "Reveal a card from hand, draw 1, then put the revealed card on top of the deck",
+  "rules": ["11-2-1"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-REVEAL-LEADER",
+      "hand": ["TEST-C2-3000", "TEST-FILLER"],
+      "deck": ["TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.leader",
+      "effect": 0
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p1.hand": 2,
+    "p1.deck.0.cardId": "TEST-C2-3000",
+    "p1.hand.1.cardId": "TEST-C5-6000"
+  }
+}

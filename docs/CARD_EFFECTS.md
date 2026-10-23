@@ -89,15 +89,16 @@ card is..."), `donOnFieldAtLeast` and `donOnFieldAtMost` ("if you have 8 or more
 your field", counting active, rested and given DON!!), `playedThisTurn` ("if this Character was
 played on this turn"), plus:
 
-| Condition                            | Card wording                                                     |
-| ------------------------------------ | ---------------------------------------------------------------- |
-| `{ "leaderIs": "Buggy" }`            | "If your Leader is [Buggy]"                                      |
-| `{ "anyOf": [ ... ] }`               | "If your Leader has the {X} type or is [Y]"                      |
-| `{ "count": {...}, "atLeast": 2 }`   | "If you have 2 or more Characters with a base cost of 5 or more" |
-| `{ "donRestedAtLeast": 6 }`          | "If you have 6 or more rested DON!! cards"                       |
-| `{ "restedCardsAtLeast": 6 }`        | "If you have 6 or more rested cards" (DON!! and field cards)     |
-| `{ "leaderMulticolored": true }`     | "If your Leader is multicolored"                                 |
-| `{ "opponentDonOnFieldAtLeast": 5 }` | "If your opponent has 5 or more DON!! cards on their field"      |
+| Condition                                        | Card wording                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------------- |
+| `{ "leaderIs": "Buggy" }`                        | "If your Leader is [Buggy]"                                      |
+| `{ "anyOf": [ ... ] }`                           | "If your Leader has the {X} type or is [Y]"                      |
+| `{ "count": {...}, "atLeast": 2 }`               | "If you have 2 or more Characters with a base cost of 5 or more" |
+| `{ "donRestedAtLeast": 6 }`                      | "If you have 6 or more rested DON!! cards"                       |
+| `{ "restedCardsAtLeast": 6 }`                    | "If you have 6 or more rested cards" (DON!! and field cards)     |
+| `{ "leaderTypeIncludes": "Whitebeard Pirates" }` | "If your Leader's type includes "Whitebeard Pirates""            |
+| `{ "leaderMulticolored": true }`                 | "If your Leader is multicolored"                                 |
+| `{ "opponentDonOnFieldAtLeast": 5 }`             | "If your opponent has 5 or more DON!! cards on their field"      |
 
 `count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`)
 and `filter`, and `atLeast` (default 1) and/or `atMost`. "If you do not have 5 Characters with a
@@ -108,7 +109,9 @@ cost of 5 or more" is `{ "count": { "side": "self", "filter": { "costAtLeast": 5
 `restDon` (①), `donMinus` (DON!! −X; add `"orMore": true` for "you may return 1 or more DON!!
 cards", where the player picks how many), `trashFromHand` (with an optional `filter`, e.g.
 `{ "trashFromHand": 1, "filter": { "type": "FILM" } }`), `handToDeckTop` (place cards from your
-hand at the top of your deck), `returnOwnCharacter` (return your Characters to your hand),
+hand at the top of your deck), `returnOwnCharacter` (return your Characters to your hand; an optional `filter`, e.g.
+`{ "notThis": true }` for "other than this Character"), `revealFromHand` ("reveal 2 cards with a
+type including ... from your hand"; they stay in hand, with an optional `filter`),
 `restOwn` (rest 1 of your active Leader, Characters or Stage matching a filter, e.g.
 `{ "restOwn": { "name": "Uta" } }`), `restThis`, `trashThis` ("trash this Character", not a K.O.), `lifeToHand` (add Life cards to
 your hand; `"from": "topOrBottom"` lets the player take the bottom one), `trashLife` (trash from
@@ -167,7 +170,7 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `opponentTrashesFromHand`        | Your opponent trashes cards from their hand.                                                                                                                                                      |
 | `searchDeck`                     | Look at the top cards, add matching ones to hand, rest to the bottom. `"rest": "trash"` trashes the rest; `"rest": "topOrBottom"` lets the player put the rest at the top or bottom in any order. |
 | `playFromHand` / `playFromTrash` | Play a card for free.                                                                                                                                                                             |
-| `lifeToHand` / `deckToLife`      | Move cards between Life, hand, and deck.                                                                                                                                                          |
+| `lifeToHand` / `deckToLife`      | Move cards between Life, hand, and deck (`lifeToHand` takes `fromBottom`).                                                                                                                        |
 | `trashLife`                      | Trash the top of your (`"side": "self"`) or the opponent's Life.                                                                                                                                  |
 | `arrangeLife`                    | Look at the top Life card of either player; place it top or bottom.                                                                                                                               |
 | `characterToLife`                | Add a Character to the top or bottom of its owner's Life; `faceUp` for face-up.                                                                                                                   |
@@ -183,6 +186,8 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `chooseOne`                      | "Choose one": `options` are `{ "label", "steps" }`; `"chooser": "opponent"` for "your opponent chooses". The player answers with `{ "type": "chooseOne", "option": index }`.                      |
 | `restOpponentDon`                | Rest up to `count` of your opponent's active DON!! cards.                                                                                                                                         |
 | `atEndOfTurn`                    | The nested steps happen at the end of this turn.                                                                                                                                                  |
+| `handToDeckBottom`               | Place cards from your hand at the bottom of your deck.                                                                                                                                            |
+| `revealedToDeckTop`              | Place the cards revealed by a `revealFromHand` cost at the top of your deck.                                                                                                                      |
 | `setBasePower`                   | "[Leader]'s base power becomes 7000", with an optional `duration`.                                                                                                                                |
 | `if`                             | Only do the nested steps if the conditions hold.                                                                                                                                                  |
 | `grantStatus`                    | "Cannot attack", "cannot be K.O.'d ...", and so on. See below.                                                                                                                                    |

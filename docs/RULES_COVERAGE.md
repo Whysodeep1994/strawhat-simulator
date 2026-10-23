@@ -213,7 +213,7 @@ Comprehensive Rules version 1.2.1.
 | 4-5-4-1 | 4-5 Draw a Card | Phase 4 (effects) | 0 |
 | 4-5-4-2 | 4-5 Draw a Card | Phase 4 (effects) | 0 |
 | 4-5-4-3 | 4-5 Draw a Card | Phase 4 (effects) | 0 |
-| 4-6 | 4-6 Damage Processing | Tested | 1 |
+| 4-6 | 4-6 Damage Processing | Tested | 2 |
 | 4-6-1 | 4-6 Damage Processing | Tested | 1 |
 | 4-6-2 | 4-6 Damage Processing | Tested | 1 |
 | 4-6-2-1 | 4-6 Damage Processing | Tested | 1 |
@@ -372,14 +372,14 @@ Comprehensive Rules version 1.2.1.
 | 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 10 |
 | 8-3-1-1 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-1-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
-| 8-3-1-3 | 8-3 Activation Cost and Conditions | Tested | 10 |
+| 8-3-1-3 | 8-3 Activation Cost and Conditions | Tested | 12 |
 | 8-3-1-3-1 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-4 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-1-5 | 8-3 Activation Cost and Conditions | Tested | 1 |
 | 8-3-1-6 | 8-3 Activation Cost and Conditions | Tested | 4 |
 | 8-3-1-7 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-8 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
-| 8-3-2 | 8-3 Activation Cost and Conditions | Tested | 1 |
+| 8-3-2 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 7 |
 | 8-3-2-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2-3 | 8-3 Activation Cost and Conditions | Tested | 2 |
@@ -488,7 +488,7 @@ Comprehensive Rules version 1.2.1.
 | 11-1-1-2 | 11-1 Infinite Loops | Phase 4 (effects) | 0 |
 | 11-1-1-3 | 11-1 Infinite Loops | Phase 4 (effects) | 0 |
 | 11-2 | 11-2 Revealing Cards | Section heading | 0 |
-| 11-2-1 | 11-2 Revealing Cards | Tested | 4 |
+| 11-2-1 | 11-2 Revealing Cards | Tested | 5 |
 | 11-2-2 | 11-2 Revealing Cards | Phase 4 (effects) | 0 |
 | 11-3 | 11-3 Viewing Secret Areas | Tested | 4 |
 | 11-3-1 | 11-3 Viewing Secret Areas | Tested | 4 |
