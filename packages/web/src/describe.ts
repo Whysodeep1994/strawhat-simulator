@@ -127,6 +127,8 @@ function conditionText(condition: Condition): string {
     return `(If you have ${condition.donRestedAtLeast} or more rested DON!! cards)`;
   if ("restedCardsAtLeast" in condition)
     return `(If you have ${condition.restedCardsAtLeast} or more rested cards)`;
+  if ("leaderTypeIncludes" in condition)
+    return `(If your Leader's type includes "${condition.leaderTypeIncludes}")`;
   if ("leaderMulticolored" in condition) return "(If your Leader is multicolored)";
   if ("opponentDonOnFieldAtLeast" in condition)
     return `(If your opponent has ${condition.opponentDonOnFieldAtLeast} or more DON!! cards on their field)`;
@@ -144,7 +146,9 @@ function costText(cost: Cost): string {
   if ("handToDeckTop" in cost)
     return `place ${cost.handToDeckTop} card(s) from your hand at the top of your deck`;
   if ("returnOwnCharacter" in cost)
-    return `return ${cost.returnOwnCharacter} of your Characters to the owner's hand`;
+    return `return ${cost.returnOwnCharacter} of your Characters${withFilter(cost.filter)} to the owner's hand`;
+  if ("revealFromHand" in cost)
+    return `reveal ${cost.revealFromHand}${filterText(cost.filter)} card(s) from your hand`;
   if ("restOwn" in cost) return `rest 1 of your${filterText(cost.restOwn)} cards`;
   if ("trashThis" in cost) return "trash this card";
   if ("returnGivenDon" in cost)
@@ -196,6 +200,10 @@ function stepText(step: Step): string {
       return `Trash ${step.upTo ? "up to " : ""}${step.count}${filterText(step.filter)} card(s) from your hand.`;
     case "handToDeckTop":
       return `Place ${step.count} card(s) from your hand at the top of your deck.`;
+    case "handToDeckBottom":
+      return `Place ${step.count} card(s) from your hand at the bottom of your deck.`;
+    case "revealedToDeckTop":
+      return "Place the revealed card(s) at the top of your deck.";
     case "trashToHand":
       return `Add up to ${step.count ?? 1}${filterText(step.filter)} card(s) from your trash to your hand.`;
     case "arrangeDeckTop":
@@ -219,7 +227,7 @@ function stepText(step: Step): string {
     case "playFromTrash":
       return `Play up to 1${filterText(step.filter)} card from your trash${step.rested ? " rested" : ""}.`;
     case "lifeToHand":
-      return `Add ${step.count} card(s) from the top of your Life cards to your hand.`;
+      return `Add ${step.count} card(s) from the ${step.fromBottom ? "bottom" : "top"} of your Life cards to your hand.`;
     case "deckToLife":
       return `Add up to ${step.count} card(s) from the top of your deck to the top of your Life cards.`;
     case "trashLife":

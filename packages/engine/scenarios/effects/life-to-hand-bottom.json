@@ -1,0 +1,23 @@
+{
+  "name": "Add the bottom Life card to hand",
+  "rules": ["4-6"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-RETURN-OTHER", "TEST-FILLER"],
+      "life": ["TEST-FILLER", "TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    }
+  ],
+  "expect": {
+    "p1.life": 1,
+    "p1.life.0.cardId": "TEST-FILLER",
+    "p1.characters": 1
+  }
+}

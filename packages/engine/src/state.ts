@@ -276,6 +276,10 @@ export function conditionsMet(
       const rested = fieldCards(state, controller).filter((card) => card.rested).length;
       return me.donRested + rested >= c.restedCardsAtLeast;
     }
+    if ("leaderTypeIncludes" in c)
+      return (definitionOf(state, me.leader).types ?? []).some((t) =>
+        t.includes(c.leaderTypeIncludes),
+      );
     if ("leaderMulticolored" in c) return definitionOf(state, me.leader).colors.length > 1;
     if ("opponentDonOnFieldAtLeast" in c)
       return donOnField(state, opponentOf(controller)) >= c.opponentDonOnFieldAtLeast;
@@ -363,7 +367,6 @@ export function canPayCosts(
   let restDon = 0;
   let donMinus = 0;
   let fromHand = 0;
-  let returned = 0;
   let returnGiven = 0;
   let life = 0;
   let fromTrash = 0;
@@ -376,7 +379,14 @@ export function canPayCosts(
       if (matching.length < cost.trashFromHand) return false;
     }
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
-    if ("returnOwnCharacter" in cost) returned += cost.returnOwnCharacter;
+    if ("returnOwnCharacter" in cost) {
+      const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      if (own.length < cost.returnOwnCharacter) return false;
+    }
+    if ("revealFromHand" in cost) {
+      const matching = hand.filter((c) => matchesFilter(state, c, cost.filter, source, false));
+      if (matching.length < cost.revealFromHand) return false;
+    }
     if ("restOwn" in cost) {
       const own = fieldCards(state, player).filter(
         (c) => !c.rested && matchesFilter(state, c, cost.restOwn, source),
@@ -395,7 +405,6 @@ export function canPayCosts(
     restDon <= p.donActive &&
     donMinus <= donOnField(state, player) &&
     fromHand <= hand.length &&
-    returned <= p.characters.length &&
     life <= p.life.length &&
     fromTrash <= p.trash.filter((c) => c.uid !== source.uid).length &&
     returnGiven <= [p.leader, ...p.characters].reduce((n, c) => n + c.givenDon, 0)

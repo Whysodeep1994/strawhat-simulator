@@ -102,6 +102,8 @@ export type Frame =
       steps: Step[];
       /** Scratch space for a step that needs more than one decision. */
       memo: string[];
+      /** Cards revealed from the hand to pay a `revealFromHand` cost. */
+      revealed?: string[];
       /** How many cards the previous step moved, for "for every card trashed". */
       previous?: number;
       answer: string[] | boolean | null;

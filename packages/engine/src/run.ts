@@ -223,9 +223,19 @@ function payCost(
     moveFromHandToDeckTop(state, frame.controller, chosen);
   } else if ("returnOwnCharacter" in cost) {
     const n = cost.returnOwnCharacter;
-    const chosen = choose(state, frame, frame.controller, p.characters, n, n, "returnToHand");
+    const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+    const chosen = choose(state, frame, frame.controller, own, n, n, "returnToHand");
     if (chosen === "wait") return "wait";
     for (const uid of chosen) removeFromField(state, uid, "hand");
+  } else if ("revealFromHand" in cost) {
+    // The cards stay in hand; the opponent sees them (rule 11-2-1).
+    const options = p.hand.filter(
+      (c) => c.uid !== source.uid && matchesFilter(state, c, cost.filter, source, false),
+    );
+    const n = cost.revealFromHand;
+    const chosen = choose(state, frame, frame.controller, options, n, n, "revealFromHand");
+    if (chosen === "wait") return "wait";
+    frame.revealed = chosen;
   } else if ("restOwn" in cost) {
     const options = fieldCards(state, frame.controller).filter(
       (c) => !c.rested && matchesFilter(state, c, cost.restOwn, source),
@@ -486,6 +496,23 @@ function runStep(
       return "continue";
     }
 
+    case "handToDeckBottom": {
+      const chosen = choose(state, frame, controller, p.hand, step.count, step.count, step.do);
+      if (chosen === "wait") return "wait";
+      const cards = chosen.map((uid) => p.hand.find((c) => c.uid === uid)).filter((c) => !!c);
+      p.hand = p.hand.filter((c) => !chosen.includes(c.uid));
+      p.deck.push(...cards);
+      return "continue";
+    }
+
+    case "revealedToDeckTop":
+      moveFromHandToDeckTop(
+        state,
+        controller,
+        (frame.revealed ?? []).filter((uid) => p.hand.some((c) => c.uid === uid)),
+      );
+      return "continue";
+
     case "trashToHand": {
       const options = p.trash.filter((c) => matchesFilter(state, c, step.filter, source, false));
       const chosen =
@@ -597,7 +624,8 @@ function runStep(
     case "lifeToHand": {
       const blocked = state.modifiers.some((m) => m.target === p.leader.uid && m.noLifeToHand);
       if (!blocked)
-        for (let i = 0; i < step.count && p.life.length > 0; i++) p.hand.push(takeLife(p.life, 0)!);
+        for (let i = 0; i < step.count && p.life.length > 0; i++)
+          p.hand.push(takeLife(p.life, step.fromBottom ? p.life.length - 1 : 0)!);
       return "continue";
     }
 

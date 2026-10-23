@@ -396,4 +396,55 @@ export const MORE_EFFECT_CARDS: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-REVEAL-LEADER",
+    name: "Test Reveal Leader",
+    category: "leader",
+    colors: ["blue"],
+    power: 5000,
+    life: 4,
+    types: ["Test Crew Pirates"],
+    effects: [
+      {
+        timing: "activateMain",
+        oncePerTurn: true,
+        optional: true,
+        costs: [{ revealFromHand: 1, filter: { typeIncludes: "Test Crew" } }],
+        steps: [{ do: "draw", count: 1 }, { do: "revealedToDeckTop" }],
+      },
+    ],
+  },
+  {
+    id: "TEST-HAND-TO-BOTTOM",
+    name: "Test Hand To Bottom",
+    category: "character",
+    colors: ["blue"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        conditions: [{ leaderTypeIncludes: "Test Crew" }],
+        steps: [
+          { do: "draw", count: 1 },
+          { do: "handToDeckBottom", count: 1 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-RETURN-OTHER",
+    name: "Test Return Other",
+    category: "character",
+    colors: ["blue"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "activateMain",
+        costs: [{ returnOwnCharacter: 1, filter: { notThis: true } }],
+        steps: [{ do: "lifeToHand", count: 1, fromBottom: true }],
+      },
+    ],
+  },
 ];

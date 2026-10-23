@@ -98,7 +98,9 @@ export type Condition =
   /** "If your Leader is multicolored". */
   | { leaderMulticolored: true }
   /** "If your opponent has 5 or more DON!! cards on their field". */
-  | { opponentDonOnFieldAtLeast: number };
+  | { opponentDonOnFieldAtLeast: number }
+  /** "If your Leader's type includes "Whitebeard Pirates"". */
+  | { leaderTypeIncludes: string };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -119,8 +121,10 @@ export type Cost =
   | { trashFromHand: number; filter?: Filter }
   /** Place cards from your hand at the top of your deck. */
   | { handToDeckTop: number }
-  /** Return this many of your Characters to your hand. */
-  | { returnOwnCharacter: number }
+  /** Return this many of your Characters (matching `filter`, e.g. `notThis`) to your hand. */
+  | { returnOwnCharacter: number; filter?: Filter }
+  /** "Reveal 2 cards with a type including ... from your hand". They stay in hand. */
+  | { revealFromHand: number; filter?: Filter }
   /** Rest 1 of your active Leader, Characters or Stage matching the filter (e.g. "rest 1 of your [Uta] cards"). */
   | { restOwn: Filter }
   | { restThis: true }
@@ -246,6 +250,10 @@ export type Step =
   | { do: "trashFromHand"; count: number; upTo?: boolean; filter?: Filter }
   /** Place cards from your hand at the top of your deck. */
   | { do: "handToDeckTop"; count: number }
+  /** Place cards from your hand at the bottom of your deck. */
+  | { do: "handToDeckBottom"; count: number }
+  /** Place the cards revealed by a `revealFromHand` cost at the top of your deck. */
+  | { do: "revealedToDeckTop" }
   /** Add up to `count` (default 1) matching cards from your trash to your hand. */
   | { do: "trashToHand"; filter?: Filter; count?: number }
   /** The opponent trashes cards from their hand. */
@@ -274,7 +282,8 @@ export type Step =
   | { do: "playFromTrash"; filter?: Filter; rested?: boolean }
   /** "You cannot add Life cards to your hand using your own effects during this turn." */
   | { do: "noLifeToHand" }
-  | { do: "lifeToHand"; count: number }
+  /** Add Life cards to your hand, from the top or (`fromBottom`) the bottom. */
+  | { do: "lifeToHand"; count: number; fromBottom?: boolean }
   | { do: "deckToLife"; count: number }
   /** "[On Play] effects are negated" for you (`self`) or your opponent. */
   | { do: "negateOnPlay"; side: "self" | "opponent"; duration?: Duration }
