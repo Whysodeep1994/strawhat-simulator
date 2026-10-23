@@ -8,3 +8,6 @@ coverage/
 
 # Card images and official card text are never committed (see docs/CARD_ASSETS.md).
 card-assets/
+
+# Official card data copied in by scripts/card-data.mjs; it lives in strawhat-card-data.
+packages/web/public/card-data/

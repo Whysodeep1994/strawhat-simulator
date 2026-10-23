@@ -1,6 +1,6 @@
 import { chooseBotAction, validateDeck, viewFor } from "@strawhat/engine";
 import { describe, expect, it } from "vitest";
-import { DEMO_CATALOG, DEMO_DECKS } from "../src/demo-cards.js";
+import { DEMO_CATALOG, DEMO_DECKS } from "./fixtures/demo-cards.js";
 import { cardText } from "../src/describe.js";
 import { botStep, botToAct, humanAct, newLocalGame, type LocalGame } from "../src/local-game.js";
 

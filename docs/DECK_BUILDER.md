@@ -41,3 +41,30 @@ the result before playing.
 
 `formatDeckList({ leader, deck })` writes a deck back out in the same format, so players can
 share decks with other sites.
+
+## Formats: Standard legality
+
+`checkDeck(catalog, format, leader, deck)` lists every reason a deck can't be played in a
+format, in plain words ("Nami (OP01-016) is banned in Standard"). An empty list means the deck
+is legal. `copyLimit(format, catalog, cardId)` says how many copies a card may have: 0 when
+it's banned or its block has rotated out, otherwise 4 or its restricted limit.
+
+A format is data (`DeckFormat`). Standard comes from strawhat-card-data's
+`formats/standard.json`, copied from Bandai's official regulation pages. It holds:
+
+- `deckSize` and `maxCopies` (50 and 4).
+- `legalBlocks`: the block icons allowed this season, e.g. `[2, 3, 4, 5, "X"]`.
+- `alwaysLegal`: card numbers that are legal whatever their block (reprints, Super Parallel Rares).
+- `treatedAsBlock`: card numbers Bandai treats as a newer block, e.g. `"ST01-011": 4`.
+- `banned`, `restricted` (card number → copies), and `bannedPairs`.
+
+Parallel prints such as `OP01-016_p1` follow their card number's rules. Without a format file
+the app checks the base rules only (rule 5-1-2).
+
+## In the app
+
+The home screen's **My decks** has **Build a deck**. The builder searches every card by name,
+type, effect text, card number, set, colour, card type, type, and a two-handle cost slider. Tap a
+Leader first; the library then shows only cards that Leader can use, Standard-legal ones first.
+Decks save in the browser as you go, and a deck can be played once it's legal in Standard.
+Starter decks are played as printed, even where their cards have rotated out of Standard.

@@ -33,6 +33,8 @@ export interface CardDefinition {
   keywords?: Keyword[];
   types?: string[];
   effects?: EffectDefinition[];
+  /** The block icon printed on the card (1, 2, … or "X"); formats use it to rotate older cards out. */
+  blockIcon?: number | string;
 }
 
 export type CardCatalog = Record<string, CardDefinition>;

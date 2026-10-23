@@ -20,6 +20,8 @@ export type {
   Timing,
 } from "./effects.js";
 export { formatDeckList, parseDeckList } from "./deck-list.js";
+export { BASE_RULES, checkDeck, copyLimit } from "./format.js";
+export type { DeckFormat, DeckProblem } from "./format.js";
 export type { ParsedDeckList } from "./deck-list.js";
 export { legalActions } from "./legal.js";
 export { PHASES, cardsToDraw, donToPlace, nextPhase } from "./phases.js";

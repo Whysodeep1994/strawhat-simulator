@@ -3,20 +3,21 @@ import {
   opponentOf,
   viewFor,
   type Action,
-  type CardCatalog,
-  type CardDefinition,
   type CardInstance,
   type GameView,
   type PlayerId,
 } from "@strawhat/engine";
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
-import { CardView, type Glow } from "./CardView.js";
+import type { Mats } from "./App.js";
+import { officialText, type Card, type CardData } from "./card-data.js";
+import { CardView, DonCard, type Glow } from "./CardView.js";
 import { cardText } from "./describe.js";
 import { botStep, botToAct, humanAct, type LocalGame } from "./local-game.js";
 
 interface Props {
-  catalog: CardCatalog;
+  data: CardData;
   game: LocalGame;
+  mats: Mats;
   onChange: (game: LocalGame) => void;
   onRestart: () => void;
   onExit: () => void;
@@ -58,7 +59,9 @@ const CHOOSE_TEXT: Record<string, string> = {
   playFromTrash: "Choose a card to play from your trash",
 };
 
-export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
+type DefOf = (card: CardInstance | null | undefined) => Card | undefined;
+
+export function Board({ data, game, mats, onChange, onRestart, onExit }: Props) {
   const me = game.human;
   const them = opponentOf(me);
   const view = useMemo(() => viewFor(game.state, me), [game.state, me]);
@@ -68,13 +71,14 @@ export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
   );
   const [mode, setMode] = useState<Mode>({ kind: "none" });
   const [menu, setMenu] = useState<Menu | null>(null);
-  const [detail, setDetail] = useState<CardDefinition | null>(null);
+  const [detail, setDetail] = useState<Card | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   const [trashOf, setTrashOf] = useState<PlayerId | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmConcede, setConfirmConcede] = useState(false);
 
-  const def = (card: CardInstance | null | undefined) => (card ? catalog[card.cardId] : undefined);
+  const def: DefOf = (card) => (card ? data.catalog[card.cardId] : undefined);
+  const art = (card: CardInstance | null | undefined) => data.imageUrl(def(card));
   const prompt = view.prompt;
   const myPrompt = prompt.kind !== "gameOver" && prompt.player === me ? prompt : null;
 
@@ -213,6 +217,7 @@ export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
     <CardView
       key={card.uid}
       def={def(card)}
+      image={art(card)}
       rested={card.rested}
       don={card.givenDon}
       power={view.powers[card.uid]}
@@ -225,16 +230,18 @@ export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
   return (
     <div className="game" onClick={() => setMenu(null)}>
       <div className="board">
-        <PlayerArea
+        <Mat
           view={view}
           player={them}
-          mirrored
+          side="opponent"
+          image={mats.opponent}
           renderCard={(card) => (
             <Clickable key={card.uid} onClick={(e) => openMenu(card.uid, e)}>
               {fieldCard(card, them)}
             </Clickable>
           )}
           def={def}
+          art={art}
           onTrash={() => setTrashOf(them)}
           onDetail={setDetail}
         />
@@ -255,15 +262,18 @@ export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
           onCancel={() => setMode({ kind: "none" })}
         />
 
-        <PlayerArea
+        <Mat
           view={view}
           player={me}
+          side="you"
+          image={mats.you}
           renderCard={(card) => (
             <Clickable key={card.uid} onClick={(e) => openMenu(card.uid, e)}>
               {fieldCard(card, me)}
             </Clickable>
           )}
           def={def}
+          art={art}
           onTrash={() => setTrashOf(me)}
           onDetail={setDetail}
         />
@@ -273,6 +283,7 @@ export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
             <Clickable key={card.uid} onClick={(e) => openMenu(card.uid, e)}>
               <CardView
                 def={def(card)}
+                image={art(card)}
                 glow={glowFor(card.uid)}
                 dim={!byCard.has(card.uid) && myPrompt?.kind === "counter"}
                 onHover={() => setDetail(def(card) ?? null)}
@@ -303,7 +314,7 @@ export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
             Concede
           </button>
         </div>
-        <Detail card={detail} />
+        <Detail card={detail} image={data.imageUrl(detail ?? undefined)} />
         <Log game={game} />
       </aside>
 
@@ -359,6 +370,7 @@ export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
               <CardView
                 key={card.uid}
                 def={def(card)}
+                image={art(card)}
                 onHover={() => setDetail(def(card) ?? null)}
               />
             ))}
@@ -379,7 +391,7 @@ export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
             {myPrompt.min === myPrompt.max
               ? `Choose ${myPrompt.max}.`
               : `Choose ${myPrompt.min === 0 ? "up to" : `${myPrompt.min} to`} ${myPrompt.max}.`}{" "}
-            From {nameOf(catalog, view, myPrompt.source)}.
+            From {nameOf(def, view, myPrompt.source)}.
           </p>
           <div className="card-row wrap">
             {view.promptCards.map((card) => {
@@ -389,6 +401,7 @@ export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
                 <CardView
                   key={card.uid}
                   def={def(card)}
+                  image={art(card)}
                   power={view.powers[card.uid]}
                   dim={!option}
                   glow={chosen ? "selected" : option ? "playable" : null}
@@ -427,13 +440,13 @@ export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
         >
           <div className="card-row">
             {view.promptCards.map((card) => (
-              <CardView key={card.uid} def={def(card)} size="large" />
+              <CardView key={card.uid} def={def(card)} image={art(card)} size="large" />
             ))}
           </div>
           <ul className="effect-text">
             {view.promptCards.flatMap((card) => {
               const d = def(card);
-              return d ? cardText(d).map((line) => <li key={line}>{line}</li>) : [];
+              return d ? textOf(d).map((line) => <li key={line}>{line}</li>) : [];
             })}
           </ul>
           <div className="row">
@@ -459,6 +472,7 @@ export function Board({ catalog, game, onChange, onRestart, onExit }: Props) {
               <CardView
                 key={card.uid}
                 def={def(card)}
+                image={art(card)}
                 size="small"
                 onHover={() => setDetail(def(card) ?? null)}
               />
@@ -525,102 +539,121 @@ function Clickable({
   );
 }
 
-function PlayerArea({
+type MatSide = "you" | "opponent";
+
+/**
+ * One player's side of the table, laid out like the official playmat: Life on the left, the
+ * Character Area on top, the Leader in the middle with the Stage beside it, the Deck and Trash
+ * on the right, and the DON!! deck and cost area along the bottom. The opponent's side is the
+ * same mat turned around.
+ */
+function Mat({
   view,
   player,
-  mirrored,
+  side,
+  image,
   renderCard,
   def,
+  art,
   onTrash,
   onDetail,
 }: {
   view: GameView;
   player: PlayerId;
-  mirrored?: boolean;
+  side: MatSide;
+  image: string | null;
   renderCard: (card: CardInstance) => ReactNode;
-  def: (card: CardInstance | null | undefined) => CardDefinition | undefined;
+  def: DefOf;
+  art: (card: CardInstance | null | undefined) => string | undefined;
   onTrash: () => void;
-  onDetail: (card: CardDefinition | null) => void;
+  onDetail: (card: Card | null) => void;
 }) {
   const p = view.players[player];
   const topTrash = p.trash[0];
-  const characters = (
-    <div className="characters" aria-label="Characters">
-      {p.characters.map(renderCard)}
-      {Array.from({ length: Math.max(0, 5 - p.characters.length) }, (_, i) => (
-        <div key={`empty-${i}`} className="slot empty" />
-      ))}
-    </div>
-  );
-  const leaderRow = (
-    <div className="leader-row">
-      <div className="pile life" title="Life" aria-label={`Life: ${p.lifeCount}`}>
-        <div className="life-stack">
-          {Array.from({ length: p.lifeCount }, (_, i) => (
-            <div key={i} className="life-card" style={{ ["--i" as string]: i }} />
-          ))}
-        </div>
-        <span className="pile-label">Life {p.lifeCount}</span>
-      </div>
-      <div className="leader-slot">{renderCard(p.leader)}</div>
-      <div className="stage-slot">
-        {p.stage ? renderCard(p.stage) : <div className="slot empty stage">Stage</div>}
-      </div>
-      <div className="pile deck" aria-label={`Deck: ${p.deckCount} cards`}>
-        <CardView faceDown size="small" />
-        <span className="pile-label">Deck {p.deckCount}</span>
-      </div>
-      <button
-        className="pile trash"
-        onClick={(e) => {
-          e.stopPropagation();
-          onTrash();
-        }}
-        onMouseEnter={() => onDetail(def(topTrash) ?? null)}
-        aria-label={`Trash: ${p.trash.length} cards`}
-      >
-        {topTrash ? (
-          <CardView def={def(topTrash)} size="small" />
-        ) : (
-          <div className="slot empty small" />
-        )}
-        <span className="pile-label">Trash {p.trash.length}</span>
-      </button>
-    </div>
-  );
-  const don = (
-    <div className="don-row" aria-label={`DON!!: ${p.donActive} active, ${p.donRested} rested`}>
-      <span className="don-label">DON!!</span>
-      {Array.from({ length: p.donActive }, (_, i) => (
-        <span key={`a${i}`} className="don active" />
-      ))}
-      {Array.from({ length: p.donRested }, (_, i) => (
-        <span key={`r${i}`} className="don rested" />
-      ))}
-      <span className="don-count">
-        {p.donActive} active · {p.donRested} rested · {p.donDeck} in deck
-      </span>
-    </div>
-  );
+  const owner = side === "you" ? "Your" : "Opponent's";
   return (
     <section
-      className={`area ${mirrored ? "them" : "me"}`}
-      aria-label={mirrored ? "Opponent" : "You"}
+      className={`mat ${side} ${image ? "custom" : ""}`}
+      style={image ? { ["--mat-image" as string]: `url("${image}")` } : undefined}
+      aria-label={side === "you" ? "Your side" : "Opponent's side"}
     >
-      {mirrored ? (
-        <>
-          {don}
-          {leaderRow}
-          {characters}
-        </>
-      ) : (
-        <>
-          {characters}
-          {leaderRow}
-          {don}
-        </>
-      )}
+      <Zone area="chars" label="Character Area">
+        <div className="characters">
+          {p.characters.map(renderCard)}
+          {Array.from({ length: Math.max(0, 5 - p.characters.length) }, (_, i) => (
+            <div key={`empty-${i}`} className="slot empty" />
+          ))}
+        </div>
+      </Zone>
+      <Zone area="leader" label="Leader">
+        {renderCard(p.leader)}
+      </Zone>
+      <Zone area="stage" label="Stage">
+        {p.stage ? renderCard(p.stage) : <div className="slot empty" />}
+      </Zone>
+      <Zone area="life" label={`Life ${p.lifeCount}`}>
+        <div
+          className="life-stack"
+          aria-label={`${owner} Life: ${p.lifeCount}`}
+          style={{ ["--n" as string]: Math.max(p.lifeCount, 1) }}
+        >
+          {Array.from({ length: p.lifeCount }, (_, i) => (
+            <div key={i} className="life-card" style={{ ["--i" as string]: i }}>
+              <CardView faceDown size="small" />
+            </div>
+          ))}
+        </div>
+      </Zone>
+      <Zone area="deck" label={`Deck ${p.deckCount}`}>
+        <div className="pile" aria-label={`${owner} deck: ${p.deckCount} cards`}>
+          {p.deckCount > 0 ? <CardView faceDown /> : <div className="slot empty" />}
+        </div>
+      </Zone>
+      <Zone area="trash" label={`Trash ${p.trash.length}`}>
+        <button
+          className="pile trash"
+          onClick={(e) => {
+            e.stopPropagation();
+            onTrash();
+          }}
+          onMouseEnter={() => onDetail(def(topTrash) ?? null)}
+          aria-label={`${owner} trash: ${p.trash.length} cards`}
+        >
+          {topTrash ? (
+            <CardView def={def(topTrash)} image={art(topTrash)} size="small" showName={false} />
+          ) : (
+            <div className="slot empty small" />
+          )}
+        </button>
+      </Zone>
+      <Zone area="dondeck" label={`DON!! deck ${p.donDeck}`}>
+        <div className="pile" aria-label={`${owner} DON!! deck: ${p.donDeck}`}>
+          {p.donDeck > 0 ? <DonCard back /> : <div className="slot empty don" />}
+        </div>
+      </Zone>
+      <Zone area="cost" label={`Cost Area · ${p.donActive} active, ${p.donRested} rested`}>
+        <div
+          className="cost-row"
+          aria-label={`${owner} DON!!: ${p.donActive} active, ${p.donRested} rested`}
+        >
+          {Array.from({ length: p.donActive }, (_, i) => (
+            <DonCard key={`a${i}`} />
+          ))}
+          {Array.from({ length: p.donRested }, (_, i) => (
+            <DonCard key={`r${i}`} rested />
+          ))}
+        </div>
+      </Zone>
     </section>
+  );
+}
+
+function Zone({ area, label, children }: { area: string; label: string; children: ReactNode }) {
+  return (
+    <div className={`zone zone-${area}`}>
+      <span className="zone-label">{label}</span>
+      {children}
+    </div>
   );
 }
 
@@ -633,7 +666,7 @@ function StatusBar({
 }: {
   view: GameView;
   me: PlayerId;
-  def: (card: CardInstance | null | undefined) => CardDefinition | undefined;
+  def: DefOf;
   mode: Mode;
   onCancel: () => void;
 }) {
@@ -686,7 +719,12 @@ function StatusBar({
   );
 }
 
-function Detail({ card }: { card: CardDefinition | null }) {
+/** Official text when the card data has it, otherwise text written from the effect data. */
+function textOf(card: Card): string[] {
+  return card.text === undefined ? cardText(card) : officialText(card);
+}
+
+function Detail({ card, image }: { card: Card | null; image: string | undefined }) {
   if (!card) {
     return (
       <div className="detail empty">
@@ -694,14 +732,14 @@ function Detail({ card }: { card: CardDefinition | null }) {
       </div>
     );
   }
-  const lines = cardText(card);
+  const lines = textOf(card);
   return (
     <div className="detail">
-      <CardView def={card} size="large" />
+      <CardView def={card} image={image} size="large" />
       <div className="detail-text">
         <h3>{card.name}</h3>
         <p className="meta">
-          {card.category}
+          <span className="card-id">{card.id}</span> · {CATEGORY_NAMES[card.category]}
           {card.cost !== undefined ? ` · cost ${card.cost}` : ""}
           {card.power !== undefined ? ` · ${card.power} power` : ""}
           {card.counter ? ` · counter +${card.counter}` : ""}
@@ -721,6 +759,13 @@ function Detail({ card }: { card: CardDefinition | null }) {
     </div>
   );
 }
+
+const CATEGORY_NAMES: Record<Card["category"], string> = {
+  leader: "Leader",
+  character: "Character",
+  event: "Event",
+  stage: "Stage",
+};
 
 function Log({ game }: { game: LocalGame }) {
   const end = useRef<HTMLLIElement>(null);
@@ -785,9 +830,8 @@ function findInView(view: GameView, uid: string): CardInstance | null {
   );
 }
 
-function nameOf(catalog: CardCatalog, view: GameView, uid: string): string {
-  const card = findInView(view, uid);
-  return card ? (catalog[card.cardId]?.name ?? "a card") : "a card";
+function nameOf(def: DefOf, view: GameView, uid: string): string {
+  return def(findInView(view, uid))?.name ?? "a card";
 }
 
 const PHASE_NAMES: Record<GameView["phase"], string> = {
