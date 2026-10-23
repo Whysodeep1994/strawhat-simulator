@@ -1,0 +1,36 @@
+{
+  "name": "An effect can stop only some [Blocker] Characters from blocking",
+  "rules": ["10-1-4-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-NO-BLOCKERS"]
+    },
+    "p2": {
+      "characters": ["TEST-BLOCKER", "TEST-BIG-BLOCKER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "block",
+      "player": "p2",
+      "blocker": "p2.characters.1",
+      "illegal": true
+    },
+    {
+      "type": "block",
+      "player": "p2",
+      "blocker": "p2.characters.0"
+    }
+  ],
+  "expect": {
+    "p2.characters.0.rested": true,
+    "p2.characters.1.rested": false,
+    "prompt.kind": "counter"
+  }
+}

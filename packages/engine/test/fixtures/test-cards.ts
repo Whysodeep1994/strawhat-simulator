@@ -448,6 +448,54 @@ const cards: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-NO-BLOCKERS",
+    name: "Test No Blockers",
+    category: "character",
+    colors: ["red"],
+    cost: 3,
+    power: 4000,
+    effects: [
+      {
+        timing: "whenAttacking",
+        steps: [
+          {
+            do: "noBlockers",
+            target: { side: "this" },
+            blockers: { powerAtLeast: 5000 },
+            duration: "battle",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-BIG-BLOCKER",
+    name: "Test Big Blocker",
+    category: "character",
+    colors: ["red"],
+    cost: 4,
+    power: 5000,
+    keywords: ["blocker"],
+  },
+  {
+    id: "TEST-KO-BLOCKER",
+    name: "Test K.O. Blocker",
+    category: "event",
+    colors: ["red"],
+    cost: 1,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "ko",
+            target: { side: "opponent", filter: { keyword: "blocker" }, upTo: true },
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 export const TEST_CATALOG: CardCatalog = Object.fromEntries(cards.map((c) => [c.id, c]));

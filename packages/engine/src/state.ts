@@ -165,6 +165,7 @@ export function matchesFilter(
   if (filter.rested !== undefined && card.rested !== filter.rested) return false;
   if (filter.notThis && source && card.uid === source.uid) return false;
   if (filter.hasTrigger && !(def.effects ?? []).some((e) => e.timing === "trigger")) return false;
+  if (filter.keyword && !hasKeywordNow(state, card, filter.keyword)) return false;
   return true;
 }
 

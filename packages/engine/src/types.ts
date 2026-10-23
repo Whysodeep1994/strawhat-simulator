@@ -1,5 +1,5 @@
 import type { CardCatalog, Keyword } from "./cards.js";
-import type { Duration, Step } from "./effects.js";
+import type { Duration, Filter, Step } from "./effects.js";
 import type { Phase } from "./phases.js";
 
 export type PlayerId = "p1" | "p2";
@@ -53,6 +53,8 @@ export interface Modifier {
   target: string;
   power?: number;
   keyword?: Keyword;
+  /** The opponent can't activate [Blocker] Characters matching this when the target attacks. */
+  noBlockers?: Filter;
   until: Duration;
 }
 

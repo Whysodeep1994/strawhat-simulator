@@ -1,0 +1,38 @@
+{
+  "name": "An effect can pick only Characters that have [Blocker]",
+  "rules": ["8-4-4-4"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-KO-BLOCKER"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C4-5000", "TEST-BLOCKER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"],
+      "illegal": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.1"]
+    }
+  ],
+  "expect": {
+    "p2.characters": 1,
+    "p2.characters.0.cardId": "TEST-C4-5000",
+    "p2.trash": 1
+  }
+}

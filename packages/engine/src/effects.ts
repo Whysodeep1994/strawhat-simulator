@@ -82,6 +82,8 @@ export interface Filter {
   notThis?: boolean;
   /** Trigger only: the card has a [Trigger]. */
   hasTrigger?: boolean;
+  /** The card has this keyword right now, e.g. [Blocker]. */
+  keyword?: Keyword;
 }
 
 export type Duration = "turn" | "battle";
@@ -95,6 +97,11 @@ export type Step =
   | { do: "setActive"; target: Target }
   | { do: "returnToHand"; target: Target }
   | { do: "returnToDeckBottom"; target: Target }
+  /**
+   * "Your opponent cannot activate [Blocker]" when the target attacks. `blockers`
+   * limits which [Blocker] Characters are stopped (e.g. 5000 power or more).
+   */
+  | { do: "noBlockers"; target: Target; blockers?: Filter; duration?: Duration }
   /** Give rested DON!! from the cost area (e.g. "Give up to 1 rested DON!! card to your Leader"). */
   | { do: "giveRestedDon"; target: Target; count: number }
   /** Put DON!! from the DON!! deck into the cost area. */

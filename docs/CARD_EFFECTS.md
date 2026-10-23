@@ -54,7 +54,8 @@ Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you ma
 `{ "side": "self" | "opponent" | "this", "zone": "leader" | "characters" | "leaderOrCharacters" | "stage", "filter": {...}, "count": 1, "upTo": true }`
 
 Filters: `category`, `costAtMost`, `costAtLeast`, `powerAtMost`, `powerAtLeast`, `type`, `name`,
-`nameIncludes`, `color`, `rested`, `notThis`, `hasTrigger`.
+`nameIncludes`, `color`, `rested`, `notThis`, `hasTrigger`, `keyword` (for example
+`{ "keyword": "blocker" }` for "[Blocker] Characters").
 
 When there's no real choice (for example, exactly one valid target and no "up to"), the engine
 picks automatically, so players are only asked about meaningful decisions.
@@ -70,6 +71,7 @@ picks automatically, so players are only asked about meaningful decisions.
 | `rest` / `setActive`             | Rest or set active.                                                   |
 | `returnToHand`                   | Return to the owner's hand.                                           |
 | `returnToDeckBottom`             | Place at the bottom of the owner's deck.                              |
+| `noBlockers`                     | "Your opponent cannot activate [Blocker]" when the target attacks.    |
 | `giveRestedDon`                  | Give rested DON!! from the cost area.                                 |
 | `addDon`                         | Add DON!! from the DON!! deck, active or rested.                      |
 | `setDonActive`                   | Set rested DON!! as active.                                           |

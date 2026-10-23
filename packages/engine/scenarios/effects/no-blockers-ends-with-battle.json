@@ -1,0 +1,40 @@
+{
+  "name": "A battle-long [Blocker] ban is gone in the next battle",
+  "rules": ["10-1-4-1", "7-1-5-1"],
+  "setup": {
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-NO-BLOCKERS",
+          "don": 1
+        },
+        "TEST-C4-5000"
+      ]
+    },
+    "p2": {
+      "characters": ["TEST-BIG-BLOCKER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    },
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.1",
+      "target": "p2.leader"
+    }
+  ],
+  "expect": {
+    "p2.life": 3,
+    "legal.p2.block": 1
+  }
+}

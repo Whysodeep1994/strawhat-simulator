@@ -6,6 +6,7 @@ import {
   fieldCards,
   findOnField,
   hasKeywordNow,
+  matchesFilter,
 } from "./state.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
 
@@ -190,8 +191,14 @@ export function eligibleBlockers(state: GameState, player: PlayerId): CardInstan
   if (!battle || battle.blocked) return [];
   const attacker = findOnField(state, battle.attacker);
   if (!attacker || hasKeywordNow(state, attacker.card, "unblockable")) return [];
+  // Rule 10-1-4-1: effects can stop [Blocker] from being activated.
+  const bans = state.modifiers.filter((m) => m.target === battle.attacker && m.noBlockers);
   return state.players[player].characters.filter(
-    (c) => !c.rested && c.uid !== battle.target && hasKeywordNow(state, c, "blocker"),
+    (c) =>
+      !c.rested &&
+      c.uid !== battle.target &&
+      hasKeywordNow(state, c, "blocker") &&
+      !bans.some((m) => matchesFilter(state, c, m.noBlockers, null)),
   );
 }
 
