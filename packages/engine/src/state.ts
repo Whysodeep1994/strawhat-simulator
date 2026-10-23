@@ -286,6 +286,7 @@ export function conditionsMet(
       const rested = fieldCards(state, controller).filter((card) => card.rested).length;
       return me.donRested + rested >= c.restedCardsAtLeast;
     }
+    if ("lifeAtMostOpponents" in c) return me.life.length <= them.life.length;
     if ("leaderTypeIncludes" in c)
       return (definitionOf(state, me.leader).types ?? []).some((t) =>
         t.includes(c.leaderTypeIncludes),
@@ -317,7 +318,8 @@ export function matchesFilter(
   const cost =
     filter.costAtMost !== undefined ||
     filter.costAtLeast !== undefined ||
-    filter.costAtMostOpponentLife
+    filter.costAtMostOpponentLife ||
+    filter.costAtMostTotalLife
       ? costOf(state, card)
       : baseCost;
   const power = usePower && findOnField(state, card.uid) ? powerOf(state, card) : basePower;
@@ -327,6 +329,11 @@ export function matchesFilter(
   if (filter.costAtMostOpponentLife && source) {
     if (cost > state.players[opponentOf(source.owner)].life.length) return false;
   }
+  if (
+    filter.costAtMostTotalLife &&
+    cost > state.players.p1.life.length + state.players.p2.life.length
+  )
+    return false;
   if (filter.baseCostAtMost !== undefined && baseCost > filter.baseCostAtMost) return false;
   if (filter.baseCostAtLeast !== undefined && baseCost < filter.baseCostAtLeast) return false;
   if (filter.powerAtMost !== undefined && power > filter.powerAtMost) return false;

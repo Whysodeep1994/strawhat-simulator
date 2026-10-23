@@ -213,7 +213,7 @@ Comprehensive Rules version 1.2.1.
 | 4-5-4-1 | 4-5 Draw a Card | Phase 4 (effects) | 0 |
 | 4-5-4-2 | 4-5 Draw a Card | Phase 4 (effects) | 0 |
 | 4-5-4-3 | 4-5 Draw a Card | Phase 4 (effects) | 0 |
-| 4-6 | 4-6 Damage Processing | Tested | 2 |
+| 4-6 | 4-6 Damage Processing | Tested | 3 |
 | 4-6-1 | 4-6 Damage Processing | Tested | 1 |
 | 4-6-2 | 4-6 Damage Processing | Tested | 1 |
 | 4-6-2-1 | 4-6 Damage Processing | Tested | 1 |
@@ -379,7 +379,7 @@ Comprehensive Rules version 1.2.1.
 | 8-3-1-6 | 8-3 Activation Cost and Conditions | Tested | 4 |
 | 8-3-1-7 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-8 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
-| 8-3-2 | 8-3 Activation Cost and Conditions | Tested | 2 |
+| 8-3-2 | 8-3 Activation Cost and Conditions | Tested | 3 |
 | 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 7 |
 | 8-3-2-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2-3 | 8-3 Activation Cost and Conditions | Tested | 2 |

@@ -95,21 +95,22 @@ card is..."), `donOnFieldAtLeast` and `donOnFieldAtMost` ("if you have 8 or more
 your field", counting active, rested and given DON!!), `playedThisTurn` ("if this Character was
 played on this turn"), plus:
 
-| Condition                                        | Card wording                                                     |
-| ------------------------------------------------ | ---------------------------------------------------------------- |
-| `{ "leaderIs": "Buggy" }`                        | "If your Leader is [Buggy]"                                      |
-| `{ "anyOf": [ ... ] }`                           | "If your Leader has the {X} type or is [Y]"                      |
-| `{ "count": {...}, "atLeast": 2 }`               | "If you have 2 or more Characters with a base cost of 5 or more" |
-| `{ "donRestedAtLeast": 6 }`                      | "If you have 6 or more rested DON!! cards"                       |
-| `{ "restedCardsAtLeast": 6 }`                    | "If you have 6 or more rested cards" (DON!! and field cards)     |
-| `{ "leaderTypeIncludes": "Whitebeard Pirates" }` | "If your Leader's type includes "Whitebeard Pirates""            |
-| `{ "leaderMulticolored": true }`                 | "If your Leader is multicolored"                                 |
-| `{ "opponentDonOnFieldAtLeast": 5 }`             | "If your opponent has 5 or more DON!! cards on their field"      |
-| `{ "thisPowerAtLeast": 7000 }`                   | "If this Character has 7000 power or more"                       |
-| `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"  |
-| `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                       |
-| `{ "opponentHandAtLeast": 6 }`                   | "If your opponent has 6 or more cards in their hand"             |
-| `{ "trashAtLeast": 10 }`                         | "If you have 10 or more cards in your trash"                     |
+| Condition                                        | Card wording                                                                |
+| ------------------------------------------------ | --------------------------------------------------------------------------- |
+| `{ "leaderIs": "Buggy" }`                        | "If your Leader is [Buggy]"                                                 |
+| `{ "anyOf": [ ... ] }`                           | "If your Leader has the {X} type or is [Y]"                                 |
+| `{ "count": {...}, "atLeast": 2 }`               | "If you have 2 or more Characters with a base cost of 5 or more"            |
+| `{ "donRestedAtLeast": 6 }`                      | "If you have 6 or more rested DON!! cards"                                  |
+| `{ "restedCardsAtLeast": 6 }`                    | "If you have 6 or more rested cards" (DON!! and field cards)                |
+| `{ "leaderTypeIncludes": "Whitebeard Pirates" }` | "If your Leader's type includes "Whitebeard Pirates""                       |
+| `{ "lifeAtMostOpponents": true }`                | "If the number of your Life cards is equal to or less than your opponent's" |
+| `{ "leaderMulticolored": true }`                 | "If your Leader is multicolored"                                            |
+| `{ "opponentDonOnFieldAtLeast": 5 }`             | "If your opponent has 5 or more DON!! cards on their field"                 |
+| `{ "thisPowerAtLeast": 7000 }`                   | "If this Character has 7000 power or more"                                  |
+| `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"             |
+| `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                  |
+| `{ "opponentHandAtLeast": 6 }`                   | "If your opponent has 6 or more cards in their hand"                        |
+| `{ "trashAtLeast": 10 }`                         | "If you have 10 or more cards in your trash"                                |
 
 `count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`)
 and `filter`, and `atLeast` (default 1) and/or `atMost`. "If you do not have 5 Characters with a
@@ -156,6 +157,7 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `baseCostAtMost`, `baseCostAtLeast`, `basePowerAtMost`, `basePowerAtLeast`: printed values
   ("base cost", "base power"). `costAtMost` and friends read the current cost and power.
 - `notName`: "other than [X]".
+- `costAtMostTotalLife`: "a cost equal to or less than the total of your and your opponent's Life cards".
 - `typeIncludes`: a type containing some text, e.g. `"Baroque Works"`.
 - `anyOf`: a list of filters, any of which may match ("{Cross Guild} type or ...").
 
@@ -205,6 +207,7 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `restOpponentDon`                | Rest up to `count` of your opponent's active DON!! cards.                                                                                                                                         |
 | `atEndOfTurn`                    | The nested steps happen at the end of this turn.                                                                                                                                                  |
 | `handToDeckBottom`               | Place cards from your hand at the bottom of your deck.                                                                                                                                            |
+| `handToLife`                     | "Add up to 1 card from your hand to the top of your Life cards."                                                                                                                                  |
 | `revealedToDeckTop`              | Place the cards revealed by a `revealFromHand` cost at the top of your deck.                                                                                                                      |
 | `setBasePower`                   | "[Leader]'s base power becomes 7000", with an optional `duration`.                                                                                                                                |
 | `if`                             | Only do the nested steps if the conditions hold.                                                                                                                                                  |
