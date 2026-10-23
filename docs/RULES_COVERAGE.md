@@ -169,7 +169,7 @@ Comprehensive Rules version 1.2.1.
 | 3-7-1 | 3-7 Character Area | Tested | 1 |
 | 3-7-2 | 3-7 Character Area | Tested | 1 |
 | 3-7-3 | 3-7 Character Area | Tested | 1 |
-| 3-7-4 | 3-7 Character Area | Tested | 1 |
+| 3-7-4 | 3-7 Character Area | Tested | 2 |
 | 3-7-5 | 3-7 Character Area | Tested | 1 |
 | 3-7-6 | 3-7 Character Area | Tested | 1 |
 | 3-7-6-1 | 3-7 Character Area | Tested | 1 |
