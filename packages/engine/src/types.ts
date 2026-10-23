@@ -57,6 +57,8 @@ export interface Modifier {
   status?: Status;
   /** The opponent can't activate [Blocker] Characters matching this when the target attacks. */
   noBlockers?: Filter;
+  /** On a Leader: its player can't add Life cards to their hand with their own effects. */
+  noLifeToHand?: boolean;
   until: "turn" | "battle";
   /** For "turn": the last turn it lasts. Defaults to the current turn. */
   endsTurn?: number;
@@ -67,6 +69,14 @@ export interface QueuedEffect {
   controller: PlayerId;
   source: string;
   effect: number;
+}
+
+/** Steps of an effect that happen at the end of the turn. */
+export interface DelayedEffect {
+  controller: PlayerId;
+  source: string;
+  effect: number;
+  steps: Step[];
 }
 
 /**
@@ -86,6 +96,8 @@ export type Frame =
       steps: Step[];
       /** Scratch space for a step that needs more than one decision. */
       memo: string[];
+      /** How many cards the previous step moved, for "for every card trashed". */
+      previous?: number;
       answer: string[] | boolean | null;
       /** `replaceRemoval` only: the card the replacement would save. */
       replacing?: string;
@@ -122,6 +134,8 @@ export type Prompt =
       revealed?: string[];
     }
   | { kind: "confirm"; player: PlayerId; reason: "optional" | "trigger"; source: string }
+  /** "Choose one": answered with the index of one of `labels`. */
+  | { kind: "chooseOne"; player: PlayerId; labels: string[]; source: string }
   | { kind: "gameOver" };
 
 export interface GameState {
@@ -140,6 +154,8 @@ export interface GameState {
   modifiers: Modifier[];
   /** "uid:effect" keys of [Once Per Turn] effects used this turn (rule 10-2-13). */
   usedThisTurn: string[];
+  /** Steps waiting for the End Phase ("at the end of this turn"). */
+  delayed: DelayedEffect[];
   /** Cards whose pending removal a replacement effect prevented (rule 8-1-3-4). */
   prevented?: string[];
   /** A [Trigger] card being activated belongs to no area (rule 10-1-5-3). */

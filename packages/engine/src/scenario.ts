@@ -114,6 +114,7 @@ export function buildScenarioState(setup: ScenarioSetup, catalog: CardCatalog): 
     pendingEffects: [],
     modifiers: [],
     usedThisTurn: [],
+    delayed: [],
     limbo: null,
     rng: 1,
     nextUid,

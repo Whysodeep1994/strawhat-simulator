@@ -1,0 +1,24 @@
+{
+  "name": "\"If the top card is...\" does nothing when it isn't",
+  "rules": ["8-3-3"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-REVEAL-DRAW"],
+      "don": {
+        "active": 4
+      },
+      "deck": ["TEST-FILLER", "TEST-C2-3000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 0,
+    "p1.deck": 2
+  }
+}

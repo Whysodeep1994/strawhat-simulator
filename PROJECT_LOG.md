@@ -28,6 +28,9 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-23: Engine blocks for starter decks ST-15 (Edward.Newgate), ST-16 (Uta), ST-17
+  (Doflamingo): either-player targets, more costs, deck arranging, reveal-and-play, choose one,
+  "at the end of this turn", "cannot add Life cards", "K.O.'d by an effect". 24 new scenarios.
 - 2026-10-23: Phase 5, first playable prototype (packages/web). React board in the Master
   Duel style: legal plays glow, tap a card for its actions, pop-ups for turn order, redraw,
   Blocker, Counter, Trigger, and effect choices, plus a game log and a card reader. You play

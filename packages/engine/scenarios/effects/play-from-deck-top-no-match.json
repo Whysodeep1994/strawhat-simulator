@@ -1,0 +1,25 @@
+{
+  "name": "A top card that doesn't match stays on top, with no question asked",
+  "rules": ["11-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-PLAY-DECK-TOP"],
+      "don": {
+        "active": 3
+      },
+      "deck": ["TEST-C5-6000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.deck.0.cardId": "TEST-C5-6000",
+    "prompt.kind": "main"
+  }
+}

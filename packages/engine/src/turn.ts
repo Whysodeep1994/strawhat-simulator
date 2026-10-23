@@ -69,15 +69,17 @@ export function startTurn(state: GameState, player: PlayerId): void {
 
 /**
  * Rules 10-2-1-2 and 10-2-17: [On K.O.] conditions are checked while the card
- * is still on the field; the effect then resolves from the trash.
+ * is still on the field; the effect then resolves from the trash. `byEffect`
+ * is false for a K.O. in battle.
  */
-export function knockOut(state: GameState, uid: string): void {
+export function knockOut(state: GameState, uid: string, byEffect = false): void {
   for (const player of ["p1", "p2"] as const) {
     const p = state.players[player];
     const card = p.characters.find((c) => c.uid === uid);
     if (!card) continue;
     (definitionOf(state, card).effects ?? []).forEach((effect, index) => {
-      if (effect.timing === "onKO" && conditionsMet(state, player, card, effect.conditions)) {
+      const timingMet = effect.timing === "onKO" || (effect.timing === "koByEffect" && byEffect);
+      if (timingMet && conditionsMet(state, player, card, effect.conditions)) {
         state.pendingEffects.push({ controller: player, source: card.uid, effect: index });
       }
     });

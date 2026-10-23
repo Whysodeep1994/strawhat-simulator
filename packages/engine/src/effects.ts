@@ -45,6 +45,8 @@ export type Timing =
   | "onOpponentsAttack"
   | "onBlock"
   | "onKO"
+  /** "When this Character is K.O.'d by an effect": checked like [On K.O.], but not in battle. */
+  | "koByEffect"
   | "activateMain"
   | "main"
   | "counter"
@@ -71,6 +73,9 @@ export type Condition =
   | { leaderHasType: string }
   | { charactersAtLeast: number }
   | { handAtMost: number }
+  /** The top card of your deck matches, as in "Reveal 1 card from the top of your deck. If that card is..." */
+  | { deckTopMatches: Filter }
+
   /** "If your Leader is [Buggy]": the Leader's name. */
   | { leaderIs: string }
   /** True if any of the listed conditions holds ("has the {X} type or is [Y]"). */
@@ -95,15 +100,21 @@ export type Cost =
   | { restDon: number }
   /** DON!! −X: return DON!! from the field to the DON!! deck (rule 8-3-1-6). */
   | { donMinus: number }
-  | { trashFromHand: number }
+  | { trashFromHand: number; filter?: Filter }
+  /** Place cards from your hand at the top of your deck. */
+  | { handToDeckTop: number }
+  /** Return this many of your Characters to your hand. */
+  | { returnOwnCharacter: number }
+  /** Rest 1 of your active Leader, Characters or Stage matching the filter (e.g. "rest 1 of your [Uta] cards"). */
+  | { restOwn: Filter }
   | { restThis: true }
   /** Trash this card from the field. Not a K.O. */
   | { trashThis: true };
 
 /** Which cards a step can pick from. */
 export interface Target {
-  /** "this" means the card the effect is on. */
-  side: "self" | "opponent" | "this";
+  /** "this" means the card the effect is on. "any" means either player's cards. */
+  side: "self" | "opponent" | "this" | "any";
   zone?: "leader" | "characters" | "leaderOrCharacters" | "stage";
   filter?: Filter;
   /** How many to pick. Defaults to 1. */
@@ -164,7 +175,8 @@ export type Status =
 
 export type Step =
   | { do: "draw"; count: number }
-  | { do: "powerUp"; target: Target; amount: number; duration?: Duration }
+  /** With `perPrevious`, `amount` is multiplied by how many cards the previous step moved. */
+  | { do: "powerUp"; target: Target; amount: number; duration?: Duration; perPrevious?: boolean }
   | { do: "grantKeyword"; target: Target; keyword: Keyword; duration?: Duration }
   | { do: "grantStatus"; target: Target; status: Status; duration?: Duration }
   /**
@@ -193,17 +205,41 @@ export type Step =
   | { do: "addDon"; count: number; rested?: boolean }
   | { do: "setDonActive"; count: number }
   /** The effect's player trashes cards from their hand. */
-  | { do: "trashFromHand"; count: number; upTo?: boolean }
+  | { do: "trashFromHand"; count: number; upTo?: boolean; filter?: Filter }
+  /** Place cards from your hand at the top of your deck. */
+  | { do: "handToDeckTop"; count: number }
+  /** Add up to `count` (default 1) matching cards from your trash to your hand. */
+  | { do: "trashToHand"; filter?: Filter; count?: number }
   /** The opponent trashes cards from their hand. */
   | { do: "opponentTrashesFromHand"; count: number }
   /** Look at the top cards, reveal and add matching ones to hand, rest to the bottom. */
-  | { do: "searchDeck"; look: number; take: number; filter?: Filter }
+  /** With `rest: "topOrBottom"`, the rest go to the top or bottom of the deck in any order. */
+  | { do: "searchDeck"; look: number; take: number; filter?: Filter; rest?: "topOrBottom" }
+  /**
+   * Look at the top cards and put them back on top in any order. With `bottom`,
+   * any of them can go to the bottom instead ("at the top or bottom of the deck in any order").
+   */
+  | { do: "arrangeDeckTop"; look: number; bottom?: boolean }
+  /** "You may play" the top card of your deck if it matches. */
+  | { do: "playFromDeckTop"; filter?: Filter; rested?: boolean }
   /** Play a card from hand for free. `rested`: "play ... rested". */
   | { do: "playFromHand"; filter?: Filter; rested?: boolean }
   | { do: "playFromTrash"; filter?: Filter; rested?: boolean }
+  /** "You cannot add Life cards to your hand using your own effects during this turn." */
+  | { do: "noLifeToHand" }
   | { do: "lifeToHand"; count: number }
   | { do: "deckToLife"; count: number }
-  /** Trigger only: play this card instead of trashing it. */
-  | { do: "playThis" }
+  /** Play this card: a [Trigger] card instead of trashing it, or this card from the trash (e.g. [On K.O.]). */
+  | { do: "playThis"; rested?: boolean }
+  /** "Choose one": the chooser picks one option, whose steps then happen. */
+  | {
+      do: "chooseOne";
+      chooser?: "opponent";
+      options: { label: string; steps: Step[] }[];
+    }
+  /** Rest up to this many of your opponent's active DON!! cards. */
+  | { do: "restOpponentDon"; count: number }
+  /** "At the end of this turn": the steps happen in this turn's End Phase. */
+  | { do: "atEndOfTurn"; steps: Step[] }
   /** A whole sub-sequence that only happens "if" a condition holds (rule 8-3-3). */
   | { do: "if"; conditions: Condition[]; steps: Step[] };

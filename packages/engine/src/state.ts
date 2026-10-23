@@ -146,7 +146,8 @@ function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, gr
           const applies =
             t.side === "this"
               ? source.uid === card.uid
-              : card.owner === (t.side === "self" ? player : opponentOf(player)) &&
+              : (t.side === "any" ||
+                  card.owner === (t.side === "self" ? player : opponentOf(player))) &&
                 zoneMatches(state, card, t.zone) &&
                 matchesFilter(state, card, t.filter, source, false);
           if (!applies) continue;
@@ -209,6 +210,10 @@ export function conditionsMet(
       return (definitionOf(state, me.leader).types ?? []).includes(c.leaderHasType);
     if ("charactersAtLeast" in c) return me.characters.length >= c.charactersAtLeast;
     if ("handAtMost" in c) return me.hand.length <= c.handAtMost;
+    if ("deckTopMatches" in c) {
+      const top = me.deck[0];
+      return !!top && matchesFilter(state, top, c.deckTopMatches, source, false);
+    }
     if ("leaderIs" in c) return definitionOf(state, me.leader).name === c.leaderIs;
     if ("anyOf" in c) return c.anyOf.some((one) => conditionsMet(state, controller, source, [one]));
     if ("count" in c) {
@@ -293,13 +298,31 @@ export function canPayCosts(
     p.donActive + p.donRested + [p.leader, ...p.characters].reduce((n, c) => n + c.givenDon, 0);
   let restDon = 0;
   let donMinus = 0;
-  let trash = 0;
+  let fromHand = 0;
+  let returned = 0;
   for (const cost of costs) {
     if ("restDon" in cost) restDon += cost.restDon;
     if ("donMinus" in cost) donMinus += cost.donMinus;
-    if ("trashFromHand" in cost) trash += cost.trashFromHand;
+    if ("trashFromHand" in cost) {
+      fromHand += cost.trashFromHand;
+      const matching = p.hand.filter((c) => matchesFilter(state, c, cost.filter, source, false));
+      if (matching.length < cost.trashFromHand) return false;
+    }
+    if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
+    if ("returnOwnCharacter" in cost) returned += cost.returnOwnCharacter;
+    if ("restOwn" in cost) {
+      const own = fieldCards(state, player).filter(
+        (c) => !c.rested && matchesFilter(state, c, cost.restOwn, source),
+      );
+      if (own.length === 0) return false;
+    }
     if ("restThis" in cost && source.rested) return false;
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
   }
-  return restDon <= p.donActive && donMinus <= fieldDon && trash <= p.hand.length;
+  return (
+    restDon <= p.donActive &&
+    donMinus <= fieldDon &&
+    fromHand <= p.hand.length &&
+    returned <= p.characters.length
+  );
 }
