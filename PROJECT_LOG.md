@@ -1,0 +1,70 @@
+# Project log
+
+The living record of this project. Read it at the start of every work session, and update it
+at the end. Newest entries go at the top of each section.
+
+## Current phase
+
+**Phase 2: Project setup** (in progress)
+
+## Roadmap
+
+Each phase has a check the project owner can do without reading code.
+
+| Phase                  | Done when you can…                                                         | Status      |
+| ---------------------- | -------------------------------------------------------------------------- | ----------- |
+| 1. Audit and decision  | Approve the direction.                                                     | Done        |
+| 2. Project setup       | Open the repo and see a green check mark on the latest change.             | In progress |
+| 3. Core rules engine   | Open a coverage report listing rules sections with pass counts, all green. | Not started |
+| 4. Cards and effects   | See every card in one starter deck marked "tested".                        | Not started |
+| 5. Local prototype     | Play a full game in a browser, mulligan to winner, on one computer.        | Not started |
+| 6. Online multiplayer  | Play a friend on two devices; their hand never shows on your screen.       | Not started |
+| 7. Deck builder        | Build a deck, see an illegal card flagged, import and export a list.       | Not started |
+| 8. Polish              | A new player finishes the tutorial; the app opens in under 3 seconds.      | Not started |
+| 9. Release and updates | Visit a public link and see an update notice after a new version ships.    | Not started |
+| 10. Card expansion     | The coverage report shows each new set at 100% tested.                     | Not started |
+
+## Done
+
+- 2026-10-23: Phase 2 started. Added AGPL-3.0 license, TypeScript workspace, tests (Vitest), lint
+  (ESLint), formatting (Prettier), a pre-commit check, GitHub CI, and contributor docs. First
+  engine module: turn phases (rules 6-1 to 6-4-1) with 6 passing tests.
+- 2026-10-23: Phase 1 audit. OPTCGSim is a closed-source Unity 6 / C# app with no license, so
+  we rebuild from scratch and use it only as a behavioral reference. Never copy or decompile it.
+
+## Next
+
+1. Owner merges the Phase 2 pull request and confirms the green check on GitHub.
+2. Phase 3: the engine must list every legal action at any moment, so the UI can highlight
+   playable cards and only ask the player when there is a real choice (Master Duel style).
+3. Phase 3: model the game state (zones, DON!!, life, leader, characters, stage) and the
+   scenario test format.
+
+## Decisions
+
+| Date       | Decision                                                                                                                                 | Why                                                         |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 2026-10-23 | UI and feel modeled on Yu-Gi-Oh! Master Duel: highlight only legal plays, one-tap actions, auto-prompts for responses, quick animations. | Owner's direction: simple to play and polished.             |
+| 2026-10-23 | Project name: Strawhat Simulator.                                                                                                        | Owner's choice.                                             |
+| 2026-10-23 | License: AGPL-3.0-or-later.                                                                                                              | Keeps hosted forks open source.                             |
+| 2026-10-23 | Stack: TypeScript, pnpm workspace, Vitest, ESLint, Prettier, GitHub CI.                                                                  | One language for engine, server, and web app; widely known. |
+| 2026-10-23 | Planned: Node.js WebSocket server (authoritative), React web client.                                                                     | Server hides private info; runs in any browser.             |
+| 2026-10-23 | No Bandai images, logos, or official card text in the repo.                                                                              | Lowers takedown risk; see docs/CARD_ASSETS.md.              |
+| 2026-10-23 | Rebuild from scratch; OPTCGSim is reference only.                                                                                        | OPTCGSim has no source code or license.                     |
+
+## Open decisions
+
+- None right now.
+
+## Known bugs
+
+- None yet.
+
+## Rules questions
+
+Tracked in [docs/RULES_QUESTIONS.md](docs/RULES_QUESTIONS.md).
+
+## Reference
+
+- Official Comprehensive Rules: https://en.onepiece-cardgame.com/pdf/rule_comprehensive.pdf
+  (version 1.2.1, updated 2026-08-28, at the time of writing). Do not commit the PDF.
