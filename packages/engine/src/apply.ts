@@ -141,7 +141,7 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
     eventActivated(state, player);
     return;
   }
-  putOnField(state, player, card, trash);
+  putOnField(state, player, card, trash, true);
 }
 
 /** Rule 6-5-5-1. */
@@ -150,6 +150,12 @@ function giveDon(state: GameState, player: PlayerId, target: string): void {
   if (!location) return;
   state.players[player].donActive -= 1;
   location.card.givenDon += 1;
+  if (location.player === player) donGiven(state, player);
+}
+
+/** "When this Leader or any of your Characters is given a DON!! card". */
+export function donGiven(state: GameState, player: PlayerId): void {
+  for (const card of fieldCards(state, player)) queueEffects(state, player, card, "donGiven");
 }
 
 // --- Battle (rule 7) ----------------------------------------------------------
@@ -162,6 +168,7 @@ function declareAttack(state: GameState, player: PlayerId, attacker: string, tar
   state.battle = { attacker, target, blocked: false };
   state.stack.push({ kind: "battle", step: "attack" });
   queueEffects(state, player, location.card, "whenAttacking");
+  queueEffects(state, player, location.card, "becomesRested");
   for (const card of fieldCards(state, opponentOf(player))) {
     queueEffects(state, opponentOf(player), card, "onOpponentsAttack");
   }
@@ -181,6 +188,7 @@ function block(state: GameState, blocker: string): void {
   state.battle.blocked = true;
   setBattleStep(state, "counter");
   queueEffects(state, location.player, location.card, "onBlock");
+  queueEffects(state, location.player, location.card, "becomesRested");
 }
 
 /** Rule 7-1-3-1-1. */

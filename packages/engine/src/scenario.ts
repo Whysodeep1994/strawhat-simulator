@@ -50,6 +50,8 @@ export interface ScenarioPlayer {
   /** A number means that many filler cards. Lists are top card first. */
   deck?: number | string[];
   life?: number | string[];
+  /** How many of the top Life cards start face-up. */
+  lifeFaceUp?: number;
   don?: { active?: number; rested?: number; deck?: number };
   turnsTaken?: number;
 }
@@ -85,6 +87,8 @@ export function buildScenarioState(setup: ScenarioSetup, catalog: CardCatalog): 
 
   const player = (id: PlayerId): PlayerState => {
     const s = setup[id] ?? {};
+    const life = pile(s.life, 4, id);
+    for (const card of life.slice(0, s.lifeFaceUp ?? 0)) card.faceUp = true;
     const defaultTurns = id === firstPlayer ? Math.ceil(turn / 2) : Math.floor(turn / 2);
     return {
       leader: fieldCard(s.leader ?? DEFAULT_LEADER, id),
@@ -93,7 +97,7 @@ export function buildScenarioState(setup: ScenarioSetup, catalog: CardCatalog): 
       hand: (s.hand ?? []).map((c) => make(c, id)),
       trash: (s.trash ?? []).map((c) => make(c, id)),
       deck: pile(s.deck, 20, id),
-      life: pile(s.life, 4, id),
+      life,
       donDeck: s.don?.deck ?? 0,
       donActive: s.don?.active ?? 0,
       donRested: s.don?.rested ?? 0,

@@ -66,5 +66,8 @@ the app checks the base rules only (rule 5-1-2).
 The home screen's **My decks** has **Build a deck**. The builder searches every card by name,
 type, effect text, card number, set, colour, card type, type, and a two-handle cost slider. Tap a
 Leader first; the library then shows only cards that Leader can use, Standard-legal ones first.
-Decks save in the browser as you go, and a deck can be played once it's legal in Standard.
+Sort the library by card number, cost, power, card type or attribute, low to high or high
+to low. Point at a card to see its art enlarged with every printed detail (card number,
+rarity, cost, power, counter, attribute, types, block, effect text) in the right-hand panel;
+on a touch screen, press and hold a card. Decks save in the browser as you go, and a deck can be played once it's legal in Standard.
 Starter decks are played as printed, even where their cards have rotated out of Standard.

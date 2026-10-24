@@ -1,6 +1,7 @@
 import type { CardCatalog, CardDefinition } from "../../src/index.js";
 import { MORE_EFFECT_CARDS } from "./test-cards-more-effects.js";
 import { OP01_EFFECT_CARDS } from "./test-cards-op01.js";
+import { OP02_EFFECT_CARDS } from "./test-cards-op02.js";
 
 /** Made-up cards for engine tests. Real cards use their official card numbers instead. */
 const cards: CardDefinition[] = [
@@ -1222,5 +1223,5 @@ const cards: CardDefinition[] = [
 ];
 
 export const TEST_CATALOG: CardCatalog = Object.fromEntries(
-  [...cards, ...MORE_EFFECT_CARDS, ...OP01_EFFECT_CARDS].map((c) => [c.id, c]),
+  [...cards, ...MORE_EFFECT_CARDS, ...OP01_EFFECT_CARDS, ...OP02_EFFECT_CARDS].map((c) => [c.id, c]),
 );

@@ -1,0 +1,30 @@
+{
+  "name": "Pay a cost by adding your Character to the top of your Life face-up",
+  "rules": ["3-10-2-1"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-LEADER-LIFE-COST",
+      "characters": ["TEST-C5-6000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.leader",
+      "effect": 0
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.life": 5,
+    "p1.life.0.cardId": "TEST-C5-6000",
+    "p1.life.0.faceUp": true,
+    "p1.hand": 1
+  }
+}

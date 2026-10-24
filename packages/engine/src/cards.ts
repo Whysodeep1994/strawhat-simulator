@@ -32,9 +32,9 @@ export interface CardDefinition {
   life?: number;
   keywords?: Keyword[];
   types?: string[];
-  effects?: EffectDefinition[];
-  /** <Strike>, <Slash>, and so on; "Slash/Strike" for two. */
+  /** Printed attribute, e.g. "Slash" or "Strike/Ranged". */
   attribute?: string;
+  effects?: EffectDefinition[];
   /** "Also treat this card's name as [Kouzuki Oden] according to the rules." */
   alsoNamed?: string[];
   /** "Under the rules of this game, you may have any number of this card in your deck." */

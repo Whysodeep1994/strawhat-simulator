@@ -1,0 +1,36 @@
+{
+  "name": "Giving DON!! to your Leader triggers \"when ... is given a DON!! card\"",
+  "rules": [
+    "8-1-3-1"
+  ],
+  "setup": {
+    "p1": {
+      "leader": "TEST-DON-WATCHER",
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "characters": [
+        "TEST-C4-5000"
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "giveDon",
+      "player": "p1",
+      "target": "p1.leader"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": [
+        "p2.characters.0"
+      ]
+    }
+  ],
+  "expect": {
+    "cost.p2.characters.0": 3
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "Trash all your face-up Life cards",
+  "rules": ["3-10-2-1"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-LEADER-FACE-UP-RULES",
+      "hand": ["TEST-C5-6000", "TEST-TRASH-FACE-UP"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.leader",
+      "effect": 1
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.0"]
+    },
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.life": 4,
+    "p1.trash": 2,
+    "p1.trash.0.cardId": "TEST-C5-6000"
+  }
+}

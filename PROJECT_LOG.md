@@ -31,6 +31,9 @@ Each phase has a check the project owner can do without reading code.
 - 2026-10-23: Engine blocks for starter decks ST-15 (Edward.Newgate), ST-16 (Uta), ST-17
   (Doflamingo): either-player targets, more costs, deck arranging, reveal-and-play, choose one,
   "at the end of this turn", "cannot add Life cards", "K.O.'d by an effect". 24 new scenarios.
+- 2026-10-23: Deck builder sorting and card preview (owner's request). Sort the library by
+  card number, cost, power, card type or attribute in either direction. Pointing at a card shows
+  its art enlarged and all its printed details on the right; press and hold on touch screens.
 - 2026-10-23: Deck builder in the app (Phase 7, early, at the owner's request). Search every card
   (name, type, effect text, card number, set, colour, card type, cost range), build and name
   decks, paste and copy lists, and save them in the browser. Decks are checked against Standard

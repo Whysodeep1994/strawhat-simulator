@@ -1,0 +1,31 @@
+{
+  "name": "A Leader that wins on deck out wins when its own effect empties the deck",
+  "rules": ["9-2-1-2"],
+  "setup": {
+    "p1": {
+      "leader": "TEST-LEADER-EAST",
+      "deck": 1
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "winner": "p1",
+    "p2.life": 3
+  }
+}

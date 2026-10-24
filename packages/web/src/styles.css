@@ -1737,22 +1737,97 @@ button.pile {
 .row.center {
   justify-content: center;
 }
-.read-card {
+.sort {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
 }
-.read-card .card.large {
-  --cw: 110px;
-  --ch: calc(var(--cw) * 1.397);
-  width: min(220px, 100%);
-  height: auto;
+.sort select {
+  width: auto;
+  padding-block: 0.3em;
+}
+.library-card {
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+/* Card details, large: the hover preview and the card reader */
+
+.preview-pane {
+  animation: pop 0.12s ease;
+}
+.card-print {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.print-art {
+  display: block;
+  width: 100%;
+  max-width: 100%;
   aspect-ratio: 600 / 838;
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
 }
-.read-text {
-  flex: 1 1 240px;
+.print-text {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   min-width: 0;
+}
+.print-text h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  text-wrap: balance;
+}
+.print-text dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+}
+.print-text dl > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.print-text dt {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.print-text dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.print-effect {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--gold);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.print-effect p {
+  margin: 0;
+}
+.print-effect p + p {
+  margin-top: 8px;
+}
+/* In the reader dialog there's room for the art beside the details. */
+.modal .card-print {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.modal .print-art {
+  width: min(260px, 100%);
+}
+.modal .print-text {
+  flex: 1 1 260px;
 }
 .paste-errors {
   color: #ffb3bb;

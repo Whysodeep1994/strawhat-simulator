@@ -110,6 +110,8 @@ export type Frame =
       revealed?: string[];
       /** Cards picked by the last step that picked cards, for "It gains ..." (`side: "chosen"`). */
       chosen?: string[];
+      /** Which option of a `oneOf` cost the player is paying. */
+      picked?: number;
       /** How many cards the previous step moved, for "for every card trashed". */
       previous?: number;
       answer: string[] | boolean | null;
@@ -181,6 +183,8 @@ export interface GameState {
   usedThisTurn: string[];
   /** Steps waiting for the End Phase ("at the end of this turn"). */
   delayed: DelayedEffect[];
+  /** The last turn in which each player's hand had a card trashed by an effect. */
+  handTrashedTurn?: Partial<Record<PlayerId, number>>;
   /** Cards whose pending removal a replacement effect prevented (rule 8-1-3-4). */
   prevented?: string[];
   /** Cards an effect just revealed to both players, e.g. from a hand. Cleared by the next action. */

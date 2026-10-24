@@ -1,0 +1,27 @@
+{
+  "name": "Effects can K.O. a Stage",
+  "rules": [
+    "3-8-5"
+  ],
+  "setup": {
+    "p1": {
+      "hand": [
+        "TEST-KO-STAGE"
+      ]
+    },
+    "p2": {
+      "stage": "TEST-STAGE"
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p2.stage": null,
+    "p2.trash": 1
+  }
+}

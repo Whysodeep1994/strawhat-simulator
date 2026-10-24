@@ -7,6 +7,7 @@ import {
   effectOf,
   fieldCards,
   findOnField,
+  matchesFilter,
   hasStatus,
   leaveField,
 } from "./state.js";
@@ -16,6 +17,25 @@ import type { CardInstance, Frame, GameState, PlayerId } from "./types.js";
 export function drawCards(state: GameState, player: PlayerId, count: number): void {
   const p = state.players[player];
   p.hand.push(...p.deck.splice(0, count));
+}
+
+/**
+ * Queues `timing` effects on every field card of `watcher` whose `played` filter matches
+ * `subject`, for "when you play a Character" and "when your opponent plays a Character".
+ */
+export function queueWatchers(
+  state: GameState,
+  watcher: PlayerId,
+  timing: Timing,
+  subject: CardInstance,
+): void {
+  for (const card of fieldCards(state, watcher)) {
+    (definitionOf(state, card).effects ?? []).forEach((effect, index) => {
+      if (effect.timing !== timing) return;
+      if (!matchesFilter(state, subject, effect.played, card, false)) return;
+      state.pendingEffects.push({ controller: watcher, source: card.uid, effect: index });
+    });
+  }
 }
 
 /** Queues every effect on `card` with this timing (rule 8-1-3-1). */
@@ -90,6 +110,10 @@ export function knockOut(state: GameState, uid: string, byEffect = false): void 
     const other = player === "p1" ? "p2" : "p1";
     for (const watcher of fieldCards(state, other))
       queueEffects(state, other, watcher, "opponentCharacterKOd");
+    // "When a Character is K.O.'d" effects on either player's field.
+    for (const watcher of ["p1", "p2"] as const)
+      for (const source of fieldCards(state, watcher))
+        queueEffects(state, watcher, source, "characterKOd");
   }
 }
 
@@ -99,6 +123,7 @@ export function putOnField(
   player: PlayerId,
   card: CardInstance,
   trash?: string,
+  fromHand = false,
 ): void {
   const p = state.players[player];
   card.rested = false;
@@ -113,6 +138,10 @@ export function putOnField(
     p.characters.push(card);
   }
   queueEffects(state, player, card, "onPlay");
+  if (definitionOf(state, card).category === "character") {
+    if (fromHand) queueWatchers(state, player, "youPlayCharacter", card);
+    queueWatchers(state, player === "p1" ? "p2" : "p1", "opponentPlaysCharacter", card);
+  }
 }
 
 /** Trashing by rule (3-7-6-1-1, 3-8-5-1) or by a "trash this Character" cost is not a K.O. */

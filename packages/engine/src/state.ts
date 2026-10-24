@@ -224,8 +224,28 @@ export function powerAmount(
     );
     return step.amount * Math.floor(cards.length / every);
   }
+  if (step.perCount) return step.amount * countCards(state, controller, null, step.perCount);
   if (!step.perTrash) return step.amount;
   return step.amount * Math.floor(p.trash.length / step.perTrash);
+}
+
+/**
+ * Whether one of `player`'s permanent effects sets a game rule right now, such as
+ * `faceUpLifeToDeckBottom` or `winOnDeckOut`.
+ */
+export function hasRule(
+  state: GameState,
+  player: PlayerId,
+  rule: "faceUpLifeToDeckBottom" | "winOnDeckOut",
+): boolean {
+  return fieldCards(state, player).some((source) =>
+    (definitionOf(state, source).effects ?? []).some(
+      (effect) =>
+        effect.timing === "permanent" &&
+        effect.steps.some((s) => s.do === rule) &&
+        conditionsMet(state, player, source, effect.conditions),
+    ),
+  );
 }
 
 /** Whether `player`'s [On Play] effects are negated right now. */
@@ -259,21 +279,23 @@ function zoneMatches(state: GameState, card: CardInstance, zone: string | undefi
 function countCards(
   state: GameState,
   controller: PlayerId,
-  source: CardInstance,
+  source: CardInstance | null,
   what: CardCount,
 ): number {
   const p = state.players[what.side === "self" ? controller : opponentOf(controller)];
   const zone = what.zone ?? "characters";
   const cards =
-    zone === "leader"
-      ? [p.leader]
-      : zone === "characters"
-        ? p.characters
-        : zone === "stage"
-          ? p.stage
-            ? [p.stage]
-            : []
-          : [p.leader, ...p.characters];
+    zone === "field"
+      ? fieldCards(state, p.leader.owner)
+      : zone === "leader"
+        ? [p.leader]
+        : zone === "characters"
+          ? p.characters
+          : zone === "stage"
+            ? p.stage
+              ? [p.stage]
+              : []
+            : [p.leader, ...p.characters];
   return cards.filter((c) => matchesFilter(state, c, what.filter, source)).length;
 }
 
@@ -300,6 +322,7 @@ export function conditionsMet(
     if ("handAtMost" in c) return me.hand.length <= c.handAtMost;
     if ("handAtLeast" in c) return me.hand.length >= c.handAtLeast;
     if ("thisRested" in c) return source.rested;
+    if ("allDonRested" in c) return me.donActive === 0;
     if ("donOnFieldAtLeast" in c) return donOnField(state, controller) >= c.donOnFieldAtLeast;
     if ("donOnFieldAtMost" in c) return donOnField(state, controller) <= c.donOnFieldAtMost;
     if ("playedThisTurn" in c) return source.playedTurn === state.turn;
@@ -321,6 +344,13 @@ export function conditionsMet(
       return me.donRested + rested >= c.restedCardsAtLeast;
     }
     if ("lifeAtMostOpponents" in c) return me.life.length <= them.life.length;
+    if ("givenDonAtLeast" in c)
+      return [me.leader, ...me.characters].reduce((n, x) => n + x.givenDon, 0) >= c.givenDonAtLeast;
+    if ("leaderAttribute" in c)
+      return (definitionOf(state, me.leader).attribute ?? "").includes(c.leaderAttribute);
+    if ("opponentHandAtLeast" in c) return them.hand.length >= c.opponentHandAtLeast;
+    if ("handTrashedByEffectThisTurn" in c)
+      return state.handTrashedTurn?.[controller] === state.turn;
     if ("leaderTypeIncludes" in c)
       return (definitionOf(state, me.leader).types ?? []).some((t) =>
         t.includes(c.leaderTypeIncludes),
@@ -376,14 +406,16 @@ export function matchesFilter(
   if (filter.notName && names.includes(filter.notName)) return false;
   if (filter.nameIncludes && !names.some((n) => n.includes(filter.nameIncludes ?? "")))
     return false;
-  if (filter.attribute && !(def.attribute ?? "").split("/").includes(filter.attribute))
-    return false;
   if (filter.color && !def.colors.includes(filter.color)) return false;
   if (filter.rested !== undefined && card.rested !== filter.rested) return false;
   if (filter.notThis && source && card.uid === source.uid) return false;
+  if (filter.isThis && (!source || card.uid !== source.uid)) return false;
   if (filter.hasTrigger && !(def.effects ?? []).some((e) => e.timing === "trigger")) return false;
   if (filter.keyword && !hasKeywordNow(state, card, filter.keyword)) return false;
+  if (filter.attribute && !(def.attribute ?? "").includes(filter.attribute)) return false;
   if (filter.anyOf && !filter.anyOf.some((f) => matchesFilter(state, card, f, source, usePower)))
+    return false;
+  if (filter.noBaseEffect && ((def.effects ?? []).length > 0 || (def.keywords ?? []).length > 0))
     return false;
   return true;
 }
@@ -451,17 +483,35 @@ export function canPayCosts(
     }
     if ("restOwn" in cost) {
       const own = fieldCards(state, player).filter(
-        (c) => !c.rested && matchesFilter(state, c, cost.restOwn, source),
+        (c) =>
+          !c.rested &&
+          !hasStatus(state, c, "cannotBeRested") &&
+          matchesFilter(state, c, cost.restOwn, source),
       );
       if (own.length === 0) return false;
     }
-    if ("restThis" in cost && source.rested) return false;
+    if ("restThis" in cost && (source.rested || hasStatus(state, source, "cannotBeRested")))
+      return false;
     if ("returnGivenDon" in cost) returnGiven += cost.returnGivenDon;
     if ("lifeToHand" in cost) life += cost.lifeToHand;
     if ("trashLife" in cost) life += cost.trashLife;
-    if ("lifeFaceUp" in cost && (!p.life[0] || p.life[0].faceUp)) return false;
+    if ("lifeFaceUp" in cost) {
+      const ends = cost.from === "topOrBottom" ? [p.life[0], p.life.at(-1)] : [p.life[0]];
+      if (!ends.some((c) => c && !c.faceUp)) return false;
+    }
+    if ("lifeFaceDown" in cost) {
+      const ends = cost.from === "topOrBottom" ? [p.life[0], p.life.at(-1)] : [p.life[0]];
+      if (!ends.some((c) => c?.faceUp)) return false;
+    }
+    if ("trashFromDeckTop" in cost && p.deck.length < cost.trashFromDeckTop) return false;
+    if ("oneOf" in cost && !cost.oneOf.some((one) => canPayCosts(state, player, source, [one])))
+      return false;
     if ("trashToDeckBottom" in cost) fromTrash += cost.trashToDeckBottom;
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
+    if ("characterToLife" in cost) {
+      const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      if (own.length < cost.characterToLife) return false;
+    }
   }
   return (
     restDon <= p.donActive &&
