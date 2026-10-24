@@ -4,7 +4,7 @@
   "setup": {
     "p1": {
       "hand": ["TEST-TUTOR"],
-      "deck": ["TEST-FILLER", "TEST-ALIAS"]
+      "deck": ["TEST-FILLER", "TEST-ALIAS-OP01"]
     }
   },
   "actions": [
@@ -20,6 +20,6 @@
     }
   ],
   "expect": {
-    "p1.hand.0.cardId": "TEST-ALIAS"
+    "p1.hand.0.cardId": "TEST-ALIAS-OP01"
   }
 }

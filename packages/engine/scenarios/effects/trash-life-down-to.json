@@ -1,0 +1,20 @@
+{
+  "name": "Trash Life cards from the top until you have 1",
+  "rules": ["4-11"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-LIFE-DOWN"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.life": 1,
+    "p1.trash": 4
+  }
+}

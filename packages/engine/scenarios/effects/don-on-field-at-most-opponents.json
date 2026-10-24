@@ -1,0 +1,28 @@
+{
+  "name": "\"If you have the same or fewer DON!! cards on your field than your opponent\"",
+  "rules": ["8-3-2"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-DON-COMPARE", "TEST-DON-COMPARE"],
+      "don": {
+        "active": 2,
+        "rested": 1
+      }
+    },
+    "p2": {
+      "don": {
+        "rested": 3
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 2
+  }
+}

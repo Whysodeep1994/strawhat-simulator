@@ -1,10 +1,10 @@
 {
-  "name": "Only a card of a different color than the returned one can be played",
-  "rules": ["8-3"],
+  "name": "Play a Character that is a different color than the returned one",
+  "rules": ["8-4"],
   "setup": {
     "p1": {
-      "hand": ["TEST-SWAP-COLOR", "TEST-C4-5000", "TEST-GREEN"],
-      "characters": ["TEST-FILLER"]
+      "characters": ["TEST-C2-3000"],
+      "hand": ["TEST-OTHER-COLOR", "TEST-RED-GREEN", "TEST-GREEN"]
     }
   },
   "actions": [

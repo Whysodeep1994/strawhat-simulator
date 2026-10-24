@@ -1,0 +1,35 @@
+{
+  "name": "Give your active Leader −5000 power as a cost",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-LEADER-COST"]
+    },
+    "p2": {
+      "characters": ["TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    }
+  ],
+  "expect": {
+    "modifiers": 2,
+    "modifiers.0.power": -5000,
+    "modifiers.1.power": -3000
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "Placing a card at the bottom of the deck pays for a draw",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-CYCLE", "TEST-C4-5000"],
+      "deck": ["TEST-C2-3000", "TEST-FILLER"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p1.hand.0.cardId": "TEST-C2-3000",
+    "p1.deck.1.cardId": "TEST-C4-5000"
+  }
+}

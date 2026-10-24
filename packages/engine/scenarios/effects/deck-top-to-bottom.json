@@ -1,0 +1,22 @@
+{
+  "name": "Place the top card of the deck at the bottom",
+  "rules": ["8-4"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-TOP-TO-BOTTOM"],
+      "deck": ["TEST-C5-6000", "TEST-FILLER", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.deck": 3,
+    "p1.deck.0.cardId": "TEST-FILLER",
+    "p1.deck.2.cardId": "TEST-C5-6000"
+  }
+}

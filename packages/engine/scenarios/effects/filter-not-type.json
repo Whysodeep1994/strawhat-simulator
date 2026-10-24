@@ -1,0 +1,22 @@
+{
+  "name": "\"The only Characters on your field are {X} type\": a Character without the type stops it",
+  "rules": ["8-3-2"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C2-3000", "TEST-FILLER"],
+      "hand": ["TEST-ONLY-CREW"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0",
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "p1.hand": 1,
+    "legal.p1.playCard": 0
+  }
+}

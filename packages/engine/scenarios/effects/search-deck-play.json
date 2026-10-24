@@ -1,10 +1,13 @@
 {
-  "name": "A Character is played from the top 3 and the rest trashed",
-  "rules": ["8-3"],
+  "name": "Look at 3 cards and play up to 1 with a cost of 2 or less",
+  "rules": ["10-2-6"],
   "setup": {
     "p1": {
       "hand": ["TEST-SEARCH-PLAY"],
-      "deck": ["TEST-C4-5000", "TEST-EVENT-C1", "TEST-FILLER", "TEST-FILLER"]
+      "don": {
+        "active": 1
+      },
+      "deck": ["TEST-FILLER", "TEST-C5-6000", "TEST-C2-3000"]
     }
   },
   "actions": [
@@ -16,12 +19,18 @@
     {
       "type": "choose",
       "player": "p1",
-      "cards": ["p1.deck.0"]
+      "cards": ["p1.deck.1"],
+      "illegal": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.deck.2"]
     }
   ],
   "expect": {
-    "p1.characters.0.cardId": "TEST-C4-5000",
-    "p1.trash": 3,
-    "p1.deck": 1
+    "p1.characters": 2,
+    "p1.characters.1.cardId": "TEST-C2-3000",
+    "p1.deck": 2
   }
 }

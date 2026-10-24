@@ -1,0 +1,21 @@
+{
+  "name": "\"Will not become active in your next Refresh Phase\" on your own Character lasts into your next turn",
+  "rules": ["6-2-3"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C2-3000", { "card": "TEST-FILLER", "rested": true }],
+      "hand": ["TEST-PUMP-FREEZE"]
+    }
+  },
+  "actions": [
+    { "type": "playCard", "player": "p1", "card": "p1.hand.0" },
+    { "type": "choose", "player": "p1", "cards": ["p1.characters.1"] },
+    { "type": "endTurn", "player": "p1" },
+    { "type": "endTurn", "player": "p2" }
+  ],
+  "expect": {
+    "turnPlayer": "p1",
+    "p1.characters.0.rested": false,
+    "p1.characters.1.rested": true
+  }
+}

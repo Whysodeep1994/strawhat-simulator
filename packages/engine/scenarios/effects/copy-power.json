@@ -1,0 +1,32 @@
+{
+  "name": "This Character's base power becomes the selected Character's power",
+  "rules": ["2-6-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-COPY-POWER"]
+    },
+    "p2": {
+      "characters": ["TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 3
+  }
+}

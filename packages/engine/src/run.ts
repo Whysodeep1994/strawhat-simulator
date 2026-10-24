@@ -1,7 +1,7 @@
 import type { Cost, Duration, Step, Target } from "./effects.js";
 import { eligibleBlockers } from "./legal.js";
 import { shuffleInPlace } from "./rng.js";
-import { processRules } from "./rules.js";
+import { endGame, processRules } from "./rules.js";
 import {
   canPayCosts,
   conditionsMet,
@@ -17,6 +17,7 @@ import {
   leaveField,
   hasStatus,
   matchesFilter,
+  namesOf,
   oncePerTurnKey,
   onPlayNegated,
   playBlocked,
@@ -129,11 +130,16 @@ const ON_FIELD_TIMINGS = new Set([
   "characterRestedByYourEffect",
   "replaceRemoval",
   "donReturned",
+  "characterRemovedByOpponent",
+  "onOpponentsBlock",
   "drawOutsideDrawPhase",
   "lifeAddedToHand",
   "lifeBecomesZero",
   "triggerActivated",
   "becomesRested",
+  "characterKOd",
+  "attackDealsDamage",
+  "opponentCharacterReturned",
 ]);
 
 function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
@@ -152,6 +158,7 @@ function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
     if (
       effect.timing !== "onKO" &&
       effect.timing !== "koByEffect" &&
+      effect.timing !== "koByOpponentsEffect" &&
       !conditionsMet(state, frame.controller, source, effect.conditions)
     )
       return "done";
@@ -257,6 +264,7 @@ function payCost(
     const chosen = choose(state, frame, frame.controller, options, n, n, "trashFromHand");
     if (chosen === "wait") return "wait";
     moveFromHandToTrash(state, frame.controller, chosen);
+    frame.costTrashed = [...(frame.costTrashed ?? []), ...chosen];
   } else if ("handToDeckTop" in cost) {
     const n = cost.handToDeckTop;
     const chosen = choose(state, frame, frame.controller, p.hand, n, n, "handToDeckTop");
@@ -265,9 +273,23 @@ function payCost(
   } else if ("returnOwnCharacter" in cost) {
     const n = cost.returnOwnCharacter;
     const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
-    const chosen = choose(state, frame, frame.controller, own, n, n, "returnToHand");
+    const to = cost.to ?? "hand";
+    const reason = to === "hand" ? "returnToHand" : "returnToDeckBottom";
+    const chosen = choose(state, frame, frame.controller, own, n, n, reason);
     if (chosen === "wait") return "wait";
-    for (const uid of chosen) removeFromField(state, uid, "hand");
+    for (const uid of chosen) removeFromField(state, uid, to);
+  } else if ("handToDeckBottom" in cost) {
+    const n = cost.handToDeckBottom;
+    const hand = p.hand.filter((c) => c.uid !== source.uid);
+    const chosen = choose(state, frame, frame.controller, hand, n, n, "handToDeckBottom");
+    if (chosen === "wait") return "wait";
+    moveFromHandToDeckBottom(state, frame.controller, chosen);
+  } else if ("thisToDeckBottom" in cost) {
+    removeFromField(state, source.uid, "deckBottom");
+  } else if ("returnActiveDon" in cost) {
+    returnDon(state, frame.controller, cost.returnActiveDon, true);
+  } else if ("activeLeaderPower" in cost) {
+    state.modifiers.push({ target: p.leader.uid, power: cost.activeLeaderPower, until: "turn" });
   } else if ("revealFromHand" in cost) {
     // The cards stay in hand; the opponent sees them (rule 11-2-1).
     const options = p.hand.filter(
@@ -418,11 +440,6 @@ function payCost(
     }
   } else if ("trashThis" in cost) {
     moveFieldCardToTrash(state, source);
-  } else if ("handToDeckBottom" in cost) {
-    const n = cost.handToDeckBottom;
-    const chosen = choose(state, frame, frame.controller, p.hand, n, n, "handToDeckBottom");
-    if (chosen === "wait") return "wait";
-    moveFromHandToDeckBottom(state, frame.controller, chosen);
   } else if ("restCharacters" in cost) {
     const n = cost.restCharacters;
     const options = p.characters.filter(
@@ -504,10 +521,10 @@ function costLabel(cost: Cost): string {
  * DON!! −X (rule 8-3-1-6). The engine returns rested DON!! first, then active, then given
  * ones (Rules Question #3). Returning 2 or more at once can trigger `donReturned` effects.
  */
-function returnDon(state: GameState, player: PlayerId, count: number): void {
+function returnDon(state: GameState, player: PlayerId, count: number, activeOnly = false): void {
   const p = state.players[player];
   let left = count;
-  const fromRested = Math.min(left, p.donRested);
+  const fromRested = activeOnly ? 0 : Math.min(left, p.donRested);
   p.donRested -= fromRested;
   left -= fromRested;
   const fromActive = Math.min(left, p.donActive);
@@ -587,41 +604,38 @@ function chooseTargets(
   target: Target,
   reason: string,
 ): string[] | "wait" {
-  if (target.side === "that") {
-    // "That Character": the cards picked before, if they're still on the field.
-    const those = (frame.targets ?? []).filter((uid) => {
-      const card = findOnField(state, uid)?.card;
-      return !!card && matchesFilter(state, card, target.filter, source);
-    });
-    return those;
-  }
-  let candidates = targetCandidates(state, frame.controller, source, target);
-  const total = target.totalPowerAtMost;
-  if (total !== undefined) candidates = candidates.filter((c) => powerOf(state, c) <= total);
+  // "That Character": the cards picked before, if they're still on the field.
+  const earlier = () =>
+    (frame.targets ?? [])
+      .map((uid) => findOnField(state, uid)?.card)
+      .filter((c): c is CardInstance => !!c && matchesFilter(state, c, target.filter, source));
+  if (target.side === "that") return earlier().map((c) => c.uid);
+  let candidates =
+    target.side === "chosen"
+      ? earlier()
+      : targetCandidates(state, frame.controller, source, target);
   const count = target.count ?? 1;
-  const chosen = choose(
-    state,
-    frame,
-    frame.controller,
-    candidates,
-    target.upTo ? 0 : count,
-    count,
-    reason,
-  );
-  if (chosen === "wait") return chosen;
-  let picked = chosen;
+  const total = target.totalPowerAtMost;
   if (total !== undefined) {
-    // "With a total power of 4000 or less": keep picks while the total still fits.
-    let sum = 0;
-    picked = chosen.filter((uid) => {
-      const card = findOnField(state, uid)?.card;
-      const power = card ? powerOf(state, card) : 0;
-      if (sum + power > total) return false;
-      sum += power;
-      return true;
-    });
+    // Only cards that fit within the total on their own can be part of a pick.
+    candidates = candidates.filter((c) => powerOf(state, c) <= total);
+    if (!Array.isArray(frame.answer) && candidates.length > 0) {
+      state.prompt = {
+        kind: "choose",
+        player: frame.controller,
+        options: candidates.map((c) => c.uid),
+        min: target.upTo ? 0 : Math.min(count, candidates.length),
+        max: Math.min(count, candidates.length),
+        reason,
+        source: frame.source,
+        maxTotalPower: total,
+      };
+      return "wait";
+    }
   }
-  frame.targets = picked;
+  const chooser = target.chooser === "opponent" ? opponentOf(frame.controller) : frame.controller;
+  const picked = choose(state, frame, chooser, candidates, target.upTo ? 0 : count, count, reason);
+  if (picked !== "wait") frame.targets = picked;
   return picked;
 }
 
@@ -891,25 +905,37 @@ function runStep(
           ? opponentOf(controller)
           : controller;
       const owner = state.players[player];
-      const pile = step.do === "playFromHand" ? owner.hand : owner.trash;
+      const both = step.do === "playFromHand" && step.orTrash;
+      const piles = both
+        ? [owner.hand, owner.trash]
+        : [step.do === "playFromHand" ? owner.hand : owner.trash];
       const played = step.do === "playFromTrash" ? (step.played ?? []) : [];
+      // "A different color than the returned Character."
+      const avoid =
+        step.do === "playFromHand" && step.differentColor
+          ? (frame.moved ?? []).flatMap((uid) => {
+              const card = findCard(state, uid);
+              return card ? definitionOf(state, card).colors : [];
+            })
+          : [];
+      // "The same card name as the trashed card."
+      const sameName =
+        step.do === "playFromTrash" && step.sameNameAsTrashed
+          ? (frame.costTrashed ?? []).flatMap((uid) => {
+              const card = findCard(state, uid);
+              return card ? namesOf(definitionOf(state, card)) : [];
+            })
+          : null;
       if (frame.memo.length === 0) {
-        // "A different color than the returned Character": shares no color with it.
-        const avoid =
-          step.do === "playFromHand" && step.differentColorFromChosen
-            ? (frame.targets ?? []).flatMap((uid) => {
-                const card = findCard(state, uid);
-                return card ? definitionOf(state, card).colors : [];
-              })
-            : [];
-        const options = pile.filter((c) => {
+        const options = piles.flat().filter((c) => {
           const def = definitionOf(state, c);
           return (
             (def.category === "character" || def.category === "stage") &&
+            !def.colors.some((color) => avoid.includes(color)) &&
+            (!sameName || namesOf(def).some((n) => sameName.includes(n))) &&
             !played.includes(def.name) &&
             !playBlocked(state, player, c, step.do === "playFromHand") &&
-            matchesFilter(state, c, step.filter, source, false) &&
-            !def.colors.some((color) => avoid.includes(color))
+            matchesFilter(state, c, step.filter, source, false)
           );
         });
         const picked =
@@ -920,6 +946,7 @@ function runStep(
       }
       const uid = frame.memo[0] as string;
       const name = definitionOf(state, findCard(state, uid) as CardInstance).name;
+      const pile = piles.find((cards) => cards.some((c) => c.uid === uid)) ?? [];
       const outcome = playChosen(state, frame, player, pile, uid, step.rested ?? false);
       // "Play up to 5 ...": the rest are played one at a time.
       if (outcome === "continue" && step.do === "playFromTrash" && (step.count ?? 1) > 1) {
@@ -927,6 +954,8 @@ function runStep(
         if (step.differentNames) next.played = [...played, name];
         frame.steps.splice(1, 0, next);
       }
+      // "If you do, ..."
+      if (outcome === "continue" && step.ifYouDo) frame.steps.splice(1, 0, ...step.ifYouDo);
       return outcome;
     }
 
@@ -937,7 +966,6 @@ function runStep(
         return playChosen(state, frame, controller, p.trash, source.uid, step.rested);
       }
       if (card && definitionOf(state, card).category === "stage") {
-        // A Stage [Trigger] ("Play this card") replaces any Stage you have (rule 3-8-5-1).
         state.limbo = null;
         putOnField(state, controller, card);
         return "continue";
@@ -960,9 +988,26 @@ function runStep(
       const owner = step.side === "opponent" ? state.players[opponentOf(controller)] : p;
       const blocked =
         owner === p && state.modifiers.some((m) => m.target === p.leader.uid && m.noLifeToHand);
-      if (!blocked)
-        for (let i = 0; i < step.count && owner.life.length > 0; i++)
-          owner.hand.push(takeLife(owner.life, step.fromBottom ? owner.life.length - 1 : 0)!);
+      if (blocked) return "continue";
+      for (let i = frame.memo.length; i < step.count && owner.life.length > 0; i++) {
+        let fromBottom = step.fromBottom ?? false;
+        if (step.from === "topOrBottom" && owner.life.length > 1) {
+          if (frame.answer === null) {
+            state.prompt = {
+              kind: "confirm",
+              player: controller,
+              reason: "lifeFromBottom",
+              source: frame.source,
+            };
+            return "wait";
+          }
+          fromBottom = frame.answer === true;
+          frame.answer = null;
+        }
+        const card = takeLife(owner.life, fromBottom ? owner.life.length - 1 : 0)!;
+        owner.hand.push(card);
+        frame.memo.push(card.uid);
+      }
       return "continue";
     }
 
@@ -1060,11 +1105,26 @@ function runStep(
         const location = findOnField(state, uid);
         if (location?.zone !== "characters") continue;
         if (protectedFrom(state, controller, location.card)) continue;
+        noteRemoval(state, controller, location.card);
         removedByEffect(state, location.card, controller);
         moveFieldCardToTrash(state, location.card);
       }
       return "continue";
     }
+
+    case "trashFromDeck": {
+      const count = step.perPrevious ? (frame.previous ?? 0) : step.count;
+      p.trash.unshift(...p.deck.splice(0, count).reverse());
+      return "continue";
+    }
+
+    case "winGame":
+      endGame(state, controller);
+      return "continue";
+
+    case "playRested":
+      // Read by putOnField while the permanent effect is on the field.
+      return "continue";
 
     case "deckToLife":
       p.life.unshift(...p.deck.splice(0, step.count));
@@ -1147,6 +1207,35 @@ function runStep(
       });
       return "continue";
 
+    case "moveGivenDon": {
+      // First the card to take a given DON!! from, then the card to give it to.
+      if (frame.memo.length === 0) {
+        const given = [p.leader, ...p.characters].filter((c) => c.givenDon > 0);
+        const from =
+          given.length === 0 ? [] : choose(state, frame, controller, given, 0, 1, "returnGivenDon");
+        if (from === "wait") return "wait";
+        if (from.length === 0) return "continue";
+        frame.memo = from;
+      }
+      const to = chooseTargets(state, frame, source, step.target, step.do);
+      if (to === "wait") return "wait";
+      const fromCard = findOnField(state, frame.memo[0] as string)?.card;
+      const toCard = to[0] ? findOnField(state, to[0])?.card : undefined;
+      if (fromCard && toCard && fromCard.givenDon > 0) {
+        fromCard.givenDon -= 1;
+        toCard.givenDon += 1;
+      }
+      return "continue";
+    }
+
+    case "replaceBattleKO":
+      state.modifiers.push({
+        target: p.leader.uid,
+        battleKOReplace: { source: frame.source, effect: step.effect },
+        until: "turn",
+      });
+      return "continue";
+
     case "restOwnDon": {
       // "Rest any number of your DON!! cards": the player picks how many.
       const most = Math.min(step.count ?? p.donActive, p.donActive);
@@ -1176,6 +1265,58 @@ function runStep(
         },
         until: "turn",
       });
+      return "continue";
+
+    case "grantCounter":
+      // Only works as a permanent effect; see counterOf.
+      return "continue";
+
+    case "deckTopToBottom":
+      p.deck.push(...p.deck.splice(0, step.count));
+      return "continue";
+
+    case "copyPower": {
+      const picked = chooseTargets(state, frame, source, step.target, step.do);
+      if (picked === "wait") return "wait";
+      const chosen = picked[0] && findOnField(state, picked[0]);
+      if (chosen && findOnField(state, source.uid))
+        state.modifiers.push({
+          target: source.uid,
+          basePower: powerOf(state, chosen.card),
+          until: "turn",
+        });
+      return "continue";
+    }
+
+    case "reorderLife": {
+      const owner = step.side === "self" ? p : state.players[opponentOf(controller)];
+      if (owner.life.length < 2) return "continue";
+      // Every card is picked: the order is the choice, first picked is the new top.
+      if (!Array.isArray(frame.answer)) {
+        state.prompt = {
+          kind: "choose",
+          player: controller,
+          options: owner.life.map((c) => c.uid),
+          min: owner.life.length,
+          max: owner.life.length,
+          reason: "lifeOrder",
+          source: frame.source,
+          revealed: owner.life.map((c) => c.uid),
+        };
+        return "wait";
+      }
+      const order = frame.answer;
+      frame.answer = null;
+      owner.life = order.map((uid) => owner.life.find((c) => c.uid === uid) as CardInstance);
+      return "continue";
+    }
+
+    case "allLifeFaceDown":
+      for (const card of p.life) card.faceUp = false;
+      return "continue";
+
+    case "trashLifeDownTo":
+      trashFromLife(state, controller, p.life.length - step.count);
       return "continue";
 
     case "arrangeOwnLife":
@@ -1238,8 +1379,8 @@ function runStep(
 }
 
 /**
- * "Look at 5 cards from the top of your deck; play up to 1 ... Then, place the rest at the
- * bottom of your deck." The memo holds the picked card, then "|" once the rest are placed.
+ * "Look at 5 cards from the top of your deck; play up to 1 ...". The chosen card waits on top of
+ * the deck while the rest go to the bottom, so a full Character area can still ask what to trash.
  */
 function searchAndPlay(
   state: GameState,
@@ -1248,33 +1389,29 @@ function searchAndPlay(
   step: Extract<Step, { do: "searchDeck" }>,
 ): Outcome {
   const p = state.players[frame.controller];
-  if (!frame.memo.includes("|")) {
+  if (frame.memo.length === 0) {
     const looked = p.deck.slice(0, step.look);
     const matching = looked.filter((c) => {
-      const def = definitionOf(state, c);
+      const category = definitionOf(state, c).category;
       return (
-        (def.category === "character" || def.category === "stage") &&
+        (category === "character" || category === "stage") &&
         matchesFilter(state, c, step.filter, source, false)
       );
     });
-    const picked =
+    const chosen =
       matching.length === 0
         ? []
-        : choose(state, frame, frame.controller, matching, 0, step.take, "searchDeck");
-    if (picked === "wait") return "wait";
-    const rest = looked.filter((c) => !picked.includes(c.uid));
-    const chosen = looked.filter((c) => picked.includes(c.uid));
-    p.deck = [...chosen, ...p.deck.slice(looked.length)];
+        : choose(state, frame, frame.controller, matching, 0, 1, "searchDeck");
+    if (chosen === "wait") return "wait";
+    const picked = looked.filter((c) => chosen.includes(c.uid));
+    const rest = looked.filter((c) => !chosen.includes(c.uid));
+    p.deck = [...picked, ...p.deck.slice(looked.length)];
     if (step.rest === "trash") p.trash.unshift(...rest.reverse());
     else p.deck.push(...rest);
-    frame.memo = [...picked, "|"];
+    if (picked.length === 0) return "continue";
+    frame.memo = chosen;
   }
-  while (frame.memo[0] !== "|") {
-    const outcome = playChosen(state, frame, frame.controller, p.deck, frame.memo[0] as string);
-    if (outcome === "wait") return "wait";
-    frame.memo.shift();
-  }
-  return "continue";
+  return playChosen(state, frame, frame.controller, p.deck, frame.memo[0] as string, step.rested);
 }
 
 /** Plays a card picked by an effect, trashing a Character first if the area is full (rule 3-7-6-1). */
@@ -1299,7 +1436,7 @@ function playChosen(
   const fromHand = pile === p.hand;
   pile.splice(index, 1);
   putOnField(state, controller, card, trash, fromHand);
-  card.rested = rested;
+  if (rested) card.rested = true;
   return "continue";
 }
 
@@ -1368,6 +1505,7 @@ function runRemoval(
     if (targets === "wait") return "wait";
     frame.memo = ["removal", ...targets];
     frame.previous = targets.length;
+    frame.moved = targets;
   }
   while (frame.memo.length > 1) {
     const next = frame.memo[1] as string;
@@ -1449,7 +1587,25 @@ function findReplacement(
       return { player: owner, source: holder.uid, effect: index };
     }
   }
-  return null;
+  return inBattle ? battleKOReplacement(state, card) : null;
+}
+
+/**
+ * "When your {Straw Hat Crew} type Character is removed from the field by your
+ * opponent's effect" (OP09-080). Call before the card leaves the field.
+ */
+function noteRemoval(state: GameState, controller: PlayerId, card: CardInstance): void {
+  const owner = card.owner;
+  if (controller === owner || findOnField(state, card.uid)?.zone !== "characters") return;
+  for (const holder of fieldCards(state, owner)) {
+    effectsOf(state, holder).forEach((effect, index) => {
+      if (
+        effect.timing === "characterRemovedByOpponent" &&
+        matchesFilter(state, card, effect.removed, holder)
+      )
+        state.pendingEffects.push({ controller: owner, source: holder.uid, effect: index });
+    });
+  }
 }
 
 /**
@@ -1481,10 +1637,14 @@ function lasting(
   state: GameState,
   controller: PlayerId,
   duration: Duration = "turn",
+  ownNextTurn = false,
 ): Pick<Modifier, "until" | "endsTurn"> {
   if (duration !== "opponentsNextTurn") return { until: duration };
-  // The opponent's next turn is the next turn if it's the controller's turn now.
-  return { until: "turn", endsTurn: state.turn + (state.turnPlayer === controller ? 1 : 2) };
+  // The opponent's next turn is the next turn if it's the controller's turn now. With
+  // `ownNextTurn`, it lasts into `controller`'s own next turn instead.
+  const now = state.turnPlayer === controller;
+  if (ownNextTurn) return { until: "turn", endsTurn: state.turn + (now ? 2 : 1) };
+  return { until: "turn", endsTurn: state.turn + (now ? 1 : 2) };
 }
 
 function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: string): void {
@@ -1532,7 +1692,11 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
         target: uid,
         status: step.status,
         ...(step.by ? { by: step.by } : {}),
-        ...lasting(state, controller, step.duration),
+        // "Will not become active in your next Refresh Phase": it lasts until the card's
+        // owner's next turn, whoever's turn it is now.
+        ...(step.status === "noRefresh"
+          ? lasting(state, card.owner, "opponentsNextTurn", true)
+          : lasting(state, controller, step.duration)),
       });
       return;
     case "noBlockers":
@@ -1544,8 +1708,10 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
       return;
     case "ko":
       if (protectedFrom(state, controller, card)) return;
-      if (location.zone === "characters" && !cannotBeKOdBy(state, controller, card))
+      if (location.zone === "characters" && !cannotBeKOdBy(state, controller, card)) {
+        noteRemoval(state, controller, card);
         knockOut(state, uid, true, controller);
+      }
       // Stages have no [On K.O.]; a K.O.'d Stage goes to the trash.
       if (location.zone === "stage") moveFieldCardToTrash(state, card);
       return;
@@ -1565,7 +1731,12 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
     case "returnToHand":
     case "returnToDeckBottom":
       if (protectedFrom(state, controller, card)) return;
+      noteRemoval(state, controller, card);
       removedByEffect(state, card, controller);
+      // "When your opponent's Character is returned to the owner's hand by your effect".
+      if (step.do === "returnToHand" && location.zone === "characters" && card.owner !== controller)
+        for (const holder of fieldCards(state, controller))
+          queueEffects(state, controller, holder, "opponentCharacterReturned");
       removeFromField(state, uid, step.do === "returnToHand" ? "hand" : "deckBottom");
       return;
     case "giveRestedDon": {
@@ -1652,6 +1823,7 @@ function characterToLife(
     toBottom = frame.answer === true;
     frame.answer = null;
   }
+  noteRemoval(state, frame.controller, card);
   removedByEffect(state, card, frame.controller);
   owner.characters = owner.characters.filter((c) => c.uid !== card.uid);
   leaveField(state, card);
@@ -1724,6 +1896,7 @@ function moveFromHandToDeckTop(state: GameState, player: PlayerId, uids: string[
   p.deck.unshift(...cards);
 }
 
+/** Puts cards from the hand at the bottom of the deck, in the order picked. */
 function moveFromHandToDeckBottom(state: GameState, player: PlayerId, uids: string[]): void {
   const p = state.players[player];
   const cards = uids.map((uid) => p.hand.find((c) => c.uid === uid)).filter((c) => !!c);
@@ -1801,6 +1974,11 @@ function runBattle(state: GameState, frame: FrameOf<"battle">): Outcome {
       if (powerOf(state, attacker.card) < powerOf(state, target.card)) return "continue";
       if (target.zone === "characters") {
         if (hasStatus(state, target.card, "cannotBeKOdInBattle", attacker.card)) return "continue";
+        if (
+          attacker.zone === "leader" &&
+          hasStatus(state, target.card, "cannotBeKOdInBattleByLeaders")
+        )
+          return "continue";
         const uid = target.card.uid;
         const ko: RemovalStep = { do: "ko", target: { side: "opponent" } };
         const replacement = findReplacement(state, state.turnPlayer, ko, uid, true);
@@ -1876,6 +2054,27 @@ function runBattle(state: GameState, frame: FrameOf<"battle">): Outcome {
   }
 }
 
+/**
+ * A `battleKOReplacement` effect a `replaceBattleKO` step set up for the Character's owner
+ * this turn ("If any of your Characters would be K.O.'d in battle during this turn, you may
+ * [costs] instead"), if it can be paid. Its card is usually in the trash by now.
+ */
+function battleKOReplacement(
+  state: GameState,
+  card: CardInstance,
+): { player: PlayerId; source: string; effect: number } | null {
+  const leader = state.players[card.owner].leader.uid;
+  for (const m of state.modifiers) {
+    if (m.target !== leader || !m.battleKOReplace) continue;
+    const source = findCard(state, m.battleKOReplace.source);
+    const effect = source && effectOf(state, source, m.battleKOReplace.effect);
+    if (!source || !effect) continue;
+    if (!canPayCosts(state, card.owner, source, effect.costs ?? [])) continue;
+    return { player: card.owner, ...m.battleKOReplace };
+  }
+  return null;
+}
+
 /** Rules 7-1-4-1-1-2, 7-1-4-1-1-3, 10-1-2-1, 10-1-3-1, 10-1-5. */
 function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
   const p = state.players[frame.defender];
@@ -1916,7 +2115,6 @@ function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
         continue;
       }
       lifeLost(state, frame.defender);
-      queueFieldEffects(state, frame.defender, "triggerActivated");
       // Rule 10-1-5-3.
       for (const player of ["p1", "p2"] as const)
         for (const holder of fieldCards(state, player))

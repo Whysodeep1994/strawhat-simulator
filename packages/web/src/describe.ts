@@ -46,6 +46,10 @@ const TIMING_NAMES: Record<Timing, string> = {
   onBlock: "[On Block]",
   onKO: "[On K.O.]",
   koByEffect: "When this Character is K.O.'d by an effect,",
+  koByOpponentsEffect: "When this Character is K.O.'d by your opponent's effect,",
+  characterRemovedByOpponent:
+    "When your Character is removed from the field by your opponent's effect,",
+  onOpponentsBlock: "When your opponent activates [Blocker],",
   activateMain: "[Activate: Main]",
   main: "[Main]",
   counter: "[Counter]",
@@ -64,12 +68,15 @@ const TIMING_NAMES: Record<Timing, string> = {
   drawOutsideDrawPhase: "When you draw a card outside of your Draw Phase,",
   lifeAddedToHand: "When a card is added to your hand from your Life,",
   lifeBecomesZero: "When your number of Life cards becomes 0,",
-  triggerActivated: "When a [Trigger] activates,",
   becomesRested: "When this Character becomes rested,",
   characterKOd: "When a Character is K.O.'d,",
   attackDealsDamage: "When this card's attack deals damage to your opponent's Life,",
+  opponentCharacterReturned:
+    "When your opponent's Character is returned to the owner's hand by your effect,",
+  battleKOReplacement: "If any of your Characters would be K.O.'d in battle during this turn,",
   takeDamage: "When you take damage,",
   youDealDamage: "When you deal damage to your opponent's Life,",
+  triggerActivated: "When a [Trigger] activates,",
   yourCharacterKOd: "When your Character is K.O.'d,",
   yourCharacterRemovedByOpponent:
     "When your Character is removed from the field by your opponent's effect,",
@@ -86,8 +93,10 @@ const STATUS_TEXT: Record<Status, string> = {
   cannotBeKOdByOpponentsEffects: "cannot be K.O.'d by your opponent's effects",
   noRefresh: "will not become active in the next Refresh Phase",
   onlyAttackTarget: "is the only card your opponent can attack",
-  cannotBeRemovedByOpponentsEffects: "cannot be removed from the field by your opponent's effects",
+  cannotBeKOdInBattleByLeaders: "cannot be K.O.'d in battle by Leaders",
+  negated: "has its effects negated",
   cannotBeRested: "cannot be rested",
+  cannotBeRemovedByOpponentsEffects: "cannot be removed from the field by your opponent's effects",
 };
 
 export function cardText(card: CardDefinition): string[] {
@@ -168,11 +177,11 @@ function conditionText(condition: Condition): string {
     return `(If you have a total of ${condition.givenDonAtLeast} or more given DON!! cards)`;
   if ("leaderAttribute" in condition)
     return `(If your Leader has the <${condition.leaderAttribute}> attribute)`;
-  if ("opponentHandAtLeast" in condition)
-    return `(If your opponent has ${condition.opponentHandAtLeast} or more cards in their hand)`;
   if ("handTrashedByEffectThisTurn" in condition)
     return "(During the turn in which a card in your hand is trashed by an effect)";
   if ("leaderMulticolored" in condition) return "(If your Leader is multicolored)";
+  if ("donOnFieldAtMostOpponents" in condition)
+    return "(If you have the same or fewer DON!! cards on your field than your opponent)";
   if ("donActiveAtMost" in condition)
     return `(If you have ${condition.donActiveAtMost} or less active DON!! cards)`;
   if ("donGivenAtLeast" in condition)
@@ -189,8 +198,12 @@ function conditionText(condition: Condition): string {
     return "(If your opponent has more DON!! cards on their field than you)";
   if ("handAtLeast" in condition)
     return `(If you have ${condition.handAtLeast} or more cards in hand)`;
-  if ("trashAtLeast" in condition)
-    return `(If you have ${condition.trashAtLeast} or more cards in your trash)`;
+  if ("opponentHandAtLeast" in condition)
+    return `(If your opponent has ${condition.opponentHandAtLeast} or more cards in their hand)`;
+  if ("handFewerThanOpponentBy" in condition)
+    return `(If you have at least ${condition.handFewerThanOpponentBy} fewer cards in hand than your opponent)`;
+  if ("totalLifeAtMost" in condition)
+    return `(If you and your opponent have a total of ${condition.totalLifeAtMost} or less Life cards)`;
   return `(If the top card of your deck is a${filterText(condition.deckTopMatches)} card)`;
 }
 
@@ -204,8 +217,12 @@ function costText(cost: Cost): string {
     return `trash ${cost.trashFromHand}${filterText(cost.filter)} card(s) from your hand`;
   if ("handToDeckTop" in cost)
     return `place ${cost.handToDeckTop} card(s) from your hand at the top of your deck`;
+  if ("handToDeckBottom" in cost)
+    return `place ${cost.handToDeckBottom} card(s) from your hand at the bottom of your deck`;
   if ("returnOwnCharacter" in cost)
-    return `return ${cost.returnOwnCharacter} of your Characters${withFilter(cost.filter)} to the owner's hand`;
+    return cost.to === "deckBottom"
+      ? `place ${cost.returnOwnCharacter} of your Characters${withFilter(cost.filter)} at the bottom of your deck`
+      : `return ${cost.returnOwnCharacter} of your Characters${withFilter(cost.filter)} to the owner's hand`;
   if ("revealFromHand" in cost)
     return `reveal ${cost.revealFromHand}${filterText(cost.filter)} card(s) from your hand`;
   if ("restOwn" in cost) return `rest 1 of your${filterText(cost.restOwn)} cards`;
@@ -236,6 +253,11 @@ function costText(cost: Cost): string {
     return `place ${cost.handToDeckBottom} card(s) from your hand at the bottom of your deck`;
   if ("restCharacters" in cost)
     return `rest ${cost.restCharacters} of your Characters${withFilter(cost.filter)}`;
+  if ("thisToDeckBottom" in cost) return "place this card at the bottom of your deck";
+  if ("returnActiveDon" in cost)
+    return `return ${cost.returnActiveDon} of your active DON!! cards to your DON!! deck`;
+  if ("activeLeaderPower" in cost)
+    return `give your 1 active Leader −${Math.abs(cost.activeLeaderPower)} power during this turn`;
   if ("toDeckBottom" in cost)
     return `place ${cost.toDeckBottom} of your ${cost.zone === "stage" ? "Stages" : `Characters${withFilter(cost.filter)}`} at the bottom of your deck`;
   if ("trashToDeck" in cost)
@@ -321,17 +343,29 @@ function stepText(step: Step): string {
     case "opponentTrashesFromHand":
       return `Your opponent trashes ${step.count} card(s) from their hand.`;
     case "searchDeck":
-      return `Look at ${step.look} cards from the top of your deck; ${step.play ? "play" : step.to === "trash" ? "trash" : "reveal"} up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"}${step.play || step.to === "trash" ? "" : ` and add ${step.take === 1 ? "it" : "them"} to ${step.to === "lifeFaceUp" ? "the top of your Life cards face-up" : "your hand"}`}. Then, ${step.rest === "trash" ? "trash the rest" : "place the rest at the bottom of your deck in any order"}.`;
+      if (step.play)
+        return `Look at ${step.look} cards from the top of your deck and play up to 1${filterText(step.filter)} card${step.rested ? " rested" : ""}. Then, place the rest at the bottom of your deck in any order.`;
+      if (step.to === "trash")
+        return `Look at ${step.look} cards from the top of your deck and trash up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"}. Then, place the rest at the bottom of your deck in any order.`;
+      return `Look at ${step.look} cards from the top of your deck; reveal up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"} and add ${step.take === 1 ? "it" : "them"} to ${step.to === "lifeFaceUp" ? "the top of your Life cards face-up" : "your hand"}. Then, ${step.rest === "trash" ? "trash the rest" : "place the rest at the bottom of your deck in any order"}.`;
     case "playFromHand":
       return step.side === "opponent"
         ? `Your opponent plays up to 1${filterText(step.filter)} card from their hand.`
-        : `Play up to 1${filterText(step.filter)} card from your hand${step.rested ? " rested" : ""}.`;
+        : `Play up to 1${filterText(step.filter)} card from your hand${step.orTrash ? " or trash" : ""}${step.differentColor ? " that is a different color than the returned card" : ""}${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
     case "playFromTrash":
-      return `Play up to ${step.count ?? 1}${filterText(step.filter)} card(s)${step.differentNames ? " with different names" : ""} from your trash${step.rested ? " rested" : ""}.`;
+      return `Play up to ${step.count ?? 1}${filterText(step.filter)} card(s)${step.differentNames ? " with different names" : ""}${step.sameNameAsTrashed ? " with the same card name as the trashed card" : ""} from your trash${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
+    case "playRested":
+      return "Your Character cards are played rested.";
+    case "trashFromDeck":
+      return step.perPrevious
+        ? "Trash the same number of cards from the top of your deck."
+        : `Trash ${step.count} card(s) from the top of your deck.`;
+    case "winGame":
+      return "You win the game.";
     case "lifeToHand":
       return step.side === "opponent"
         ? `Your opponent adds ${step.count} card(s) from the top of their Life cards to their hand.`
-        : `Add ${step.count} card(s) from the ${step.fromBottom ? "bottom" : "top"} of your Life cards to your hand.`;
+        : `Add ${step.count} card(s) from the ${step.from === "topOrBottom" ? "top or bottom" : step.fromBottom ? "bottom" : "top"} of your Life cards to your hand.`;
     case "deckToLife":
       return `Add up to ${step.count} card(s) from the top of your deck to the top of your Life cards.`;
     case "trashLife":
@@ -368,6 +402,22 @@ function stepText(step: Step): string {
       return `At the end of this battle: ${step.steps.map(stepText).join(" ")}`;
     case "nextPlayCostChange":
       return `The next time you play a${filterText(step.filter)} card from your hand during this turn, give it ${step.amount >= 0 ? "+" : "−"}${Math.abs(step.amount)} cost.`;
+    case "moveGivenDon":
+      return `Give up to 1 of your currently given DON!! cards to ${targetText(step.target)}.`;
+    case "replaceBattleKO":
+      return "If any of your Characters would be K.O.'d in battle during this turn, you may pay this card's other cost instead.";
+    case "grantCounter":
+      return `All of ${targetText(step.target)} in your hand have a +${step.amount} Counter.`;
+    case "deckTopToBottom":
+      return `Place ${step.count} card(s) from the top of your deck at the bottom.`;
+    case "copyPower":
+      return `This card's base power becomes the same as the power of ${targetText(step.target)} during this turn.`;
+    case "reorderLife":
+      return `Look at all of ${step.side === "self" ? "your" : "your opponent's"} Life cards and place them back in any order.`;
+    case "allLifeFaceDown":
+      return "Turn all of your Life cards face-down.";
+    case "trashLifeDownTo":
+      return `Trash cards from the top of your Life cards until you have ${step.count} Life card${step.count === 1 ? "" : "s"}.`;
     case "trashThis":
       return "Trash this card.";
     case "handDownTo":
@@ -397,9 +447,14 @@ function stepText(step: Step): string {
   }
 }
 
+function ifYouDoText(steps: Step[] | undefined): string {
+  return steps ? ` If you do, ${steps.map(stepText).join(" ")}` : "";
+}
+
 function targetText(target: Target): string {
   if (target.side === "this") return "this card";
   if (target.side === "that") return "that card";
+  if (target.side === "chosen") return `that card${withFilter(target.filter)}`;
   const owner = target.side === "self" ? "your" : target.side === "any" ? "the" : "your opponent's";
   const zone = target.zone ?? "characters";
   const count = target.count ?? 1;
@@ -415,7 +470,11 @@ function targetText(target: Target): string {
             : "Characters";
   if (zone === "leader" || zone === "stage") return `${owner} ${noun}`;
   const amount = target.upTo ? `up to ${count}` : `${count}`;
-  return `${amount} of ${owner} ${noun}${withFilter(target.filter)}`;
+  const total =
+    target.totalPowerAtMost !== undefined
+      ? ` with a total power of ${target.totalPowerAtMost} or less`
+      : "";
+  return `${amount} of ${owner} ${noun}${withFilter(target.filter)}${total}`;
 }
 
 function filterText(filter: Filter | undefined): string {

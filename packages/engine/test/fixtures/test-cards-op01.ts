@@ -100,7 +100,7 @@ export const OP01_EFFECT_CARDS: CardDefinition[] = [
             filter: {
               category: "character",
             },
-            differentColorFromChosen: true,
+            differentColor: true,
           },
         ],
       },
@@ -136,7 +136,7 @@ export const OP01_EFFECT_CARDS: CardDefinition[] = [
     ],
   },
   {
-    id: "TEST-KO-WATCHER",
+    id: "TEST-KO-WATCHER-OP01",
     name: "Test K.O. Watcher",
     category: "character",
     colors: ["purple"],
@@ -409,7 +409,7 @@ export const OP01_EFFECT_CARDS: CardDefinition[] = [
     ],
   },
   {
-    id: "TEST-SEARCH-PLAY",
+    id: "TEST-SEARCH-PLAY-OP01",
     name: "Test Search Play",
     category: "event",
     colors: ["purple"],
@@ -433,13 +433,13 @@ export const OP01_EFFECT_CARDS: CardDefinition[] = [
     ],
   },
   {
-    id: "TEST-ALIAS",
+    id: "TEST-ALIAS-OP01",
     name: "Test Alias",
     category: "character",
     colors: ["green"],
     cost: 2,
     power: 3000,
-    alsoNamed: ["Test 5000"],
+    aliases: ["Test 5000"],
   },
   {
     id: "TEST-ANY-NUMBER",

@@ -1,0 +1,33 @@
+{
+  "name": "Only a card of a different color than the returned one can be played",
+  "rules": ["8-3"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-SWAP-COLOR", "TEST-C4-5000", "TEST-GREEN"],
+      "characters": ["TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.0"],
+      "illegal": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.1"]
+    }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.characters.0.cardId": "TEST-GREEN",
+    "p1.hand": 2
+  }
+}

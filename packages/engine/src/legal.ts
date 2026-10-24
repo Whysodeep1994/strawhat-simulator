@@ -2,6 +2,7 @@ import type { Action } from "./actions.js";
 import {
   canPayCosts,
   conditionsMet,
+  counterOf,
   definitionOf,
   effectsOf,
   fieldCards,
@@ -12,6 +13,7 @@ import {
   oncePerTurnKey,
   playBlocked,
   playCostOf,
+  powerOf,
 } from "./state.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
 
@@ -84,6 +86,13 @@ export function isLegal(state: GameState, action: Action): boolean {
     const prompt = state.prompt;
     if (prompt.kind !== "choose" || prompt.player !== action.player) return false;
     const unique = new Set(action.cards);
+    if (prompt.maxTotalPower !== undefined) {
+      const total = action.cards.reduce((sum, uid) => {
+        const card = findOnField(state, uid)?.card;
+        return sum + (card ? powerOf(state, card) : 0);
+      }, 0);
+      if (total > prompt.maxTotalPower) return false;
+    }
     return (
       unique.size === action.cards.length &&
       action.cards.length >= prompt.min &&
@@ -241,7 +250,7 @@ function counterActions(state: GameState, player: PlayerId): Action[] {
   const actions: Action[] = [];
   for (const card of p.hand) {
     const def = definitionOf(state, card);
-    if (def.category === "character" && def.counter) {
+    if (def.category === "character" && counterOf(state, player, card) > 0) {
       for (const target of targets)
         actions.push({ type: "counter", player, card: card.uid, target });
     }

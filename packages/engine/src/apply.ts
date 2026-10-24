@@ -4,6 +4,7 @@ import { endGame, processRules } from "./rules.js";
 import { advance } from "./run.js";
 import { shuffleInPlace } from "./rng.js";
 import {
+  counterOf,
   definitionOf,
   effectsOf,
   fieldCards,
@@ -205,6 +206,9 @@ function block(state: GameState, blocker: string): void {
   setBattleStep(state, "counter");
   queueEffects(state, location.player, location.card, "onBlock");
   queueEffects(state, location.player, location.card, "becomesRested");
+  const attacker = opponentOf(location.player);
+  for (const card of fieldCards(state, attacker))
+    queueEffects(state, attacker, card, "onOpponentsBlock");
 }
 
 /** Rule 7-1-3-1-1. */
@@ -216,7 +220,7 @@ function counter(state: GameState, player: PlayerId, uid: string, target: string
   );
   if (!card) return;
   p.trash.unshift(card);
-  const value = definitionOf(state, card).counter ?? 0;
+  const value = counterOf(state, player, card);
   state.modifiers.push({ target, power: value, until: "battle" });
 }
 
