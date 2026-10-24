@@ -291,6 +291,8 @@ export interface Filter {
   costAtMostDonOnField?: boolean;
   /** A type containing this text, e.g. "Baroque Works". */
   typeIncludes?: string;
+  /** No type containing this text. */
+  notTypeIncludes?: string;
   /** Matches card names containing this text (rule 2-1-2-1). */
   nameIncludes?: string;
   name?: string;

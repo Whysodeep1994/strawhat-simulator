@@ -455,6 +455,9 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.powerAtMost !== undefined) parts.push(`${filter.powerAtMost} power or less`);
   if (filter.powerAtLeast !== undefined) parts.push(`${filter.powerAtLeast} power or more`);
   if (filter.type) parts.push(`the {${filter.type}} type`);
+  if (filter.notType) parts.push(`no {${filter.notType}} type`);
+  if (filter.typeIncludes) parts.push(`a type including "${filter.typeIncludes}"`);
+  if (filter.notTypeIncludes) parts.push(`no type including "${filter.notTypeIncludes}"`);
   if (filter.name) parts.push(`the name "${filter.name}"`);
   if (filter.nameIncludes) parts.push(`"${filter.nameIncludes}" in the name`);
   if (filter.keyword) parts.push(`[${KEYWORD_NAMES[filter.keyword]}]`);
