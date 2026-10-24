@@ -241,8 +241,6 @@ function payCost(
     moveFromHandToDeckBottom(state, frame.controller, chosen);
   } else if ("thisToDeckBottom" in cost) {
     removeFromField(state, source.uid, "deckBottom");
-  } else if ("deckToTrash" in cost) {
-    p.trash.unshift(...p.deck.splice(0, cost.deckToTrash).reverse());
   } else if ("activeLeaderPower" in cost) {
     state.modifiers.push({ target: p.leader.uid, power: cost.activeLeaderPower, until: "turn" });
   } else if ("revealFromHand" in cost) {
@@ -905,14 +903,6 @@ function runStep(
       return "continue";
     }
 
-    case "redirectAttack": {
-      if (!state.battle) return "continue";
-      const picked = chooseTargets(state, frame, source, step.target, step.do);
-      if (picked === "wait") return "wait";
-      if (picked[0]) state.battle.target = picked[0];
-      return "continue";
-    }
-
     case "reorderLife": {
       const owner = step.side === "self" ? p : state.players[opponentOf(controller)];
       if (owner.life.length < 2) return "continue";
@@ -936,7 +926,7 @@ function runStep(
       return "continue";
     }
 
-    case "lifeFaceDown":
+    case "allLifeFaceDown":
       for (const card of p.life) card.faceUp = false;
       return "continue";
 

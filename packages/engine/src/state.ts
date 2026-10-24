@@ -435,7 +435,6 @@ export function canPayCosts(
   let returnGiven = 0;
   let life = 0;
   let fromTrash = 0;
-  let fromDeck = 0;
   for (const cost of costs) {
     if ("restDon" in cost) restDon += cost.restDon;
     if ("donMinus" in cost) donMinus += cost.donMinus;
@@ -447,7 +446,6 @@ export function canPayCosts(
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
     if ("handToDeckBottom" in cost) fromHand += cost.handToDeckBottom;
     if ("thisToDeckBottom" in cost && !findOnField(state, source.uid)) return false;
-    if ("deckToTrash" in cost) fromDeck += cost.deckToTrash;
     if ("activeLeaderPower" in cost && p.leader.rested) return false;
     if ("returnOwnCharacter" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
@@ -471,14 +469,6 @@ export function canPayCosts(
     if ("returnGivenDon" in cost) returnGiven += cost.returnGivenDon;
     if ("lifeToHand" in cost) life += cost.lifeToHand;
     if ("trashLife" in cost) life += cost.trashLife;
-    if ("lifeFaceUp" in cost && (!p.life[0] || p.life[0].faceUp)) return false;
-    if ("trashToDeckBottom" in cost) {
-      fromTrash += cost.trashToDeckBottom;
-      const matching = p.trash.filter(
-        (c) => c.uid !== source.uid && matchesFilter(state, c, cost.filter, source, false),
-      );
-      if (matching.length < cost.trashToDeckBottom) return false;
-    }
     if ("lifeFaceUp" in cost) {
       const ends = cost.from === "topOrBottom" ? [p.life[0], p.life.at(-1)] : [p.life[0]];
       if (!ends.some((c) => c && !c.faceUp)) return false;
@@ -490,7 +480,13 @@ export function canPayCosts(
     if ("trashFromDeckTop" in cost && p.deck.length < cost.trashFromDeckTop) return false;
     if ("oneOf" in cost && !cost.oneOf.some((one) => canPayCosts(state, player, source, [one])))
       return false;
-    if ("trashToDeckBottom" in cost) fromTrash += cost.trashToDeckBottom;
+    if ("trashToDeckBottom" in cost) {
+      fromTrash += cost.trashToDeckBottom;
+      const matching = p.trash.filter(
+        (c) => c.uid !== source.uid && matchesFilter(state, c, cost.filter, source, false),
+      );
+      if (matching.length < cost.trashToDeckBottom) return false;
+    }
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
     if ("characterToLife" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
@@ -503,7 +499,6 @@ export function canPayCosts(
     fromHand <= hand.length &&
     life <= p.life.length &&
     fromTrash <= p.trash.filter((c) => c.uid !== source.uid).length &&
-    fromDeck <= p.deck.length &&
     returnGiven <= [p.leader, ...p.characters].reduce((n, c) => n + c.givenDon, 0)
   );
 }

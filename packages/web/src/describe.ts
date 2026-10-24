@@ -55,11 +55,10 @@ const TIMING_NAMES: Record<Timing, string> = {
   characterRestedByYourEffect: "(If a Character is rested by your effect)",
   replaceRemoval: "",
   donReturned: "When DON!! cards on your field are returned to your DON!! deck,",
-  characterKOd: "When a Character is K.O.'d,",
-  koByOpponentsEffect: "When this Character is K.O.'d by your opponent's effect,",
   becomesRested: "When this Character becomes rested,",
   characterKOd: "When a Character is K.O.'d,",
   attackDealsDamage: "When this card's attack deals damage to your opponent's Life,",
+  koByOpponentsEffect: "When this Character is K.O.'d by your opponent's effect,",
   permanent: "",
 };
 
@@ -196,7 +195,6 @@ function costText(cost: Cost): string {
   if ("handToDeckBottom" in cost)
     return `place ${cost.handToDeckBottom} card(s) from your hand at the bottom of your deck`;
   if ("thisToDeckBottom" in cost) return "place this card at the bottom of your deck";
-  if ("deckToTrash" in cost) return `trash ${cost.deckToTrash} card(s) from the top of your deck`;
   if ("activeLeaderPower" in cost)
     return `give your 1 active Leader −${Math.abs(cost.activeLeaderPower)} power during this turn`;
   if ("characterToLife" in cost)
@@ -275,7 +273,6 @@ function stepText(step: Step): string {
     case "searchDeck":
       if (step.play)
         return `Look at ${step.look} cards from the top of your deck and play up to 1${filterText(step.filter)} card${step.rested ? " rested" : ""}. Then, place the rest at the bottom of your deck in any order.`;
-      return `Look at ${step.look} cards from the top of your deck; reveal up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"} and add ${step.take === 1 ? "it" : "them"} to your hand. Then, ${step.rest === "trash" ? "trash the rest" : "place the rest at the bottom of your deck in any order"}.`;
       return `Look at ${step.look} cards from the top of your deck; reveal up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"} and add ${step.take === 1 ? "it" : "them"} to ${step.to === "lifeFaceUp" ? "the top of your Life cards face-up" : "your hand"}. Then, ${step.rest === "trash" ? "trash the rest" : "place the rest at the bottom of your deck in any order"}.`;
     case "playFromHand":
       return `Play up to 1${filterText(step.filter)} card from your hand${step.orTrash ? " or trash" : ""}${step.differentColor ? " that is a different color than the returned card" : ""}${step.rested ? " rested" : ""}.`;
@@ -309,11 +306,9 @@ function stepText(step: Step): string {
       return `Place ${step.count} card(s) from the top of your deck at the bottom.`;
     case "copyPower":
       return `This card's base power becomes the same as the power of ${targetText(step.target)} during this turn.`;
-    case "redirectAttack":
-      return `Change the attack target to ${targetText(step.target)}.`;
     case "reorderLife":
       return `Look at all of ${step.side === "self" ? "your" : "your opponent's"} Life cards and place them back in any order.`;
-    case "lifeFaceDown":
+    case "allLifeFaceDown":
       return "Turn all of your Life cards face-down.";
     case "trashLifeDownTo":
       return `Trash cards from the top of your Life cards until you have ${step.count} Life card${step.count === 1 ? "" : "s"}.`;

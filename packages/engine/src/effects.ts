@@ -65,6 +65,8 @@ export type Timing =
   | "characterKOd"
   /** "When this Character is K.O.'d by your opponent's effect". */
   | "koByOpponentsEffect"
+  /** "When this card's attack deals damage to your opponent's Life". */
+  | "attackDealsDamage"
   /** "When this Character becomes rested" (by attacking, blocking, a cost or an effect). */
   | "becomesRested"
   /** Always on while its conditions hold (rule 8-1-3-3). */
@@ -109,8 +111,6 @@ export type Condition =
   | { leaderTypeIncludes: string }
   /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
   | { lifeAtMostOpponents: true }
-  /** "If you have 30 or more cards in your trash". */
-  | { trashAtLeast: number };
   /** "If you have a total of 3 or more given DON!! cards" (Leader and Characters). */
   | { givenDonAtLeast: number }
   /** "If your Leader has the <Slash> attribute". */
@@ -118,7 +118,9 @@ export type Condition =
   /** "If your opponent has 6 or more cards in their hand". */
   | { opponentHandAtLeast: number }
   /** "During the turn in which a card in your hand is trashed by an effect". */
-  | { handTrashedByEffectThisTurn: true };
+  | { handTrashedByEffectThisTurn: true }
+  /** "If you have 30 or more cards in your trash". */
+  | { trashAtLeast: number };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -153,18 +155,6 @@ export type Cost =
   | { lifeToHand: number; from?: "top" | "topOrBottom" }
   /** Trash cards from the top of your Life cards. */
   | { trashLife: number }
-  /** Turn the top card of your Life cards face-up. It must be face-down. */
-  | { lifeFaceUp: number }
-  /** Place cards from your trash (matching `filter`) at the bottom of your deck. */
-  | { trashToDeckBottom: number; filter?: Filter }
-  /** Place cards from your hand at the bottom of your deck. */
-  | { handToDeckBottom: number }
-  /** Place this card (a Character or Stage) at the bottom of your deck. */
-  | { thisToDeckBottom: true }
-  /** "Trash 2 cards from the top of your deck." */
-  | { deckToTrash: number }
-  /** "Give your 1 active Leader −5000 power during this turn": the Leader must be active. */
-  | { activeLeaderPower: number }
   /** Turn the top (or, with `from: "topOrBottom"`, top or bottom) Life card face-up. It must be face-down. */
   | { lifeFaceUp: number; from?: "top" | "topOrBottom" }
   /** Turn a face-up Life card at the top (or bottom) face-down. */
@@ -173,8 +163,14 @@ export type Cost =
   | { trashFromDeckTop: number }
   /** "Rest your Leader or 1 of your DON!! cards": the player pays one of these. */
   | { oneOf: Cost[] }
-  /** Place cards from your trash at the bottom of your deck. */
-  | { trashToDeckBottom: number }
+  /** Place cards from your trash (matching `filter`) at the bottom of your deck. */
+  | { trashToDeckBottom: number; filter?: Filter }
+  /** Place cards from your hand at the bottom of your deck. */
+  | { handToDeckBottom: number }
+  /** Place this card (a Character or Stage) at the bottom of your deck. */
+  | { thisToDeckBottom: true }
+  /** "Give your 1 active Leader −5000 power during this turn": the Leader must be active. */
+  | { activeLeaderPower: number }
   /** Trash this card from the field. Not a K.O. */
   | { trashThis: true }
   /** "Return N total of your currently given DON!! cards to your cost area rested." */
@@ -326,8 +322,24 @@ export type Step =
   | { do: "handToDeckBottom"; count: number }
   /** "Change the target of the attack to ...": the chosen card becomes the attack's target. */
   | { do: "redirectAttack"; target: Target }
-  /** "Add up to 1 card from your hand to the top of your Life cards." */
-  | { do: "handToLife"; count: number }
+  /**
+   * "Add up to 1 card from your hand to the top of your Life cards." `fromTrash` also offers
+   * matching cards in your trash ("from your hand or trash"); `faceUp` adds them face-up.
+   */
+  | { do: "handToLife"; count: number; filter?: Filter; fromTrash?: boolean; faceUp?: boolean }
+  /** Trash all of your face-up Life cards. */
+  | { do: "trashFaceUpLife" }
+  /** Trash cards from the top of your deck. */
+  | { do: "trashDeckTop"; count: number }
+  /**
+   * Permanent only: "Your face-up Life cards are placed at the bottom of your deck instead of
+   * being added to your hand, according to the rules" (damage, rule 7-1-4-1-1-2).
+   */
+  | { do: "faceUpLifeToDeckBottom" }
+  /** Permanent, on a Leader: "when your deck is reduced to 0, you win the game instead of losing". */
+  | { do: "winOnDeckOut" }
+  /** Permanent, on a Leader: "you can only include {type} type cards in your deck". Checked by `checkDeck`. */
+  | { do: "deckOnlyType"; type: string }
   /** Place the cards revealed by a `revealFromHand` cost at the top of your deck. */
   | { do: "revealedToDeckTop" }
   /** Add up to `count` (default 1) matching cards from your trash to your hand. */
@@ -417,11 +429,9 @@ export type Step =
   | { do: "setBasePower"; target: Target; power: number; duration?: Duration }
   /** "This Character's base power becomes the same as the selected Character's power during this turn." */
   | { do: "copyPower"; target: Target }
-  /** "Change the attack target to the selected Character" (during a battle). */
-  | { do: "redirectAttack"; target: Target }
   /** "Look at all of your (opponent's) Life cards and place them back in any order." */
   | { do: "reorderLife"; side: "self" | "opponent" }
   /** "Turn all of your Life cards face-down." */
-  | { do: "lifeFaceDown" }
+  | { do: "allLifeFaceDown" }
   /** "Trash cards from the top of your Life cards until you have 1 Life card." */
   | { do: "trashLifeDownTo"; count: number };

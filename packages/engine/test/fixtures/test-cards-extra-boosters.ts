@@ -328,7 +328,7 @@ export const EXTRA_BOOSTER_CARDS: CardDefinition[] = [
         optional: true,
         costs: [
           {
-            deckToTrash: 2,
+            trashFromDeckTop: 2,
           },
         ],
         steps: [
@@ -370,7 +370,7 @@ export const EXTRA_BOOSTER_CARDS: CardDefinition[] = [
             side: "opponent",
           },
           {
-            do: "lifeFaceDown",
+            do: "allLifeFaceDown",
           },
         ],
       },
