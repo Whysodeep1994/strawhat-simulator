@@ -1,0 +1,32 @@
+{
+  "name": "\"Return 2 of your active DON!! cards\" leaves rested DON!! alone",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-ACTIVE-DON"],
+      "don": {
+        "active": 2,
+        "rested": 3
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p1.donActive": 0,
+    "p1.donRested": 3,
+    "p1.donDeck": 2,
+    "p1.characters.0.rested": false
+  }
+}

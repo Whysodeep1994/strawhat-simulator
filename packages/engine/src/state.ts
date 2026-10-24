@@ -18,6 +18,11 @@ export interface FieldLocation {
   card: CardInstance;
 }
 
+/** A card's name plus any "also treat this card's name as [X]" names (rule 2-1-2). */
+export function namesOf(def: CardDefinition): string[] {
+  return [def.name, ...(def.aliases ?? [])];
+}
+
 export function definitionOf(state: GameState, card: CardInstance): CardDefinition {
   const def = state.catalog[card.cardId];
   if (!def) throw new Error(`Unknown card id "${card.cardId}"`);
@@ -238,15 +243,39 @@ function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, gr
   }
 }
 
-/** A power or cost change, scaled by `perTrash` ("for every 4 cards in your trash"). */
+/**
+ * A power or cost change, scaled by `perTrash` ("for every 4 cards in your trash") or
+ * `perRestedDon` ("for every 3 of your rested DON!! cards").
+ */
 export function powerAmount(
   state: GameState,
   controller: PlayerId,
   step: Extract<Step, { do: "powerUp" | "costChange" }>,
 ): number {
+  const p = state.players[controller];
+  if (step.perRestedDon) return step.amount * Math.floor(p.donRested / step.perRestedDon);
   if (step.perCount) return step.amount * countCards(state, controller, null, step.perCount);
   if (!step.perTrash) return step.amount;
-  return step.amount * Math.floor(state.players[controller].trash.length / step.perTrash);
+  const trash = p.trash.filter((c) => matchesFilter(state, c, step.trashFilter, null, false));
+  return step.amount * Math.floor(trash.length / step.perTrash);
+}
+
+/**
+ * A Character card's Counter in `player`'s hand: printed, plus "have a +1000 Counter"
+ * from permanent effects on their field.
+ */
+export function counterOf(state: GameState, player: PlayerId, card: CardInstance): number {
+  let counter = definitionOf(state, card).counter ?? 0;
+  for (const source of fieldCards(state, player)) {
+    for (const effect of definitionOf(state, source).effects ?? []) {
+      if (effect.timing !== "permanent" || effect.zone === "hand") continue;
+      if (!conditionsMet(state, player, source, effect.conditions)) continue;
+      for (const step of effect.steps)
+        if (step.do === "grantCounter" && matchesFilter(state, card, step.target.filter, source))
+          counter += step.amount;
+    }
+  }
+  return counter;
 }
 
 /**
@@ -348,7 +377,7 @@ export function conditionsMet(
       const top = me.deck[0];
       return !!top && matchesFilter(state, top, c.deckTopMatches, source, false);
     }
-    if ("leaderIs" in c) return definitionOf(state, me.leader).name === c.leaderIs;
+    if ("leaderIs" in c) return namesOf(definitionOf(state, me.leader)).includes(c.leaderIs);
     if ("anyOf" in c) return c.anyOf.some((one) => conditionsMet(state, controller, source, [one]));
     if ("count" in c) {
       const n = countCards(state, controller, source, c.count);
@@ -385,6 +414,8 @@ export function conditionsMet(
       return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
     if ("totalLifeAtMost" in c) return me.life.length + them.life.length <= c.totalLifeAtMost;
     if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
+    if ("donOnFieldAtMostOpponents" in c)
+      return donOnField(state, controller) <= donOnField(state, opponentOf(controller));
     return false;
   });
 }
@@ -420,6 +451,7 @@ export function matchesFilter(
     cost > state.players.p1.life.length + state.players.p2.life.length
   )
     return false;
+  if (filter.noCounter && def.counter) return false;
   if (filter.baseCostAtMost !== undefined && baseCost > filter.baseCostAtMost) return false;
   if (filter.baseCostAtLeast !== undefined && baseCost < filter.baseCostAtLeast) return false;
   if (filter.powerAtMost !== undefined && power > filter.powerAtMost) return false;
@@ -433,9 +465,11 @@ export function matchesFilter(
   if (filter.notType && (def.types ?? []).includes(filter.notType)) return false;
   if (filter.typeIncludes && !(def.types ?? []).some((t) => t.includes(filter.typeIncludes ?? "")))
     return false;
-  if (filter.name && def.name !== filter.name) return false;
-  if (filter.notName && def.name === filter.notName) return false;
-  if (filter.nameIncludes && !def.name.includes(filter.nameIncludes)) return false;
+  const names = namesOf(def);
+  if (filter.name && !names.includes(filter.name)) return false;
+  if (filter.notName && names.includes(filter.notName)) return false;
+  if (filter.nameIncludes && !names.some((n) => n.includes(filter.nameIncludes ?? "")))
+    return false;
   if (filter.color && !def.colors.includes(filter.color)) return false;
   if (filter.rested !== undefined && card.rested !== filter.rested) return false;
   if (filter.notThis && source && card.uid === source.uid) return false;
@@ -527,6 +561,9 @@ export function canPayCosts(
     }
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
     if ("handToDeckBottom" in cost) fromHand += cost.handToDeckBottom;
+    if ("thisToDeckBottom" in cost && !findOnField(state, source.uid)) return false;
+    if ("activeLeaderPower" in cost && p.leader.rested) return false;
+    if ("returnActiveDon" in cost) restDon += cost.returnActiveDon;
     if ("returnOwnCharacter" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.returnOwnCharacter) return false;
@@ -560,7 +597,13 @@ export function canPayCosts(
     if ("trashFromDeckTop" in cost && p.deck.length < cost.trashFromDeckTop) return false;
     if ("oneOf" in cost && !cost.oneOf.some((one) => canPayCosts(state, player, source, [one])))
       return false;
-    if ("trashToDeckBottom" in cost) fromTrash += cost.trashToDeckBottom;
+    if ("trashToDeckBottom" in cost) {
+      fromTrash += cost.trashToDeckBottom;
+      const matching = p.trash.filter(
+        (c) => c.uid !== source.uid && matchesFilter(state, c, cost.filter, source, false),
+      );
+      if (matching.length < cost.trashToDeckBottom) return false;
+    }
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
     if ("toDeckBottom" in cost) {
       const own =

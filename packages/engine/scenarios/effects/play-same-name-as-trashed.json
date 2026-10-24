@@ -1,0 +1,37 @@
+{
+  "name": "Play a card with the same name as the card trashed to pay the cost",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-SAME-NAME", "TEST-SAME-NAME-SMALL"],
+      "trash": ["TEST-C5-6000", "TEST-SAME-NAME-BIG"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.trash.2"],
+      "illegal": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.trash.3"]
+    }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.characters.0.cardId": "TEST-SAME-NAME-BIG"
+  }
+}

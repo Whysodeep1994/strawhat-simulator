@@ -1,0 +1,13 @@
+{
+  "name": "With no other card in hand the Stage can't be activated",
+  "rules": ["8-3-1-3"],
+  "setup": {
+    "p1": {
+      "stage": "TEST-LOGUE"
+    }
+  },
+  "actions": [],
+  "expect": {
+    "legal.p1.activate": 0
+  }
+}

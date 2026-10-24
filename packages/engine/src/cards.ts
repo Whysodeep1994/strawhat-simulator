@@ -35,6 +35,8 @@ export interface CardDefinition {
   /** Printed attribute, e.g. "Slash" or "Strike/Ranged". */
   attribute?: string | null;
   effects?: EffectDefinition[];
+  /** "Also treat this card's name as [X] according to the rules." */
+  aliases?: string[];
   /** The block icon printed on the card (1, 2, … or "X"); formats use it to rotate older cards out. */
   blockIcon?: number | string;
 }

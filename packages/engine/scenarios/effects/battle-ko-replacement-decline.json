@@ -1,0 +1,41 @@
+{
+  "name": "Declining the battle K.O. replacement lets the Character be K.O.'d",
+  "rules": ["8-1-3-4-1"],
+  "setup": {
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-C2-3000",
+          "rested": true
+        }
+      ],
+      "hand": ["TEST-BATTLE-SAVE", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.characters.0"
+    },
+    {
+      "type": "counterEvent",
+      "player": "p2",
+      "card": "p2.hand.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    },
+    {
+      "type": "confirm",
+      "player": "p2",
+      "accept": false
+    }
+  ],
+  "expect": {
+    "p2.characters": 0,
+    "p2.hand": 1
+  }
+}

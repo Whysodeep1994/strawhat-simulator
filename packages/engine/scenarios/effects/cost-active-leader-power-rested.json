@@ -1,0 +1,25 @@
+{
+  "name": "A rested Leader can't pay \"give your 1 active Leader −5000 power\"",
+  "rules": ["8-3-1-3"],
+  "setup": {
+    "p1": {
+      "leader": {
+        "card": "TEST-LEADER",
+        "rested": true
+      },
+      "characters": ["TEST-LEADER-COST"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    }
+  ],
+  "expect": {
+    "modifiers": 0,
+    "prompt.kind": "counter"
+  }
+}

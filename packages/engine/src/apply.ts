@@ -3,7 +3,14 @@ import { isLegal } from "./legal.js";
 import { endGame, processRules } from "./rules.js";
 import { advance } from "./run.js";
 import { shuffleInPlace } from "./rng.js";
-import { definitionOf, effectsOf, fieldCards, findOnField, playCostOf } from "./state.js";
+import {
+  counterOf,
+  definitionOf,
+  effectsOf,
+  fieldCards,
+  findOnField,
+  playCostOf,
+} from "./state.js";
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
 import { drawCards, pushEffect, putOnField, queueEffects, startTurn } from "./turn.js";
 
@@ -203,7 +210,7 @@ function counter(state: GameState, player: PlayerId, uid: string, target: string
   );
   if (!card) return;
   p.trash.unshift(card);
-  const value = definitionOf(state, card).counter ?? 0;
+  const value = counterOf(state, player, card);
   state.modifiers.push({ target, power: value, until: "battle" });
 }
 
