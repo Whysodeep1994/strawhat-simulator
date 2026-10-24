@@ -1,0 +1,33 @@
+{
+  "name": "\"When this Character is K.O.'d by your opponent's effect\" plays it again rested",
+  "rules": ["10-2-1-1"],
+  "setup": {
+    "turnPlayer": "p2",
+    "p1": {
+      "characters": ["TEST-COMEBACK"]
+    },
+    "p2": {
+      "hand": ["TEST-KO-EVENT"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p2",
+      "card": "p2.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p2",
+      "cards": ["p1.characters.0"]
+    }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.characters.0.rested": true,
+    "p1.trash": 0
+  }
+}

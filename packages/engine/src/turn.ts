@@ -112,8 +112,8 @@ export function startTurn(state: GameState, player: PlayerId): void {
 
 /**
  * Rules 10-2-1-2 and 10-2-17: [On K.O.] conditions are checked while the card
- * is still on the field; the effect then resolves from the trash. `byEffect`
- * is false for a K.O. in battle.
+ * is still on the field; the effect then resolves from the trash. `by` is the
+ * player whose effect K.O.s the card, and is left out for a K.O. in battle.
  */
 export function knockOut(state: GameState, uid: string, byEffect = false, by?: PlayerId): void {
   for (const player of ["p1", "p2"] as const) {
@@ -159,6 +159,17 @@ export function putOnField(
     queueAbout(state, card, "youPlayCharacter");
   }
   queueEffects(state, player, card, "onPlay");
+}
+
+function playsRested(state: GameState, player: PlayerId): boolean {
+  return fieldCards(state, player).some((source) =>
+    effectsOf(state, source).some(
+      (effect) =>
+        effect.timing === "permanent" &&
+        effect.steps.some((s) => s.do === "playRested") &&
+        conditionsMet(state, player, source, effect.conditions),
+    ),
+  );
 }
 
 /** Trashing by rule (3-7-6-1-1, 3-8-5-1) or by a "trash this Character" cost is not a K.O. */

@@ -27,6 +27,8 @@ export interface EffectDefinition {
   replaces?: Replacement;
   /** `donReturned` only: how many DON!! must be returned at once ("when 2 or more ..."). */
   returnedAtLeast?: number;
+  /** `characterRemovedByOpponent` only: which of your Characters it watches. */
+  removed?: Filter;
   /**
    * For timings about another card (`yourCharacterKOd`, `yourCharacterRemovedByOpponent`,
    * `youPlayCharacter`): which cards set the effect off.
@@ -59,6 +61,12 @@ export type Timing =
   | "onKO"
   /** "When this Character is K.O.'d by an effect": checked like [On K.O.], but not in battle. */
   | "koByEffect"
+  /** "When this Character is K.O.'d by your opponent's effect". */
+  | "koByOpponentsEffect"
+  /** "When your Character is removed from the field by your opponent's effect". See `removed`. */
+  | "characterRemovedByOpponent"
+  /** "When your opponent activates [Blocker]". */
+  | "onOpponentsBlock"
   | "activateMain"
   | "main"
   | "counter"
@@ -179,6 +187,8 @@ export type Cost =
   | { trashFromHand: number; filter?: Filter }
   /** Place cards from your hand at the top of your deck. */
   | { handToDeckTop: number }
+  /** Place cards from your hand at the bottom of your deck in any order. */
+  | { handToDeckBottom: number }
   /** Return this many of your Characters (matching `filter`, e.g. `notThis`) to your hand. */
   | { returnOwnCharacter: number; filter?: Filter }
   /** "Reveal 2 cards with a type including ... from your hand". They stay in hand. */
@@ -301,6 +311,12 @@ export type Status =
   | "cannotBeKOdByOpponentsEffects"
   /** Doesn't become active in its owner's next Refresh Phase. */
   | "noRefresh"
+  /** "Cannot be K.O.'d in battle by Leaders". */
+  | "cannotBeKOdInBattleByLeaders"
+  /** "Negate the effect of ...": the card's effects and keywords don't work (rule 8-2). */
+  | "negated"
+  /** "Cannot be rested": it can't attack, block, or be rested by effects or costs. */
+  | "cannotBeRested";
   /** Can't be rested, so it can't attack or block either. */
   | "cannotBeRested"
   /** Can't be K.O.'d, returned, or trashed by the opponent's effects. */
@@ -424,6 +440,23 @@ export type Step =
   | { do: "arrangeDeckTop"; look: number; bottom?: boolean }
   /** "You may play" the top card of your deck if it matches. */
   | { do: "playFromDeckTop"; filter?: Filter; rested?: boolean }
+  /** Play a card from hand for free. `rested`: "play ... rested". */
+  /** `ifYouDo`: steps that happen only if a card was played ("If you do, draw 1 card"). */
+  | { do: "playFromHand"; filter?: Filter; rested?: boolean; ifYouDo?: Step[] }
+  | { do: "playFromTrash"; filter?: Filter; rested?: boolean; ifYouDo?: Step[] }
+  /** Permanent only: "Your Character cards are played rested." */
+  | { do: "playRested" }
+  /** Trash cards from the top of your deck. `perPrevious`: as many as the previous step moved. */
+  | { do: "trashFromDeck"; count: number; perPrevious?: boolean }
+  /** "You win the game." */
+  | { do: "winGame" }
+  /** "You cannot add Life cards to your hand using your own effects during this turn." */
+  | { do: "noLifeToHand" }
+  /**
+   * Add Life cards to your hand, from the top or (`fromBottom`) the bottom.
+   * `from: "topOrBottom"` lets the player pick.
+   */
+  | { do: "lifeToHand"; count: number; fromBottom?: boolean; from?: "topOrBottom" }
   /**
    * Play a card from hand for free. `rested`: "play ... rested". `side: "opponent"`:
    * "your opponent plays up to 1 Character card ... from their hand".

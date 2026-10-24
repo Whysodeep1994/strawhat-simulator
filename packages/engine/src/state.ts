@@ -513,6 +513,7 @@ export function canPayCosts(
       if (matching.length < cost.trashFromHand) return false;
     }
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
+    if ("handToDeckBottom" in cost) fromHand += cost.handToDeckBottom;
     if ("returnOwnCharacter" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.returnOwnCharacter) return false;

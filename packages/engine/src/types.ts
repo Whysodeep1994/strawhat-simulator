@@ -110,6 +110,8 @@ export type Frame =
       picked?: number;
       /** How many cards the previous step moved, for "for every card trashed". */
       previous?: number;
+      /** The cards the previous targeting step picked, for "that Character". */
+      chosen?: string[];
       answer: string[] | boolean | null;
       /** `replaceRemoval` only: the card the replacement would save. */
       replacing?: string;
@@ -153,6 +155,8 @@ export type Prompt =
       source: string;
       /** Extra cards only the chooser sees, e.g. every card looked at in a search (rule 11-3-1). */
       revealed?: string[];
+      /** "With a total power of 4000 or less": the picked cards' power must add up to at most this. */
+      maxTotalPower?: number;
     }
   | {
       kind: "confirm";

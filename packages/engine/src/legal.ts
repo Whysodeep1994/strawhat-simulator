@@ -12,6 +12,7 @@ import {
   oncePerTurnKey,
   playBlocked,
   playCostOf,
+  powerOf,
 } from "./state.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
 
@@ -84,6 +85,13 @@ export function isLegal(state: GameState, action: Action): boolean {
     const prompt = state.prompt;
     if (prompt.kind !== "choose" || prompt.player !== action.player) return false;
     const unique = new Set(action.cards);
+    if (prompt.maxTotalPower !== undefined) {
+      const total = action.cards.reduce((sum, uid) => {
+        const card = findOnField(state, uid)?.card;
+        return sum + (card ? powerOf(state, card) : 0);
+      }, 0);
+      if (total > prompt.maxTotalPower) return false;
+    }
     return (
       unique.size === action.cards.length &&
       action.cards.length >= prompt.min &&
