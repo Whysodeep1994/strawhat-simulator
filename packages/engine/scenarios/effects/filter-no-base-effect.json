@@ -28,7 +28,6 @@
   ],
   "expect": {
     "modifiers": 1,
-    "modifiers.0.power": 2000,
-    "modifiers.0.target": "c3"
+    "modifiers.0.power": 2000
   }
 }

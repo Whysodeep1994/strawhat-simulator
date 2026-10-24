@@ -42,6 +42,8 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                            | 8-1-3-4 |
 | `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."          | 8-1-3-1 |
 | `becomesRested`               | "When this Character becomes rested" (attack, block, cost or effect) | 8-1-3-1 |
+| `characterKOd`                | "When a Character is K.O.'d" (either player's, any K.O.)             | 8-1-3-1 |
+| `attackDealsDamage`           | "When this card's attack deals damage to your opponent's Life"       | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
