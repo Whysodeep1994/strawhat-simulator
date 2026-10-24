@@ -11,8 +11,11 @@ export interface EffectDefinition {
   conditions?: Condition[];
   /** Paid before the colon, top to bottom (rule 8-3-1). */
   costs?: Cost[];
-  /** [Once Per Turn] (rule 10-2-13). */
-  oncePerTurn?: boolean;
+  /**
+   * [Once Per Turn] (rule 10-2-13). A string is a key shared by several effects on the card
+   * that are one [Once Per Turn] effect, e.g. one written with two timings or two costs.
+   */
+  oncePerTurn?: boolean | string;
   /** "You may": the player can decline (rule 8-1-2). */
   optional?: boolean;
   /**
@@ -24,6 +27,11 @@ export interface EffectDefinition {
   replaces?: Replacement;
   /** `donReturned` only: how many DON!! must be returned at once ("when 2 or more ..."). */
   returnedAtLeast?: number;
+  /**
+   * For timings about another card (`yourCharacterKOd`, `yourCharacterRemovedByOpponent`,
+   * `youPlayCharacter`): which cards set the effect off.
+   */
+  cardFilter?: Filter;
   steps: Step[];
 }
 
@@ -67,6 +75,18 @@ export type Timing =
   | "characterKOd"
   /** "When this card's attack deals damage to your opponent's Life". */
   | "attackDealsDamage"
+  /** "When you take damage": each time a Life card leaves for damage. */
+  | "takeDamage"
+  /** "When your Character [cardFilter] is K.O.'d". */
+  | "yourCharacterKOd"
+  /** "When your Character [cardFilter] is removed from the field by your opponent's effect". */
+  | "yourCharacterRemovedByOpponent"
+  /** "When you play a Character [cardFilter]". */
+  | "youPlayCharacter"
+  /** "When a [Trigger] activates" (either player's). */
+  | "triggerActivated"
+  /** Leader effects that read "at the start of the game" (rule 5-2-1-5-1). */
+  | "startOfGame"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -116,7 +136,12 @@ export type Condition =
   /** "If your opponent has 6 or more cards in their hand". */
   | { opponentHandAtLeast: number }
   /** "During the turn in which a card in your hand is trashed by an effect". */
-  | { handTrashedByEffectThisTurn: true };
+  | { handTrashedByEffectThisTurn: true }
+
+  /** "If you have 5 or less active DON!! cards". */
+  | { donActiveAtMost: number }
+  /** "If you have 7 or more cards in your trash". */
+  | { trashAtLeast: number };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -163,13 +188,18 @@ export type Cost =
   /** "Return N total of your currently given DON!! cards to your cost area rested." */
   | { returnGivenDon: number }
   /** "Add 1 of your Characters ... to the top of your Life cards (face-up)". */
-  | { characterToLife: number; filter?: Filter; faceUp?: boolean };
+  | { characterToLife: number; filter?: Filter; faceUp?: boolean }
+
+  /** "Give 1 of your active DON!! cards to 1 of your Leader or Character cards". */
+  | { giveActiveDon: number }
+  /** "Trash 1 of your Characters with a type including ...". Not a K.O. */
+  | { trashOwnCharacter: number; filter?: Filter };
 
 /** Which cards a step can pick from. */
 export interface Target {
   /** "this" means the card the effect is on. "any" means either player's cards. */
   side: "self" | "opponent" | "this" | "any";
-  zone?: "leader" | "characters" | "leaderOrCharacters" | "stage";
+  zone?: "leader" | "characters" | "leaderOrCharacters" | "stage" | "field";
   filter?: Filter;
   /** How many to pick. Defaults to 1. */
   count?: number;
@@ -195,6 +225,10 @@ export interface Filter {
   basePowerAtMost?: number;
   basePowerAtLeast?: number;
   type?: string;
+  /** Doesn't have this type ("If you only have {Celestial Dragons} type Characters"). */
+  notType?: string;
+  /** "With a cost equal to or less than the number of DON!! cards on your field". */
+  costAtMostDonOnField?: boolean;
   /** A type containing this text, e.g. "Baroque Works". */
   typeIncludes?: string;
   /** Matches card names containing this text (rule 2-1-2-1). */
@@ -234,8 +268,10 @@ export type Status =
   | "cannotBeKOdByOpponentsEffects"
   /** Doesn't become active in its owner's next Refresh Phase. */
   | "noRefresh"
-  /** "Cannot be rested": it can't attack, block, or be rested by effects or costs. */
-  | "cannotBeRested";
+  /** Can't be rested, so it can't attack or block either. */
+  | "cannotBeRested"
+  /** Can't be K.O.'d, returned, or trashed by the opponent's effects. */
+  | "cannotBeRemovedByOpponentsEffects";
 
 export type Step =
   | { do: "draw"; count: number }
@@ -267,7 +303,8 @@ export type Step =
       perTrash?: number;
       perCount?: CardCount;
     }
-  | { do: "ko"; target: Target }
+  /** K.O. Characters or Stages. */
+  | { do: "ko"; target: Target; ifYouDo?: Step[] }
   /**
    * `stayRested`: "and that Character will not become active in your
    * opponent's next Refresh Phase". `ifYouDo`: steps that happen only if at
@@ -275,8 +312,9 @@ export type Step =
    */
   | { do: "rest"; target: Target; stayRested?: boolean; ifYouDo?: Step[] }
   | { do: "setActive"; target: Target }
-  | { do: "returnToHand"; target: Target }
-  | { do: "returnToDeckBottom"; target: Target }
+  /** `ifYouDo`: "you may return ...: If you do, ..." (use `upTo` on the target). */
+  | { do: "returnToHand"; target: Target; ifYouDo?: Step[] }
+  | { do: "returnToDeckBottom"; target: Target; ifYouDo?: Step[] }
   /**
    * "Your opponent cannot activate [Blocker]" when the target attacks. `blockers`
    * limits which [Blocker] Characters are stopped (e.g. 5000 power or more).
@@ -340,13 +378,50 @@ export type Step =
   | { do: "arrangeDeckTop"; look: number; bottom?: boolean }
   /** "You may play" the top card of your deck if it matches. */
   | { do: "playFromDeckTop"; filter?: Filter; rested?: boolean }
-  /** Play a card from hand for free. `rested`: "play ... rested". */
-  | { do: "playFromHand"; filter?: Filter; rested?: boolean }
-  | { do: "playFromTrash"; filter?: Filter; rested?: boolean }
+  /**
+   * Play a card from hand for free. `rested`: "play ... rested". `side: "opponent"`:
+   * "your opponent plays up to 1 Character card ... from their hand".
+   */
+  | { do: "playFromHand"; filter?: Filter; rested?: boolean; side?: "opponent" }
+  /**
+   * `count`: "play up to 5 ...", one at a time. `differentNames`: "with different card names".
+   * `played` is filled in by the engine with the names played so far.
+   */
+  | {
+      do: "playFromTrash";
+      filter?: Filter;
+      rested?: boolean;
+      count?: number;
+      differentNames?: boolean;
+      played?: string[];
+    }
+  /** "Play up to 1 ... from your deck", then shuffle it (start of the game effects). */
+  | { do: "playFromDeck"; filter?: Filter }
+  /** "Rest any number of your DON!! cards" (up to `count`); later steps can use `perPrevious`. */
+  | { do: "restOwnDon"; count?: number }
+  /**
+   * "You cannot play Character cards with a base cost of 5 or more during this turn".
+   * `fromHand`: only plays from the hand ("you cannot play cards from your hand").
+   */
+  | { do: "cannotPlay"; filter?: Filter; fromHand?: boolean }
+  /** "Look at all of your Life cards and place them back in your Life area in any order." */
+  | { do: "arrangeOwnLife" }
+  /**
+   * Permanent only: "[target] have their effects negated". Their printed keywords and effects
+   * stop working while this effect is on the field.
+   */
+  | { do: "negateEffects"; target: Target }
+  /** Permanent, Leader only: "1 DON!! card placed during your DON!! Phase is given to your Leader". */
+  | { do: "donPhaseToLeader" }
+  /** Permanent, Leader only: "you cannot include Events with a cost of 2 or more in your deck". */
+  | { do: "deckExcludes"; category?: CardCategory; costAtLeast?: number }
   /** "You cannot add Life cards to your hand using your own effects during this turn." */
   | { do: "noLifeToHand" }
-  /** Add Life cards to your hand, from the top or (`fromBottom`) the bottom. */
-  | { do: "lifeToHand"; count: number; fromBottom?: boolean }
+  /**
+   * Add Life cards to your hand, from the top or (`fromBottom`) the bottom. `side: "opponent"`:
+   * "your opponent adds 1 card from the top of their Life cards to their hand".
+   */
+  | { do: "lifeToHand"; count: number; fromBottom?: boolean; side?: "opponent" }
   | { do: "deckToLife"; count: number }
   /** "[On Play] effects are negated" for you (`self`) or your opponent. */
   | { do: "negateOnPlay"; side: "self" | "opponent"; duration?: Duration }
