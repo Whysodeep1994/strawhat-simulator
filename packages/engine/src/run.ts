@@ -16,10 +16,14 @@ import {
   leaveField,
   hasStatus,
   matchesFilter,
+  oncePerTurnKey,
   onPlayNegated,
+  playBlocked,
   powerAmount,
   powerOf,
+  zoneCards,
 } from "./state.js";
+import { shuffleInPlace } from "./rng.js";
 import {
   drawCards,
   knockOut,
@@ -27,6 +31,7 @@ import {
   pushEffect,
   putOnField,
   queueEffects,
+  removedByEffect,
   startTurn,
 } from "./turn.js";
 import {
@@ -49,7 +54,8 @@ type Outcome = "done" | "wait" | "continue" | "yield";
  */
 export function advance(state: GameState): void {
   for (let guard = 0; guard < 10_000; guard++) {
-    if (state.winner !== null || state.phase === "setup") return;
+    // During setup, only "at the start of the game" effects and the opening draw run.
+    if (state.winner !== null || (state.phase === "setup" && state.stack.length === 0)) return;
     const top = state.stack.at(-1);
     if (!top || isBetweenSteps(top)) flushPending(state);
     const frame = state.stack.at(-1);
@@ -101,6 +107,11 @@ function runFrame(state: GameState, frame: Frame): Outcome {
       return "done";
     case "end-phase":
       return runEndPhase(state, frame);
+    case "opening-draw":
+      // Rule 5-2-1-6.
+      for (const player of ["p1", "p2"] as const) drawCards(state, player, 5);
+      state.prompt = { kind: "mulligan", player: state.firstPlayer ?? state.turnPlayer };
+      return "done";
   }
 }
 
@@ -127,7 +138,7 @@ function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
   if (!source) return "done";
   const effect = effectOf(state, source, frame.effect);
   if (!effect) return "done";
-  const key = `${frame.source}:${frame.effect}`;
+  const key = oncePerTurnKey(frame.source, effect, frame.effect);
 
   if (frame.stage === "check") {
     // Rule 8-1-3-1-3: an auto effect whose card has left its area doesn't activate.
@@ -196,6 +207,28 @@ function payCost(
   if ("restDon" in cost) {
     p.donActive -= cost.restDon;
     p.donRested += cost.restDon;
+  } else if ("giveActiveDon" in cost) {
+    // One DON!! at a time, so the player picks which card each goes to.
+    while (frame.memo.length < cost.giveActiveDon) {
+      const cards = [p.leader, ...p.characters];
+      const chosen = choose(state, frame, frame.controller, cards, 1, 1, "giveDon");
+      if (chosen === "wait") return "wait";
+      const card = cards.find((c) => c.uid === chosen[0]);
+      if (!card || p.donActive === 0) return "continue";
+      p.donActive -= 1;
+      card.givenDon += 1;
+      frame.memo.push(card.uid);
+    }
+    frame.memo = [];
+  } else if ("trashOwnCharacter" in cost) {
+    const n = cost.trashOwnCharacter;
+    const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+    const chosen = choose(state, frame, frame.controller, own, n, n, "trashCharacter");
+    if (chosen === "wait") return "wait";
+    for (const uid of chosen) {
+      const card = findOnField(state, uid)?.card;
+      if (card) moveFieldCardToTrash(state, card);
+    }
   } else if ("donMinus" in cost) {
     let count = cost.donMinus;
     const most = donOnField(state, frame.controller);
@@ -471,18 +504,7 @@ function targetCandidates(
       ? [controller, opponentOf(controller)]
       : [target.side === "self" ? controller : opponentOf(controller)];
   const zone = target.zone ?? "characters";
-  const cards = players.flatMap((player) => {
-    const p = state.players[player];
-    return zone === "leader"
-      ? [p.leader]
-      : zone === "characters"
-        ? p.characters
-        : zone === "stage"
-          ? p.stage
-            ? [p.stage]
-            : []
-          : [p.leader, ...p.characters];
-  });
+  const cards = players.flatMap((player) => zoneCards(state.players[player], zone));
   return cards.filter((c) => matchesFilter(state, c, target.filter, source));
 }
 
@@ -733,6 +755,7 @@ function runStep(
         const playable =
           !!def &&
           (def.category === "character" || def.category === "stage") &&
+          !playBlocked(state, controller, top, false) &&
           matchesFilter(state, top, step.filter, source, false);
         const picked = playable ? choose(state, frame, controller, [top], 0, 1, step.do) : [];
         if (picked === "wait") return "wait";
@@ -744,17 +767,26 @@ function runStep(
 
     case "playFromHand":
     case "playFromTrash": {
-      const pile = step.do === "playFromHand" ? p.hand : p.trash;
+      // "Your opponent plays ... from their hand": they choose and the card is theirs.
+      const player =
+        step.do === "playFromHand" && step.side === "opponent"
+          ? opponentOf(controller)
+          : controller;
+      const owner = state.players[player];
+      const pile = step.do === "playFromHand" ? owner.hand : owner.trash;
+      const played = step.do === "playFromTrash" ? (step.played ?? []) : [];
       if (frame.memo.length === 0) {
         const options = pile.filter((c) => {
           const def = definitionOf(state, c);
           return (
             (def.category === "character" || def.category === "stage") &&
+            !played.includes(def.name) &&
+            !playBlocked(state, player, c, step.do === "playFromHand") &&
             matchesFilter(state, c, step.filter, source, false)
           );
         });
         const picked =
-          options.length === 0 ? [] : choose(state, frame, controller, options, 0, 1, step.do);
+          options.length === 0 ? [] : choose(state, frame, player, options, 0, 1, step.do);
         if (picked === "wait") return "wait";
         if (picked.length === 0) return "continue";
         frame.memo = picked;
@@ -769,6 +801,15 @@ function runStep(
       );
       // "If you do, ..."
       if (outcome === "continue" && step.ifYouDo) frame.steps.splice(1, 0, ...step.ifYouDo);
+      const uid = frame.memo[0] as string;
+      const name = definitionOf(state, findCard(state, uid) as CardInstance).name;
+      const outcome = playChosen(state, frame, player, pile, uid, step.rested ?? false);
+      // "Play up to 5 ...": the rest are played one at a time.
+      if (outcome === "continue" && step.do === "playFromTrash" && (step.count ?? 1) > 1) {
+        const next = { ...step, count: (step.count ?? 1) - 1 };
+        if (step.differentNames) next.played = [...played, name];
+        frame.steps.splice(1, 0, next);
+      }
       return outcome;
     }
 
@@ -813,6 +854,13 @@ function runStep(
         p.hand.push(card);
         frame.memo.push(card.uid);
       }
+      // "You cannot add Life cards ... using your own effects" doesn't stop the opponent's.
+      const owner = step.side === "opponent" ? state.players[opponentOf(controller)] : p;
+      const blocked =
+        owner === p && state.modifiers.some((m) => m.target === p.leader.uid && m.noLifeToHand);
+      if (!blocked)
+        for (let i = 0; i < step.count && owner.life.length > 0; i++)
+          owner.hand.push(takeLife(owner.life, step.fromBottom ? owner.life.length - 1 : 0)!);
       return "continue";
     }
 
@@ -909,7 +957,8 @@ function runStep(
       for (const uid of targets) {
         const location = findOnField(state, uid);
         if (location?.zone !== "characters") continue;
-        noteRemoval(state, controller, location.card);
+        if (protectedFrom(state, controller, location.card)) continue;
+        removedByEffect(state, location.card, controller);
         moveFieldCardToTrash(state, location.card);
       }
       return "continue";
@@ -931,6 +980,88 @@ function runStep(
 
     case "deckToLife":
       p.life.unshift(...p.deck.splice(0, step.count));
+      return "continue";
+
+    case "restOwnDon": {
+      // "Rest any number of your DON!! cards": the player picks how many.
+      const most = Math.min(step.count ?? p.donActive, p.donActive);
+      let count = 0;
+      if (most > 0) {
+        if (!Array.isArray(frame.answer)) {
+          const labels = [];
+          for (let n = 0; n <= most; n++) labels.push(`Rest ${n} DON!!`);
+          state.prompt = { kind: "chooseOne", player: controller, labels, source: frame.source };
+          return "wait";
+        }
+        count = Math.min(most, Number(frame.answer[0]));
+        frame.answer = null;
+      }
+      p.donActive -= count;
+      p.donRested += count;
+      frame.previous = count;
+      return "continue";
+    }
+
+    case "cannotPlay":
+      state.modifiers.push({
+        target: p.leader.uid,
+        cannotPlay: {
+          ...(step.filter ? { filter: step.filter } : {}),
+          ...(step.fromHand ? { fromHand: true } : {}),
+        },
+        until: "turn",
+      });
+      return "continue";
+
+    case "arrangeOwnLife":
+      if (p.life.length > 1) {
+        if (!Array.isArray(frame.answer)) {
+          state.prompt = {
+            kind: "choose",
+            player: controller,
+            options: p.life.map((c) => c.uid),
+            min: p.life.length,
+            max: p.life.length,
+            reason: "lifeOrder",
+            source: frame.source,
+          };
+          return "wait";
+        }
+        const order = frame.answer;
+        frame.answer = null;
+        p.life = order.map((uid) => p.life.find((c) => c.uid === uid) as CardInstance);
+      }
+      return "continue";
+
+    case "playFromDeck": {
+      if (frame.memo.length === 0) {
+        const options = p.deck.filter((c) => {
+          const def = definitionOf(state, c);
+          return (
+            (def.category === "character" || def.category === "stage") &&
+            !playBlocked(state, controller, c, false) &&
+            matchesFilter(state, c, step.filter, source, false)
+          );
+        });
+        const picked =
+          options.length === 0 ? [] : choose(state, frame, controller, options, 0, 1, step.do);
+        if (picked === "wait") return "wait";
+        if (picked.length === 0) {
+          state.rng = shuffleInPlace(p.deck, state.rng);
+          return "continue";
+        }
+        frame.memo = picked;
+      }
+      const outcome = playChosen(state, frame, controller, p.deck, frame.memo[0] as string);
+      // Rule 5-2-1-5-2: a deck changed by an effect is shuffled.
+      if (outcome === "continue") state.rng = shuffleInPlace(p.deck, state.rng);
+      return outcome;
+    }
+
+    case "negateEffects":
+    case "donPhaseToLeader":
+    case "deckExcludes":
+      // Permanent effects, worked out where they apply.
       return "continue";
 
     case "if":
@@ -1053,6 +1184,8 @@ function runRemoval(
     frame.memo.splice(1, 1);
     applyToTarget(state, frame.controller, step, next);
   }
+  // "You may return ...: If you do, ..."
+  if (step.ifYouDo && (frame.previous ?? 0) > 0) frame.steps.splice(1, 0, ...step.ifYouDo);
   return "continue";
 }
 
@@ -1060,13 +1193,19 @@ function runRemoval(
 function wouldRemove(state: GameState, controller: PlayerId, step: RemovalStep, uid: string) {
   const location = findOnField(state, uid);
   if (!location || location.zone === "leader") return false;
+  if (protectedFrom(state, controller, location.card)) return false;
   if (step.do !== "ko") return true;
-  return location.zone === "characters" && !cannotBeKOdBy(state, controller, location.card);
+  return location.zone === "stage" || !cannotBeKOdBy(state, controller, location.card);
 }
 
 function cannotBeKOdBy(state: GameState, controller: PlayerId, card: CardInstance): boolean {
   if (hasStatus(state, card, "cannotBeKOdByEffects")) return true;
   return controller !== card.owner && hasStatus(state, card, "cannotBeKOdByOpponentsEffects");
+}
+
+/** "Cannot be removed from the field by your opponent's effects". */
+function protectedFrom(state: GameState, controller: PlayerId, card: CardInstance): boolean {
+  return controller !== card.owner && hasStatus(state, card, "cannotBeRemovedByOpponentsEffects");
 }
 
 /** The first usable replacement effect on the owner's field that would save `uid`. */
@@ -1089,7 +1228,11 @@ function findReplacement(
       if (r.byOpponent && controller === owner) continue;
       if (r.side === "this" ? holder.uid !== uid : !matchesFilter(state, card, r.filter, holder))
         continue;
-      if (effect.oncePerTurn && state.usedThisTurn.includes(`${holder.uid}:${index}`)) continue;
+      if (
+        effect.oncePerTurn &&
+        state.usedThisTurn.includes(oncePerTurnKey(holder.uid, effect, index))
+      )
+        continue;
       if (!conditionsMet(state, owner, holder, effect.conditions)) continue;
       if (!canPayCosts(state, owner, holder, effect.costs ?? [])) continue;
       return { player: owner, source: holder.uid, effect: index };
@@ -1199,10 +1342,11 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
       });
       return;
     case "ko":
-      if (location.zone === "characters" && !cannotBeKOdBy(state, controller, card)) {
-        noteRemoval(state, controller, card);
-        knockOut(state, uid, controller);
-      }
+      if (protectedFrom(state, controller, card)) return;
+      if (location.zone === "characters" && !cannotBeKOdBy(state, controller, card))
+        knockOut(state, uid, true, controller);
+      // Stages have no [On K.O.]; a K.O.'d Stage goes to the trash.
+      if (location.zone === "stage") moveFieldCardToTrash(state, card);
       return;
     case "rest":
       if (hasStatus(state, card, "cannotBeRested")) return;
@@ -1219,7 +1363,8 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
       return;
     case "returnToHand":
     case "returnToDeckBottom":
-      noteRemoval(state, controller, card);
+      if (protectedFrom(state, controller, card)) return;
+      removedByEffect(state, card, controller);
       removeFromField(state, uid, step.do === "returnToHand" ? "hand" : "deckBottom");
       return;
     case "giveRestedDon": {
@@ -1260,6 +1405,7 @@ function characterToLife(
   const location = findOnField(state, frame.memo[0] as string);
   if (location?.zone !== "characters") return "continue";
   const card = location.card;
+  if (protectedFrom(state, frame.controller, card)) return "continue";
   const owner = state.players[card.owner];
   let toBottom = false;
   if (owner.life.length > 0) {
@@ -1275,7 +1421,7 @@ function characterToLife(
     toBottom = frame.answer === true;
     frame.answer = null;
   }
-  noteRemoval(state, frame.controller, card);
+  removedByEffect(state, card, frame.controller);
   owner.characters = owner.characters.filter((c) => c.uid !== card.uid);
   leaveField(state, card);
   if (step.faceUp) card.faceUp = true;
@@ -1452,6 +1598,10 @@ function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
     const top = p.life[0];
     if (!top) return "done";
     const hasTrigger = (definitionOf(state, top).effects ?? []).some((e) => e.timing === "trigger");
+    // "When you take damage", once for each Life card (rule 7-1-4-1-1-2).
+    if (frame.answer === null)
+      for (const card of fieldCards(state, frame.defender))
+        queueEffects(state, frame.defender, card, "takeDamage");
     if (frame.banish) {
       p.trash.unshift(takeLife(p.life, 0) as CardInstance);
     } else if (top.faceUp && hasRule(state, frame.defender, "faceUpLifeToDeckBottom")) {
@@ -1476,6 +1626,9 @@ function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
         continue;
       }
       // Rule 10-1-5-3.
+      for (const player of ["p1", "p2"] as const)
+        for (const holder of fieldCards(state, player))
+          queueEffects(state, player, holder, "triggerActivated");
       state.limbo = card;
       state.stack.push({ kind: "trigger-cleanup" });
       const index = (definitionOf(state, card).effects ?? []).findIndex(

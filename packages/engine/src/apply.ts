@@ -3,7 +3,7 @@ import { isLegal } from "./legal.js";
 import { endGame, processRules } from "./rules.js";
 import { advance } from "./run.js";
 import { shuffleInPlace } from "./rng.js";
-import { definitionOf, fieldCards, findOnField, playCostOf } from "./state.js";
+import { definitionOf, effectsOf, fieldCards, findOnField, playCostOf } from "./state.js";
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
 import { drawCards, pushEffect, putOnField, queueEffects, startTurn } from "./turn.js";
 
@@ -86,13 +86,22 @@ function perform(state: GameState, action: Action): void {
 
 // --- Setup (rule 5-2) ---------------------------------------------------------
 
-/** Rule 5-2-1-5, then 5-2-1-6: both players draw 5; the first player decides on a redraw first. */
+/**
+ * Rule 5-2-1-5, then 5-2-1-6: both players draw 5; the first player decides on a redraw first.
+ * "At the start of the game" Leader effects come before the draw, the chooser's first (5-2-1-5-1).
+ */
 function chooseTurnOrder(state: GameState, chooser: PlayerId, goFirst: boolean): void {
   const first = goFirst ? chooser : opponentOf(chooser);
   state.firstPlayer = first;
   state.turnPlayer = first;
-  for (const player of ["p1", "p2"] as const) drawCards(state, player, 5);
-  state.prompt = { kind: "mulligan", player: first };
+  state.stack.push({ kind: "opening-draw" });
+  // The stack runs newest first, so the chooser's effects are pushed last.
+  for (const player of [opponentOf(chooser), chooser]) {
+    const leader = state.players[player].leader;
+    effectsOf(state, leader).forEach((effect, index) => {
+      if (effect.timing === "startOfGame") pushEffect(state, player, leader.uid, index);
+    });
+  }
 }
 
 /** Rules 5-2-1-6, 5-2-1-6-1, 5-2-1-7, 5-2-1-8. */
