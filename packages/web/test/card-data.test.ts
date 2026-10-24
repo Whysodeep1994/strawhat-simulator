@@ -86,6 +86,10 @@ describe("card data", () => {
     const data = buildCardData(cards, [], "./card-data/");
     expect(data.imageUrl(leader)).toBe("./card-data/images/ST99-001.png");
     expect(data.imageUrl(offColor)).toBeUndefined();
+    expect(data.imageUrl({ ...leader, image: "/_blob/abc" })).toBe("/_blob/abc");
+    expect(data.imageUrl({ ...leader, image: "https://example.com/a.webp" })).toBe(
+      "https://example.com/a.webp",
+    );
   });
 
   it("shows official text line by line, with the [Trigger] last", () => {

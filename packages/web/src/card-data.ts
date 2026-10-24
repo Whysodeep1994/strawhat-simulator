@@ -86,7 +86,14 @@ export function buildCardData(
     decks,
     format: standard ?? { ...BASE_RULES, id: "standard", name: "Standard" },
     formatLoaded: standard !== undefined,
-    imageUrl: (card) => (card?.image ? `${base}${card.image}` : undefined),
+    // Paths are relative to the card data; a full or root-relative URL (an image hosted
+    // elsewhere) is used as it is.
+    imageUrl: (card) =>
+      card?.image
+        ? /^([a-z]+:|\/)/i.test(card.image)
+          ? card.image
+          : `${base}${card.image}`
+        : undefined,
   };
 }
 
