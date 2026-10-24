@@ -69,6 +69,10 @@ export type Timing =
   | "replaceRemoval"
   /** "When ... DON!! cards on your field are returned to your DON!! deck". See `returnedAtLeast`. */
   | "donReturned"
+  /** "When a Character is K.O.'d": any Character, either player's, in battle or by an effect. */
+  | "characterKOd"
+  /** "When this card's attack deals damage to your opponent's Life". */
+  | "attackDealsDamage"
   /** "When this Character becomes rested" (by attacking, blocking, a cost or an effect). */
   | "becomesRested"
   /** Always on while its conditions hold (rule 8-1-3-3). */
@@ -113,12 +117,10 @@ export type Condition =
   | { leaderTypeIncludes: string }
   /** "If your opponent has more DON!! cards on their field than you". */
   | { opponentHasMoreDon: true }
-  /** "If your opponent has 5 or more cards in their hand". */
-  | { opponentHandAtLeast: number }
   /** "If the number of cards in your hand is at least 3 less than the number in your opponent's hand". */
   | { handFewerThanOpponentBy: number }
   /** "If you and your opponent have a total of 5 or less Life cards". */
-  | { totalLifeAtMost: number };
+  | { totalLifeAtMost: number }
   /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
   | { lifeAtMostOpponents: true }
   /** "If you have a total of 3 or more given DON!! cards" (Leader and Characters). */
@@ -256,7 +258,7 @@ export type Status =
   /** "Cannot be K.O.'d in battle by Leaders". */
   | "cannotBeKOdInBattleByLeaders"
   /** "Negate the effect of ...": the card's effects and keywords don't work (rule 8-2). */
-  | "negated";
+  | "negated"
   /** "Cannot be rested": it can't attack, block, or be rested by effects or costs. */
   | "cannotBeRested";
 
@@ -318,8 +320,24 @@ export type Step =
   | { do: "handToDeckBottom"; count: number }
   /** "Change the target of the attack to ...": the chosen card becomes the attack's target. */
   | { do: "redirectAttack"; target: Target }
-  /** "Add up to 1 card from your hand to the top of your Life cards." */
-  | { do: "handToLife"; count: number }
+  /**
+   * "Add up to 1 card from your hand to the top of your Life cards." `fromTrash` also offers
+   * matching cards in your trash ("from your hand or trash"); `faceUp` adds them face-up.
+   */
+  | { do: "handToLife"; count: number; filter?: Filter; fromTrash?: boolean; faceUp?: boolean }
+  /** Trash all of your face-up Life cards. */
+  | { do: "trashFaceUpLife" }
+  /** Trash cards from the top of your deck. */
+  | { do: "trashDeckTop"; count: number }
+  /**
+   * Permanent only: "Your face-up Life cards are placed at the bottom of your deck instead of
+   * being added to your hand, according to the rules" (damage, rule 7-1-4-1-1-2).
+   */
+  | { do: "faceUpLifeToDeckBottom" }
+  /** Permanent, on a Leader: "when your deck is reduced to 0, you win the game instead of losing". */
+  | { do: "winOnDeckOut" }
+  /** Permanent, on a Leader: "you can only include {type} type cards in your deck". Checked by `checkDeck`. */
+  | { do: "deckOnlyType"; type: string }
   /** Place the cards revealed by a `revealFromHand` cost at the top of your deck. */
   | { do: "revealedToDeckTop" }
   /** Add up to `count` (default 1) matching cards from your trash to your hand. */
@@ -355,8 +373,6 @@ export type Step =
   | { do: "playRested" }
   /** Trash cards from the top of your deck. `perPrevious`: as many as the previous step moved. */
   | { do: "trashFromDeck"; count: number; perPrevious?: boolean }
-  /** "Add up to 1 ... card from your hand to the top of your Life cards face-up." */
-  | { do: "handToLife"; filter?: Filter; faceUp?: boolean }
   /** "You win the game." */
   | { do: "winGame" }
   /** "You cannot add Life cards to your hand using your own effects during this turn." */

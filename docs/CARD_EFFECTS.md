@@ -23,27 +23,6 @@ opponent's Characters with a cost of 3 or less" is written as:
 
 ## Timings
 
-| Timing                        | Card wording                                                   | Rules   |
-| ----------------------------- | -------------------------------------------------------------- | ------- |
-| `onPlay`                      | [On Play]                                                      | 10-2-6  |
-| `whenAttacking`               | [When Attacking]                                               | 10-2-5  |
-| `onOpponentsAttack`           | [On Your Opponent's Attack]                                    | 10-2-16 |
-| `onBlock`                     | [On Block]                                                     | 10-2-15 |
-| `onKO`                        | [On K.O.]                                                      | 10-2-17 |
-| `koByEffect`                  | "When this Character is K.O.'d by an effect" (not in battle)   | 10-2-1  |
-| `koByOpponentsEffect`         | "When this Character is K.O.'d by your opponent's effect"      | 10-2-1  |
-| `characterRemovedByOpponent`  | "When your Character is removed ... by your opponent's effect" | 8-1-3-1 |
-| `onOpponentsBlock`            | "When your opponent activates [Blocker]"                       | 8-1-3-1 |
-| `activateMain`                | [Activate: Main]                                               | 10-2-2  |
-| `main`                        | [Main] on Events                                               | 10-2-3  |
-| `counter`                     | [Counter] on Events                                            | 10-2-4  |
-| `trigger`                     | [Trigger]                                                      | 10-1-5  |
-| `endOfYourTurn`               | [End of Your Turn]                                             | 10-2-7  |
-| `endOfOpponentsTurn`          | [End of Your Opponent's Turn]                                  | 10-2-8  |
-| `permanent`                   | Always-on text, e.g. "+1000 power"                             | 8-1-3-3 |
-| `characterRestedByYourEffect` | "If a Character is rested by your effect"                      | 8-1-3-1 |
-| `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                      | 8-1-3-4 |
-| `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."    | 8-1-3-1 |
 | Timing                        | Card wording                                                         | Rules   |
 | ----------------------------- | -------------------------------------------------------------------- | ------- |
 | `onPlay`                      | [On Play]                                                            | 10-2-6  |
@@ -63,6 +42,9 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                            | 8-1-3-4 |
 | `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."          | 8-1-3-1 |
 | `becomesRested`               | "When this Character becomes rested" (attack, block, cost or effect) | 8-1-3-1 |
+| `koByOpponentsEffect`         | "When this Character is K.O.'d by your opponent's effect"            | 10-2-1  |
+| `characterRemovedByOpponent`  | "When your Character is removed ... by your opponent's effect"       | 8-1-3-1 |
+| `onOpponentsBlock`            | "When your opponent activates [Blocker]"                             | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -115,20 +97,6 @@ card is..."), `donOnFieldAtLeast` and `donOnFieldAtMost` ("if you have 8 or more
 your field", counting active, rested and given DON!!), `playedThisTurn` ("if this Character was
 played on this turn"), plus:
 
-| Condition                                        | Card wording                                                      |
-| ------------------------------------------------ | ----------------------------------------------------------------- |
-| `{ "leaderIs": "Buggy" }`                        | "If your Leader is [Buggy]"                                       |
-| `{ "anyOf": [ ... ] }`                           | "If your Leader has the {X} type or is [Y]"                       |
-| `{ "count": {...}, "atLeast": 2 }`               | "If you have 2 or more Characters with a base cost of 5 or more"  |
-| `{ "donRestedAtLeast": 6 }`                      | "If you have 6 or more rested DON!! cards"                        |
-| `{ "restedCardsAtLeast": 6 }`                    | "If you have 6 or more rested cards" (DON!! and field cards)      |
-| `{ "leaderTypeIncludes": "Whitebeard Pirates" }` | "If your Leader's type includes "Whitebeard Pirates""             |
-| `{ "leaderMulticolored": true }`                 | "If your Leader is multicolored"                                  |
-| `{ "opponentDonOnFieldAtLeast": 5 }`             | "If your opponent has 5 or more DON!! cards on their field"       |
-| `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"   |
-| `{ "opponentHandAtLeast": 5 }`                   | "If your opponent has 5 or more cards in their hand"              |
-| `{ "handFewerThanOpponentBy": 3 }`               | "If the number of cards in your hand is at least 3 less than ..." |
-| `{ "totalLifeAtMost": 5 }`                       | "If you and your opponent have a total of 5 or less Life cards"   |
 | Condition                                        | Card wording                                                                |
 | ------------------------------------------------ | --------------------------------------------------------------------------- |
 | `{ "leaderIs": "Buggy" }`                        | "If your Leader is [Buggy]"                                                 |
@@ -144,6 +112,9 @@ played on this turn"), plus:
 | `{ "leaderAttribute": "Slash" }`                 | "If your Leader has the <Slash> attribute"                                  |
 | `{ "opponentHandAtLeast": 6 }`                   | "If your opponent has 6 or more cards in their hand"                        |
 | `{ "handTrashedByEffectThisTurn": true }`        | "During the turn in which a card in your hand is trashed by an effect"      |
+| `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"             |
+| `{ "handFewerThanOpponentBy": 3 }`               | "If the number of cards in your hand is at least 3 less than ..."           |
+| `{ "totalLifeAtMost": 5 }`                       | "If you and your opponent have a total of 5 or less Life cards"             |
 
 `count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
@@ -257,7 +228,6 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `setBasePower`                   | "[Leader]'s base power becomes 7000", with an optional `duration`.                                                                                                                                |
 | `playRested`                     | In a `permanent` effect: "Your Character cards are played rested."                                                                                                                                |
 | `trashFromDeck`                  | Trash cards from the top of your deck; `perPrevious` for "the same number of cards as you did from your hand".                                                                                    |
-| `handToLife`                     | "Add up to 1 ... card from your hand to the top of your Life cards"; `faceUp` for face-up.                                                                                                        |
 | `winGame`                        | "You win the game."                                                                                                                                                                               |
 | `if`                             | Only do the nested steps if the conditions hold.                                                                                                                                                  |
 | `redirectAttack`                 | "Change the target of the attack to ..." the chosen card.                                                                                                                                         |
@@ -274,10 +244,9 @@ opponent's next turn" or "... next End Phase".
 
 Statuses for `grantStatus`: `cannotAttack`, `cannotBlock` ("your opponent cannot activate
 [Blocker]" on a chosen Character), `cannotBeKOdInBattle`, `cannotBeKOdByEffects`,
-`cannotBeKOdByOpponentsEffects`, `cannotBeKOdInBattleByLeaders`, `noRefresh`, and `negated` ("negate
-the effect of ..."): a negated card's effects and printed keywords stop working (rule 8-2).
-`cannotBeKOdByOpponentsEffects`, `noRefresh`, and `cannotBeRested` (it can't attack, block, or
-be rested by costs or effects).
+`cannotBeKOdByOpponentsEffects`, `cannotBeKOdInBattleByLeaders`, `noRefresh`, `cannotBeRested` (it
+can't attack, block, or be rested by costs or effects), and `negated` ("negate the effect of ..."):
+a negated card's effects and printed keywords stop working (rule 8-2).
 
 Step options:
 

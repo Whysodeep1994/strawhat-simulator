@@ -205,7 +205,7 @@ export const OP09_EFFECT_CARDS: CardDefinition[] = [
       {
         timing: "onPlay",
         steps: [
-          { do: "handToLife", faceUp: true },
+          { do: "handToLife", count: 1, faceUp: true },
           { do: "lifeToHand", count: 1, from: "topOrBottom" },
         ],
       },

@@ -119,8 +119,6 @@ const ON_FIELD_TIMINGS = new Set([
   "donReturned",
   "characterRemovedByOpponent",
   "onOpponentsBlock",
-  "characterKOd",
-  "attackDealsDamage",
   "becomesRested",
 ]);
 
@@ -923,21 +921,6 @@ function runStep(
       return "continue";
     }
 
-    case "handToLife": {
-      const options = p.hand.filter((c) => matchesFilter(state, c, step.filter, source, false));
-      const chosen =
-        options.length === 0 ? [] : choose(state, frame, controller, options, 0, 1, step.do);
-      if (chosen === "wait") return "wait";
-      for (const uid of chosen) {
-        const card = p.hand.find((c) => c.uid === uid);
-        if (!card) continue;
-        p.hand = p.hand.filter((c) => c.uid !== uid);
-        if (step.faceUp) card.faceUp = true;
-        p.life.unshift(card);
-      }
-      return "continue";
-    }
-
     case "winGame":
       endGame(state, controller);
       return "continue";
@@ -1131,6 +1114,9 @@ function noteRemoval(state: GameState, controller: PlayerId, card: CardInstance)
         state.pendingEffects.push({ controller: owner, source: holder.uid, effect: index });
     });
   }
+}
+
+/**
  * Rests a field card by a cost or effect. `byEffect` also fires "If a Character is
  * rested by your effect"; "When this Character becomes rested" fires either way.
  */

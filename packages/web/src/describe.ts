@@ -146,8 +146,6 @@ function conditionText(condition: Condition): string {
     return `(If you have a total of ${condition.givenDonAtLeast} or more given DON!! cards)`;
   if ("leaderAttribute" in condition)
     return `(If your Leader has the <${condition.leaderAttribute}> attribute)`;
-  if ("opponentHandAtLeast" in condition)
-    return `(If your opponent has ${condition.opponentHandAtLeast} or more cards in their hand)`;
   if ("handTrashedByEffectThisTurn" in condition)
     return "(During the turn in which a card in your hand is trashed by an effect)";
   if ("leaderMulticolored" in condition) return "(If your Leader is multicolored)";
@@ -288,8 +286,6 @@ function stepText(step: Step): string {
       return step.perPrevious
         ? "Trash the same number of cards from the top of your deck."
         : `Trash ${step.count} card(s) from the top of your deck.`;
-    case "handToLife":
-      return `Add up to 1${filterText(step.filter)} card from your hand to the top of your Life cards${step.faceUp ? " face-up" : ""}.`;
     case "winGame":
       return "You win the game.";
     case "lifeToHand":

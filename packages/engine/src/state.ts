@@ -317,7 +317,6 @@ export function conditionsMet(
       return [me.leader, ...me.characters].reduce((n, x) => n + x.givenDon, 0) >= c.givenDonAtLeast;
     if ("leaderAttribute" in c)
       return (definitionOf(state, me.leader).attribute ?? "").includes(c.leaderAttribute);
-    if ("opponentHandAtLeast" in c) return them.hand.length >= c.opponentHandAtLeast;
     if ("handTrashedByEffectThisTurn" in c)
       return state.handTrashedTurn?.[controller] === state.turn;
     if ("leaderTypeIncludes" in c)

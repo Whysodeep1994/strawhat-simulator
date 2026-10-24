@@ -179,10 +179,10 @@ function block(state: GameState, blocker: string): void {
   state.battle.blocked = true;
   setBattleStep(state, "counter");
   queueEffects(state, location.player, location.card, "onBlock");
+  queueEffects(state, location.player, location.card, "becomesRested");
   const attacker = opponentOf(location.player);
   for (const card of fieldCards(state, attacker))
     queueEffects(state, attacker, card, "onOpponentsBlock");
-  queueEffects(state, location.player, location.card, "becomesRested");
 }
 
 /** Rule 7-1-3-1-1. */
