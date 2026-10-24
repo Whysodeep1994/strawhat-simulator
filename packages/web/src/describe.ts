@@ -157,8 +157,6 @@ function conditionText(condition: Condition): string {
     return "(If your opponent has more DON!! cards on their field than you)";
   if ("handAtLeast" in condition)
     return `(If you have ${condition.handAtLeast} or more cards in hand)`;
-  if ("opponentHandAtLeast" in condition)
-    return `(If your opponent has ${condition.opponentHandAtLeast} or more cards in hand)`;
   if ("trashAtLeast" in condition)
     return `(If you have ${condition.trashAtLeast} or more cards in your trash)`;
   return `(If the top card of your deck is a${filterText(condition.deckTopMatches)} card)`;

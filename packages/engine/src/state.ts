@@ -313,7 +313,6 @@ export function conditionsMet(
       return [me.leader, ...me.characters].reduce((n, x) => n + x.givenDon, 0) >= c.givenDonAtLeast;
     if ("leaderAttribute" in c)
       return (definitionOf(state, me.leader).attribute ?? "").includes(c.leaderAttribute);
-    if ("opponentHandAtLeast" in c) return them.hand.length >= c.opponentHandAtLeast;
     if ("handTrashedByEffectThisTurn" in c)
       return state.handTrashedTurn?.[controller] === state.turn;
     if ("leaderTypeIncludes" in c)
@@ -489,6 +488,7 @@ export function canPayCosts(
         matchesFilter(state, c, cost.playFromHand, source, false),
       );
       if (matching.length === 0) return false;
+    }
     if ("characterToLife" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.characterToLife) return false;

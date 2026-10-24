@@ -1518,6 +1518,7 @@ function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
       lifeLost(state, frame.defender);
     } else if (top.faceUp && hasRule(state, frame.defender, "faceUpLifeToDeckBottom")) {
       p.deck.push(takeLife(p.life, 0) as CardInstance);
+      lifeLost(state, frame.defender);
     } else if (!hasTrigger) {
       lifeCardToHand(state, frame.defender, 0);
     } else if (frame.answer === null) {

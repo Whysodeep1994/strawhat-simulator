@@ -73,6 +73,10 @@ export type Timing =
   | "triggerActivated"
   /** "When this Character becomes rested" (by attacking, blocking, a cost or an effect). */
   | "becomesRested"
+  /** "When a Character is K.O.'d": any Character, either player's, in battle or by an effect. */
+  | "characterKOd"
+  /** "When this card's attack deals damage to your opponent's Life". */
+  | "attackDealsDamage"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -118,7 +122,6 @@ export type Condition =
   /** "If your opponent has more DON!! cards on their field than you". */
   | { opponentHasMoreDon: true }
   | { handAtLeast: number }
-  | { opponentHandAtLeast: number }
   /** "If you have 10 or more cards in your trash". */
   | { trashAtLeast: number }
   /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
@@ -183,7 +186,7 @@ export type Cost =
   /** "K.O. 1 of your Characters other than this Character". */
   | { koOwnCharacter: number; filter?: Filter }
   /** "Play 1 [Kotori] from your hand". */
-  | { playFromHand: Filter };
+  | { playFromHand: Filter }
   /** "Add 1 of your Characters ... to the top of your Life cards (face-up)". */
   | { characterToLife: number; filter?: Filter; faceUp?: boolean };
 
@@ -340,7 +343,23 @@ export type Step =
   /** "Change the target of the attack to ...": the chosen card becomes the attack's target. */
   | { do: "redirectAttack"; target: Target }
   /** "Add up to 1 card from your hand to the top of your Life cards." */
-  | { do: "handToLife"; count: number }
+  /**
+   * "Add up to 1 card from your hand to the top of your Life cards." `fromTrash` also offers
+   * matching cards in your trash ("from your hand or trash"); `faceUp` adds them face-up.
+   */
+  | { do: "handToLife"; count: number; filter?: Filter; fromTrash?: boolean; faceUp?: boolean }
+  /** Trash all of your face-up Life cards. */
+  | { do: "trashFaceUpLife" }
+  | { do: "trashDeckTop"; count: number }
+  /**
+   * Permanent only: "Your face-up Life cards are placed at the bottom of your deck instead of
+   * being added to your hand, according to the rules" (damage, rule 7-1-4-1-1-2).
+   */
+  | { do: "faceUpLifeToDeckBottom" }
+  /** Permanent, on a Leader: "when your deck is reduced to 0, you win the game instead of losing". */
+  | { do: "winOnDeckOut" }
+  /** Permanent, on a Leader: "you can only include {type} type cards in your deck". Checked by `checkDeck`. */
+  | { do: "deckOnlyType"; type: string }
   /** Place the cards revealed by a `revealFromHand` cost at the top of your deck. */
   | { do: "revealedToDeckTop" }
   /** Add up to `count` (default 1) matching cards from your trash to your hand. */

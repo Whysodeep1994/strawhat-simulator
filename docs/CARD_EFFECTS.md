@@ -23,28 +23,6 @@ opponent's Characters with a cost of 3 or less" is written as:
 
 ## Timings
 
-| Timing                        | Card wording                                                 | Rules   |
-| ----------------------------- | ------------------------------------------------------------ | ------- |
-| `onPlay`                      | [On Play]                                                    | 10-2-6  |
-| `whenAttacking`               | [When Attacking]                                             | 10-2-5  |
-| `onOpponentsAttack`           | [On Your Opponent's Attack]                                  | 10-2-16 |
-| `onBlock`                     | [On Block]                                                   | 10-2-15 |
-| `onKO`                        | [On K.O.]                                                    | 10-2-17 |
-| `koByEffect`                  | "When this Character is K.O.'d by an effect" (not in battle) | 10-2-1  |
-| `activateMain`                | [Activate: Main]                                             | 10-2-2  |
-| `main`                        | [Main] on Events                                             | 10-2-3  |
-| `counter`                     | [Counter] on Events                                          | 10-2-4  |
-| `trigger`                     | [Trigger]                                                    | 10-1-5  |
-| `endOfYourTurn`               | [End of Your Turn]                                           | 10-2-7  |
-| `endOfOpponentsTurn`          | [End of Your Opponent's Turn]                                | 10-2-8  |
-| `permanent`                   | Always-on text, e.g. "+1000 power"                           | 8-1-3-3 |
-| `characterRestedByYourEffect` | "If a Character is rested by your effect"                    | 8-1-3-1 |
-| `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                    | 8-1-3-4 |
-| `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."  | 8-1-3-1 |
-| `drawOutsideDrawPhase`        | "When you draw a card outside of your Draw Phase"            | 8-1-3-1 |
-| `lifeAddedToHand`             | "When a card is added to your hand from your Life"           | 8-1-3-1 |
-| `lifeBecomesZero`             | "When your number of Life cards becomes 0"                   | 8-1-3-1 |
-| `triggerActivated`            | "When a [Trigger] activates" (yours)                         | 8-1-3-1 |
 | Timing                        | Card wording                                                         | Rules   |
 | ----------------------------- | -------------------------------------------------------------------- | ------- |
 | `onPlay`                      | [On Play]                                                            | 10-2-6  |
@@ -64,6 +42,10 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                            | 8-1-3-4 |
 | `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."          | 8-1-3-1 |
 | `becomesRested`               | "When this Character becomes rested" (attack, block, cost or effect) | 8-1-3-1 |
+| `drawOutsideDrawPhase`        | "When you draw a card outside of your Draw Phase"                    | 8-1-3-1 |
+| `lifeAddedToHand`             | "When a card is added to your hand from your Life"                   | 8-1-3-1 |
+| `lifeBecomesZero`             | "When your number of Life cards becomes 0"                           | 8-1-3-1 |
+| `triggerActivated`            | "When a [Trigger] activates" (yours)                                 | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -125,15 +107,14 @@ played on this turn"), plus:
 | `{ "lifeAtMostOpponents": true }`                | "If the number of your Life cards is equal to or less than your opponent's" |
 | `{ "leaderMulticolored": true }`                 | "If your Leader is multicolored"                                            |
 | `{ "opponentDonOnFieldAtLeast": 5 }`             | "If your opponent has 5 or more DON!! cards on their field"                 |
-| `{ "thisPowerAtLeast": 7000 }`                   | "If this Character has 7000 power or more"                                  |
-| `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"             |
-| `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                  |
-| `{ "opponentHandAtLeast": 6 }`                   | "If your opponent has 6 or more cards in their hand"                        |
-| `{ "trashAtLeast": 10 }`                         | "If you have 10 or more cards in your trash"                                |
 | `{ "givenDonAtLeast": 3 }`                       | "If you have a total of 3 or more given DON!! cards"                        |
 | `{ "leaderAttribute": "Slash" }`                 | "If your Leader has the <Slash> attribute"                                  |
 | `{ "opponentHandAtLeast": 6 }`                   | "If your opponent has 6 or more cards in their hand"                        |
 | `{ "handTrashedByEffectThisTurn": true }`        | "During the turn in which a card in your hand is trashed by an effect"      |
+| `{ "thisPowerAtLeast": 7000 }`                   | "If this Character has 7000 power or more"                                  |
+| `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"             |
+| `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                  |
+| `{ "trashAtLeast": 10 }`                         | "If you have 10 or more cards in your trash"                                |
 
 `count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
@@ -160,9 +141,9 @@ of costs the player pays one of, e.g. "rest your Leader or 1 of your DON!! cards
 ("return N of your currently given DON!! cards to your cost area rested"; the player picks which
 cards), `toDeckBottom` ("place 1 of your Characters at the bottom of your deck"; `"zone": "stage"` for
 Stages, optional `filter`), `trashToDeck` ("return 20 cards from your trash to your deck and shuffle
-it"), `koOwnCharacter` ("K.O. 1 of your Characters", optional `filter`), and `playFromHand` ("play 1
-[Kotori] from your hand"; the value is a filter).
-cards), `characterToLife` ("add 1 of your Characters with ... to the top of your Life cards
+it"), `koOwnCharacter` ("K.O. 1 of your Characters", optional `filter`), `playFromHand` ("play 1
+[Kotori] from your hand"; the value is a filter),
+and `characterToLife` ("add 1 of your Characters with ... to the top of your Life cards
 face-up": `{ "characterToLife": 1, "filter": {...}, "faceUp": true }`).
 
 Face-up Life cards are open to both players (rule 3-10-2-1): `viewFor` shows them in `life`, and
