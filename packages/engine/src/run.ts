@@ -136,6 +136,8 @@ const ON_FIELD_TIMINGS = new Set([
   "lifeBecomesZero",
   "triggerActivated",
   "becomesRested",
+  "characterKOd",
+  "attackDealsDamage",
 ]);
 
 function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
