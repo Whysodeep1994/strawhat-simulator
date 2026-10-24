@@ -1,0 +1,21 @@
+{
+  "name": "\"If the total cost of your Characters is 5 or more\" fails at a total of 3",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-TOTAL-COST", "TEST-C2-3000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0,
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "p1.hand": 0
+  }
+}

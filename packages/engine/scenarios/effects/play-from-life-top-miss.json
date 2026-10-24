@@ -1,0 +1,22 @@
+{
+  "name": "A top Life card that doesn't match stays in Life",
+  "rules": ["8-3-3"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-LIFE-PLAY"],
+      "life": ["TEST-EVENT", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    }
+  ],
+  "expect": {
+    "p1.life": 2,
+    "p1.characters": 1
+  }
+}

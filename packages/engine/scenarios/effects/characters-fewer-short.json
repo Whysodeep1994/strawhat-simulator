@@ -1,0 +1,26 @@
+{
+  "name": "\"At least 2 less Characters\" fails with only 1 less",
+  "rules": ["8-3-3"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-FILLER"],
+      "hand": ["TEST-FEWER-CHARACTERS"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "characters": ["TEST-FILLER", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 0
+  }
+}

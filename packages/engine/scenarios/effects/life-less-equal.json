@@ -1,0 +1,18 @@
+{
+  "name": "Equal Life is not less Life, so no [Rush]",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-LIFE-LESS",
+          "playedThisTurn": true
+        }
+      ]
+    }
+  },
+  "actions": [],
+  "expect": {
+    "legal.p1.attack": 1
+  }
+}

@@ -391,6 +391,13 @@ export function conditionsMet(
       return me.donRested + rested >= c.restedCardsAtLeast;
     }
     if ("lifeAtMostOpponents" in c) return me.life.length <= them.life.length;
+    if ("lifeLessThanOpponents" in c) return me.life.length < them.life.length;
+    if ("charactersTotalCostAtLeast" in c)
+      return (
+        me.characters.reduce((n, x) => n + costOf(state, x), 0) >= c.charactersTotalCostAtLeast
+      );
+    if ("charactersFewerThanOpponentBy" in c)
+      return me.characters.length <= them.characters.length - c.charactersFewerThanOpponentBy;
     if ("givenDonAtLeast" in c)
       return [me.leader, ...me.characters].reduce((n, x) => n + x.givenDon, 0) >= c.givenDonAtLeast;
     if ("leaderAttribute" in c)
@@ -592,6 +599,7 @@ export function canPayCosts(
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
     if ("handToDeckBottom" in cost) fromHand += cost.handToDeckBottom;
     if ("thisToDeckBottom" in cost && !findOnField(state, source.uid)) return false;
+    if ("returnThis" in cost && findOnField(state, source.uid)?.zone !== "characters") return false;
     if ("activeLeaderPower" in cost && p.leader.rested) return false;
     if ("returnActiveDon" in cost) restDon += cost.returnActiveDon;
     if ("returnOwnCharacter" in cost) {

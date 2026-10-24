@@ -28,6 +28,11 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-24: Engine blocks for set OP-10: "when you activate an Event", the total cost of your
+  Characters, "at least 2 fewer Characters", "less Life cards than your opponent", returning this
+  Character to hand as a cost, "would be K.O.'d in battle" replacements, playing the top Life card,
+  "you cannot set DON!! cards as active using Character effects", and "your opponent's rested
+  DON!! will not become active in their next Refresh Phase". 14 new effect scenarios.
 - 2026-10-23: Engine blocks for set OP-09: "negate the effect of" (a `negated` status that also
   turns off printed keywords), "that Character" targets, "total power of 4000 or less", "your
   Character cards are played rested", "cannot be K.O.'d in battle by Leaders", trashing cards from

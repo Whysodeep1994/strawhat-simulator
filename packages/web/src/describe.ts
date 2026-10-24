@@ -76,6 +76,7 @@ const TIMING_NAMES: Record<Timing, string> = {
   triggerActivated: "When a [Trigger] activates,",
   opponentActivatesEvent: "When your opponent activates an Event,",
   startOfGame: "At the start of the game,",
+  eventActivated: "When you activate an Event,",
   permanent: "",
 };
 
@@ -190,6 +191,12 @@ function conditionText(condition: Condition): string {
     return `(If you have at least ${condition.handFewerThanOpponentBy} fewer cards in hand than your opponent)`;
   if ("totalLifeAtMost" in condition)
     return `(If you and your opponent have a total of ${condition.totalLifeAtMost} or less Life cards)`;
+  if ("charactersTotalCostAtLeast" in condition)
+    return `(If the total cost of your Characters is ${condition.charactersTotalCostAtLeast} or more)`;
+  if ("charactersFewerThanOpponentBy" in condition)
+    return `(If you have at least ${condition.charactersFewerThanOpponentBy} fewer Characters than your opponent)`;
+  if ("lifeLessThanOpponents" in condition)
+    return "(If you have less Life cards than your opponent)";
   return `(If the top card of your deck is a${filterText(condition.deckTopMatches)} card)`;
 }
 
@@ -235,6 +242,7 @@ function costText(cost: Cost): string {
     return `place ${cost.trashToDeckBottom}${filterText(cost.filter)} card(s) from your trash at the bottom of your deck`;
   }
   if ("thisToDeckBottom" in cost) return "place this card at the bottom of your deck";
+  if ("returnThis" in cost) return "return this Character to the owner's hand";
   if ("returnActiveDon" in cost)
     return `return ${cost.returnActiveDon} of your active DON!! cards to your DON!! deck`;
   if ("activeLeaderPower" in cost)
@@ -321,6 +329,12 @@ function stepText(step: Step): string {
       return `Look at ${step.look} cards from the top of your deck and place them at the top${step.bottom ? " or bottom" : ""} of your deck in any order.`;
     case "playFromDeckTop":
       return `You may play the top card of your deck if it is a${filterText(step.filter)} card${step.rested ? ", rested" : ""}.`;
+    case "playFromLifeTop":
+      return `Reveal the top card of your Life cards. If it is a${filterText(step.filter)} card, you may play it.`;
+    case "noCharacterDonActive":
+      return "You cannot set DON!! cards as active using Character effects during this turn.";
+    case "freezeOpponentDon":
+      return `Up to ${step.count} of your opponent's rested DON!! cards will not become active in their next Refresh Phase.`;
     case "noLifeToHand":
       return "You cannot add Life cards to your hand using your own effects during this turn.";
     case "chooseOne":

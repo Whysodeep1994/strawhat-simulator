@@ -159,6 +159,7 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
     p.trash.unshift(card);
     const index = (def.effects ?? []).findIndex((e) => e.timing === "main");
     pushEffect(state, player, card.uid, index);
+    queueFieldEffects(state, player, "eventActivated");
     queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
     return;
   }
@@ -237,5 +238,6 @@ function counterEvent(state: GameState, player: PlayerId, uid: string): void {
   p.trash.unshift(card);
   const index = (def.effects ?? []).findIndex((e) => e.timing === "counter");
   pushEffect(state, player, card.uid, index);
+  queueFieldEffects(state, player, "eventActivated");
   queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
 }

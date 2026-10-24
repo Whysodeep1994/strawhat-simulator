@@ -269,7 +269,7 @@ Comprehensive Rules version 1.2.1.
 | 6-2 | 6-2 Refresh Phase | Tested | 1 |
 | 6-2-1 | 6-2 Refresh Phase | Phase 4 (effects) | 0 |
 | 6-2-2 | 6-2 Refresh Phase | Phase 4 (effects) | 0 |
-| 6-2-3 | 6-2 Refresh Phase | Tested | 2 |
+| 6-2-3 | 6-2 Refresh Phase | Tested | 3 |
 | 6-2-4 | 6-2 Refresh Phase | Tested | 3 |
 | 6-3 | 6-3 Draw Phase | Tested | 1 |
 | 6-3-1 | 6-3 Draw Phase | Tested | 4 |
@@ -325,7 +325,7 @@ Comprehensive Rules version 1.2.1.
 | 7-1-4-1-1-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 2 |
 | 7-1-4-1-1-3 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 2 |
 | 7-1-4-1-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
-| 7-1-4-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 5 |
+| 7-1-4-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 6 |
 | 7-1-5 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-5-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 3 |
 | 7-1-5-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Phase 4 (effects) | 0 |
@@ -336,7 +336,7 @@ Comprehensive Rules version 1.2.1.
 | 8-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-2 | 8-1 Effects | Tested | 4 |
 | 8-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
-| 8-1-3-1 | 8-1 Effects | Tested | 10 |
+| 8-1-3-1 | 8-1 Effects | Tested | 11 |
 | 8-1-3-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-3-1-2 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
@@ -349,7 +349,7 @@ Comprehensive Rules version 1.2.1.
 | 8-1-3-3-3 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-3-4 | 8-1 Effects | Tested | 1 |
 | 8-1-3-3-5 | 8-1 Effects | Phase 4 (effects) | 0 |
-| 8-1-3-4 | 8-1 Effects | Tested | 5 |
+| 8-1-3-4 | 8-1 Effects | Tested | 7 |
 | 8-1-3-4-1 | 8-1 Effects | Tested | 3 |
 | 8-1-3-4-2 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-4-3 | 8-1 Effects | Phase 4 (effects) | 0 |
@@ -369,7 +369,7 @@ Comprehensive Rules version 1.2.1.
 | 8-2-3 | 8-2 Valid and Invalid Effects | Phase 4 (effects) | 0 |
 | 8-2-4 | 8-2 Valid and Invalid Effects | Phase 4 (effects) | 0 |
 | 8-3 | 8-3 Activation Cost and Conditions | Section heading | 0 |
-| 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 20 |
+| 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 21 |
 | 8-3-1-1 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-1-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-3 | 8-3 Activation Cost and Conditions | Tested | 21 |
@@ -380,12 +380,12 @@ Comprehensive Rules version 1.2.1.
 | 8-3-1-7 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-8 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2 | 8-3 Activation Cost and Conditions | Tested | 7 |
-| 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 15 |
+| 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 19 |
 | 8-3-2-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2-3 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-4 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-5 | 8-3 Activation Cost and Conditions | Tested | 1 |
-| 8-3-3 | 8-3 Activation Cost and Conditions | Tested | 12 |
+| 8-3-3 | 8-3 Activation Cost and Conditions | Tested | 17 |
 | 8-4 | 8-4 Activation and Resolution | Tested | 5 |
 | 8-4-1 | 8-4 Activation and Resolution | Tested | 2 |
 | 8-4-1-1 | 8-4 Activation and Resolution | Tested | 1 |
@@ -422,7 +422,7 @@ Comprehensive Rules version 1.2.1.
 | 9-2-1-2 | 9-2 Defeat Judgment Processing | Tested | 2 |
 | 10-1 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-1 | 10-1 Keyword Effects | Tested | 1 |
-| 10-1-1-1 | 10-1 Keyword Effects | Tested | 2 |
+| 10-1-1-1 | 10-1 Keyword Effects | Tested | 3 |
 | 10-1-2 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-2-1 | 10-1 Keyword Effects | Tested | 2 |
 | 10-1-3 | 10-1 Keyword Effects | Tested | 1 |

@@ -79,8 +79,13 @@ export function startTurn(state: GameState, player: PlayerId): void {
   }
   for (const card of [p.leader, ...p.characters, ...(p.stage ? [p.stage] : [])])
     if (!hasStatus(state, card, "noRefresh")) card.rested = false;
-  p.donActive += p.donRested;
-  p.donRested = 0;
+  // "Will not become active in your opponent's next Refresh Phase".
+  const frozen = state.modifiers
+    .filter((m) => m.target === p.leader.uid && m.frozenDon)
+    .reduce((n, m) => n + (m.frozenDon ?? 0), 0);
+  const stay = Math.min(frozen, p.donRested);
+  p.donActive += p.donRested - stay;
+  p.donRested = stay;
 
   // Draw Phase, rule 6-3-1.
   state.phase = "draw";

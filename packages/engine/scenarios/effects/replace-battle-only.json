@@ -1,0 +1,36 @@
+{
+  "name": "\"If this Character would be K.O.'d in battle\" saves it in battle",
+  "rules": ["8-1-3-4", "7-1-4-2"],
+  "setup": {
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-BATTLE-ONLY-SAVE",
+          "rested": true
+        }
+      ],
+      "hand": ["TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    },
+    {
+      "type": "confirm",
+      "player": "p2",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p2.characters": 1,
+    "p2.hand": 0
+  }
+}
