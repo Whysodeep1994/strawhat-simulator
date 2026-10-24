@@ -145,6 +145,23 @@ export function hasStatus(state: GameState, card: CardInstance, status: Status):
   return permanentGrants(state, card, "grantStatus").some((grant) => grant.status === status);
 }
 
+/**
+ * "This Character cannot be K.O.'d by effects of your opponent's Characters with 5000 base
+ * power or less": whether one of `card`'s own `koImmunity` effects covers `source`.
+ */
+export function koImmuneTo(state: GameState, card: CardInstance, source: CardInstance): boolean {
+  if (source.owner === card.owner || definitionOf(state, source).category !== "character")
+    return false;
+  return effectsOf(state, card).some(
+    (effect) =>
+      effect.timing === "permanent" &&
+      conditionsMet(state, card.owner, card, effect.conditions) &&
+      effect.steps.some(
+        (step) => step.do === "koImmunity" && matchesFilter(state, source, step.from, card, false),
+      ),
+  );
+}
+
 /** Current cost of a card on the field: printed cost plus effects (rule 2-7-1). */
 export function costOf(state: GameState, card: CardInstance): number {
   let cost = definitionOf(state, card).cost ?? 0;
@@ -235,7 +252,12 @@ function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, gr
             grants.push({ cost: powerAmount(state, player, step) });
           else if (step.do === "grantKeyword") grants.push({ keyword: step.keyword });
           else if (step.do === "grantStatus") grants.push({ status: step.status });
-          else if (step.do === "setBasePower") grants.push({ basePower: step.power });
+          else if (step.do === "setBasePower")
+            grants.push({
+              basePower: step.leaderBase
+                ? basePowerOf(state, state.players[player].leader)
+                : step.power,
+            });
           else grants.push({});
         }
       }
@@ -419,6 +441,10 @@ export function conditionsMet(
       return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
     if ("totalLifeAtMost" in c) return me.life.length + them.life.length <= c.totalLifeAtMost;
     if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
+    if ("thisRested" in c) return source.rested;
+    if ("not" in c) return !conditionsMet(state, controller, source, [c.not]);
+    if ("opponentLeaderAttribute" in c)
+      return (definitionOf(state, them.leader).attribute ?? "").includes(c.opponentLeaderAttribute);
     if ("donOnFieldAtMostOpponents" in c)
       return donOnField(state, controller) <= donOnField(state, opponentOf(controller));
     return false;
@@ -575,7 +601,9 @@ export function canPayCosts(
   let returnGiven = 0;
   let life = 0;
   let fromTrash = 0;
+  let restCards = 0;
   for (const cost of costs) {
+    if ("restCards" in cost) restCards += cost.restCards;
     if ("restDon" in cost) restDon += cost.restDon;
     if ("giveActiveDon" in cost) restDon += cost.giveActiveDon;
     if ("trashOwnCharacter" in cost) {
@@ -656,8 +684,12 @@ export function canPayCosts(
       if (own.length < cost.characterToLife) return false;
     }
   }
+  const activeCards = fieldCards(state, player).filter(
+    (c) => !c.rested && !hasStatus(state, c, "cannotBeRested"),
+  ).length;
   return (
     restDon <= p.donActive &&
+    restCards <= activeCards + p.donActive - restDon &&
     donMinus <= donOnField(state, player) &&
     fromHand <= hand.length &&
     life <= p.life.length &&
