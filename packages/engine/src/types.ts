@@ -65,6 +65,9 @@ export interface Modifier {
   negateOnPlay?: boolean;
   /** On a Leader: its player can't add Life cards to their hand with their own effects. */
   noLifeToHand?: boolean;
+  /** On a Leader: a `battleKOReplacement` effect, set up by a `replaceBattleKO` step, that may save
+   * its player's Characters from a K.O. in battle this turn. */
+  battleKOReplace?: { source: string; effect: number };
   /** On a Leader: its player can't play cards matching `filter` (`fromHand`: only from the hand). */
   cannotPlay?: { filter?: Filter; fromHand?: boolean };
   until: "turn" | "battle";
@@ -110,8 +113,10 @@ export type Frame =
       picked?: number;
       /** How many cards the previous step moved, for "for every card trashed". */
       previous?: number;
-      /** The cards the previous targeting step picked, for "that Character". */
-      chosen?: string[];
+      /** The cards the last removal step moved, for "a different color than the returned Character". */
+      moved?: string[];
+      /** Cards trashed from the hand to pay this effect's costs ("the trashed card"). */
+      costTrashed?: string[];
       answer: string[] | boolean | null;
       /** `replaceRemoval` only: the card the replacement would save. */
       replacing?: string;

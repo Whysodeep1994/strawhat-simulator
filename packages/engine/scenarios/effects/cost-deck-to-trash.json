@@ -3,7 +3,7 @@
   "rules": ["8-3-1"],
   "setup": {
     "p1": {
-      "hand": ["TEST-DECK-TRASH"]
+      "hand": ["TEST-EB-DECK-TRASH"]
     }
   },
   "actions": [

@@ -258,7 +258,7 @@ export const EXTRA_BOOSTER_CARDS: CardDefinition[] = [
     ],
   },
   {
-    id: "TEST-REDIRECT",
+    id: "TEST-EB-REDIRECT",
     name: "Test Redirect",
     category: "event",
     colors: ["purple"],
@@ -317,7 +317,7 @@ export const EXTRA_BOOSTER_CARDS: CardDefinition[] = [
     ],
   },
   {
-    id: "TEST-DECK-TRASH",
+    id: "TEST-EB-DECK-TRASH",
     name: "Test Deck Trash",
     category: "event",
     colors: ["black"],
@@ -524,7 +524,7 @@ export const EXTRA_BOOSTER_CARDS: CardDefinition[] = [
           {
             do: "grantStatus",
             target: {
-              side: "previous",
+              side: "that",
             },
             status: "noRefresh",
             duration: "opponentsNextTurn",

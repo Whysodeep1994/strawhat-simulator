@@ -4,7 +4,7 @@
   "setup": {
     "p2": {
       "characters": ["TEST-C2-3000"],
-      "hand": ["TEST-REDIRECT"]
+      "hand": ["TEST-EB-REDIRECT"]
     }
   },
   "actions": [

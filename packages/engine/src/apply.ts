@@ -3,7 +3,14 @@ import { isLegal } from "./legal.js";
 import { endGame, processRules } from "./rules.js";
 import { advance } from "./run.js";
 import { shuffleInPlace } from "./rng.js";
-import { definitionOf, effectsOf, fieldCards, findOnField, playCostOf } from "./state.js";
+import {
+  counterOf,
+  definitionOf,
+  effectsOf,
+  fieldCards,
+  findOnField,
+  playCostOf,
+} from "./state.js";
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
 import { drawCards, pushEffect, putOnField, queueEffects, startTurn } from "./turn.js";
 

@@ -1,5 +1,5 @@
 {
-  "name": "\"The selected Character\" is the one the previous step picked",
+  "name": "\"The selected Character\" (side \"that\") is the one the previous step picked",
   "rules": ["8-4"],
   "setup": {
     "p1": {
@@ -21,8 +21,8 @@
   ],
   "expect": {
     "modifiers": 2,
-    "modifiers.0.target": "c7",
-    "modifiers.1.target": "c7",
+    "modifiers.0.target": "c3",
+    "modifiers.1.target": "c3",
     "modifiers.1.status": "noRefresh"
   }
 }
