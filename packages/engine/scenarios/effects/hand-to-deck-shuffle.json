@@ -1,0 +1,26 @@
+{
+  "name": "Your opponent shuffles their hand into their deck and draws 5",
+  "rules": ["10-2-6"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-HAND-SHUFFLE"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "hand": ["TEST-FILLER", "TEST-FILLER", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p2.hand": 5,
+    "p2.deck": 18
+  }
+}

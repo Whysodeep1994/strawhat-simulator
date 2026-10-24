@@ -108,6 +108,8 @@ export type Timing =
   | "youPlayCharacter"
   /** "When a [Trigger] activates" (either player's). */
   | "triggerActivated"
+  /** "When your opponent activates an Event" (the card is on your field). */
+  | "opponentActivatesEvent"
   /** Leader effects that read "at the start of the game" (rule 5-2-1-5-1). */
   | "startOfGame"
   /** Always on while its conditions hold (rule 8-1-3-3). */
@@ -174,7 +176,9 @@ export type Condition =
   /** "If the number of DON!! cards on your field is equal to or less than the number on your opponent's field". */
   | { donOnFieldAtMostOpponents: true }
   /** "If you have 5 or less active DON!! cards". */
-  | { donActiveAtMost: number };
+  | { donActiveAtMost: number }
+  /** "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field". */
+  | { donFewerThanOpponentBy: number };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -232,7 +236,7 @@ export type Cost =
   /** "Return N total of your currently given DON!! cards to your cost area rested." */
   | { returnGivenDon: number }
   /** "Place 1 of your Characters (or Stages) at the bottom of your deck". */
-  | { toDeckBottom: number; zone?: "characters" | "stage"; filter?: Filter }
+  | { toDeckBottom: number; zone?: "characters" | "stage"; filter?: Filter; side?: "any" }
   /** "Return 20 cards from your trash to your deck and shuffle it". */
   | { trashToDeck: number }
   /** "K.O. 1 of your Characters other than this Character". */
@@ -244,8 +248,8 @@ export type Cost =
 
   /** "Give 1 of your active DON!! cards to 1 of your Leader or Character cards". */
   | { giveActiveDon: number }
-  /** "Trash 1 of your Characters with a type including ...". Not a K.O. */
-  | { trashOwnCharacter: number; filter?: Filter };
+  /** "Trash 1 of your Characters with a type including ...". Not a K.O. `zone: "stage"` trashes your Stage. */
+  | { trashOwnCharacter: number; filter?: Filter; zone?: "stage" };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -418,8 +422,17 @@ export type Step =
   | { do: "extraTurn" }
   /** Place cards from your hand at the top of your deck. */
   | { do: "handToDeckTop"; count: number }
-  /** Place cards from your hand at the bottom of your deck. */
-  | { do: "handToDeckBottom"; count: number }
+  /**
+   * Place cards from your hand at the bottom of your deck. `side: "opponent"`: "your opponent
+   * must place 1 card from their hand at the bottom of their deck" (they pick).
+   */
+  | { do: "handToDeckBottom"; count: number; side?: "opponent" }
+  /** "[Side] returns all cards in their hand to their deck and shuffles it. Then, draws 5 cards." */
+  | { do: "handToDeckShuffle"; side: "self" | "opponent"; draw: number }
+  /** "You cannot attack a Leader during this turn." */
+  | { do: "cannotAttackLeader" }
+  /** "Deal 1 damage to your opponent" (rule 4-6-2: damage from an effect, [Trigger] included). */
+  | { do: "dealDamage"; count: number }
   /** "Change the target of the attack to ...": the chosen card becomes the attack's target. */
   | { do: "redirectAttack"; target: Target }
   /**
