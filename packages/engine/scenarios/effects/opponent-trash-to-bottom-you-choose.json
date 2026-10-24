@@ -1,0 +1,28 @@
+{
+  "name": "You pick up to 1 card from the opponent's trash for the bottom of their deck",
+  "rules": ["8-3-3"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-OPP-TRASH-BOTTOM"]
+    },
+    "p2": {
+      "trash": ["TEST-FILLER", "TEST-C4-5000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.trash.1"]
+    }
+  ],
+  "expect": {
+    "p2.trash": 1,
+    "p2.deck.20.cardId": "TEST-C4-5000"
+  }
+}
