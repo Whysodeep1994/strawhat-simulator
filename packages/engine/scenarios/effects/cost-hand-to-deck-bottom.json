@@ -1,0 +1,35 @@
+{
+  "name": "A cost that places 2 cards from hand at the bottom of the deck",
+  "rules": ["8-3-1-3"],
+  "setup": {
+    "p1": {
+      "stage": "TEST-HAND-BOTTOM-COST",
+      "hand": ["TEST-C2-3000", "TEST-C4-5000", "TEST-BLOCKER"],
+      "deck": 5
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.stage",
+      "effect": 0
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.0", "p1.hand.1"]
+    }
+  ],
+  "expect": {
+    "p1.hand": 3,
+    "p1.deck": 5,
+    "p1.deck.4.cardId": "TEST-C4-5000",
+    "p1.stage.rested": true
+  }
+}

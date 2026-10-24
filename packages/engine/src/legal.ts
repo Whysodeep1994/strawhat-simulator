@@ -12,6 +12,7 @@ import {
   oncePerTurnKey,
   playBlocked,
   playCostOf,
+  powerOf,
 } from "./state.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
 
@@ -84,6 +85,13 @@ export function isLegal(state: GameState, action: Action): boolean {
     const prompt = state.prompt;
     if (prompt.kind !== "choose" || prompt.player !== action.player) return false;
     const unique = new Set(action.cards);
+    if (prompt.maxTotalPower !== undefined) {
+      const total = action.cards.reduce((sum, uid) => {
+        const card = findOnField(state, uid)?.card;
+        return sum + (card ? powerOf(state, card) : 0);
+      }, 0);
+      if (total > prompt.maxTotalPower) return false;
+    }
     return (
       unique.size === action.cards.length &&
       action.cards.length >= prompt.min &&
@@ -216,7 +224,9 @@ export function eligibleBlockers(state: GameState, player: PlayerId): CardInstan
   if (!attacker || hasKeywordNow(state, attacker.card, "unblockable")) return [];
   // Rule 10-1-4-1: effects can stop [Blocker] from being activated.
   const bans = state.modifiers.filter((m) => m.target === battle.attacker && m.noBlockers);
-  return state.players[player].characters.filter(
+  const p = state.players[player];
+  // A Leader with [Blocker] can block too.
+  return [p.leader, ...p.characters].filter(
     (c) =>
       !c.rested &&
       c.uid !== battle.target &&

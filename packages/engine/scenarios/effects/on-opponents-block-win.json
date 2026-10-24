@@ -1,0 +1,29 @@
+{
+  "name": "\"When your opponent activates [Blocker], if either player has 0 Life, you win\"",
+  "rules": ["1-2-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-BLOCK-WIN"]
+    },
+    "p2": {
+      "characters": ["TEST-BLOCKER"],
+      "life": 0
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "block",
+      "player": "p2",
+      "blocker": "p2.characters.0"
+    }
+  ],
+  "expect": {
+    "winner": "p1"
+  }
+}

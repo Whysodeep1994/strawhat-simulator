@@ -110,11 +110,20 @@ export type Frame =
       picked?: number;
       /** How many cards the previous step moved, for "for every card trashed". */
       previous?: number;
+      /** The cards the previous targeting step picked, for "that Character". */
+      chosen?: string[];
       answer: string[] | boolean | null;
       /** `replaceRemoval` only: the card the replacement would save. */
       replacing?: string;
+      /** The cards the last targeting step picked, for "that Character" (`side: "that"`). */
+      targets?: string[];
     }
-  | { kind: "battle"; step: "attack" | "block" | "counter" | "damage" | "end" }
+  | {
+      kind: "battle";
+      step: "attack" | "block" | "counter" | "damage" | "ko" | "end";
+      /** The losing Character a replacement effect may save from a K.O. in battle. */
+      saving?: string;
+    }
   | {
       kind: "damage";
       defender: PlayerId;
@@ -146,6 +155,8 @@ export type Prompt =
       source: string;
       /** Extra cards only the chooser sees, e.g. every card looked at in a search (rule 11-3-1). */
       revealed?: string[];
+      /** "With a total power of 4000 or less": the picked cards' power must add up to at most this. */
+      maxTotalPower?: number;
     }
   | {
       kind: "confirm";
@@ -185,6 +196,8 @@ export interface GameState {
   prevented?: string[];
   /** A [Trigger] card being activated belongs to no area (rule 10-1-5-3). */
   limbo: CardInstance | null;
+  /** A player who takes an extra turn after this one ("take an extra turn"). */
+  extraTurn?: PlayerId;
   /** Seeded random state, so a game can be replayed exactly. */
   rng: number;
   nextUid: number;
