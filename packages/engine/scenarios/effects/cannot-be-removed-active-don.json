@@ -1,0 +1,34 @@
+{
+  "name": "An active DON!! turns the protection off",
+  "rules": ["8-1-3-3"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-RETURN-ANY"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "characters": ["TEST-UNTOUCHABLE"],
+      "don": {
+        "active": 1,
+        "rested": 2
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    }
+  ],
+  "expect": {
+    "p2.characters": 0
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "An active lure doesn't limit attacks",
+  "rules": ["7-1-1-2"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-FILLER"]
+    },
+    "p2": {
+      "characters": [
+        "TEST-LURE",
+        {
+          "card": "TEST-FILLER",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [],
+  "expect": {
+    "legal.p1.attack": 4
+  }
+}

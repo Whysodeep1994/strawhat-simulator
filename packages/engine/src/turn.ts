@@ -39,18 +39,20 @@ export function queueEffects(
   card: CardInstance,
   timing: Timing,
   about?: CardInstance,
+  fromHand = false,
 ): void {
   effectsOf(state, card).forEach((effect, index) => {
     if (effect.timing !== timing) return;
     if (about && !matchesFilter(state, about, effect.cardFilter, card)) return;
+    if (effect.fromHand && !fromHand) return;
     state.pendingEffects.push({ controller, source: card.uid, effect: index });
   });
 }
 
 /** Queues `timing` effects on the owner's other field cards about `card`. */
-function queueAbout(state: GameState, card: CardInstance, timing: Timing): void {
+function queueAbout(state: GameState, card: CardInstance, timing: Timing, fromHand = false): void {
   for (const holder of fieldCards(state, card.owner))
-    if (holder.uid !== card.uid) queueEffects(state, card.owner, holder, timing, card);
+    if (holder.uid !== card.uid) queueEffects(state, card.owner, holder, timing, card, fromHand);
 }
 
 /**
@@ -134,6 +136,9 @@ export function knockOut(state: GameState, uid: string, byEffect = false, by?: P
     p.characters = p.characters.filter((c) => c.uid !== uid);
     leaveField(state, card);
     p.trash.unshift(card);
+    const other = player === "p1" ? "p2" : "p1";
+    for (const watcher of fieldCards(state, other))
+      queueEffects(state, other, watcher, "opponentCharacterKOd");
     // "When a Character is K.O.'d" effects on either player's field.
     for (const watcher of ["p1", "p2"] as const)
       for (const source of fieldCards(state, watcher))
@@ -147,6 +152,7 @@ export function putOnField(
   player: PlayerId,
   card: CardInstance,
   trash?: string,
+  fromHand = false,
 ): void {
   const p = state.players[player];
   card.rested = false;
@@ -161,7 +167,10 @@ export function putOnField(
     p.characters.push(card);
     // "Your Character cards are played rested."
     if (playsRested(state, player)) card.rested = true;
-    queueAbout(state, card, "youPlayCharacter");
+    queueAbout(state, card, "youPlayCharacter", fromHand);
+    const other = player === "p1" ? "p2" : "p1";
+    for (const holder of fieldCards(state, other))
+      queueEffects(state, other, holder, "opponentPlaysCharacter", card);
   }
   queueEffects(state, player, card, "onPlay");
 }

@@ -139,16 +139,32 @@ export function hasKeywordNow(state: GameState, card: CardInstance, keyword: Key
   return keywordsOf(state, card).includes(keyword);
 }
 
-/** Whether an effect gives the card this status right now, e.g. "cannot attack". */
-export function hasStatus(state: GameState, card: CardInstance, status: Status): boolean {
-  if (state.modifiers.some((m) => m.target === card.uid && m.status === status)) return true;
-  return permanentGrants(state, card, "grantStatus").some((grant) => grant.status === status);
+/**
+ * Whether an effect gives the card this status right now, e.g. "cannot attack". With
+ * `against`, statuses limited to some cards ("by <Strike> attribute Characters") count only
+ * if `against` matches; without it, they don't count.
+ */
+export function hasStatus(
+  state: GameState,
+  card: CardInstance,
+  status: Status,
+  against?: CardInstance,
+): boolean {
+  const applies = (by: Filter | undefined) =>
+    !by || (!!against && matchesFilter(state, against, by, null));
+  if (state.modifiers.some((m) => m.target === card.uid && m.status === status && applies(m.by)))
+    return true;
+  return permanentGrants(state, card, "grantStatus").some(
+    (grant) => grant.status === status && applies(grant.by),
+  );
 }
 
 /** Current cost of a card on the field: printed cost plus effects (rule 2-7-1). */
 export function costOf(state: GameState, card: CardInstance): number {
   let cost = definitionOf(state, card).cost ?? 0;
   if (!findOnField(state, card.uid)) return cost;
+  for (const m of state.modifiers)
+    if (m.target === card.uid && m.setCost !== undefined) cost = m.setCost;
   for (const m of state.modifiers) if (m.target === card.uid) cost += m.cost ?? 0;
   for (const grant of permanentGrants(state, card, "costChange")) cost += grant.cost ?? 0;
   return Math.max(0, cost);
@@ -172,6 +188,13 @@ export function playCostOf(state: GameState, player: PlayerId, card: CardInstanc
           cost += step.amount;
     }
   }
+  const discount = state.modifiers.find(
+    (m) =>
+      m.target === state.players[player].leader.uid &&
+      m.nextPlay &&
+      matchesFilter(state, card, m.nextPlay.filter, null, false),
+  );
+  if (discount?.nextPlay) cost += discount.nextPlay.amount;
   return Math.max(0, cost);
 }
 
@@ -181,6 +204,7 @@ interface Grant {
   basePower?: number;
   keyword?: Keyword;
   status?: Status;
+  by?: Filter;
 }
 
 type GrantStep =
@@ -211,17 +235,22 @@ function permanentGrants(state: GameState, card: CardInstance, kind: GrantStep):
 function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, grants: Grant[]) {
   for (const player of ["p1", "p2"] as const) {
     for (const source of fieldCards(state, player)) {
-      const effects = definitionOf(state, source).effects ?? [];
-      if (!effects.some((e) => e.timing === "permanent")) continue;
+      // Only effects with a step of this kind matter; skipping the rest early keeps
+      // conditions that read costs or power from checking every other grant again.
+      const effects = (definitionOf(state, source).effects ?? []).filter(
+        (e) =>
+          e.timing === "permanent" && e.zone !== "hand" && e.steps.some((st) => st.do === kind),
+      );
+      if (effects.length === 0) continue;
       // A negating card's own negation is not checked, so working out negation can't loop.
       if (negatedByStatus(state, source)) continue;
       if (kind !== "negateEffects" && isNegated(state, source)) continue;
       for (const effect of effects) {
-        if (effect.timing !== "permanent" || effect.zone === "hand") continue;
         if (!conditionsMet(state, player, source, effect.conditions)) continue;
         for (const step of effect.steps) {
           if (step.do !== kind) continue;
           const t = step.target;
+          if (t.side === "that") continue;
           const applies =
             t.side === "this"
               ? source.uid === card.uid
@@ -234,7 +263,8 @@ function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, gr
           else if (step.do === "costChange")
             grants.push({ cost: powerAmount(state, player, step) });
           else if (step.do === "grantKeyword") grants.push({ keyword: step.keyword });
-          else if (step.do === "grantStatus") grants.push({ status: step.status });
+          else if (step.do === "grantStatus")
+            grants.push({ status: step.status, ...(step.by ? { by: step.by } : {}) });
           else if (step.do === "setBasePower") grants.push({ basePower: step.power });
           else grants.push({});
         }
@@ -253,6 +283,13 @@ export function powerAmount(
   step: Extract<Step, { do: "powerUp" | "costChange" }>,
 ): number {
   const p = state.players[controller];
+  if (step.do === "powerUp" && step.per) {
+    const { zone, filter, every = 1 } = step.per;
+    const cards = (zone === "hand" ? p.hand : p.trash).filter((c) =>
+      matchesFilter(state, c, filter, null, false),
+    );
+    return step.amount * Math.floor(cards.length / every);
+  }
   if (step.perRestedDon) return step.amount * Math.floor(p.donRested / step.perRestedDon);
   if (step.perCount) return step.amount * countCards(state, controller, null, step.perCount);
   if (!step.perTrash) return step.amount;
@@ -370,6 +407,9 @@ export function conditionsMet(
       return (definitionOf(state, me.leader).types ?? []).includes(c.leaderHasType);
     if ("charactersAtLeast" in c) return me.characters.length >= c.charactersAtLeast;
     if ("handAtMost" in c) return me.hand.length <= c.handAtMost;
+    if ("handAtLeast" in c) return me.hand.length >= c.handAtLeast;
+    if ("thisRested" in c) return source.rested;
+    if ("allDonRested" in c) return me.donActive === 0;
     if ("donOnFieldAtLeast" in c) return donOnField(state, controller) >= c.donOnFieldAtLeast;
     if ("donOnFieldAtMost" in c) return donOnField(state, controller) <= c.donOnFieldAtMost;
     if ("playedThisTurn" in c) return source.playedTurn === state.turn;
@@ -391,6 +431,9 @@ export function conditionsMet(
       return me.donRested + rested >= c.restedCardsAtLeast;
     }
     if ("lifeAtMostOpponents" in c) return me.life.length <= them.life.length;
+    if ("lifeLessThanOpponents" in c) return me.life.length < them.life.length;
+    if ("deckAtMost" in c) return me.deck.length <= c.deckAtMost;
+    if ("thisIsAttackTarget" in c) return state.battle?.target === source.uid;
     if ("givenDonAtLeast" in c)
       return [me.leader, ...me.characters].reduce((n, x) => n + x.givenDon, 0) >= c.givenDonAtLeast;
     if ("leaderAttribute" in c)
@@ -413,7 +456,6 @@ export function conditionsMet(
         donOnField(state, controller) <=
         donOnField(state, opponentOf(controller)) - c.donFewerThanOpponentBy
       );
-    if ("handAtLeast" in c) return me.hand.length >= c.handAtLeast;
     if ("opponentHandAtLeast" in c) return them.hand.length >= c.opponentHandAtLeast;
     if ("handFewerThanOpponentBy" in c)
       return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
@@ -486,6 +528,7 @@ export function matchesFilter(
   if (filter.color && !def.colors.includes(filter.color)) return false;
   if (filter.rested !== undefined && card.rested !== filter.rested) return false;
   if (filter.notThis && source && card.uid === source.uid) return false;
+  if (filter.isThis && (!source || card.uid !== source.uid)) return false;
   if (filter.hasTrigger && !(def.effects ?? []).some((e) => e.timing === "trigger")) return false;
   if (filter.keyword && !hasKeywordNow(state, card, filter.keyword)) return false;
   if (filter.attribute && !(def.attribute ?? "").includes(filter.attribute)) return false;
@@ -591,6 +634,12 @@ export function canPayCosts(
     }
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
     if ("handToDeckBottom" in cost) fromHand += cost.handToDeckBottom;
+    if ("restCharacters" in cost) {
+      const own = p.characters.filter(
+        (c) => !c.rested && matchesFilter(state, c, cost.filter, source),
+      );
+      if (own.length < cost.restCharacters) return false;
+    }
     if ("thisToDeckBottom" in cost && !findOnField(state, source.uid)) return false;
     if ("activeLeaderPower" in cost && p.leader.rested) return false;
     if ("returnActiveDon" in cost) restDon += cost.returnActiveDon;

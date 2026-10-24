@@ -1,0 +1,32 @@
+{
+  "name": "Resting 2 Characters pays for a draw",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-REST-TWO"],
+      "characters": ["TEST-FILLER", "TEST-FILLER", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.characters.0", "p1.characters.2"]
+    }
+  ],
+  "expect": {
+    "p1.hand": 2,
+    "p1.characters.0.rested": true,
+    "p1.characters.1.rested": false
+  }
+}
