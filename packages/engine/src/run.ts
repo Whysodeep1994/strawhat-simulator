@@ -291,6 +291,10 @@ function payCost(
     moveFromHandToDeckBottom(state, frame.controller, chosen);
   } else if ("thisToDeckBottom" in cost) {
     removeFromField(state, source.uid, "deckBottom");
+  } else if ("thisToHand" in cost) {
+    removeFromField(state, source.uid, "hand");
+  } else if ("thisPower" in cost) {
+    state.modifiers.push({ target: source.uid, power: cost.thisPower, until: "turn" });
   } else if ("returnActiveDon" in cost) {
     returnDon(state, frame.controller, cost.returnActiveDon, true);
   } else if ("activeLeaderPower" in cost) {

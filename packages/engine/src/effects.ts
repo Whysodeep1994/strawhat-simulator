@@ -234,6 +234,10 @@ export type Cost =
   | { handToDeckBottom: number }
   /** Place this card (a Character or Stage) at the bottom of your deck. */
   | { thisToDeckBottom: true }
+  /** "Return this Character to the owner's hand". */
+  | { thisToHand: true }
+  /** "Give this Character −2000 power during this turn". */
+  | { thisPower: number }
   /** "Give your 1 active Leader −5000 power during this turn": the Leader must be active. */
   | { activeLeaderPower: number }
   /** "Return 2 of your active DON!! cards to your DON!! deck". */

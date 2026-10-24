@@ -608,6 +608,8 @@ export function canPayCosts(
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
     if ("handToDeckBottom" in cost) fromHand += cost.handToDeckBottom;
     if ("thisToDeckBottom" in cost && !findOnField(state, source.uid)) return false;
+    if ("thisToHand" in cost && !findOnField(state, source.uid)) return false;
+    if ("thisPower" in cost && !findOnField(state, source.uid)) return false;
     if ("activeLeaderPower" in cost && p.leader.rested) return false;
     if ("returnActiveDon" in cost) restDon += cost.returnActiveDon;
     if ("returnOwnCharacter" in cost) {

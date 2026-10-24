@@ -244,6 +244,8 @@ function costText(cost: Cost): string {
     return `place ${cost.trashToDeckBottom}${filterText(cost.filter)} card(s) from your trash at the bottom of your deck`;
   }
   if ("thisToDeckBottom" in cost) return "place this card at the bottom of your deck";
+  if ("thisToHand" in cost) return "return this Character to the owner's hand";
+  if ("thisPower" in cost) return `give this Character ${cost.thisPower} power during this turn`;
   if ("returnActiveDon" in cost)
     return `return ${cost.returnActiveDon} of your active DON!! cards to your DON!! deck`;
   if ("activeLeaderPower" in cost)

@@ -166,7 +166,9 @@ your field"), `playFromHand` ("play 1
 [Kotori] from your hand"; the value is a filter),
 and `characterToLife` ("add 1 of your Characters with ... to the top of your Life cards
 face-up": `{ "characterToLife": 1, "filter": {...}, "faceUp": true }`), `thisToDeckBottom` ("place
-this card ... at the bottom of your deck"), `activeLeaderPower` ("give your 1 active Leader −5000
+this card ... at the bottom of your deck"), `thisToHand` ("return this Character to the owner's
+hand"), `thisPower` ("give this Character −2000 power during this turn": `{ "thisPower": -2000 }`),
+`activeLeaderPower` ("give your 1 active Leader −5000
 power during this turn"; the Leader must be active), and `returnActiveDon` ("return 2 of your
 active DON!! cards to your DON!! deck"; rested ones can't pay it). `returnOwnCharacter` takes
 `"to": "deckBottom"` for "place 1 of your Characters ... at the bottom of your deck", and

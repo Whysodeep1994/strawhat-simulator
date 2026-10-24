@@ -941,4 +941,26 @@ export const EXTRA_BOOSTER_CARDS: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-SELF-BOUNCE",
+    name: "Test Self Bounce",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 3000,
+    effects: [
+      { timing: "activateMain", costs: [{ thisToHand: true }], steps: [{ do: "draw", count: 1 }] },
+    ],
+  },
+  {
+    id: "TEST-SELF-WEAKEN",
+    name: "Test Self Weaken",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 3000,
+    effects: [
+      { timing: "activateMain", costs: [{ thisPower: -2000 }], steps: [{ do: "draw", count: 1 }] },
+    ],
+  },
 ];
