@@ -162,6 +162,20 @@ export function koImmuneTo(state: GameState, card: CardInstance, source: CardIns
   );
 }
 
+/** "Cannot be rested by your opponent's Leader and Character effects" (`restImmunity`). */
+export function restImmuneTo(state: GameState, card: CardInstance, source: CardInstance): boolean {
+  if (source.owner === card.owner) return false;
+  return effectsOf(state, card).some(
+    (effect) =>
+      effect.timing === "permanent" &&
+      conditionsMet(state, card.owner, card, effect.conditions) &&
+      effect.steps.some(
+        (step) =>
+          step.do === "restImmunity" && matchesFilter(state, source, step.from, card, false),
+      ),
+  );
+}
+
 /** Current cost of a card on the field: printed cost plus effects (rule 2-7-1). */
 export function costOf(state: GameState, card: CardInstance): number {
   let cost = definitionOf(state, card).cost ?? 0;
@@ -277,6 +291,10 @@ export function powerAmount(
   const p = state.players[controller];
   if (step.perRestedDon) return step.amount * Math.floor(p.donRested / step.perRestedDon);
   if (step.perCount) return step.amount * countCards(state, controller, null, step.perCount);
+  if (step.do === "powerUp" && step.perTopLifeCost) {
+    const top = p.life[0];
+    return step.amount * (top ? (definitionOf(state, top).cost ?? 0) : 0);
+  }
   if (!step.perTrash) return step.amount;
   const trash = p.trash.filter((c) => matchesFilter(state, c, step.trashFilter, null, false));
   return step.amount * Math.floor(trash.length / step.perTrash);
@@ -307,7 +325,7 @@ export function counterOf(state: GameState, player: PlayerId, card: CardInstance
 export function hasRule(
   state: GameState,
   player: PlayerId,
-  rule: "faceUpLifeToDeckBottom" | "winOnDeckOut",
+  rule: "faceUpLifeToDeckBottom" | "winOnDeckOut" | "deckOutAtEndOfTurn",
 ): boolean {
   return fieldCards(state, player).some((source) =>
     (definitionOf(state, source).effects ?? []).some(
@@ -440,7 +458,35 @@ export function conditionsMet(
     if ("handFewerThanOpponentBy" in c)
       return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
     if ("totalLifeAtMost" in c) return me.life.length + them.life.length <= c.totalLifeAtMost;
-    if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
+    if ("trashAtLeast" in c)
+      return (
+        me.trash.filter((card) => matchesFilter(state, card, c.filter, null, false)).length >=
+        c.trashAtLeast
+      );
+    if ("deckAtMost" in c) return me.deck.length <= c.deckAtMost;
+    if ("yourTurnsAtLeast" in c) return me.turnsTaken >= c.yourTurnsAtLeast;
+    if ("lifeFewerThanOpponents" in c) return me.life.length < them.life.length;
+    if ("opponentDonActiveAtLeast" in c) return them.donActive >= c.opponentDonActiveAtLeast;
+    if ("activatedEventThisTurn" in c)
+      return (state.activatedEvents ?? []).some(
+        (e) =>
+          e.player === controller &&
+          e.turn === state.turn &&
+          matchesFilter(
+            state,
+            {
+              uid: "",
+              cardId: e.cardId,
+              owner: controller,
+              rested: false,
+              givenDon: 0,
+              playedTurn: null,
+            },
+            c.activatedEventThisTurn,
+            null,
+            false,
+          ),
+      );
     if ("thisRested" in c) return source.rested;
     if ("not" in c) return !conditionsMet(state, controller, source, [c.not]);
     if ("opponentLeaderAttribute" in c)
@@ -469,7 +515,8 @@ export function matchesFilter(
     filter.costAtLeast !== undefined ||
     filter.costAtMostOpponentLife ||
     filter.costAtMostDonOnField ||
-    filter.costAtMostTotalLife
+    filter.costAtMostTotalLife ||
+    filter.costEqualsGivenDon
       ? costOf(state, card)
       : baseCost;
   const power = () =>
@@ -517,6 +564,8 @@ export function matchesFilter(
   if (filter.attribute && !(def.attribute ?? "").includes(filter.attribute)) return false;
   if (filter.anyOf && !filter.anyOf.some((f) => matchesFilter(state, card, f, source, usePower)))
     return false;
+  if (filter.givenDonAtLeast !== undefined && card.givenDon < filter.givenDonAtLeast) return false;
+  if (filter.costEqualsGivenDon && cost !== card.givenDon) return false;
   if (filter.noBaseEffect && ((def.effects ?? []).length > 0 || (def.keywords ?? []).length > 0))
     return false;
   return true;
@@ -682,6 +731,10 @@ export function canPayCosts(
     if ("characterToLife" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.characterToLife) return false;
+    }
+    if ("giveOpponentDon" in cost) {
+      const them = state.players[opponentOf(player)];
+      if (them.donRested < cost.giveOpponentDon || them.characters.length === 0) return false;
     }
   }
   const activeCards = fieldCards(state, player).filter(
