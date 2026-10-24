@@ -20,6 +20,7 @@ import {
   oncePerTurnKey,
   onPlayNegated,
   playBlocked,
+  toDeckBottomOptions,
   powerAmount,
   powerOf,
   zoneCards,
@@ -136,6 +137,7 @@ const ON_FIELD_TIMINGS = new Set([
   "lifeAddedToHand",
   "lifeBecomesZero",
   "triggerActivated",
+  "opponentActivatesEvent",
   "becomesRested",
   "characterKOd",
   "attackDealsDamage",
@@ -231,7 +233,8 @@ function payCost(
     frame.memo = [];
   } else if ("trashOwnCharacter" in cost) {
     const n = cost.trashOwnCharacter;
-    const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+    const pile = cost.zone === "stage" ? (p.stage ? [p.stage] : []) : p.characters;
+    const own = pile.filter((c) => matchesFilter(state, c, cost.filter, source));
     const chosen = choose(state, frame, frame.controller, own, n, n, "trashCharacter");
     if (chosen === "wait") return "wait";
     for (const uid of chosen) {
@@ -423,12 +426,7 @@ function payCost(
   } else if ("trashThis" in cost) {
     moveFieldCardToTrash(state, source);
   } else if ("toDeckBottom" in cost) {
-    const own =
-      cost.zone === "stage"
-        ? p.stage
-          ? [p.stage]
-          : []
-        : p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+    const own = toDeckBottomOptions(state, frame.controller, source, cost);
     const n = cost.toDeckBottom;
     const chosen = choose(state, frame, frame.controller, own, n, n, "returnToDeckBottom");
     if (chosen === "wait") return "wait";
@@ -734,10 +732,48 @@ function runStep(
     }
 
     case "handToDeckBottom": {
-      const chosen = choose(state, frame, controller, p.hand, step.count, step.count, step.do);
+      // "Your opponent must place 1 card from their hand ...": they pick.
+      const who = step.side === "opponent" ? opponentOf(controller) : controller;
+      const hand = state.players[who].hand;
+      const n = Math.min(step.count, hand.length);
+      const chosen = choose(state, frame, who, hand, n, n, step.do);
       if (chosen === "wait") return "wait";
-      moveFromHandToDeckBottom(state, controller, chosen);
+      moveFromHandToDeckBottom(state, who, chosen);
       return "continue";
+    }
+
+    case "handToDeckShuffle": {
+      const who = step.side === "opponent" ? opponentOf(controller) : controller;
+      const player = state.players[who];
+      player.deck.push(...player.hand);
+      player.hand = [];
+      state.rng = shuffleInPlace(player.deck, state.rng);
+      drawCards(state, who, step.draw);
+      return "continue";
+    }
+
+    case "cannotAttackLeader":
+      state.modifiers.push({ target: p.leader.uid, noLeaderAttacks: true, until: "turn" });
+      return "continue";
+
+    case "dealDamage": {
+      // The damage frame runs on top; the step is done once it has been pushed.
+      if (frame.memo.includes("dealt")) return "continue";
+      frame.memo.push("dealt");
+      const defender = opponentOf(controller);
+      // Rule 1-2-1-1-1: damage while you have 0 Life cards loses the game.
+      if (state.players[defender].life.length === 0) {
+        processRules(state, [defender]);
+        return "continue";
+      }
+      state.stack.push({
+        kind: "damage",
+        defender,
+        remaining: step.count,
+        banish: false,
+        answer: null,
+      });
+      return "yield";
     }
 
     case "redirectAttack": {

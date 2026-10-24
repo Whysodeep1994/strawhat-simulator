@@ -12,7 +12,14 @@ import {
   playCostOf,
 } from "./state.js";
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
-import { drawCards, pushEffect, putOnField, queueEffects, startTurn } from "./turn.js";
+import {
+  drawCards,
+  pushEffect,
+  putOnField,
+  queueEffects,
+  queueFieldEffects,
+  startTurn,
+} from "./turn.js";
 
 export class IllegalActionError extends Error {
   constructor(action: Action) {
@@ -152,6 +159,7 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
     p.trash.unshift(card);
     const index = (def.effects ?? []).findIndex((e) => e.timing === "main");
     pushEffect(state, player, card.uid, index);
+    queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
     return;
   }
   putOnField(state, player, card, trash);
@@ -229,4 +237,5 @@ function counterEvent(state: GameState, player: PlayerId, uid: string): void {
   p.trash.unshift(card);
   const index = (def.effects ?? []).findIndex((e) => e.timing === "counter");
   pushEffect(state, player, card.uid, index);
+  queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
 }
