@@ -101,6 +101,8 @@ export type Timing =
   | "attackDealsDamage"
   /** "When you take damage": each time a Life card leaves for damage. */
   | "takeDamage"
+  /** "When you deal damage to your opponent's Life": any of your attacks. */
+  | "youDealDamage"
   /** "When your Character [cardFilter] is K.O.'d". */
   | "yourCharacterKOd"
   /** "When your Character [cardFilter] is removed from the field by your opponent's effect". */
@@ -162,6 +164,12 @@ export type Condition =
   | { trashAtLeast: number }
   /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
   | { lifeAtMostOpponents: true }
+  /** "If you have less Life cards than your opponent". */
+  | { lifeLessThanOpponents: true }
+  /** "If you have 20 or less cards in your deck". */
+  | { deckAtMost: number }
+  /** "When this Leader ... is attacked": this card is the target of the current attack. */
+  | { thisIsAttackTarget: true }
   /** "If you have a total of 3 or more given DON!! cards" (Leader and Characters). */
   | { givenDonAtLeast: number }
   /** "If your Leader has the <Slash> attribute". */
@@ -205,7 +213,7 @@ export type Cost =
   /** Add Life cards to your hand, from the top or (player's choice) the top or bottom. */
   | { lifeToHand: number; from?: "top" | "topOrBottom" }
   /** Trash cards from the top of your Life cards. */
-  | { trashLife: number }
+  | { trashLife: number; from?: "top" | "topOrBottom" }
   /** Turn the top (or, with `from: "topOrBottom"`, top or bottom) Life card face-up. It must be face-down. */
   | { lifeFaceUp: number; from?: "top" | "topOrBottom" }
   /** Turn a face-up Life card at the top (or bottom) face-down. */
@@ -215,7 +223,7 @@ export type Cost =
   /** "Rest your Leader or 1 of your DON!! cards": the player pays one of these. */
   | { oneOf: Cost[] }
   /** Place cards from your trash at the bottom of your deck. */
-  | { trashToDeckBottom: number }
+  | { trashToDeckBottom: number; filter?: Filter }
   /** Trash this card from the field. Not a K.O. */
   | { trashThis: true }
   /** "Return N total of your currently given DON!! cards to your cost area rested." */
@@ -473,7 +481,7 @@ export type Step =
       /** "Play up to 1 ..." instead of adding to hand. */
       play?: boolean;
       /** "Add ... to the top of your Life cards face-up" instead of to your hand. */
-      to?: "lifeFaceUp";
+      to?: "lifeFaceUp" | "trash";
     }
   /**
    * Look at the top cards and put them back on top in any order. With `bottom`,
@@ -580,4 +588,6 @@ export type Step =
   /** A whole sub-sequence that only happens "if" a condition holds (rule 8-3-3). */
   | { do: "if"; conditions: Condition[]; steps: Step[] }
   /** "[Leader]'s base power becomes 7000": replaces the printed power (rule 2-6-1). */
-  | { do: "setBasePower"; target: Target; power: number; duration?: Duration };
+  | { do: "setBasePower"; target: Target; power: number; duration?: Duration }
+  /** "Set the cost of ... to 0": replaces the printed cost. */
+  | { do: "setCost"; target: Target; cost: number; duration?: Duration };

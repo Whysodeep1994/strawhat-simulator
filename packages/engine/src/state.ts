@@ -149,6 +149,8 @@ export function hasStatus(
 export function costOf(state: GameState, card: CardInstance): number {
   let cost = definitionOf(state, card).cost ?? 0;
   if (!findOnField(state, card.uid)) return cost;
+  for (const m of state.modifiers)
+    if (m.target === card.uid && m.setCost !== undefined) cost = m.setCost;
   for (const m of state.modifiers) if (m.target === card.uid) cost += m.cost ?? 0;
   for (const grant of permanentGrants(state, card, "costChange")) cost += grant.cost ?? 0;
   return Math.max(0, cost);
@@ -219,12 +221,16 @@ function permanentGrants(state: GameState, card: CardInstance, kind: GrantStep):
 function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, grants: Grant[]) {
   for (const player of ["p1", "p2"] as const) {
     for (const source of fieldCards(state, player)) {
-      const effects = definitionOf(state, source).effects ?? [];
-      if (!effects.some((e) => e.timing === "permanent")) continue;
+      // Only effects with a step of this kind matter; skipping the rest early keeps
+      // conditions that read costs or power from checking every other grant again.
+      const effects = (definitionOf(state, source).effects ?? []).filter(
+        (e) =>
+          e.timing === "permanent" && e.zone !== "hand" && e.steps.some((st) => st.do === kind),
+      );
+      if (effects.length === 0) continue;
       // A negating card's own negation is not checked, so working out negation can't loop.
       if (kind !== "negateEffects" && isNegated(state, source)) continue;
       for (const effect of effects) {
-        if (effect.timing !== "permanent" || effect.zone === "hand") continue;
         if (!conditionsMet(state, player, source, effect.conditions)) continue;
         for (const step of effect.steps) {
           if (step.do !== kind) continue;
@@ -387,6 +393,9 @@ export function conditionsMet(
       return me.donRested + rested >= c.restedCardsAtLeast;
     }
     if ("lifeAtMostOpponents" in c) return me.life.length <= them.life.length;
+    if ("lifeLessThanOpponents" in c) return me.life.length < them.life.length;
+    if ("deckAtMost" in c) return me.deck.length <= c.deckAtMost;
+    if ("thisIsAttackTarget" in c) return state.battle?.target === source.uid;
     if ("givenDonAtLeast" in c)
       return [me.leader, ...me.characters].reduce((n, x) => n + x.givenDon, 0) >= c.givenDonAtLeast;
     if ("leaderAttribute" in c)
@@ -590,7 +599,14 @@ export function canPayCosts(
     if ("trashFromDeckTop" in cost && p.deck.length < cost.trashFromDeckTop) return false;
     if ("oneOf" in cost && !cost.oneOf.some((one) => canPayCosts(state, player, source, [one])))
       return false;
-    if ("trashToDeckBottom" in cost) fromTrash += cost.trashToDeckBottom;
+    if ("trashToDeckBottom" in cost) {
+      if (cost.filter) {
+        const matching = p.trash.filter(
+          (c) => c.uid !== source.uid && matchesFilter(state, c, cost.filter, source, false),
+        );
+        if (matching.length < cost.trashToDeckBottom) return false;
+      } else fromTrash += cost.trashToDeckBottom;
+    }
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
     if ("toDeckBottom" in cost) {
       const own =

@@ -326,7 +326,25 @@ function payCost(
     }
     frame.memo = [];
   } else if ("trashLife" in cost) {
-    trashFromLife(state, frame.controller, cost.trashLife);
+    for (let i = frame.memo.length; i < cost.trashLife; i++) {
+      let fromBottom = false;
+      if (cost.from === "topOrBottom" && p.life.length > 1) {
+        if (frame.answer === null) {
+          state.prompt = {
+            kind: "confirm",
+            player: frame.controller,
+            reason: "lifeFromBottom",
+            source: frame.source,
+          };
+          return "wait";
+        }
+        fromBottom = frame.answer === true;
+        frame.answer = null;
+      }
+      trashFromLife(state, frame.controller, 1, fromBottom);
+      frame.memo.push("|");
+    }
+    frame.memo = [];
   } else if ("lifeFaceUp" in cost || "lifeFaceDown" in cost) {
     const faceUp = "lifeFaceUp" in cost;
     const count = faceUp ? cost.lifeFaceUp : cost.lifeFaceDown;
@@ -380,7 +398,9 @@ function payCost(
     if (outcome === "wait") return "wait";
     delete frame.picked;
   } else if ("trashToDeckBottom" in cost) {
-    const pile = p.trash.filter((c) => c.uid !== source.uid);
+    const pile = p.trash.filter(
+      (c) => c.uid !== source.uid && matchesFilter(state, c, cost.filter, source, false),
+    );
     const chosen = choose(
       state,
       frame,
@@ -670,6 +690,7 @@ function runStep(
     case "setActive":
     case "noBlockers":
     case "setBasePower":
+    case "setCost":
     case "giveRestedDon": {
       if (step.do === "giveRestedDon" && p.donRested === 0) return "continue";
       const targets = chooseTargets(state, frame, source, step.target, step.do);
@@ -833,7 +854,8 @@ function runStep(
       if (step.to === "lifeFaceUp") {
         for (const card of taken) card.faceUp = true;
         p.life.unshift(...taken);
-      } else p.hand.push(...taken);
+      } else if (step.to === "trash") p.trash.unshift(...taken.reverse());
+      else p.hand.push(...taken);
       if (step.rest === "trash") p.trash.unshift(...rest.reverse());
       else if (step.rest === "topOrBottom") {
         // The rest go back on top, then the player arranges them.
@@ -1491,6 +1513,13 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
         ...lasting(state, controller, step.duration),
       });
       return;
+    case "setCost":
+      state.modifiers.push({
+        target: uid,
+        setCost: step.cost,
+        ...lasting(state, controller, step.duration),
+      });
+      return;
     case "grantKeyword":
       state.modifiers.push({
         target: uid,
@@ -1559,9 +1588,15 @@ function takeLife(life: CardInstance[], index: number): CardInstance | undefined
   return card;
 }
 
-function trashFromLife(state: GameState, player: PlayerId, count: number): void {
+function trashFromLife(
+  state: GameState,
+  player: PlayerId,
+  count: number,
+  fromBottom = false,
+): void {
   const p = state.players[player];
-  for (let i = 0; i < count && p.life.length > 0; i++) p.trash.unshift(takeLife(p.life, 0)!);
+  for (let i = 0; i < count && p.life.length > 0; i++)
+    p.trash.unshift(takeLife(p.life, fromBottom ? p.life.length - 1 : 0)!);
   lifeLost(state, player);
 }
 
@@ -1790,6 +1825,8 @@ function runBattle(state: GameState, frame: FrameOf<"battle">): Outcome {
         return "continue";
       }
       queueEffects(state, attacker.player, attacker.card, "attackDealsDamage");
+      for (const card of fieldCards(state, attacker.player))
+        queueEffects(state, attacker.player, card, "youDealDamage");
       state.stack.push({
         kind: "damage",
         defender: target.player,

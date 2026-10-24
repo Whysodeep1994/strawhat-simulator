@@ -69,11 +69,11 @@ const TIMING_NAMES: Record<Timing, string> = {
   characterKOd: "When a Character is K.O.'d,",
   attackDealsDamage: "When this card's attack deals damage to your opponent's Life,",
   takeDamage: "When you take damage,",
+  youDealDamage: "When you deal damage to your opponent's Life,",
   yourCharacterKOd: "When your Character is K.O.'d,",
   yourCharacterRemovedByOpponent:
     "When your Character is removed from the field by your opponent's effect,",
   youPlayCharacter: "When you play a Character,",
-  triggerActivated: "When a [Trigger] activates,",
   startOfGame: "At the start of the game,",
   permanent: "",
 };
@@ -88,7 +88,6 @@ const STATUS_TEXT: Record<Status, string> = {
   onlyAttackTarget: "is the only card your opponent can attack",
   cannotBeRemovedByOpponentsEffects: "cannot be removed from the field by your opponent's effects",
   cannotBeRested: "cannot be rested",
-  cannotBeRemovedByOpponentsEffects: "cannot be removed from the field by your opponent's effects",
 };
 
 export function cardText(card: CardDefinition): string[] {
@@ -158,6 +157,11 @@ function conditionText(condition: Condition): string {
     return `(If you have ${condition.restedCardsAtLeast} or more rested cards)`;
   if ("lifeAtMostOpponents" in condition)
     return "(If you have equal or fewer Life cards than your opponent)";
+  if ("lifeLessThanOpponents" in condition)
+    return "(If you have less Life cards than your opponent)";
+  if ("deckAtMost" in condition)
+    return `(If you have ${condition.deckAtMost} or less cards in your deck)`;
+  if ("thisIsAttackTarget" in condition) return "(If this card is being attacked)";
   if ("leaderTypeIncludes" in condition)
     return `(If your Leader's type includes "${condition.leaderTypeIncludes}")`;
   if ("givenDonAtLeast" in condition)
@@ -212,7 +216,8 @@ function costText(cost: Cost): string {
     const from = cost.from === "topOrBottom" ? "top or bottom" : "top";
     return `add ${cost.lifeToHand} card(s) from the ${from} of your Life cards to your hand`;
   }
-  if ("trashLife" in cost) return `trash ${cost.trashLife} card(s) from the top of your Life cards`;
+  if ("trashLife" in cost)
+    return `trash ${cost.trashLife} card(s) from the ${cost.from === "topOrBottom" ? "top or bottom" : "top"} of your Life cards`;
   if ("lifeFaceUp" in cost) {
     const from = cost.from === "topOrBottom" ? "top or bottom" : "top";
     return `turn ${cost.lifeFaceUp} card(s) from the ${from} of your Life cards face-up`;
@@ -225,7 +230,7 @@ function costText(cost: Cost): string {
     return `trash ${cost.trashFromDeckTop} card(s) from the top of your deck`;
   if ("oneOf" in cost) return cost.oneOf.map(costText).join(" or ");
   if ("trashToDeckBottom" in cost) {
-    return `place ${cost.trashToDeckBottom} card(s) from your trash at the bottom of your deck`;
+    return `place ${cost.trashToDeckBottom}${filterText(cost.filter)} card(s) from your trash at the bottom of your deck`;
   }
   if ("handToDeckBottom" in cost)
     return `place ${cost.handToDeckBottom} card(s) from your hand at the bottom of your deck`;
@@ -316,7 +321,7 @@ function stepText(step: Step): string {
     case "opponentTrashesFromHand":
       return `Your opponent trashes ${step.count} card(s) from their hand.`;
     case "searchDeck":
-      return `Look at ${step.look} cards from the top of your deck; ${step.play ? "play" : "reveal"} up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"}${step.play ? "" : ` and add ${step.take === 1 ? "it" : "them"} to ${step.to === "lifeFaceUp" ? "the top of your Life cards face-up" : "your hand"}`}. Then, ${step.rest === "trash" ? "trash the rest" : "place the rest at the bottom of your deck in any order"}.`;
+      return `Look at ${step.look} cards from the top of your deck; ${step.play ? "play" : step.to === "trash" ? "trash" : "reveal"} up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"}${step.play || step.to === "trash" ? "" : ` and add ${step.take === 1 ? "it" : "them"} to ${step.to === "lifeFaceUp" ? "the top of your Life cards face-up" : "your hand"}`}. Then, ${step.rest === "trash" ? "trash the rest" : "place the rest at the bottom of your deck in any order"}.`;
     case "playFromHand":
       return step.side === "opponent"
         ? `Your opponent plays up to 1${filterText(step.filter)} card from their hand.`
@@ -347,6 +352,8 @@ function stepText(step: Step): string {
       return `${step.side === "self" ? "Your" : "Your opponent's"} [On Play] effects are negated${durationText(step.duration)}.`;
     case "setBasePower":
       return `${capital(targetText(step.target))}'s base power becomes ${step.power}${durationText(step.duration)}.`;
+    case "setCost":
+      return `Set the cost of ${targetText(step.target)} to ${step.cost}${durationText(step.duration)}.`;
     case "revealOpponentHand":
       return `Choose ${step.count} card(s) from your opponent's hand; your opponent reveals them.${step.steps ? ` If a revealed card is a${filterText(step.ifRevealed)} card, ${step.steps.map(stepText).join(" ")}` : ""}`;
     case "lifeToDeckBottom":

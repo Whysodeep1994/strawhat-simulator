@@ -57,6 +57,8 @@ export interface Modifier {
   /** "Base power becomes X": replaces the printed power. */
   basePower?: number;
   cost?: number;
+  /** "Set the cost of ... to 0": replaces the printed cost. */
+  setCost?: number;
   keyword?: Keyword;
   status?: Status;
   /** The status only works against these cards ("by <Strike> attribute Characters"). */
