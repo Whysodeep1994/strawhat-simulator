@@ -28,6 +28,14 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-24: Prototype fixes found while testing the 518-card data (EB-01, EB-02, full OP-09,
+  ST-31 to 36) with 84 computer-vs-computer games across every deck. The computer froze on "K.O.
+  up to 2 Characters with a total power of 4000 or less" because it picked over the limit; it now
+  keeps to the total, and the choose dialog shows the running total and won't confirm past it.
+  Sets with several Leaders now get one practice deck per Leader with a unique id (they shared
+  one before, which confused the home screen). Still slow: late-game moves with ST-30 take about
+  0.1 to 0.4 s, from permanent effects re-checking each other (see Known bugs).
+
 - 2026-10-23: Engine blocks for set OP-09: "negate the effect of" (a `negated` status that also
   turns off printed keywords), "that Character" targets, "total power of 4000 or less", "your
   Character cards are played rested", "cannot be K.O.'d in battle by Leaders", trashing cards from
@@ -123,6 +131,9 @@ Each phase has a check the project owner can do without reading code.
 
 - Performance: each action copies the whole game state and re-lists legal moves. A random
   game takes about 70 ms. Fine for now; optimize in Phase 8.
+- Performance: permanent effects with conditions that count cards by power (for example ST-30)
+  re-work each other's grants on every check, so a late-game move can take 0.1 to 0.4 s.
+  Caching grants per game state would fix it.
 
 ## Rules questions
 

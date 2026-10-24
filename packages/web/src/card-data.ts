@@ -108,7 +108,7 @@ export function practiceDeck(cards: Card[], leader: Card): PlayableDeck | null {
   }
   const deck = [...copies].flatMap(([id, n]) => Array<string>(n).fill(id));
   return {
-    id: `${set}-practice`,
+    id: `${leader.id}-practice`,
     name: `${setLabel(set)} practice deck`,
     leader: leader.id,
     deck,
