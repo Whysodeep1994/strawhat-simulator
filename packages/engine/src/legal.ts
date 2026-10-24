@@ -3,11 +3,14 @@ import {
   canPayCosts,
   conditionsMet,
   definitionOf,
+  effectsOf,
   fieldCards,
   findOnField,
   hasKeywordNow,
   hasStatus,
   matchesFilter,
+  oncePerTurnKey,
+  playBlocked,
   playCostOf,
 } from "./state.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
@@ -117,7 +120,7 @@ function playActions(state: GameState, player: PlayerId): Action[] {
   for (const card of p.hand) {
     const def = definitionOf(state, card);
     const cost = playCostOf(state, player, card);
-    if (cost > p.donActive) continue;
+    if (cost > p.donActive || playBlocked(state, player, card, true)) continue;
     if (def.category === "event") {
       const effect = (def.effects ?? []).find((e) => e.timing === "main");
       if (!effect || !conditionsMet(state, player, card, effect.conditions)) continue;
@@ -142,9 +145,13 @@ function playActions(state: GameState, player: PlayerId): Action[] {
 function activateActions(state: GameState, player: PlayerId): Action[] {
   const actions: Action[] = [];
   for (const card of fieldCards(state, player)) {
-    (definitionOf(state, card).effects ?? []).forEach((effect, index) => {
+    effectsOf(state, card).forEach((effect, index) => {
       if (effect.timing !== "activateMain") return;
-      if (effect.oncePerTurn && state.usedThisTurn.includes(`${card.uid}:${index}`)) return;
+      if (
+        effect.oncePerTurn &&
+        state.usedThisTurn.includes(oncePerTurnKey(card.uid, effect, index))
+      )
+        return;
       if (!conditionsMet(state, player, card, effect.conditions)) return;
       if (!canPayCosts(state, player, card, effect.costs ?? [])) return;
       actions.push({ type: "activate", player, card: card.uid, effect: index });
