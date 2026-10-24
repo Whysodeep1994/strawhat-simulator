@@ -32,6 +32,7 @@ import {
 } from "./state.js";
 import { shuffleInPlace } from "./rng.js";
 import {
+  characterLeaving,
   drawCards,
   knockOut,
   moveFieldCardToTrash,
@@ -153,6 +154,7 @@ const ON_FIELD_TIMINGS = new Set([
   "attackDealsDamage",
   "opponentCharacterReturned",
   "restedByOpponentsCharacter",
+  "yourCharacterRemoved",
 ]);
 
 const RULE_EFFECT: EffectDefinition = { timing: "main", steps: [] };
@@ -369,6 +371,8 @@ function payCost(
       them.donRested -= count;
       card.givenDon += count;
     }
+  } else if ("koThis" in cost) {
+    knockOut(state, source.uid, true, frame.controller);
   } else if ("restThis" in cost) {
     restCard(state, frame.controller, source, true);
   } else if ("returnGivenDon" in cost) {
@@ -521,6 +525,7 @@ function payCost(
     for (const uid of chosen) {
       const card = p.characters.find((c) => c.uid === uid);
       if (!card) continue;
+      characterLeaving(state, card);
       p.characters = p.characters.filter((c) => c.uid !== uid);
       leaveField(state, card);
       if (cost.faceUp) card.faceUp = true;
@@ -1066,13 +1071,13 @@ function runStep(
       const rest = looked.filter((c) => !chosen.includes(c.uid));
       p.deck = p.deck.slice(looked.length);
       const taken = looked.filter((c) => chosen.includes(c.uid));
-      if (step.to === "lifeFaceUp") {
-        for (const card of taken) card.faceUp = true;
+      if (step.to === "lifeFaceUp" || step.to === "life") {
+        if (step.to === "lifeFaceUp") for (const card of taken) card.faceUp = true;
         p.life.unshift(...taken);
       } else if (step.to === "play") {
         // The chosen card waits on top of the deck and is played right after.
         p.deck.unshift(...taken);
-        if (taken.length > 0) frame.steps.splice(1, 0, { do: "playFromDeckTop", must: true });
+        frame.steps.splice(1, 0, ...taken.map((): Step => ({ do: "playFromDeckTop", must: true })));
       } else p.hand.push(...taken);
       if (step.rest === "trash") p.trash.unshift(...rest.reverse());
       else if (step.rest === "topOrBottom") {
@@ -1121,7 +1126,7 @@ function runStep(
       const piles = both
         ? [owner.hand, owner.trash]
         : [step.do === "playFromHand" ? owner.hand : owner.trash];
-      const played = step.do === "playFromTrash" ? (step.played ?? []) : [];
+      const played = step.played ?? [];
       // "A different color than the returned Character."
       const avoid =
         step.do === "playFromHand" && step.differentColor
@@ -1161,7 +1166,7 @@ function runStep(
       const pile = piles.find((cards) => cards.some((c) => c.uid === uid)) ?? [];
       const outcome = playChosen(state, frame, player, pile, uid, step.rested ?? false);
       // "Play up to 5 ...": the rest are played one at a time.
-      if (outcome === "continue" && step.do === "playFromTrash" && (step.count ?? 1) > 1) {
+      if (outcome === "continue" && (step.count ?? 1) > 1) {
         const next = { ...step, count: (step.count ?? 1) - 1 };
         if (step.differentNames) next.played = [...played, name];
         frame.steps.splice(1, 0, next);
@@ -1513,6 +1518,7 @@ function runStep(
     case "restImmunity":
     case "deckOutAtEndOfTurn":
     case "donDeckSize":
+    case "rushFromTrash":
       // Permanent effects, worked out where they apply.
       return "continue";
 
@@ -1558,6 +1564,20 @@ function searchAndPlay(
   return playChosen(state, frame, frame.controller, p.deck, frame.memo[0] as string, step.rested);
 }
 
+/** Whether a permanent `rushFromTrash` effect of `player` covers a card played from their trash. */
+function rushFromTrash(state: GameState, player: PlayerId, card: CardInstance): boolean {
+  return fieldCards(state, player).some((source) =>
+    effectsOf(state, source).some(
+      (effect) =>
+        effect.timing === "permanent" &&
+        conditionsMet(state, player, source, effect.conditions) &&
+        effect.steps.some(
+          (step) => step.do === "rushFromTrash" && matchesFilter(state, card, step.filter, source),
+        ),
+    ),
+  );
+}
+
 /** Plays a card picked by an effect, trashing a Character first if the area is full (rule 3-7-6-1). */
 function playChosen(
   state: GameState,
@@ -1577,9 +1597,13 @@ function playChosen(
     if (chosen === "wait") return "wait";
     trash = chosen[0];
   }
+  const fromTrash = pile === p.trash;
   pile.splice(index, 1);
   putOnField(state, controller, card, trash);
   if (rested) card.rested = true;
+  // "When a {Land of Wano} type Character card is played from your trash, that Character gains [Rush]".
+  if (fromTrash && rushFromTrash(state, controller, card))
+    state.modifiers.push({ target: card.uid, keyword: "rush", until: "turn" });
   // "The Character played with this effect gains [Rush]": later steps can target it as "that".
   frame.targets = [card.uid];
   return "continue";
@@ -2004,6 +2028,7 @@ function characterToLife(
   }
   noteRemoval(state, frame.controller, card);
   removedByEffect(state, card, frame.controller);
+  characterLeaving(state, card);
   owner.characters = owner.characters.filter((c) => c.uid !== card.uid);
   leaveField(state, card);
   if (step.faceUp) card.faceUp = true;
@@ -2055,6 +2080,7 @@ function removeFromField(state: GameState, uid: string, to: "hand" | "deckBottom
   if (!location || location.zone === "leader") return;
   const card = location.card;
   const owner = state.players[card.owner];
+  characterLeaving(state, card);
   if (location.zone === "stage") owner.stage = null;
   owner.characters = owner.characters.filter((c) => c.uid !== uid);
   owner.donRested += card.givenDon;

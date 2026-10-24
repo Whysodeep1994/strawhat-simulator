@@ -325,7 +325,7 @@ export function counterOf(state: GameState, player: PlayerId, card: CardInstance
       if (!conditionsMet(state, player, source, effect.conditions)) continue;
       for (const step of effect.steps)
         if (step.do === "grantCounter" && matchesFilter(state, card, step.target.filter, source))
-          counter += step.amount;
+          counter = step.becomes ? step.amount : counter + step.amount;
     }
   }
   return counter;
@@ -388,12 +388,13 @@ export function countCards(
     what.side === "any"
       ? ["p1", "p2"]
       : [what.side === "self" ? controller : opponentOf(controller)];
-  let n = 0;
-  for (const id of players)
-    n += zoneCards(state.players[id], what.zone ?? "characters").filter((c) =>
+  const cards = players.flatMap((id) =>
+    zoneCards(state.players[id], what.zone ?? "characters").filter((c) =>
       matchesFilter(state, c, what.filter, source),
-    ).length;
-  return n;
+    ),
+  );
+  if (!what.distinctNames) return cards.length;
+  return new Set(cards.map((c) => definitionOf(state, c).name)).size;
 }
 
 /** A player's cards in a target zone. */
@@ -491,6 +492,9 @@ export function conditionsMet(
         c.trashAtLeast
       );
     if ("deckAtMost" in c) return me.deck.length <= c.deckAtMost;
+    if ("thisCostAtLeast" in c) return costOf(state, source) >= c.thisCostAtLeast;
+    if ("opponentCharacterKOdThisTurn" in c)
+      return state.characterKOdTurn?.[opponentOf(controller)] === state.turn;
     if ("yourTurnsAtLeast" in c) return me.turnsTaken >= c.yourTurnsAtLeast;
     if ("opponentDonActiveAtLeast" in c) return them.donActive >= c.opponentDonActiveAtLeast;
     if ("activatedEventThisTurn" in c)
@@ -791,6 +795,7 @@ export function canPayCosts(
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.characterToLife) return false;
     }
+    if ("koThis" in cost && findOnField(state, source.uid)?.zone !== "characters") return false;
     if ("giveOpponentDon" in cost) {
       const them = state.players[opponentOf(player)];
       if (them.donRested < cost.giveOpponentDon || them.characters.length === 0) return false;
