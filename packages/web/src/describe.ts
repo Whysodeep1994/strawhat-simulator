@@ -76,6 +76,8 @@ const TIMING_NAMES: Record<Timing, string> = {
   triggerActivated: "When a [Trigger] activates,",
   opponentActivatesEvent: "When your opponent activates an Event,",
   characterRemovedByYourEffect: "When a Character is removed from the field by your effect,",
+  yourCharacterRemovedByEffect: "When your Character is removed from the field by an effect,",
+  opponentLifeRemoved: "When a card is removed from your opponent's Life cards,",
   startOfGame: "At the start of the game,",
   restedByOpponentsCharacter:
     "When this Character becomes rested by your opponent's Character's effect,",
@@ -90,6 +92,8 @@ const STATUS_TEXT: Record<Status, string> = {
   cannotBeKOdByOpponentsEffects: "cannot be K.O.'d by your opponent's effects",
   noRefresh: "will not become active in the next Refresh Phase",
   cannotBeKOdInBattleByLeaders: "cannot be K.O.'d in battle by Leaders",
+  cannotBeKOdInBattleBySlash: "cannot be K.O.'d in battle by <Slash> attribute cards",
+  mustTrashToAttack: "cannot attack unless its owner trashes 2 cards from their hand",
   negated: "has its effects negated",
   cannotBeRested: "cannot be rested",
   cannotBeRemovedByOpponentsEffects: "cannot be removed from the field by your opponent's effects",
@@ -199,6 +203,11 @@ function conditionText(condition: Condition): string {
     return `(If you and your opponent have a total of ${condition.totalLifeAtMost} or less Life cards)`;
   if ("lifeFewerThanOpponent" in condition)
     return "(If you have less Life cards than your opponent)";
+  if ("trashHas" in condition)
+    return `(If you have a${filterText(condition.trashHas)} card in your trash)`;
+  if ("opponentRestedCardsAtLeast" in condition)
+    return `(If your opponent has ${condition.opponentRestedCardsAtLeast} or more rested cards)`;
+  if ("thisActive" in condition) return "(If this Character is active)";
   return `(If the top card of your deck is a${filterText(condition.deckTopMatches)} card)`;
 }
 
@@ -302,6 +311,8 @@ function stepText(step: Step): string {
       return `Trash ${step.upTo ? "up to " : ""}${step.count}${filterText(step.filter)} card(s) from your hand.`;
     case "handToDeckTop":
       return `Place ${step.count} card(s) from your hand at the top${step.orBottom ? " or bottom" : ""} of your deck${step.orBottom ? " in any order" : ""}.`;
+    case "donDownToOpponent":
+      return "Return DON!! cards from your field to your DON!! deck until you have as many as your opponent.";
     case "opponentDonNoRefresh":
       return `Up to ${step.count} of your opponent's rested DON!! cards will not become active in your opponent's next Refresh Phase.`;
     case "handToDeckBottom":
@@ -339,7 +350,7 @@ function stepText(step: Step): string {
     case "playFromDeckTop":
       return step.must
         ? "Play that card."
-        : `You may play the top card of your deck if it is a${filterText(step.filter)} card${step.rested ? ", rested" : ""}.${step.restToBottom ? " Then, place the rest at the bottom of your deck." : ""}`;
+        : `You may play the top card of your deck if it is a${filterText(step.filter)} card${step.rested ? ", rested" : ""}.${step.restToBottom ? " Then, place the rest at the bottom of your deck." : ""}${step.restTopOrBottom ? " Then, place the rest at the top or bottom of your deck." : ""}`;
     case "noLifeToHand":
       return "You cannot add Life cards to your hand using your own effects during this turn.";
     case "chooseOne":
@@ -488,6 +499,9 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.costAtMost !== undefined) parts.push(`a cost of ${filter.costAtMost} or less`);
   if (filter.costAtLeast !== undefined) parts.push(`a cost of ${filter.costAtLeast} or more`);
   if (filter.costAtMostOpponentLife) parts.push("a cost up to your opponent's Life count");
+  if (filter.costAtMostLife) parts.push("a cost up to your Life count");
+  if (filter.costAtMostOpponentDonOnField)
+    parts.push("a cost up to the number of DON!! cards on your opponent's field");
   if (filter.costAtMostTotalLife) parts.push("a cost up to the total of both players' Life cards");
   if (filter.noBaseEffect) parts.push("no base effect");
   if (filter.powerAtMost !== undefined) parts.push(`${filter.powerAtMost} power or less`);

@@ -112,6 +112,10 @@ export type Timing =
   | "opponentActivatesEvent"
   /** "When a Character is removed from the field by your effect" (either player's Character). */
   | "characterRemovedByYourEffect"
+  /** "When your Character [cardFilter] is removed from the field by an effect" (either player's). */
+  | "yourCharacterRemovedByEffect"
+  /** "When a card is removed from your opponent's Life cards" (damage or an effect). */
+  | "opponentLifeRemoved"
   /** Leader effects that read "at the start of the game" (rule 5-2-1-5-1). */
   | "startOfGame"
   /** "When this Character becomes rested by your opponent's Character's effect". */
@@ -190,7 +194,13 @@ export type Condition =
   /** True if the condition doesn't hold. */
   | { not: Condition }
   /** "If your opponent's Leader has the <Slash> attribute". */
-  | { opponentLeaderAttribute: string };
+  | { opponentLeaderAttribute: string }
+  /** "If you have [Kuromarimo] in your trash": a card matching the filter is in your trash. */
+  | { trashHas: Filter }
+  /** "If your opponent has 7 or more rested cards" (DON!! in the cost area, Leader, Characters, Stage). */
+  | { opponentRestedCardsAtLeast: number }
+  /** "If this Character is active". */
+  | { thisActive: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -311,6 +321,10 @@ export interface Filter {
   notType?: string;
   /** "With a cost equal to or less than the number of DON!! cards on your field". */
   costAtMostDonOnField?: boolean;
+  /** "With a cost equal to or less than the number of DON!! cards on your opponent's field". */
+  costAtMostOpponentDonOnField?: boolean;
+  /** "With a cost equal to or less than your number of Life cards". */
+  costAtMostLife?: boolean;
   /** A type containing this text, e.g. "Baroque Works". */
   typeIncludes?: string;
   /** No type containing this text. */
@@ -357,6 +371,10 @@ export type Status =
   | "noRefresh"
   /** "Cannot be K.O.'d in battle by Leaders". */
   | "cannotBeKOdInBattleByLeaders"
+  /** "Cannot be K.O.'d in battle by <Slash> attribute cards". */
+  | "cannotBeKOdInBattleBySlash"
+  /** "Cannot attack unless your opponent trashes 2 cards from their hand whenever they attack". */
+  | "mustTrashToAttack"
   /** "Negate the effect of ...": the card's effects and keywords don't work (rule 8-2). */
   | "negated"
   /** "Cannot be rested": it can't attack, block, or be rested by effects or costs. */
@@ -545,6 +563,8 @@ export type Step =
       rested?: boolean;
       restToBottom?: boolean;
       must?: boolean;
+      /** "Then, place the rest at the top or bottom of your deck." */
+      restTopOrBottom?: boolean;
     }
   /**
    * Play a card from hand for free. `rested`: "play ... rested". `orTrash`: "from your hand
@@ -678,6 +698,11 @@ export type Step =
    * next Refresh Phase".
    */
   | { do: "opponentDonNoRefresh"; count: number }
+  /**
+   * "Return DON!! cards from your field to your DON!! deck until you have the same number of
+   * DON!! cards on your field as your opponent" (rested first, as for DON!! −X).
+   */
+  | { do: "donDownToOpponent" }
   /** "This Character's base power becomes the same as the selected Character's power during this turn." */
   | { do: "copyPower"; target: Target }
   /** "Look at all of your (opponent's) Life cards and place them back in any order." */

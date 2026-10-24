@@ -60,6 +60,7 @@ function queueAbout(state: GameState, card: CardInstance, timing: Timing): void 
 export function removedByEffect(state: GameState, card: CardInstance, by: PlayerId): void {
   if (findOnField(state, card.uid)?.zone !== "characters") return;
   if (by !== card.owner) queueAbout(state, card, "yourCharacterRemovedByOpponent");
+  queueAbout(state, card, "yourCharacterRemovedByEffect");
   // "When a Character is removed from the field by your effect".
   queueFieldEffects(state, by, "characterRemovedByYourEffect");
 }
