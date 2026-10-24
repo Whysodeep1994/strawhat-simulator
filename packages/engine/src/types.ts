@@ -65,6 +65,8 @@ export interface Modifier {
   negateOnPlay?: boolean;
   /** On a Leader: its player can't add Life cards to their hand with their own effects. */
   noLifeToHand?: boolean;
+  /** On a Leader: its player can't play cards matching `filter` (`fromHand`: only from the hand). */
+  cannotPlay?: { filter?: Filter; fromHand?: boolean };
   until: "turn" | "battle";
   /** For "turn": the last turn it lasts. Defaults to the current turn. */
   endsTurn?: number;
@@ -123,6 +125,8 @@ export type Frame =
       answer: boolean | null;
     }
   | { kind: "trigger-cleanup" }
+  /** Rule 5-2-1-6: the opening draw, after any "at the start of the game" effects. */
+  | { kind: "opening-draw" }
   | { kind: "end-phase"; stage: number };
 
 /** Who must act next, and what kind of decision it is. */
