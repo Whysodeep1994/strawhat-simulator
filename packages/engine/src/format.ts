@@ -83,6 +83,10 @@ export function checkDeck(
   const onlyType = (leader.effects ?? [])
     .flatMap((e) => (e.timing === "permanent" ? e.steps : []))
     .find((s): s is Extract<Step, { do: "deckOnlyType" }> => s.do === "deckOnlyType")?.type;
+  // "You cannot include Events with a cost of 2 or more in your deck" (OP13-079).
+  const excluded = (leader.effects ?? [])
+    .flatMap((e) => (e.timing === "permanent" ? e.steps : []))
+    .filter((s): s is Extract<Step, { do: "deckExcludes" }> => s.do === "deckExcludes");
   const copies = new Map<string, number>();
   for (const id of deck) copies.set(id, (copies.get(id) ?? 0) + 1);
   for (const id of copies.keys()) {
@@ -97,6 +101,17 @@ export function checkDeck(
       problems.push({
         card: id,
         message: `${name} (${id}) isn't {${onlyType}} type; ${leader.name} only allows {${onlyType}} cards`,
+      });
+    } else if (
+      excluded.some(
+        (s) =>
+          (!s.category || card.category === s.category) &&
+          (s.costAtLeast === undefined || (card.cost ?? 0) >= s.costAtLeast),
+      )
+    ) {
+      problems.push({
+        card: id,
+        message: `${leader.name} doesn't allow ${name} (${id}) in the deck`,
       });
     }
   }
