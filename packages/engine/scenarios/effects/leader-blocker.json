@@ -1,0 +1,22 @@
+{
+  "name": "A Leader with [Blocker] blocks an attack on a Character",
+  "rules": ["10-1-4-1"],
+  "setup": {
+    "p1": { "characters": ["TEST-C5-6000"] },
+    "p2": {
+      "leader": "TEST-LEADER-BLOCKER",
+      "characters": [{ "card": "TEST-C2-3000", "rested": true }]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.characters.0"
+    },
+    { "type": "block", "player": "p2", "blocker": "p2.leader" },
+    { "type": "pass", "player": "p2" }
+  ],
+  "expect": { "p2.characters": 1, "p2.leader.rested": true, "p2.life": 3 }
+}

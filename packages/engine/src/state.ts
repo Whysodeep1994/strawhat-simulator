@@ -148,6 +148,16 @@ export function playCostOf(state: GameState, player: PlayerId, card: CardInstanc
     if (!conditionsMet(state, player, card, effect.conditions)) continue;
     for (const step of effect.steps) if (step.do === "costChange") cost += step.amount;
   }
+  // "The cost of playing ... from your hand will be reduced by 1" on your field.
+  for (const source of fieldCards(state, player)) {
+    for (const effect of definitionOf(state, source).effects ?? []) {
+      if (effect.timing !== "permanent" || effect.zone === "hand") continue;
+      if (!conditionsMet(state, player, source, effect.conditions)) continue;
+      for (const step of effect.steps)
+        if (step.do === "handCostChange" && matchesFilter(state, card, step.filter, source, false))
+          cost += step.amount;
+    }
+  }
   return Math.max(0, cost);
 }
 
@@ -356,12 +366,12 @@ export function conditionsMet(
     if ("donActiveAtMost" in c) return me.donActive <= c.donActiveAtMost;
     if ("opponentDonOnFieldAtLeast" in c)
       return donOnField(state, opponentOf(controller)) >= c.opponentDonOnFieldAtLeast;
+    if ("thisPowerAtLeast" in c) return powerOf(state, source) >= c.thisPowerAtLeast;
     if ("opponentHasMoreDon" in c)
       return donOnField(state, opponentOf(controller)) > donOnField(state, controller);
+    if ("handAtLeast" in c) return me.hand.length >= c.handAtLeast;
     if ("opponentHandAtLeast" in c) return them.hand.length >= c.opponentHandAtLeast;
-    if ("handFewerThanOpponentBy" in c)
-      return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
-    if ("totalLifeAtMost" in c) return me.life.length + them.life.length <= c.totalLifeAtMost;
+    if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
     return false;
   });
 }
@@ -539,6 +549,26 @@ export function canPayCosts(
       return false;
     if ("trashToDeckBottom" in cost) fromTrash += cost.trashToDeckBottom;
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
+    if ("toDeckBottom" in cost) {
+      const own =
+        cost.zone === "stage"
+          ? p.stage
+            ? [p.stage]
+            : []
+          : p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      if (own.length < cost.toDeckBottom) return false;
+    }
+    if ("trashToDeck" in cost) fromTrash += cost.trashToDeck;
+    if ("koOwnCharacter" in cost) {
+      const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      if (own.length < cost.koOwnCharacter) return false;
+    }
+    if ("playFromHand" in cost) {
+      const matching = hand.filter((c) =>
+        matchesFilter(state, c, cost.playFromHand, source, false),
+      );
+      if (matching.length === 0) return false;
+    }
     if ("characterToLife" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.characterToLife) return false;

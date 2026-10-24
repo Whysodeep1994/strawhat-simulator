@@ -45,6 +45,10 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `koByOpponentsEffect`         | "When this Character is K.O.'d by your opponent's effect"            | 10-2-1  |
 | `characterRemovedByOpponent`  | "When your Character is removed ... by your opponent's effect"       | 8-1-3-1 |
 | `onOpponentsBlock`            | "When your opponent activates [Blocker]"                             | 8-1-3-1 |
+| `drawOutsideDrawPhase`        | "When you draw a card outside of your Draw Phase"                    | 8-1-3-1 |
+| `lifeAddedToHand`             | "When a card is added to your hand from your Life"                   | 8-1-3-1 |
+| `lifeBecomesZero`             | "When your number of Life cards becomes 0"                           | 8-1-3-1 |
+| `triggerActivated`            | "When a [Trigger] activates" (yours)                                 | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -85,8 +89,10 @@ Punch] would be K.O.'d by an effect, you may trash this Character instead":
 
 `replaces` fields: `side` (`"self"` for your cards matching `filter`, `"this"` for the card
 itself), `removal` (`"ko"`, or `"remove"` for any removal from the field by K.O. or return), and
-`byOpponent: true` for "by your opponent's effect". Removals by effects only; a K.O. in battle is
-never replaced.
+`byOpponent: true` for "by your opponent's effect". Removals by effects only, unless the effect sets
+`battle: true` for wording that also covers a K.O. in battle ("If this Character would be K.O.'d").
+The effect's steps can use the target `{ "side": "that" }` for the saved card ("give that Character
+−1000 power instead").
 
 ## Conditions
 
@@ -112,9 +118,10 @@ played on this turn"), plus:
 | `{ "leaderAttribute": "Slash" }`                 | "If your Leader has the <Slash> attribute"                                  |
 | `{ "opponentHandAtLeast": 6 }`                   | "If your opponent has 6 or more cards in their hand"                        |
 | `{ "handTrashedByEffectThisTurn": true }`        | "During the turn in which a card in your hand is trashed by an effect"      |
+| `{ "thisPowerAtLeast": 7000 }`                   | "If this Character has 7000 power or more"                                  |
 | `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"             |
-| `{ "handFewerThanOpponentBy": 3 }`               | "If the number of cards in your hand is at least 3 less than ..."           |
-| `{ "totalLifeAtMost": 5 }`                       | "If you and your opponent have a total of 5 or less Life cards"             |
+| `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                  |
+| `{ "trashAtLeast": 10 }`                         | "If you have 10 or more cards in your trash"                                |
 
 `count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
@@ -139,7 +146,11 @@ of costs the player pays one of, e.g. "rest your Leader or 1 of your DON!! cards
 `{ "oneOf": [{ "restOwn": { "category": "leader" } }, { "restDon": 1 }] }`),
 `trashToDeckBottom` (place cards from your trash at the bottom of your deck), `returnGivenDon`
 ("return N of your currently given DON!! cards to your cost area rested"; the player picks which
-cards), `characterToLife` ("add 1 of your Characters with ... to the top of your Life cards
+cards), `toDeckBottom` ("place 1 of your Characters at the bottom of your deck"; `"zone": "stage"` for
+Stages, optional `filter`), `trashToDeck` ("return 20 cards from your trash to your deck and shuffle
+it"), `koOwnCharacter` ("K.O. 1 of your Characters", optional `filter`), `playFromHand` ("play 1
+[Kotori] from your hand"; the value is a filter),
+and `characterToLife` ("add 1 of your Characters with ... to the top of your Life cards
 face-up": `{ "characterToLife": 1, "filter": {...}, "faceUp": true }`).
 
 Face-up Life cards are open to both players (rule 3-10-2-1): `viewFor` shows them in `life`, and
@@ -157,11 +168,15 @@ K.O. it" is a `grantStatus` step followed by `{ "do": "ko", "target": { "side": 
 `"totalPowerAtMost": 4000` is for "K.O. up to 2 of your opponent's Characters with a total power of
 4000 or less": the picked cards' power must add up to at most that.
 
+`"that"` means the cards the previous targeting step picked ("that card gains an additional +2000"),
+or the card a replacement effect saves. `totalPowerAtMost` limits the picked cards' total power ("up to
+2 ... with a total power of 4000 or less").
+
 `"any"` means either player's cards, for wording like "return up to 1 Character with a cost of 4
 or less" that doesn't say whose.
 
 Filters: `category`, `costAtMost`, `costAtLeast`, `powerAtMost`, `powerAtLeast`, `type`, `name`,
-`nameIncludes`, `color`, `rested`, `costAtMostOpponentLife` ("a cost equal to or less than the
+`nameIncludes`, `notType`, `color`, `rested`, `costAtMostOpponentLife` ("a cost equal to or less than the
 number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for example
 `{ "keyword": "blocker" }` for "[Blocker] Characters"), and:
 
@@ -233,6 +248,11 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `redirectAttack`                 | "Change the target of the attack to ..." the chosen card.                                                                                                                                         |
 | `grantStatus`                    | "Cannot attack", "cannot be K.O.'d ...", and so on. See below.                                                                                                                                    |
 | `costChange`                     | Change cost (negative for "−"), for the turn or as a permanent effect.                                                                                                                            |
+| `trashThis`                      | "Then, trash this Stage": trash the effect's own card. Not a K.O.                                                                                                                                 |
+| `handDownTo`                     | "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent".                                                                                                          |
+| `trashToDeckBottom`              | `side` places `count` cards from their trash at the bottom of their deck, in the order they pick.                                                                                                 |
+| `handCostChange`                 | In a permanent effect on the field: "The cost of playing {X} cards from your hand will be reduced by 1" (`filter`, `amount`).                                                                     |
+| `extraTurn`                      | "Take an extra turn after this one."                                                                                                                                                              |
 
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash", or
 `perCount` (a `count`-style `{ "side", "zone", "filter" }`) for "for every {Straw Hat Crew} type
@@ -257,6 +277,11 @@ Step options:
 [steps]` for "If you do, draw 1 card" (only if a card was played).
 - `lifeToHand` takes `"from": "topOrBottom"` for "add 1 card from the top or bottom of your Life
   cards to your hand".
+- `playFromHand` and `playFromTrash` take `"rested": true` for "play ... rested".
+- `trashFromHand` takes `"ifYouDo": [steps]` for "you may trash 1 card from your hand. If you do, ..."
+  (with `"upTo": true`).
+
+A Leader with [Blocker] can block like a Character.
 
 `powerUp` takes `perTrash: 4` for "+X power for every 4 cards in your trash".
 
