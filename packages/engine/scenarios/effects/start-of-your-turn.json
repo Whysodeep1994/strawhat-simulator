@@ -1,0 +1,23 @@
+{
+  "name": "An \"at the start of your turn\" effect resolves before the Draw Phase",
+  "rules": ["6-2-1"],
+  "setup": {
+    "turn": 4,
+    "turnPlayer": "p2",
+    "p1": {
+      "characters": ["TEST-START-TURN"],
+      "deck": ["TEST-C2-3000", "TEST-C4-5000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "endTurn",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "turnPlayer": "p1",
+    "p1.trash.0.cardId": "TEST-C2-3000",
+    "p1.hand.0.cardId": "TEST-C4-5000"
+  }
+}

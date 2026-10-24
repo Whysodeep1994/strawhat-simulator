@@ -1,0 +1,26 @@
+{
+  "name": "\"If you and your opponent have a total of 5 or more Life cards\"",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-TOTAL-LIFE-MIN"],
+      "don": {
+        "active": 1
+      },
+      "life": 2
+    },
+    "p2": {
+      "life": 3
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

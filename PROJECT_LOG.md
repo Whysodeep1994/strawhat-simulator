@@ -28,6 +28,12 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-24: Engine blocks for set OP-11: "at the start of your turn" effects, "when a card is
+  removed from your or your opponent's Life cards", "when your opponent activates a [Trigger]",
+  "choose a cost and reveal" (`guessCost`), "look at 1 card from the top of your opponent's deck",
+  "cannot be K.O.'d by effects of Characters without <Special>", "cannot be rested by your
+  opponent's effects", four new conditions, and small options on `handToDeckTop`,
+  `trashToDeckBottom`, `characterToLife` and `atEndOfTurn`.
 - 2026-10-24: Engine blocks for set OP-10: "when you activate an Event", the total cost of your
   Characters, "at least 2 fewer Characters", "less Life cards than your opponent", returning this
   Character to hand as a cost, "would be K.O.'d in battle" replacements, playing the top Life card,

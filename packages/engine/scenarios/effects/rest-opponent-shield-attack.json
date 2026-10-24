@@ -1,0 +1,25 @@
+{
+  "name": "A Character that can't be rested by the opponent can still attack",
+  "rules": ["7-1-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-REST-SHIELD"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p1.characters.0.rested": true,
+    "p2.life": 4
+  }
+}

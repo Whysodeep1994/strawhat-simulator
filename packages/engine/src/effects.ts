@@ -116,6 +116,12 @@ export type Timing =
   | "startOfGame"
   /** "When you activate an Event": you play an Event's [Main] or [Counter] effect. */
   | "eventActivated"
+  /** "When your opponent activates a [Trigger]". */
+  | "opponentActivatesTrigger"
+  /** "This effect can be activated at the start of your turn" (before the Refresh Phase ends). */
+  | "startOfYourTurn"
+  /** "When a card is removed from your or your opponent's Life cards" (any way). */
+  | "lifeCardRemoved"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -188,7 +194,15 @@ export type Condition =
   /** "If you have less Life cards than your opponent". */
   | { lifeLessThanOpponents: true }
   /** "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field". */
-  | { donFewerThanOpponentBy: number };
+  | { donFewerThanOpponentBy: number }
+  /** "If you and your opponent have a total of 5 or more Life cards". */
+  | { totalLifeAtLeast: number }
+  /** "If your opponent has 5 or more rested cards" (DON!! and field cards). */
+  | { opponentRestedCardsAtLeast: number }
+  /** "If your Leader's colors include blue". */
+  | { leaderColorIncludes: Color }
+  /** "If that (attacking) Character has the <Slash> attribute": the card attacking now. */
+  | { attackerMatches: Filter };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -355,7 +369,11 @@ export type Status =
   /** "Cannot be rested": it can't attack, block, or be rested by effects or costs. */
   | "cannotBeRested"
   /** Can't be K.O.'d, returned, or trashed by the opponent's effects. */
-  | "cannotBeRemovedByOpponentsEffects";
+  | "cannotBeRemovedByOpponentsEffects"
+  /** "Cannot be K.O.'d by effects of Characters without the <Special> attribute". */
+  | "cannotBeKOdByNonSpecialCharacters"
+  /** "Cannot be rested by your opponent's effects". Unlike `cannotBeRested`, it can still attack. */
+  | "cannotBeRestedByOpponentsEffects";
 
 export type Step =
   | { do: "draw"; count: number }
@@ -427,7 +445,7 @@ export type Step =
   /** "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent". */
   | { do: "handDownTo"; count: number; both?: boolean }
   /** "Your opponent places 3 cards from their trash at the bottom of their deck". */
-  | { do: "trashToDeckBottom"; side: "self" | "opponent"; count: number }
+  | { do: "trashToDeckBottom"; side: "self" | "opponent"; count: number; filter?: Filter }
   /**
    * On a permanent field effect: "The cost of playing ... from your hand will be reduced by 1".
    */
@@ -435,7 +453,8 @@ export type Step =
   /** "Take an extra turn after this one". */
   | { do: "extraTurn" }
   /** Place cards from your hand at the top of your deck. */
-  | { do: "handToDeckTop"; count: number }
+  /** With `topOrBottom`, the player then places each card at the top or bottom, in any order. */
+  | { do: "handToDeckTop"; count: number; topOrBottom?: boolean }
   /**
    * Place cards from your hand at the bottom of your deck. `side: "opponent"`: "your opponent
    * must place 1 card from their hand at the bottom of their deck" (they pick).
@@ -598,7 +617,15 @@ export type Step =
    * "Add up to 1 of your Characters ... to the top or bottom of the owner's Life cards face-up."
    * The player picks the Character, then top or bottom.
    */
-  | { do: "characterToLife"; target: Target; faceUp?: boolean }
+  /** `top`: always the top of the Life cards, instead of the player's choice of top or bottom. */
+  | { do: "characterToLife"; target: Target; faceUp?: boolean; top?: boolean }
+  /** "Look at 1 card from the top of your opponent's deck." */
+  | { do: "lookAtOpponentDeckTop" }
+  /**
+   * "Choose a cost and reveal 1 card from the top of your opponent's deck. If the revealed card
+   * has the chosen cost, ...": the nested steps happen only on a match.
+   */
+  | { do: "guessCost"; steps: Step[] }
   /** "Look at all your Life cards; place 1 at the top of your deck and the rest back in any order." */
   | { do: "lifeToDeckTop" }
   /** Trigger only: add this card to your hand. */

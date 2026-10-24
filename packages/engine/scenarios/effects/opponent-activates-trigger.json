@@ -1,0 +1,32 @@
+{
+  "name": "\"When your opponent activates a [Trigger]\"",
+  "rules": ["10-1-5"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-OPP-TRIGGER-WATCH"]
+    },
+    "p2": {
+      "life": ["TEST-TRIGGER-DRAW", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    },
+    {
+      "type": "confirm",
+      "player": "p2",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

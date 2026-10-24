@@ -77,6 +77,9 @@ const TIMING_NAMES: Record<Timing, string> = {
   opponentActivatesEvent: "When your opponent activates an Event,",
   startOfGame: "At the start of the game,",
   eventActivated: "When you activate an Event,",
+  opponentActivatesTrigger: "When your opponent activates a [Trigger],",
+  startOfYourTurn: "At the start of your turn,",
+  lifeCardRemoved: "When a card is removed from your or your opponent's Life cards,",
   permanent: "",
 };
 
@@ -91,6 +94,9 @@ const STATUS_TEXT: Record<Status, string> = {
   negated: "has its effects negated",
   cannotBeRested: "cannot be rested",
   cannotBeRemovedByOpponentsEffects: "cannot be removed from the field by your opponent's effects",
+  cannotBeKOdByNonSpecialCharacters:
+    "cannot be K.O.'d by effects of Characters without the <Special> attribute",
+  cannotBeRestedByOpponentsEffects: "cannot be rested by your opponent's effects",
 };
 
 export function cardText(card: CardDefinition): string[] {
@@ -197,6 +203,14 @@ function conditionText(condition: Condition): string {
     return `(If you have at least ${condition.charactersFewerThanOpponentBy} fewer Characters than your opponent)`;
   if ("lifeLessThanOpponents" in condition)
     return "(If you have less Life cards than your opponent)";
+  if ("totalLifeAtLeast" in condition)
+    return `(If you and your opponent have a total of ${condition.totalLifeAtLeast} or more Life cards)`;
+  if ("opponentRestedCardsAtLeast" in condition)
+    return `(If your opponent has ${condition.opponentRestedCardsAtLeast} or more rested cards)`;
+  if ("leaderColorIncludes" in condition)
+    return `(If your Leader's colors include ${condition.leaderColorIncludes})`;
+  if ("attackerMatches" in condition)
+    return `(If the attacking card is a${filterText(condition.attackerMatches)} card)`;
   return `(If the top card of your deck is a${filterText(condition.deckTopMatches)} card)`;
 }
 
@@ -296,7 +310,7 @@ function stepText(step: Step): string {
     case "trashFromHand":
       return `Trash ${step.upTo ? "up to " : ""}${step.count}${filterText(step.filter)} card(s) from your hand.`;
     case "handToDeckTop":
-      return `Place ${step.count} card(s) from your hand at the top of your deck.`;
+      return `Place ${step.count} card(s) from your hand at the ${step.topOrBottom ? "top or bottom" : "top"} of your deck${step.topOrBottom ? " in any order" : ""}.`;
     case "handToDeckBottom":
       return step.side === "opponent"
         ? `Your opponent places ${step.count} card(s) from their hand at the bottom of their deck.`
@@ -376,7 +390,11 @@ function stepText(step: Step): string {
     case "trashCharacter":
       return `Trash ${targetText(step.target)}.`;
     case "characterToLife":
-      return `Add ${targetText(step.target)} to the top or bottom of the owner's Life cards${step.faceUp ? " face-up" : ""}.`;
+      return `Add ${targetText(step.target)} to the ${step.top ? "top" : "top or bottom"} of the owner's Life cards${step.faceUp ? " face-up" : " face-down"}.`;
+    case "lookAtOpponentDeckTop":
+      return "Look at 1 card from the top of your opponent's deck.";
+    case "guessCost":
+      return `Choose a cost and reveal 1 card from the top of your opponent's deck. If the revealed card has the chosen cost: ${step.steps.map(stepText).join(" ")}`;
     case "lifeToDeckTop":
       return "Look at all your Life cards; place 1 at the top of your deck and the rest back in your Life area in any order.";
     case "addThisToHand":
@@ -408,7 +426,7 @@ function stepText(step: Step): string {
     case "handDownTo":
       return `${step.both ? "You and your opponent trash" : "Trash"} cards from your hand until you have ${step.count} cards.`;
     case "trashToDeckBottom":
-      return `${step.side === "self" ? "Place" : "Your opponent places"} ${step.count} card(s) from the trash at the bottom of the deck.`;
+      return `${step.side === "self" ? "Place" : "Your opponent places"} ${step.count}${filterText(step.filter)} card(s) from the trash at the bottom of the deck.`;
     case "handCostChange":
       return `The cost of playing${filterText(step.filter)} cards from your hand changes by ${step.amount}.`;
     case "extraTurn":

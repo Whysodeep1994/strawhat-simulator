@@ -69,7 +69,6 @@ export function startTurn(state: GameState, player: PlayerId): void {
   state.usedThisTurn = [];
   const p = state.players[player];
   p.turnsTaken += 1;
-  const isFirstPlayer = player === state.firstPlayer;
 
   // Refresh Phase, rules 6-2-3 and 6-2-4.
   state.phase = "refresh";
@@ -86,6 +85,25 @@ export function startTurn(state: GameState, player: PlayerId): void {
   const stay = Math.min(frozen, p.donRested);
   p.donActive += p.donRested - stay;
   p.donRested = stay;
+
+  // "This effect can be activated at the start of your turn": it resolves before the Draw Phase.
+  const starting = fieldCards(state, player).filter((card) =>
+    effectsOf(state, card).some(
+      (e) => e.timing === "startOfYourTurn" && conditionsMet(state, player, card, e.conditions),
+    ),
+  );
+  if (starting.length > 0) {
+    state.stack.push({ kind: "turn-start", player });
+    for (const card of starting) queueEffects(state, player, card, "startOfYourTurn");
+    return;
+  }
+  continueTurn(state, player);
+}
+
+/** The rest of the turn's start after the Refresh Phase: rules 6-3 to 6-5. */
+export function continueTurn(state: GameState, player: PlayerId): void {
+  const p = state.players[player];
+  const isFirstPlayer = player === state.firstPlayer;
 
   // Draw Phase, rule 6-3-1.
   state.phase = "draw";

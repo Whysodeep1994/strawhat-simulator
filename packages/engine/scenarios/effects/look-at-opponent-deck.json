@@ -1,0 +1,26 @@
+{
+  "name": "Look at the top card of the opponent's deck, then go on",
+  "rules": ["11-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-LOOK-OPP"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": []
+    }
+  ],
+  "expect": {
+    "p1.hand": 1,
+    "p2.deck": 20
+  }
+}

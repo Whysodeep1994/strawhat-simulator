@@ -1,0 +1,31 @@
+{
+  "name": "\"Add ... to the top of the owner's Life cards\" doesn't offer the bottom",
+  "rules": ["8-1-3-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-LIFE-TOP"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C4-5000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0"]
+    }
+  ],
+  "expect": {
+    "p2.characters": 0,
+    "p2.life.0.cardId": "TEST-C4-5000"
+  }
+}

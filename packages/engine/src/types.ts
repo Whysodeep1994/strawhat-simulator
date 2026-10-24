@@ -94,6 +94,8 @@ export interface DelayedEffect {
   source: string;
   effect: number;
   steps: Step[];
+  /** Cards the steps' "that" targets mean, e.g. the Character the effect played. */
+  targets?: string[];
 }
 
 /**
@@ -145,7 +147,9 @@ export type Frame =
   | { kind: "trigger-cleanup" }
   /** Rule 5-2-1-6: the opening draw, after any "at the start of the game" effects. */
   | { kind: "opening-draw" }
-  | { kind: "end-phase"; stage: number };
+  | { kind: "end-phase"; stage: number }
+  /** "At the start of your turn" effects resolve; then the Draw Phase begins. */
+  | { kind: "turn-start"; player: PlayerId };
 
 /** Who must act next, and what kind of decision it is. */
 export type Prompt =

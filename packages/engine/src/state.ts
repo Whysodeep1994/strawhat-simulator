@@ -425,6 +425,17 @@ export function conditionsMet(
     if ("handFewerThanOpponentBy" in c)
       return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
     if ("totalLifeAtMost" in c) return me.life.length + them.life.length <= c.totalLifeAtMost;
+    if ("totalLifeAtLeast" in c) return me.life.length + them.life.length >= c.totalLifeAtLeast;
+    if ("opponentRestedCardsAtLeast" in c) {
+      const rested = fieldCards(state, opponentOf(controller)).filter((card) => card.rested).length;
+      return them.donRested + rested >= c.opponentRestedCardsAtLeast;
+    }
+    if ("leaderColorIncludes" in c)
+      return definitionOf(state, me.leader).colors.includes(c.leaderColorIncludes);
+    if ("attackerMatches" in c) {
+      const attacker = state.battle && findCard(state, state.battle.attacker);
+      return !!attacker && matchesFilter(state, attacker, c.attackerMatches, source);
+    }
     if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
     if ("donOnFieldAtMostOpponents" in c)
       return donOnField(state, controller) <= donOnField(state, opponentOf(controller));

@@ -54,6 +54,9 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `battleKOReplacement`         | Set up by `replaceBattleKO`: "If any of your Characters would be K.O.'d in battle during this turn, you may ... instead" | 8-1-3-4 |
 | `eventActivated`              | "When you activate an Event" (you play an Event's [Main] or [Counter])                                                   | 8-1-3-1 |
 | `opponentActivatesEvent`      | "When your opponent activates an Event" (main or counter)                                                                | 8-1-3-1 |
+| `opponentActivatesTrigger`    | "When your opponent activates a [Trigger]"                                                                               | 8-1-3-1 |
+| `startOfYourTurn`             | "This effect can be activated at the start of your turn" (after the Refresh Phase, before the Draw Phase)                | 6-2-1   |
+| `lifeCardRemoved`             | "When a card is removed from your or your opponent's Life cards" (damage, costs and effects)                             | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -133,6 +136,10 @@ played on this turn"), plus:
 | `{ "charactersFewerThanOpponentBy": 2 }`         | "If the number of your Characters is at least 2 less than the number of your opponent's Characters"       |
 | `{ "lifeLessThanOpponents": true }`              | "If you have less Life cards than your opponent"                                                          |
 | `{ "donFewerThanOpponentBy": 2 }`                | "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field"  |
+| `{ "totalLifeAtLeast": 5 }`                      | "If you and your opponent have a total of 5 or more Life cards"                                           |
+| `{ "opponentRestedCardsAtLeast": 5 }`            | "If your opponent has 5 or more rested cards" (DON!! and field cards)                                     |
+| `{ "leaderColorIncludes": "blue" }`              | "If your Leader's colors include blue"                                                                    |
+| `{ "attackerMatches": {...} }`                   | "If that Character has the <Slash> attribute": a filter for the card attacking now                        |
 
 `count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
@@ -261,6 +268,8 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `playFromDeckTop`                | "You may play" the top card of your deck if it matches; `rested` plays it rested.                                                                                                                 |
 | `playFromLifeTop`                | "Reveal 1 card from the top of your Life cards. If that card is ..., you may play that card."                                                                                                     |
 | `noCharacterDonActive`           | "You cannot set DON!! cards as active using Character effects during this turn": later `setDonActive` steps on Characters do nothing.                                                             |
+| `lookAtOpponentDeckTop`          | "Look at 1 card from the top of your opponent's deck." Only the player looking sees it.                                                                                                           |
+| `guessCost`                      | "Choose a cost and reveal 1 card from the top of your opponent's deck. If the revealed card has the chosen cost, ...": the nested `steps` happen on a match. The card stays on top.               |
 | `freezeOpponentDon`              | "Up to `count` of your opponent's rested DON!! cards will not become active in your opponent's next Refresh Phase."                                                                               |
 | `noLifeToHand`                   | "You cannot add Life cards to your hand using your own effects during this turn."                                                                                                                 |
 | `chooseOne`                      | "Choose one": `options` are `{ "label", "steps" }`; `"chooser": "opponent"` for "your opponent chooses". The player answers with `{ "type": "chooseOne", "option": index }`.                      |
@@ -309,7 +318,9 @@ opponent's next turn" or "... next End Phase".
 
 Statuses for `grantStatus`: `cannotAttack`, `cannotBlock` ("your opponent cannot activate
 [Blocker]" on a chosen Character), `cannotBeKOdInBattle`, `cannotBeKOdByEffects`,
-`cannotBeKOdByOpponentsEffects`, `cannotBeKOdInBattleByLeaders`, `noRefresh` (it stays rested through its owner's next Refresh
+`cannotBeKOdByOpponentsEffects`, `cannotBeKOdInBattleByLeaders`, `cannotBeKOdByNonSpecialCharacters` ("cannot be K.O.'d by
+effects of Characters without the <Special> attribute"), `cannotBeRestedByOpponentsEffects` (unlike
+`cannotBeRested`, the card can still attack and block), `noRefresh` (it stays rested through its owner's next Refresh
 Phase, whatever the `duration`), `cannotBeRested` (it
 can't attack, block, or be rested by costs or effects), and `negated` ("negate the effect of ..."):
 a negated card's effects and printed keywords stop working (rule 8-2).
@@ -334,6 +345,12 @@ Step options:
 - `handToDeckBottom` takes `"side": "opponent"` for "your opponent must place 1 card from their
   hand at the bottom of their deck" (they pick).
 - `playThis` on a Stage's [Trigger] plays the Stage.
+- `handToDeckTop` takes `"topOrBottom": true` for "place 2 cards from your hand at the top or bottom of
+  your deck in any order".
+- `trashToDeckBottom` takes a `filter` ("your opponent places 3 Events from their trash ...").
+- `characterToLife` takes `"top": true` for "add it to the top of your Life cards" (no choice of the bottom).
+- `atEndOfTurn` remembers the cards picked or played before it, so its steps can use `{ "side": "that" }`
+  for "place the Character played by this effect at the bottom of the owner's deck at the end of this turn".
 - `trashFromHand` takes `"ifYouDo": [steps]` for "you may trash 1 card from your hand. If you do, ..."
   (with `"upTo": true`).
 
