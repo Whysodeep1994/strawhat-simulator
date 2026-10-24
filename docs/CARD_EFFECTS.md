@@ -292,7 +292,8 @@ opponent's next turn" or "... next End Phase".
 
 Statuses for `grantStatus`: `cannotAttack`, `cannotBlock` ("your opponent cannot activate
 [Blocker]" on a chosen Character), `cannotBeKOdInBattle`, `cannotBeKOdByEffects`,
-`cannotBeKOdByOpponentsEffects`, `cannotBeKOdInBattleByLeaders`, `noRefresh`, `cannotBeRested` (it
+`cannotBeKOdByOpponentsEffects`, `cannotBeKOdInBattleByLeaders`, `noRefresh` (it stays rested through its owner's next Refresh
+Phase, whatever the `duration`), `cannotBeRested` (it
 can't attack, block, or be rested by costs or effects), and `negated` ("negate the effect of ..."):
 a negated card's effects and printed keywords stop working (rule 8-2).
 

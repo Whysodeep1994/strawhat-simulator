@@ -1521,10 +1521,14 @@ function lasting(
   state: GameState,
   controller: PlayerId,
   duration: Duration = "turn",
+  ownNextTurn = false,
 ): Pick<Modifier, "until" | "endsTurn"> {
   if (duration !== "opponentsNextTurn") return { until: duration };
-  // The opponent's next turn is the next turn if it's the controller's turn now.
-  return { until: "turn", endsTurn: state.turn + (state.turnPlayer === controller ? 1 : 2) };
+  // The opponent's next turn is the next turn if it's the controller's turn now. With
+  // `ownNextTurn`, it lasts into `controller`'s own next turn instead.
+  const now = state.turnPlayer === controller;
+  if (ownNextTurn) return { until: "turn", endsTurn: state.turn + (now ? 2 : 1) };
+  return { until: "turn", endsTurn: state.turn + (now ? 1 : 2) };
 }
 
 function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: string): void {
@@ -1564,7 +1568,11 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
       state.modifiers.push({
         target: uid,
         status: step.status,
-        ...lasting(state, controller, step.duration),
+        // "Will not become active in your next Refresh Phase": it lasts until the card's
+        // owner's next turn, whoever's turn it is now.
+        ...(step.status === "noRefresh"
+          ? lasting(state, card.owner, "opponentsNextTurn", true)
+          : lasting(state, controller, step.duration)),
       });
       return;
     case "noBlockers":

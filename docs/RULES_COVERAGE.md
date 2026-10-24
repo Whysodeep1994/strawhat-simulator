@@ -269,7 +269,7 @@ Comprehensive Rules version 1.2.1.
 | 6-2 | 6-2 Refresh Phase | Tested | 1 |
 | 6-2-1 | 6-2 Refresh Phase | Phase 4 (effects) | 0 |
 | 6-2-2 | 6-2 Refresh Phase | Phase 4 (effects) | 0 |
-| 6-2-3 | 6-2 Refresh Phase | Tested | 1 |
+| 6-2-3 | 6-2 Refresh Phase | Tested | 2 |
 | 6-2-4 | 6-2 Refresh Phase | Tested | 3 |
 | 6-3 | 6-3 Draw Phase | Tested | 1 |
 | 6-3-1 | 6-3 Draw Phase | Tested | 4 |
