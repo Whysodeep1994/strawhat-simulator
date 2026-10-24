@@ -1,12 +1,12 @@
 {
-  "name": "A Counter Event triggers \"when your opponent activates an Event\"",
+  "name": "When your opponent activates an Event, they place a card from hand at the bottom of their deck",
   "rules": ["8-1-3-1"],
   "setup": {
     "p1": {
       "characters": ["TEST-EVENT-WATCHER"]
     },
     "p2": {
-      "hand": ["TEST-EVENT-COUNTER"],
+      "hand": ["TEST-EVENT-COUNTER", "TEST-FILLER"],
       "don": {
         "active": 1
       }
@@ -28,9 +28,15 @@
       "type": "choose",
       "player": "p2",
       "cards": ["p2.leader"]
+    },
+    {
+      "type": "pass",
+      "player": "p2"
     }
   ],
   "expect": {
-    "p1.hand": 1
+    "p2.life": 4,
+    "p2.hand": 0,
+    "p2.deck": 21
   }
 }

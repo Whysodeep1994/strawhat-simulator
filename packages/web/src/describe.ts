@@ -182,6 +182,8 @@ function conditionText(condition: Condition): string {
   if ("leaderMulticolored" in condition) return "(If your Leader is multicolored)";
   if ("donOnFieldAtMostOpponents" in condition)
     return "(If you have the same or fewer DON!! cards on your field than your opponent)";
+  if ("donFewerThanOpponentBy" in condition)
+    return `(If you have at least ${condition.donFewerThanOpponentBy} fewer DON!! cards on your field than your opponent)`;
   if ("donActiveAtMost" in condition)
     return `(If you have ${condition.donActiveAtMost} or less active DON!! cards)`;
   if ("donGivenAtLeast" in condition)
@@ -259,7 +261,7 @@ function costText(cost: Cost): string {
   if ("activeLeaderPower" in cost)
     return `give your 1 active Leader −${Math.abs(cost.activeLeaderPower)} power during this turn`;
   if ("toDeckBottom" in cost)
-    return `place ${cost.toDeckBottom} of your ${cost.zone === "stage" ? "Stages" : `Characters${withFilter(cost.filter)}`} at the bottom of your deck`;
+    return `place ${cost.toDeckBottom} ${cost.zone === "stage" ? "of your Stages" : `${cost.side === "any" ? "" : "of your "}Characters${withFilter(cost.filter)}`} at the bottom of the owner's deck`;
   if ("trashToDeck" in cost)
     return `return ${cost.trashToDeck} cards from your trash to your deck and shuffle it`;
   if ("koOwnCharacter" in cost)
@@ -270,7 +272,7 @@ function costText(cost: Cost): string {
   if ("giveActiveDon" in cost)
     return `give ${cost.giveActiveDon} of your active DON!! cards to your Leader or a Character`;
   if ("trashOwnCharacter" in cost)
-    return `trash ${cost.trashOwnCharacter} of your Characters${withFilter(cost.filter)}`;
+    return `trash ${cost.trashOwnCharacter} of your ${cost.zone === "stage" ? "Stages" : "Characters"}${withFilter(cost.filter)}`;
   return "rest this card";
 }
 
@@ -309,7 +311,15 @@ function stepText(step: Step): string {
     case "handToDeckTop":
       return `Place ${step.count} card(s) from your hand at the top of your deck.`;
     case "handToDeckBottom":
-      return `Place ${step.count} card(s) from your hand at the bottom of your deck.`;
+      return step.side === "opponent"
+        ? `Your opponent places ${step.count} card(s) from their hand at the bottom of their deck.`
+        : `Place ${step.count} card(s) from your hand at the bottom of your deck.`;
+    case "handToDeckShuffle":
+      return `${step.side === "opponent" ? "Your opponent returns" : "Return"} all cards in hand to the deck and shuffles it, then draws ${step.draw} cards.`;
+    case "cannotAttackLeader":
+      return "You cannot attack a Leader during this turn.";
+    case "dealDamage":
+      return `Deal ${step.count} damage to your opponent.`;
     case "redirectAttack":
       return `Change the target of the attack to ${targetText(step.target)}.`;
     case "handToLife":
@@ -495,6 +505,9 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.powerAtMost !== undefined) parts.push(`${filter.powerAtMost} power or less`);
   if (filter.powerAtLeast !== undefined) parts.push(`${filter.powerAtLeast} power or more`);
   if (filter.type) parts.push(`the {${filter.type}} type`);
+  if (filter.notType) parts.push(`no {${filter.notType}} type`);
+  if (filter.typeIncludes) parts.push(`a type including "${filter.typeIncludes}"`);
+  if (filter.notTypeIncludes) parts.push(`no type including "${filter.notTypeIncludes}"`);
   if (filter.name) parts.push(`the name "${filter.name}"`);
   if (filter.nameIncludes) parts.push(`"${filter.nameIncludes}" in the name`);
   if (filter.keyword) parts.push(`[${KEYWORD_NAMES[filter.keyword]}]`);

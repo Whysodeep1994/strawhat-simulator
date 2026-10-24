@@ -76,6 +76,8 @@ export interface Modifier {
   battleKOReplace?: { source: string; effect: number };
   /** On a Leader: its player can't play cards matching `filter` (`fromHand`: only from the hand). */
   cannotPlay?: { filter?: Filter; fromHand?: boolean };
+  /** On a Leader: its player can't attack Leaders ("you cannot attack a Leader during this turn"). */
+  noLeaderAttacks?: boolean;
   until: "turn" | "battle";
   /** For "turn": the last turn it lasts. Defaults to the current turn. */
   endsTurn?: number;

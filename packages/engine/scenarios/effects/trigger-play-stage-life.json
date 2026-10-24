@@ -3,7 +3,7 @@
   "rules": ["10-1-5"],
   "setup": {
     "p2": {
-      "life": ["TEST-STAGE-TRIGGER"]
+      "life": ["TEST-STAGE-TRIGGER-OP02"]
     }
   },
   "actions": [
@@ -24,6 +24,6 @@
     }
   ],
   "expect": {
-    "p2.stage.cardId": "TEST-STAGE-TRIGGER"
+    "p2.stage.cardId": "TEST-STAGE-TRIGGER-OP02"
   }
 }

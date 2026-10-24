@@ -107,7 +107,7 @@ export const OP01_EFFECT_CARDS: CardDefinition[] = [
     ],
   },
   {
-    id: "TEST-EVENT-WATCHER",
+    id: "TEST-EVENT-WATCHER-OP01",
     name: "Test Event Watcher",
     category: "character",
     colors: ["blue"],

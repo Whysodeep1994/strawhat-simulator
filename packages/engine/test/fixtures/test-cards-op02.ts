@@ -197,7 +197,7 @@ export const OP02_EFFECT_CARDS: CardDefinition[] = [
     ],
   },
   {
-    id: "TEST-STAGE-TRIGGER",
+    id: "TEST-STAGE-TRIGGER-OP02",
     name: "Test Trigger Stage",
     category: "stage",
     colors: ["black"],

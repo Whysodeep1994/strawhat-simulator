@@ -4,7 +4,7 @@
   "setup": {
     "p1": {
       "hand": ["TEST-EVENT-C1"],
-      "characters": ["TEST-EVENT-WATCHER"],
+      "characters": ["TEST-EVENT-WATCHER-OP01"],
       "don": {
         "active": 1
       }

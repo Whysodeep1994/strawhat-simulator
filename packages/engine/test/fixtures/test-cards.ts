@@ -4,6 +4,7 @@ import { MORE_EFFECT_CARDS } from "./test-cards-more-effects.js";
 import { OP01_EFFECT_CARDS } from "./test-cards-op01.js";
 import { OP02_EFFECT_CARDS } from "./test-cards-op02.js";
 import { OP03_EFFECT_CARDS } from "./test-cards-op03.js";
+import { OP06_EFFECT_CARDS } from "./test-cards-op06.js";
 import { OP09_EFFECT_CARDS } from "./test-cards-op09.js";
 
 /** Made-up cards for engine tests. Real cards use their official card numbers instead. */
@@ -1229,6 +1230,7 @@ export const TEST_CATALOG: CardCatalog = Object.fromEntries(
   [
     ...cards,
     ...MORE_EFFECT_CARDS,
+    ...OP06_EFFECT_CARDS,
     ...OP09_EFFECT_CARDS,
     ...EXTRA_BOOSTER_CARDS,
     ...OP01_EFFECT_CARDS,

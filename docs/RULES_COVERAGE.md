@@ -18,7 +18,7 @@ Comprehensive Rules version 1.2.1.
 | 1-2 | 1-2 Ending the Game | Tested | 1 |
 | 1-2-1 | 1-2 Ending the Game | Tested | 3 |
 | 1-2-1-1 | 1-2 Ending the Game | Tested | 1 |
-| 1-2-1-1-1 | 1-2 Ending the Game | Tested | 1 |
+| 1-2-1-1-1 | 1-2 Ending the Game | Tested | 2 |
 | 1-2-1-1-2 | 1-2 Ending the Game | Tested | 1 |
 | 1-2-2 | 1-2 Ending the Game | Tested | 1 |
 | 1-2-2-1 | 1-2 Ending the Game | Tested | 1 |
@@ -336,7 +336,7 @@ Comprehensive Rules version 1.2.1.
 | 8-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-2 | 8-1 Effects | Tested | 4 |
 | 8-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
-| 8-1-3-1 | 8-1 Effects | Tested | 20 |
+| 8-1-3-1 | 8-1 Effects | Tested | 21 |
 | 8-1-3-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-3-1-2 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
@@ -369,7 +369,7 @@ Comprehensive Rules version 1.2.1.
 | 8-2-3 | 8-2 Valid and Invalid Effects | Phase 4 (effects) | 0 |
 | 8-2-4 | 8-2 Valid and Invalid Effects | Phase 4 (effects) | 0 |
 | 8-3 | 8-3 Activation Cost and Conditions | Tested | 8 |
-| 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 21 |
+| 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 23 |
 | 8-3-1-1 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-1-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-3 | 8-3 Activation Cost and Conditions | Tested | 23 |
@@ -380,7 +380,7 @@ Comprehensive Rules version 1.2.1.
 | 8-3-1-7 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-8 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2 | 8-3 Activation Cost and Conditions | Tested | 8 |
-| 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 13 |
+| 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 15 |
 | 8-3-2-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2-3 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-4 | 8-3 Activation Cost and Conditions | Tested | 2 |
@@ -429,7 +429,7 @@ Comprehensive Rules version 1.2.1.
 | 10-1-3-1 | 10-1 Keyword Effects | Tested | 2 |
 | 10-1-4 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-4-1 | 10-1 Keyword Effects | Tested | 7 |
-| 10-1-5 | 10-1 Keyword Effects | Tested | 4 |
+| 10-1-5 | 10-1 Keyword Effects | Tested | 5 |
 | 10-1-5-1 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-5-2 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-5-3 | 10-1 Keyword Effects | Tested | 3 |
@@ -444,7 +444,7 @@ Comprehensive Rules version 1.2.1.
 | 10-2-1-3 | 10-2 Keywords | Tested | 2 |
 | 10-2-2 | 10-2 Keywords | Tested | 1 |
 | 10-2-2-1 | 10-2 Keywords | Tested | 2 |
-| 10-2-3 | 10-2 Keywords | Tested | 1 |
+| 10-2-3 | 10-2 Keywords | Tested | 2 |
 | 10-2-3-1 | 10-2 Keywords | Tested | 1 |
 | 10-2-3-1-1 | 10-2 Keywords | Phase 4 (effects) | 0 |
 | 10-2-4 | 10-2 Keywords | Tested | 1 |
@@ -453,7 +453,7 @@ Comprehensive Rules version 1.2.1.
 | 10-2-4-1-2 | 10-2 Keywords | Phase 4 (effects) | 0 |
 | 10-2-5 | 10-2 Keywords | Tested | 2 |
 | 10-2-5-1 | 10-2 Keywords | Tested | 1 |
-| 10-2-6 | 10-2 Keywords | Tested | 5 |
+| 10-2-6 | 10-2 Keywords | Tested | 7 |
 | 10-2-6-1 | 10-2 Keywords | Tested | 1 |
 | 10-2-7 | 10-2 Keywords | Tested | 1 |
 | 10-2-7-1 | 10-2 Keywords | Tested | 1 |

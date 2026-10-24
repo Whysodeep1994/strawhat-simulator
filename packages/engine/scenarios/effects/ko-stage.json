@@ -6,7 +6,7 @@
       "hand": ["TEST-KO-STAGE"]
     },
     "p2": {
-      "stage": "TEST-STAGE-TRIGGER"
+      "stage": "TEST-STAGE-TRIGGER-OP02"
     }
   },
   "actions": [
