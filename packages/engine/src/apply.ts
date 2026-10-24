@@ -9,6 +9,7 @@ import {
   effectsOf,
   fieldCards,
   findOnField,
+  matchesFilter,
   playCostOf,
 } from "./state.js";
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
@@ -149,6 +150,15 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
   if (!inHand) return;
   // Rule 6-5-3-1: the cost is worked out while the card is still in hand.
   const cost = playCostOf(state, player, inHand);
+  // "The next time you play ...": the reduction is used up.
+  state.modifiers = state.modifiers.filter(
+    (m) =>
+      !(
+        m.target === p.leader.uid &&
+        m.nextPlayCost &&
+        matchesFilter(state, inHand, m.nextPlayCost.filter, inHand, false)
+      ),
+  );
   const [card] = p.hand.splice(position, 1);
   if (!card) return;
   const def = definitionOf(state, card);

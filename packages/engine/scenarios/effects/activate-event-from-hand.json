@@ -1,0 +1,29 @@
+{
+  "name": "Activate an Event from your hand without paying its cost",
+  "rules": ["10-2-4"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-ACTIVATE-EVENT", "TEST-EVENT-DRAW-2"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.0"]
+    }
+  ],
+  "expect": {
+    "p1.hand": 2,
+    "p1.trash.0.cardId": "TEST-EVENT-DRAW-2",
+    "p1.donActive": 0
+  }
+}

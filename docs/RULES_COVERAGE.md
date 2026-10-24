@@ -282,7 +282,7 @@ Comprehensive Rules version 1.2.1.
 | 6-5-2 | 6-5 Main Phase | Tested | 1 |
 | 6-5-2-1 | 6-5 Main Phase | Tested | 1 |
 | 6-5-3 | 6-5 Main Phase | Tested | 1 |
-| 6-5-3-1 | 6-5 Main Phase | Tested | 2 |
+| 6-5-3-1 | 6-5 Main Phase | Tested | 5 |
 | 6-5-4 | 6-5 Main Phase | Tested | 1 |
 | 6-5-4-1 | 6-5 Main Phase | Tested | 1 |
 | 6-5-5 | 6-5 Main Phase | Tested | 2 |
@@ -305,7 +305,7 @@ Comprehensive Rules version 1.2.1.
 | 6-6-1-4 | 6-6 End Phase | Tested | 2 |
 | 7-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 2 |
-| 7-1-1-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 5 |
+| 7-1-1-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 6 |
 | 7-1-1-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 3 |
 | 7-1-1-3 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-1-4 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Phase 4 (effects) | 0 |
@@ -319,7 +319,7 @@ Comprehensive Rules version 1.2.1.
 | 7-1-3-1-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 2 |
 | 7-1-3-1-3 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Phase 4 (effects) | 0 |
 | 7-1-4 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
-| 7-1-4-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 3 |
+| 7-1-4-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 5 |
 | 7-1-4-1-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-4-1-1-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-4-1-1-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 2 |
@@ -336,14 +336,14 @@ Comprehensive Rules version 1.2.1.
 | 8-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-2 | 8-1 Effects | Tested | 4 |
 | 8-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
-| 8-1-3-1 | 8-1 Effects | Tested | 18 |
+| 8-1-3-1 | 8-1 Effects | Tested | 28 |
 | 8-1-3-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-3-1-2 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-2 | 8-1 Effects | Tested | 3 |
 | 8-1-3-2-1 | 8-1 Effects | Tested | 1 |
 | 8-1-3-2-2 | 8-1 Effects | Tested | 1 |
-| 8-1-3-3 | 8-1 Effects | Tested | 17 |
+| 8-1-3-3 | 8-1 Effects | Tested | 18 |
 | 8-1-3-3-1 | 8-1 Effects | Tested | 1 |
 | 8-1-3-3-2 | 8-1 Effects | Tested | 1 |
 | 8-1-3-3-3 | 8-1 Effects | Phase 4 (effects) | 0 |
@@ -380,7 +380,7 @@ Comprehensive Rules version 1.2.1.
 | 8-3-1-7 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-8 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2 | 8-3 Activation Cost and Conditions | Tested | 7 |
-| 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 26 |
+| 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 34 |
 | 8-3-2-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2-3 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-4 | 8-3 Activation Cost and Conditions | Tested | 2 |
@@ -447,7 +447,7 @@ Comprehensive Rules version 1.2.1.
 | 10-2-3 | 10-2 Keywords | Tested | 2 |
 | 10-2-3-1 | 10-2 Keywords | Tested | 1 |
 | 10-2-3-1-1 | 10-2 Keywords | Phase 4 (effects) | 0 |
-| 10-2-4 | 10-2 Keywords | Tested | 1 |
+| 10-2-4 | 10-2 Keywords | Tested | 2 |
 | 10-2-4-1 | 10-2 Keywords | Tested | 2 |
 | 10-2-4-1-1 | 10-2 Keywords | Phase 4 (effects) | 0 |
 | 10-2-4-1-2 | 10-2 Keywords | Phase 4 (effects) | 0 |

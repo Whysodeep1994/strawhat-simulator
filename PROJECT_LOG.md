@@ -28,6 +28,12 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-24: Engine blocks for set OP-12: "when a card is trashed from your hand by your own
+  effect", "when your opponent plays a Character" (also "using a Character's effect"), "cannot attack
+  Characters with a base cost of 7 or less", "cannot be played by effects", activating an Event from
+  the hand, "the next time you play ...", "you cannot draw cards using your own effects", "cannot be
+  K.O.'d in battle by <Slash> cards", three new conditions, and small options on `trashAtLeast`,
+  `giveActiveDon`, `addDon`, `restOwnDon` and `draw`.
 - 2026-10-24: Engine blocks for set OP-11: "at the start of your turn" effects, "when a card is
   removed from your or your opponent's Life cards", "when your opponent activates a [Trigger]",
   "choose a cost and reveal" (`guessCost`), "look at 1 card from the top of your opponent's deck",

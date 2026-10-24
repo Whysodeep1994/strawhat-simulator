@@ -1,0 +1,31 @@
+{
+  "name": "\"The next time you play [X] from your hand during this turn, the cost will be reduced by 2\"",
+  "rules": ["6-5-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-NEXT-CHEAPER"],
+      "hand": ["TEST-C4-5000", "TEST-C4-5000"],
+      "don": {
+        "active": 5
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.characters": 2,
+    "p1.donActive": 3,
+    "p1.hand.0.cost": 4
+  }
+}

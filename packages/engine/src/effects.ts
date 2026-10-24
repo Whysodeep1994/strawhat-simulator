@@ -122,6 +122,15 @@ export type Timing =
   | "startOfYourTurn"
   /** "When a card is removed from your or your opponent's Life cards" (any way). */
   | "lifeCardRemoved"
+  /**
+   * "When a card is trashed from your hand by your {Navy} type card's effect": `cardFilter` is
+   * for the card whose effect trashed them; `perPrevious` counts the trashed cards.
+   */
+  | "handTrashedByOwnEffect"
+  /** "When your opponent plays a Character [cardFilter]" (from the hand or by an effect). */
+  | "opponentPlaysCharacter"
+  /** "When your opponent plays a Character using a Character's effect". */
+  | "opponentPlaysCharacterByCharacterEffect"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -168,7 +177,8 @@ export type Condition =
   | { opponentHasMoreDon: true }
   | { handAtLeast: number }
   /** "If you have 10 or more cards in your trash". */
-  | { trashAtLeast: number }
+  /** "If you have 4 or more Events in your trash": only cards matching `filter` count. */
+  | { trashAtLeast: number; filter?: Filter }
   /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
   | { lifeAtMostOpponents: true }
   /** "If you have a total of 3 or more given DON!! cards" (Leader and Characters). */
@@ -199,6 +209,12 @@ export type Condition =
   | { totalLifeAtLeast: number }
   /** "If your opponent has 5 or more rested cards" (DON!! and field cards). */
   | { opponentRestedCardsAtLeast: number }
+  /** "If this Character is active". */
+  | { thisActive: true }
+  /** "When this Leader attacks your opponent's Leader": the attack's target is a Leader. */
+  | { attackingLeader: true }
+  /** "If this Leader battles your opponent's Character during this turn". */
+  | { battledCharacterThisTurn: true }
   /** "If your Leader's colors include blue". */
   | { leaderColorIncludes: Color }
   /** "If that (attacking) Character has the <Slash> attribute": the card attacking now. */
@@ -273,7 +289,8 @@ export type Cost =
   | { characterToLife: number; filter?: Filter; faceUp?: boolean }
 
   /** "Give 1 of your active DON!! cards to 1 of your Leader or Character cards". */
-  | { giveActiveDon: number }
+  /** `filter`: which card gets them ("to 1 of your [Silvers Rayleigh]"); later steps' "that" is it. */
+  | { giveActiveDon: number; filter?: Filter }
   /** "Trash 1 of your Characters with a type including ...". Not a K.O. `zone: "stage"` trashes your Stage. */
   | { trashOwnCharacter: number; filter?: Filter; zone?: "stage" };
 
@@ -373,10 +390,13 @@ export type Status =
   /** "Cannot be K.O.'d by effects of Characters without the <Special> attribute". */
   | "cannotBeKOdByNonSpecialCharacters"
   /** "Cannot be rested by your opponent's effects". Unlike `cannotBeRested`, it can still attack. */
-  | "cannotBeRestedByOpponentsEffects";
+  | "cannotBeRestedByOpponentsEffects"
+  /** "Cannot be K.O.'d in battle by <Slash> attribute cards". */
+  | "cannotBeKOdInBattleBySlash";
 
 export type Step =
-  | { do: "draw"; count: number }
+  /** With `perPrevious`, `count` is multiplied by the `amount` that set the effect off. */
+  | { do: "draw"; count: number; perPrevious?: boolean }
   /**
    * With `perPrevious`, `amount` is multiplied by how many cards the previous step moved.
    * `perTrash`: "+amount for every N cards in your trash" (only cards matching `trashFilter`,
@@ -435,7 +455,8 @@ export type Step =
   /** Give rested DON!! from the cost area (e.g. "Give up to 1 rested DON!! card to your Leader"). */
   | { do: "giveRestedDon"; target: Target; count: number }
   /** Put DON!! from the DON!! deck into the cost area. */
-  | { do: "addDon"; count: number; rested?: boolean }
+  /** `side: "opponent"`: "your opponent adds 1 DON!! card from their DON!! deck". */
+  | { do: "addDon"; count: number; rested?: boolean; side?: "opponent" }
   | { do: "setDonActive"; count: number }
   /** The effect's player trashes cards from their hand. */
   /** `ifYouDo`: "you may trash ...: If you do, ..." (with `upTo`). */
@@ -572,7 +593,7 @@ export type Step =
   /** "Play up to 1 ... from your deck", then shuffle it (start of the game effects). */
   | { do: "playFromDeck"; filter?: Filter }
   /** "Rest any number of your DON!! cards" (up to `count`); later steps can use `perPrevious`. */
-  | { do: "restOwnDon"; count?: number }
+  | { do: "restOwnDon"; count?: number; ifYouDo?: Step[] }
   /**
    * "You cannot play Character cards with a base cost of 5 or more during this turn".
    * `fromHand`: only plays from the hand ("you cannot play cards from your hand").
@@ -619,6 +640,16 @@ export type Step =
    */
   /** `top`: always the top of the Life cards, instead of the player's choice of top or bottom. */
   | { do: "characterToLife"; target: Target; faceUp?: boolean; top?: boolean }
+  /** "This Leader cannot attack your opponent's Characters with a base cost of 7 or less during this turn." */
+  | { do: "restrictAttackTargets"; filter: Filter }
+  /** Permanent, `zone: "hand"`: "This card in your hand cannot be played by effects." */
+  | { do: "notPlayableByEffects" }
+  /** "Activate up to 1 ... Event from your hand": its [Main] resolves without paying its cost. */
+  | { do: "activateEventFromHand"; filter?: Filter }
+  /** "The next time you play [X] from your hand during this turn, the cost will be reduced by 2." */
+  | { do: "nextPlayCostChange"; filter?: Filter; amount: number }
+  /** "You cannot draw cards using your own effects during this turn." */
+  | { do: "noDrawByOwnEffects" }
   /** "Look at 1 card from the top of your opponent's deck." */
   | { do: "lookAtOpponentDeckTop" }
   /**

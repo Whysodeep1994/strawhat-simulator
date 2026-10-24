@@ -67,6 +67,7 @@ export function startTurn(state: GameState, player: PlayerId): void {
   state.turn += 1;
   state.turnPlayer = player;
   state.usedThisTurn = [];
+  state.battledCharacter = [];
   const p = state.players[player];
   p.turnsTaken += 1;
 
@@ -170,6 +171,7 @@ export function putOnField(
   player: PlayerId,
   card: CardInstance,
   trash?: string,
+  byCharacter?: CardInstance,
 ): void {
   const p = state.players[player];
   card.rested = false;
@@ -185,6 +187,13 @@ export function putOnField(
     // "Your Character cards are played rested."
     if (playsRested(state, player)) card.rested = true;
     queueAbout(state, card, "youPlayCharacter");
+    // "When your opponent plays a Character ..."
+    const opponent = player === "p1" ? "p2" : "p1";
+    for (const holder of fieldCards(state, opponent)) {
+      queueEffects(state, opponent, holder, "opponentPlaysCharacter", card);
+      if (byCharacter && definitionOf(state, byCharacter).category === "character")
+        queueEffects(state, opponent, holder, "opponentPlaysCharacterByCharacterEffect", card);
+    }
   }
   queueEffects(state, player, card, "onPlay");
 }
@@ -214,6 +223,7 @@ export function pushEffect(
   controller: PlayerId,
   source: string,
   effect: number,
+  amount?: number,
 ): void {
   const card =
     findOnField(state, source)?.card ??
@@ -231,6 +241,7 @@ export function pushEffect(
     steps: structuredClone(effectOf(state, card, effect)?.steps ?? []),
     memo: [],
     answer: null,
+    ...(amount !== undefined ? { previous: amount } : {}),
   };
   state.stack.push(frame);
 }

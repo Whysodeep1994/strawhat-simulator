@@ -76,6 +76,12 @@ export interface Modifier {
   frozenDon?: number;
   /** On a Leader: its player can't attack Leaders ("you cannot attack a Leader during this turn"). */
   noLeaderAttacks?: boolean;
+  /** The target can't attack cards matching this ("cannot attack Characters with a base cost of 7 or less"). */
+  noAttackTargets?: Filter;
+  /** On a Leader: the next card matching `filter` its player plays from hand costs `amount` more (or less). */
+  nextPlayCost?: { filter?: Filter; amount: number };
+  /** On a Leader: its player can't draw cards with their own effects. */
+  noDrawByOwnEffects?: boolean;
   until: "turn" | "battle";
   /** For "turn": the last turn it lasts. Defaults to the current turn. */
   endsTurn?: number;
@@ -86,6 +92,8 @@ export interface QueuedEffect {
   controller: PlayerId;
   source: string;
   effect: number;
+  /** How many cards set it off, e.g. cards trashed from the hand; later steps use `perPrevious`. */
+  amount?: number;
 }
 
 /** Steps of an effect that happen at the end of the turn. */
@@ -203,6 +211,8 @@ export interface GameState {
   modifiers: Modifier[];
   /** "uid:effect" keys of [Once Per Turn] effects used this turn (rule 10-2-13). */
   usedThisTurn: string[];
+  /** Leaders and Characters that battled an opponent's Character this turn. */
+  battledCharacter?: string[];
   /** Steps waiting for the End Phase ("at the end of this turn"). */
   delayed: DelayedEffect[];
   /** The last turn in which each player's hand had a card trashed by an effect. */

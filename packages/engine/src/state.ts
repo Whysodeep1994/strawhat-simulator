@@ -172,6 +172,15 @@ export function playCostOf(state: GameState, player: PlayerId, card: CardInstanc
           cost += step.amount;
     }
   }
+  // "The next time you play [X] from your hand during this turn, the cost will be reduced by 2."
+  const leader = state.players[player].leader.uid;
+  for (const m of state.modifiers)
+    if (
+      m.target === leader &&
+      m.nextPlayCost &&
+      matchesFilter(state, card, m.nextPlayCost.filter, card, false)
+    )
+      cost += m.nextPlayCost.amount;
   return Math.max(0, cost);
 }
 
@@ -436,7 +445,15 @@ export function conditionsMet(
       const attacker = state.battle && findCard(state, state.battle.attacker);
       return !!attacker && matchesFilter(state, attacker, c.attackerMatches, source);
     }
-    if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
+    if ("trashAtLeast" in c)
+      return (
+        me.trash.filter((card) => matchesFilter(state, card, c.filter, source, false)).length >=
+        c.trashAtLeast
+      );
+    if ("thisActive" in c) return !source.rested;
+    if ("attackingLeader" in c) return !!state.battle && state.battle.target === them.leader.uid;
+    if ("battledCharacterThisTurn" in c)
+      return state.battledCharacter?.includes(source.uid) ?? false;
     if ("donOnFieldAtMostOpponents" in c)
       return donOnField(state, controller) <= donOnField(state, opponentOf(controller));
     return false;
