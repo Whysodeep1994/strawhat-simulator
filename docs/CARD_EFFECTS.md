@@ -212,6 +212,7 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `noBaseEffect`: "with no base effect", a card without card text (rule 2-8-5): no effects and
   no keywords.
 - `noCounter`: "Character cards without a Counter".
+- `lacksKeyword`: "without [Blocker]" is `{ "lacksKeyword": "blocker" }`.
 - `lacksTiming`: "without a [When Attacking] effect" is `{ "lacksTiming": "whenAttacking" }`.
 - `notType`: not of this type. "If the only Characters on your field are {X} type Characters" is
   `{ "count": { "side": "self", "filter": { "notType": "X" } }, "atMost": 0 }`.

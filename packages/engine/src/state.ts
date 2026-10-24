@@ -501,6 +501,7 @@ export function matchesFilter(
   if (filter.notThis && source && card.uid === source.uid) return false;
   if (filter.hasTrigger && !(def.effects ?? []).some((e) => e.timing === "trigger")) return false;
   if (filter.keyword && !hasKeywordNow(state, card, filter.keyword)) return false;
+  if (filter.lacksKeyword && hasKeywordNow(state, card, filter.lacksKeyword)) return false;
   if (filter.attribute && !(def.attribute ?? "").includes(filter.attribute)) return false;
   if (filter.anyOf && !filter.anyOf.some((f) => matchesFilter(state, card, f, source, usePower)))
     return false;

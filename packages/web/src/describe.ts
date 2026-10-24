@@ -488,6 +488,7 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.name) parts.push(`the name "${filter.name}"`);
   if (filter.nameIncludes) parts.push(`"${filter.nameIncludes}" in the name`);
   if (filter.keyword) parts.push(`[${KEYWORD_NAMES[filter.keyword]}]`);
+  if (filter.lacksKeyword) parts.push(`no [${KEYWORD_NAMES[filter.lacksKeyword]}]`);
   if (filter.attribute) parts.push(`the <${filter.attribute}> attribute`);
   if (parts.length === 0) return "";
   const rested = filter.rested ? " that are rested" : "";

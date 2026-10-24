@@ -316,6 +316,8 @@ export interface Filter {
   hasTrigger?: boolean;
   /** The card has this keyword right now, e.g. [Blocker]. */
   keyword?: Keyword;
+  /** The card doesn't have this keyword right now ("without [Blocker]"). */
+  lacksKeyword?: Keyword;
   /** The printed attribute includes this, e.g. "Slash". */
   attribute?: string;
   /** At least one of these filters matches ("{Cross Guild} type or ..."). */

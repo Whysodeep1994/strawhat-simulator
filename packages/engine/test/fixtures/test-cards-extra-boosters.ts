@@ -922,4 +922,23 @@ export const EXTRA_BOOSTER_CARDS: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-NO-BLOCKER-KO",
+    name: "Test No-Blocker K.O.",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "ko",
+            target: { side: "opponent", upTo: true, filter: { lacksKeyword: "blocker" } },
+          },
+        ],
+      },
+    ],
+  },
 ];
