@@ -96,6 +96,8 @@ export type Timing =
   | "becomesRested"
   /** "When a Character is K.O.'d": any Character, either player's, in battle or by an effect. */
   | "characterKOd"
+  /** "When your opponent's Character is K.O.'d", in battle or by an effect. */
+  | "opponentCharacterKOd"
   /** "When this card's attack deals damage to your opponent's Life". */
   | "attackDealsDamage"
   /** "When you take damage": each time a Life card leaves for damage. */
@@ -158,7 +160,7 @@ export type Condition =
   | { opponentHasMoreDon: true }
   | { handAtLeast: number }
   /** "If you have 10 or more cards in your trash". */
-  | { trashAtLeast: number }
+  | { trashAtLeast: number; trashFilter?: Filter }
   /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
   | { lifeAtMostOpponents: true }
   /** "If you have a total of 3 or more given DON!! cards" (Leader and Characters). */
@@ -180,11 +182,14 @@ export type Condition =
   /** "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field". */
   | { donFewerThanOpponentBy: number }
   /** "If you have a face-up Life card". */
-  | { faceUpLifeAtLeast: number };
+  | { faceUpLifeAtLeast: number }
+  /** "If you have less Characters than your opponent". */
+  | { charactersFewerThanOpponent: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
-  side: "self" | "opponent";
+  /** "any" counts both players' cards ("if there are 2 or more Characters with a cost of 8 or more"). */
+  side: "self" | "opponent" | "any";
   /** Defaults to "characters". "field" is the Leader, Characters, and Stage. */
   zone?: "leader" | "characters" | "leaderOrCharacters" | "stage" | "field";
   filter?: Filter;
@@ -350,7 +355,8 @@ export type Status =
   | "cannotBeRemovedByOpponentsEffects";
 
 export type Step =
-  | { do: "draw"; count: number }
+  /** With `perCount`, `count` is multiplied by the count ("draw a card for each of your {X} type Characters"). */
+  | { do: "draw"; count: number; perCount?: CardCount }
   /**
    * With `perPrevious`, `amount` is multiplied by how many cards the previous step moved.
    * `perTrash`: "+amount for every N cards in your trash" (only cards matching `trashFilter`,
@@ -413,7 +419,15 @@ export type Step =
   | { do: "setDonActive"; count: number }
   /** The effect's player trashes cards from their hand. */
   /** `ifYouDo`: "you may trash ...: If you do, ..." (with `upTo`). */
-  | { do: "trashFromHand"; count: number; upTo?: boolean; filter?: Filter; ifYouDo?: Step[] }
+  /** `perCount` multiplies `count` like `draw` ("Then, trash the same number of cards from your hand"). */
+  | {
+      do: "trashFromHand";
+      count: number;
+      upTo?: boolean;
+      filter?: Filter;
+      ifYouDo?: Step[];
+      perCount?: CardCount;
+    }
   /** "Trash this Stage" (or Character) as part of the effect. Not a K.O. */
   | { do: "trashThis" }
   /** "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent". */
@@ -618,4 +632,6 @@ export type Step =
   /** "Your opponent places 1 card from their hand at the bottom of their deck" (they pick). */
   | { do: "opponentHandToDeckBottom"; count: number }
   /** "Activate the [Main] effect of up to 1 Event card ... in your trash". */
-  | { do: "activateEventFromTrash"; filter?: Filter };
+  | { do: "activateEventFromTrash"; filter?: Filter }
+  /** "Set the power of up to 1 of your opponent's Characters to 0": gives −(its current power). */
+  | { do: "setPowerToZero"; target: Target; duration?: Duration };

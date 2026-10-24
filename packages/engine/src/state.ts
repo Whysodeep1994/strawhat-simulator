@@ -325,16 +325,22 @@ function zoneMatches(state: GameState, card: CardInstance, zone: string | undefi
 }
 
 /** Field cards counted by a `count` condition. */
-function countCards(
+export function countCards(
   state: GameState,
   controller: PlayerId,
   source: CardInstance | null,
   what: CardCount,
 ): number {
-  const p = state.players[what.side === "self" ? controller : opponentOf(controller)];
-  return zoneCards(p, what.zone ?? "characters").filter((c) =>
-    matchesFilter(state, c, what.filter, source),
-  ).length;
+  const players: PlayerId[] =
+    what.side === "any"
+      ? ["p1", "p2"]
+      : [what.side === "self" ? controller : opponentOf(controller)];
+  let n = 0;
+  for (const id of players)
+    n += zoneCards(state.players[id], what.zone ?? "characters").filter((c) =>
+      matchesFilter(state, c, what.filter, source),
+    ).length;
+  return n;
 }
 
 /** A player's cards in a target zone. */
@@ -418,9 +424,14 @@ export function conditionsMet(
     if ("handFewerThanOpponentBy" in c)
       return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
     if ("totalLifeAtMost" in c) return me.life.length + them.life.length <= c.totalLifeAtMost;
+    if ("charactersFewerThanOpponent" in c) return me.characters.length < them.characters.length;
     if ("faceUpLifeAtLeast" in c)
       return me.life.filter((l) => l.faceUp).length >= c.faceUpLifeAtLeast;
-    if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
+    if ("trashAtLeast" in c)
+      return (
+        me.trash.filter((t) => matchesFilter(state, t, c.trashFilter, null, false)).length >=
+        c.trashAtLeast
+      );
     if ("donOnFieldAtMostOpponents" in c)
       return donOnField(state, controller) <= donOnField(state, opponentOf(controller));
     return false;

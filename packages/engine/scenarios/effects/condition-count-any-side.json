@@ -1,0 +1,26 @@
+{
+  "name": "\"If there are 2 or more Characters with a cost of 2 or more\" counts both players",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-COUNT-ANY"],
+      "characters": ["TEST-C2-3000"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C2-3000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

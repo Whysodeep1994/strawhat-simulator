@@ -4,6 +4,7 @@ import { endGame, processRules } from "./rules.js";
 import {
   canPayCosts,
   conditionsMet,
+  countCards,
   definitionOf,
   donOnField,
   effectOf,
@@ -140,6 +141,7 @@ const ON_FIELD_TIMINGS = new Set([
   "opponentActivatesEvent",
   "becomesRested",
   "characterKOd",
+  "opponentCharacterKOd",
   "attackDealsDamage",
   "opponentCharacterReturned",
 ]);
@@ -615,10 +617,14 @@ function runStep(
   const controller = frame.controller;
   const p = state.players[controller];
   switch (step.do) {
-    case "draw":
-      if (drawCards(state, controller, step.count) > 0)
+    case "draw": {
+      const n = step.perCount
+        ? step.count * countCards(state, controller, source, step.perCount)
+        : step.count;
+      if (n > 0 && drawCards(state, controller, n) > 0)
         queueFieldEffects(state, controller, "drawOutsideDrawPhase");
       return "continue";
+    }
 
     case "trashThis":
       if (findOnField(state, source.uid)) moveFieldCardToTrash(state, source);
@@ -671,6 +677,7 @@ function runStep(
     case "setActive":
     case "noBlockers":
     case "setBasePower":
+    case "setPowerToZero":
     case "giveRestedDon": {
       if (step.do === "giveRestedDon" && p.donRested === 0) return "continue";
       const targets = chooseTargets(state, frame, source, step.target, step.do);
@@ -714,8 +721,11 @@ function runStep(
 
     case "trashFromHand": {
       const options = p.hand.filter((c) => matchesFilter(state, c, step.filter, source, false));
-      const min = step.upTo ? 0 : step.count;
-      const chosen = choose(state, frame, controller, options, min, step.count, "trashFromHand");
+      const count = step.perCount
+        ? step.count * countCards(state, controller, source, step.perCount)
+        : step.count;
+      const min = step.upTo ? 0 : count;
+      const chosen = choose(state, frame, controller, options, min, count, "trashFromHand");
       if (chosen === "wait") return "wait";
       moveFromHandToTrash(state, controller, chosen);
       frame.previous = chosen.length;
@@ -1627,6 +1637,13 @@ function applyToTarget(state: GameState, controller: PlayerId, step: Step, uid: 
       state.modifiers.push({
         target: uid,
         basePower: step.power,
+        ...lasting(state, controller, step.duration),
+      });
+      return;
+    case "setPowerToZero":
+      state.modifiers.push({
+        target: uid,
+        power: -Math.max(0, powerOf(state, card)),
         ...lasting(state, controller, step.duration),
       });
       return;

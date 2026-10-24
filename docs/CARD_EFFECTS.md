@@ -50,6 +50,7 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `lifeBecomesZero`             | "When your number of Life cards becomes 0"                                                                               | 8-1-3-1 |
 | `triggerActivated`            | "When a [Trigger] activates" (either player's)                                                                           | 8-1-3-1 |
 | `characterKOd`                | "When a Character is K.O.'d" (either player's, any K.O.)                                                                 | 8-1-3-1 |
+| `opponentCharacterKOd`        | "When your opponent's Character is K.O.'d" (in battle or by an effect)                                                   | 8-1-3-1 |
 | `opponentCharacterReturned`   | "When your opponent's Character is returned to the owner's hand by your effect"                                          | 8-1-3-1 |
 | `battleKOReplacement`         | Set up by `replaceBattleKO`: "If any of your Characters would be K.O.'d in battle during this turn, you may ... instead" | 8-1-3-4 |
 | `opponentActivatesEvent`      | "When your opponent activates an Event" (main or counter)                                                                | 8-1-3-1 |
@@ -124,16 +125,19 @@ played on this turn"), plus:
 | `{ "handTrashedByEffectThisTurn": true }`        | "During the turn in which a card in your hand is trashed by an effect"                                    |
 | `{ "donOnFieldAtMostOpponents": true }`          | "If the number of DON!! cards on your field is equal to or less than the number on your opponent's field" |
 | `{ "faceUpLifeAtLeast": 1 }`                     | "If you have a face-up Life card"                                                                         |
+| `{ "charactersFewerThanOpponent": true }`        | "If you have less Characters than your opponent"                                                          |
 | `{ "thisPowerAtLeast": 7000 }`                   | "If this Character has 7000 power or more"                                                                |
 | `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"                                           |
 | `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                                                |
 | `{ "trashAtLeast": 10 }`                         | "If you have 10 or more cards in your trash"                                                              |
+| `{ "trashAtLeast": 4, "trashFilter": {...} }`    | "If you have 4 or more Events in your trash": only trash cards matching `trashFilter` count               |
 | `{ "donFewerThanOpponentBy": 2 }`                | "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field"  |
 
-`count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`;
+`count` takes `side` (`"self"`, `"opponent"`, or `"any"` for both players), an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
 and `filter`, and `atLeast` (default 1) and/or `atMost`. "If you do not have 5 Characters with a
 cost of 5 or more" is `{ "count": { "side": "self", "filter": { "costAtLeast": 5 } }, "atMost": 4 }`.
+`"side": "any"` counts both players' cards ("if there are 2 or more Characters with a cost of 8 or more").
 
 ## Costs
 
@@ -276,6 +280,7 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `trashLifeDownTo`                | "Trash cards from the top of your Life cards until you have 1 Life card."                                                                                                                         |
 | `opponentHandToDeckBottom`       | "Your opponent places 1 card from their hand at the bottom of their deck": the opponent picks.                                                                                                    |
 | `activateEventFromTrash`         | "Activate the [Main] effect of up to 1 Event card ... in your trash" (`filter`). The Event stays in the trash.                                                                                    |
+| `setPowerToZero`                 | "Set the power of up to 1 of your opponent's Characters to 0 during this turn" (`target`, `duration`): gives −(its current power).                                                                |
 | `playRested`                     | In a `permanent` effect: "Your Character cards are played rested."                                                                                                                                |
 | `trashFromDeck`                  | Trash cards from the top of your deck; `perPrevious` for "the same number of cards as you did from your hand".                                                                                    |
 | `winGame`                        | "You win the game."                                                                                                                                                                               |
@@ -294,7 +299,9 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash", or
 `perCount` (a `count`-style `{ "side", "zone", "filter" }`) for "for every {Straw Hat Crew} type
-card on your field".
+card on your field". `draw` and `trashFromHand` take the same `perCount`: "Draw a card for each
+of your {Neptunian} type Characters. Then, trash the same number of cards from your hand" is
+`draw` and `trashFromHand`, each with `count: 1` and the same `perCount`.
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash" (add
 `trashFilter` to count only some cards, e.g. `{ "category": "event" }` for "every 2 Events in
 your trash"), and `perRestedDon: 3` for "for every 3 of your rested DON!! cards".

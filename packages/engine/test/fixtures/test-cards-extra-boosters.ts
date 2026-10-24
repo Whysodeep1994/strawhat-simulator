@@ -820,4 +820,106 @@ export const EXTRA_BOOSTER_CARDS: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-POWER-ZERO",
+    name: "Test Power Zero",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          { do: "setPowerToZero", target: { side: "opponent", upTo: true }, duration: "turn" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-DRAW-PER",
+    name: "Test Draw Per",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          { do: "draw", count: 1, perCount: { side: "self" } },
+          { do: "trashFromHand", count: 1, perCount: { side: "self" } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRASH-EVENTS",
+    name: "Test Trash Events",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "if",
+            conditions: [{ trashAtLeast: 2, trashFilter: { category: "event" } }],
+            steps: [{ do: "draw", count: 1 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-KO-WATCH",
+    name: "Test K.O. Watch",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [{ timing: "opponentCharacterKOd", steps: [{ do: "draw", count: 1 }] }],
+  },
+  {
+    id: "TEST-COUNT-ANY",
+    name: "Test Count Any",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "if",
+            conditions: [{ count: { side: "any", filter: { costAtLeast: 2 } }, atLeast: 2 }],
+            steps: [{ do: "draw", count: 1 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-FEWER-CHARS",
+    name: "Test Fewer Characters",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "if",
+            conditions: [{ charactersFewerThanOpponent: true }],
+            steps: [{ do: "draw", count: 1 }],
+          },
+        ],
+      },
+    ],
+  },
 ];
