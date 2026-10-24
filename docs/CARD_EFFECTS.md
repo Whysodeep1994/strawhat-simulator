@@ -23,24 +23,27 @@ opponent's Characters with a cost of 3 or less" is written as:
 
 ## Timings
 
-| Timing                        | Card wording                                                 | Rules   |
-| ----------------------------- | ------------------------------------------------------------ | ------- |
-| `onPlay`                      | [On Play]                                                    | 10-2-6  |
-| `whenAttacking`               | [When Attacking]                                             | 10-2-5  |
-| `onOpponentsAttack`           | [On Your Opponent's Attack]                                  | 10-2-16 |
-| `onBlock`                     | [On Block]                                                   | 10-2-15 |
-| `onKO`                        | [On K.O.]                                                    | 10-2-17 |
-| `koByEffect`                  | "When this Character is K.O.'d by an effect" (not in battle) | 10-2-1  |
-| `activateMain`                | [Activate: Main]                                             | 10-2-2  |
-| `main`                        | [Main] on Events                                             | 10-2-3  |
-| `counter`                     | [Counter] on Events                                          | 10-2-4  |
-| `trigger`                     | [Trigger]                                                    | 10-1-5  |
-| `endOfYourTurn`               | [End of Your Turn]                                           | 10-2-7  |
-| `endOfOpponentsTurn`          | [End of Your Opponent's Turn]                                | 10-2-8  |
-| `permanent`                   | Always-on text, e.g. "+1000 power"                           | 8-1-3-3 |
-| `characterRestedByYourEffect` | "If a Character is rested by your effect"                    | 8-1-3-1 |
-| `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                    | 8-1-3-4 |
-| `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."  | 8-1-3-1 |
+| Timing                        | Card wording                                                  | Rules   |
+| ----------------------------- | ------------------------------------------------------------- | ------- |
+| `onPlay`                      | [On Play]                                                     | 10-2-6  |
+| `whenAttacking`               | [When Attacking]                                              | 10-2-5  |
+| `onOpponentsAttack`           | [On Your Opponent's Attack]                                   | 10-2-16 |
+| `onBlock`                     | [On Block]                                                    | 10-2-15 |
+| `onKO`                        | [On K.O.]                                                     | 10-2-17 |
+| `koByEffect`                  | "When this Character is K.O.'d by an effect" (not in battle)  | 10-2-1  |
+| `activateMain`                | [Activate: Main]                                              | 10-2-2  |
+| `main`                        | [Main] on Events                                              | 10-2-3  |
+| `counter`                     | [Counter] on Events                                           | 10-2-4  |
+| `trigger`                     | [Trigger]                                                     | 10-1-5  |
+| `endOfYourTurn`               | [End of Your Turn]                                            | 10-2-7  |
+| `endOfOpponentsTurn`          | [End of Your Opponent's Turn]                                 | 10-2-8  |
+| `permanent`                   | Always-on text, e.g. "+1000 power"                            | 8-1-3-3 |
+| `characterRestedByYourEffect` | "If a Character is rested by your effect"                     | 8-1-3-1 |
+| `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                     | 8-1-3-4 |
+| `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."   | 8-1-3-1 |
+| `opponentActivatesEvent`      | "When your opponent activates an Event" (Main or Counter)     | 8-1-3-1 |
+| `youActivateEvent`            | "When you activate an Event" (Main or Counter)                | 8-1-3-1 |
+| `opponentCharacterKOd`        | "When your opponent's Character is K.O.'d" (battle or effect) | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -87,7 +90,7 @@ never replaced.
 (a filter for the top card of your deck, for "Reveal 1 card from the top of your deck. If that
 card is..."), `donOnFieldAtLeast` and `donOnFieldAtMost` ("if you have 8 or more DON!! cards on
 your field", counting active, rested and given DON!!), `playedThisTurn` ("if this Character was
-played on this turn"), plus:
+played on this turn"), `handAtLeast`, `thisRested` ("if this Character is rested"), plus:
 
 | Condition                                        | Card wording                                                                |
 | ------------------------------------------------ | --------------------------------------------------------------------------- |
@@ -119,7 +122,8 @@ your hand; `"from": "topOrBottom"` lets the player take the bottom one), `trashL
 the top of your Life), `lifeFaceUp` (turn the top Life card face-up; it must be face-down),
 `trashToDeckBottom` (place cards from your trash at the bottom of your deck), `returnGivenDon`
 ("return N of your currently given DON!! cards to your cost area rested"; the player picks which
-cards).
+cards), `handToDeckBottom` ("place 1 card from your hand at the bottom of your deck"),
+`restCharacters` ("rest 2 of your Characters", with an optional `filter`).
 
 Face-up Life cards are open to both players (rule 3-10-2-1): `viewFor` shows them in `life`, and
 a card is face-down again once it leaves the Life area.
@@ -129,7 +133,11 @@ a card is face-down again once it leaves the Life area.
 `{ "side": "self" | "opponent" | "this" | "any", "zone": "leader" | "characters" | "leaderOrCharacters" | "stage", "filter": {...}, "count": 1, "upTo": true }`
 
 `"any"` means either player's cards, for wording like "return up to 1 Character with a cost of 4
-or less" that doesn't say whose.
+or less" that doesn't say whose. `"chosen"` means the cards the previous card-picking step picked,
+for "Set up to 1 ... as active. It gains +1000 power" or "that card gains an additional +2000".
+
+A permanent `costChange` with `"zone": "hand"` on a field card changes the cost of cards in your
+hand, for "give blue Events in your hand −1 cost".
 
 Filters: `category`, `costAtMost`, `costAtLeast`, `powerAtMost`, `powerAtLeast`, `type`, `name`,
 `nameIncludes`, `color`, `rested`, `costAtMostOpponentLife` ("a cost equal to or less than the
@@ -142,6 +150,10 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `costAtMostTotalLife`: "a cost equal to or less than the total of your and your opponent's Life cards".
 - `typeIncludes`: a type containing some text, e.g. `"Baroque Works"`.
 - `anyOf`: a list of filters, any of which may match ("{Cross Guild} type or ...").
+- `attribute`: "<Strike> attribute" (a card with two attributes has both, rule 2-5-4).
+
+Names match a card's `alsoNamed` too ("Also treat this card's name as [Kouzuki Oden]"). A card
+with `anyNumberInDeck: true` has no copy limit in deck building.
 
 When there's no real choice (for example, exactly one valid target and no "up to"), the engine
 picks automatically, so players are only asked about meaningful decisions.
@@ -192,6 +204,11 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `handToLife`                     | "Add up to 1 card from your hand to the top of your Life cards."                                                                                                                                  |
 | `revealedToDeckTop`              | Place the cards revealed by a `revealFromHand` cost at the top of your deck.                                                                                                                      |
 | `setBasePower`                   | "[Leader]'s base power becomes 7000", with an optional `duration`.                                                                                                                                |
+| `revealOpponentHand`             | "Choose 2 cards from your opponent's hand; your opponent reveals those cards." With `ifRevealed` and `steps`: "If the revealed card is an Event, ...". Picked face-down.                          |
+| `lifeToDeckBottom`               | Place the top Life card(s) of `side` at the bottom of the owner's deck.                                                                                                                           |
+| `searchWholeDeck`                | "Reveal up to 1 [X] from your deck and add it to your hand. Then, shuffle your deck." `play: true` plays it instead.                                                                              |
+| `atEndOfBattle`                  | The nested steps happen when this battle ends.                                                                                                                                                    |
+| `nextPlayCostChange`             | "The next time you play a ... card during this turn, the cost will be reduced by 1" (`amount: -1`).                                                                                               |
 | `if`                             | Only do the nested steps if the conditions hold.                                                                                                                                                  |
 | `grantStatus`                    | "Cannot attack", "cannot be K.O.'d ...", and so on. See below.                                                                                                                                    |
 | `costChange`                     | Change cost (negative for "−"), for the turn or as a permanent effect.                                                                                                                            |
@@ -204,7 +221,8 @@ opponent's next turn" or "... next End Phase".
 
 Statuses for `grantStatus`: `cannotAttack`, `cannotBlock` ("your opponent cannot activate
 [Blocker]" on a chosen Character), `cannotBeKOdInBattle`, `cannotBeKOdByEffects`,
-`cannotBeKOdByOpponentsEffects`, and `noRefresh`.
+`cannotBeKOdByOpponentsEffects`, `noRefresh`, and `onlyAttackTarget` ("your opponent cannot attack
+any card other than this Character").
 
 Step options:
 
@@ -213,6 +231,18 @@ Step options:
   ..." (use `"upTo": true` on its target so the player can decline).
 - `playFromHand` and `playFromTrash` take `"rested": true` for "play ... rested".
 
-`powerUp` takes `perTrash: 4` for "+X power for every 4 cards in your trash".
+`powerUp` takes `perTrash: 4` for "+X power for every 4 cards in your trash", and `per` for
+"for every card in your hand" (`{ "zone": "hand" }`) or "for every 2 Events in your trash"
+(`{ "zone": "trash", "filter": { "category": "event" }, "every": 2 }`).
+
+More step options:
+
+- `searchDeck` takes `"play": true` for "look at 5 cards ...; play up to 1 ...".
+- `playFromHand` takes `"differentColorFromChosen": true` for "a different color than the
+  returned Character".
+- `trashFromHand` takes `"chooser": "opponent"` for "your opponent chooses 1 card from your hand;
+  trash that card" (picked face-down).
+- `grantStatus` takes `by` (a filter) for "cannot be K.O.'d in battle by <Strike> attribute
+  Characters".
 
 Each block is tested in `packages/engine/scenarios/effects/` using made-up `TEST-` cards.

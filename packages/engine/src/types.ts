@@ -59,6 +59,10 @@ export interface Modifier {
   cost?: number;
   keyword?: Keyword;
   status?: Status;
+  /** The status only works against these cards ("by <Strike> attribute Characters"). */
+  by?: Filter;
+  /** On a Leader: the next card its player plays matching `filter` costs `amount` more (or less). */
+  nextPlay?: { filter?: Filter; amount: number };
   /** The opponent can't activate [Blocker] Characters matching this when the target attacks. */
   noBlockers?: Filter;
   /** The target is a Leader: its player's [On Play] effects are negated. */
@@ -104,6 +108,8 @@ export type Frame =
       memo: string[];
       /** Cards revealed from the hand to pay a `revealFromHand` cost. */
       revealed?: string[];
+      /** Cards picked by the last step that picked cards, for "It gains ..." (`side: "chosen"`). */
+      chosen?: string[];
       /** How many cards the previous step moved, for "for every card trashed". */
       previous?: number;
       answer: string[] | boolean | null;
@@ -140,6 +146,8 @@ export type Prompt =
       source: string;
       /** Extra cards only the chooser sees, e.g. every card looked at in a search (rule 11-3-1). */
       revealed?: string[];
+      /** The options are face-down to the chooser, e.g. cards in the opponent's hand. */
+      hidden?: boolean;
     }
   | {
       kind: "confirm";
@@ -175,6 +183,10 @@ export interface GameState {
   delayed: DelayedEffect[];
   /** Cards whose pending removal a replacement effect prevented (rule 8-1-3-4). */
   prevented?: string[];
+  /** Cards an effect just revealed to both players, e.g. from a hand. Cleared by the next action. */
+  revealed?: string[];
+  /** Steps waiting for the end of the current battle ("at the end of this battle"). */
+  afterBattle?: DelayedEffect[];
   /** A [Trigger] card being activated belongs to no area (rule 10-1-5-3). */
   limbo: CardInstance | null;
   /** Seeded random state, so a game can be replayed exactly. */

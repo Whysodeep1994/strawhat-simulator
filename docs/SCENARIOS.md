@@ -41,6 +41,7 @@ Scenarios live in `packages/engine/scenarios/` as JSON files and run with `pnpm 
   `p1.characters.2`. Add `"illegal": true` to check that an action is refused.
 - **`expect`**: paths into the game state. Zones compare by card count (`"p2.life": 3`). Other
   examples: `"p1.characters.0.rested": true`, `"winner": "p1"`, `"prompt.kind": "counter"`, and
-  `"legal.p1.attack": 2` (how many attacks `p1` could legally declare).
+  `"legal.p1.attack": 2` (how many attacks `p1` could legally declare), and
+  `"power.p1.characters.0": 6000` or `"cost.p2.characters.0": 1` for current power and cost.
 
 Test cards are in `packages/engine/test/fixtures/test-cards.ts`.

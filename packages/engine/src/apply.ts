@@ -3,7 +3,7 @@ import { isLegal } from "./legal.js";
 import { endGame, processRules } from "./rules.js";
 import { advance } from "./run.js";
 import { shuffleInPlace } from "./rng.js";
-import { definitionOf, fieldCards, findOnField, playCostOf } from "./state.js";
+import { definitionOf, fieldCards, findOnField, matchesFilter, playCostOf } from "./state.js";
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
 import { drawCards, pushEffect, putOnField, queueEffects, startTurn } from "./turn.js";
 
@@ -21,6 +21,7 @@ export class IllegalActionError extends Error {
 export function applyAction(state: GameState, action: Action): GameState {
   if (!isLegal(state, action)) throw new IllegalActionError(action);
   const next = structuredClone(state);
+  delete next.revealed;
   perform(next, action);
   processRules(next);
   advance(next);
@@ -126,6 +127,7 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
   if (!inHand) return;
   // Rule 6-5-3-1: the cost is worked out while the card is still in hand.
   const cost = playCostOf(state, player, inHand);
+  useNextPlayDiscount(state, player, inHand.uid);
   const [card] = p.hand.splice(position, 1);
   if (!card) return;
   const def = definitionOf(state, card);
@@ -136,6 +138,7 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
     p.trash.unshift(card);
     const index = (def.effects ?? []).findIndex((e) => e.timing === "main");
     pushEffect(state, player, card.uid, index);
+    eventActivated(state, player);
     return;
   }
   putOnField(state, player, card, trash);
@@ -208,4 +211,27 @@ function counterEvent(state: GameState, player: PlayerId, uid: string): void {
   p.trash.unshift(card);
   const index = (def.effects ?? []).findIndex((e) => e.timing === "counter");
   pushEffect(state, player, card.uid, index);
+  eventActivated(state, player);
+}
+
+/** "When you activate an Event" and "When your opponent activates an Event". */
+function eventActivated(state: GameState, player: PlayerId): void {
+  for (const card of fieldCards(state, player))
+    queueEffects(state, player, card, "youActivateEvent");
+  const other = opponentOf(player);
+  for (const card of fieldCards(state, other))
+    queueEffects(state, other, card, "opponentActivatesEvent");
+}
+
+/** A "the next time you play ... the cost will be reduced" discount is used once. */
+function useNextPlayDiscount(state: GameState, player: PlayerId, uid: string): void {
+  const card = state.players[player].hand.find((c) => c.uid === uid);
+  if (!card) return;
+  const index = state.modifiers.findIndex(
+    (m) =>
+      m.target === state.players[player].leader.uid &&
+      m.nextPlay &&
+      matchesFilter(state, card, m.nextPlay.filter, null, false),
+  );
+  if (index >= 0) state.modifiers.splice(index, 1);
 }

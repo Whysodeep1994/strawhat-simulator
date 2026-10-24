@@ -33,11 +33,22 @@ export interface CardDefinition {
   keywords?: Keyword[];
   types?: string[];
   effects?: EffectDefinition[];
+  /** <Strike>, <Slash>, and so on; "Slash/Strike" for two. */
+  attribute?: string;
+  /** "Also treat this card's name as [Kouzuki Oden] according to the rules." */
+  alsoNamed?: string[];
+  /** "Under the rules of this game, you may have any number of this card in your deck." */
+  anyNumberInDeck?: boolean;
   /** The block icon printed on the card (1, 2, … or "X"); formats use it to rotate older cards out. */
   blockIcon?: number | string;
 }
 
 export type CardCatalog = Record<string, CardDefinition>;
+
+/** The card's name plus any name it is also treated as (rule 2-1-2). */
+export function namesOf(card: CardDefinition): string[] {
+  return [card.name, ...(card.alsoNamed ?? [])];
+}
 
 export function hasKeyword(card: CardDefinition, keyword: Keyword): boolean {
   return card.keywords?.includes(keyword) ?? false;

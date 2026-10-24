@@ -173,7 +173,12 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
     const attackable = hasKeywordNow(state, attacker, "canAttackActive")
       ? allCharacters
       : restedCharacters;
-    const targets = attackTargets(state, attacker, opponent.leader.uid, attackable);
+    let targets = attackTargets(state, attacker, opponent.leader.uid, attackable);
+    // "Your opponent cannot attack any card other than [this Character]."
+    const lures = [opponent.leader, ...opponent.characters].filter((c) =>
+      hasStatus(state, c, "onlyAttackTarget"),
+    );
+    if (lures.length > 0) targets = targets.filter((t) => lures.some((c) => c.uid === t));
     for (const target of targets)
       actions.push({ type: "attack", player, attacker: attacker.uid, target });
   }

@@ -1,0 +1,33 @@
+{
+  "name": "Cheaper cards don't use up the discount",
+  "rules": ["6-5-3-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-DISCOUNT-NEXT", "TEST-FILLER", "TEST-C4-5000"],
+      "don": {
+        "active": 4
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.characters": 2,
+    "p1.donActive": 0
+  }
+}

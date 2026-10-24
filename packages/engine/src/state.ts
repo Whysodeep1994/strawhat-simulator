@@ -1,4 +1,4 @@
-import type { CardDefinition, Keyword } from "./cards.js";
+import { namesOf, type CardDefinition, type Keyword } from "./cards.js";
 import type {
   CardCount,
   Condition,
@@ -96,10 +96,24 @@ export function hasKeywordNow(state: GameState, card: CardInstance, keyword: Key
   return keywordsOf(state, card).includes(keyword);
 }
 
-/** Whether an effect gives the card this status right now, e.g. "cannot attack". */
-export function hasStatus(state: GameState, card: CardInstance, status: Status): boolean {
-  if (state.modifiers.some((m) => m.target === card.uid && m.status === status)) return true;
-  return permanentGrants(state, card, "grantStatus").some((grant) => grant.status === status);
+/**
+ * Whether an effect gives the card this status right now, e.g. "cannot attack". With
+ * `against`, statuses limited to some cards ("by <Strike> attribute Characters") count only
+ * if `against` matches; without it, they don't count.
+ */
+export function hasStatus(
+  state: GameState,
+  card: CardInstance,
+  status: Status,
+  against?: CardInstance,
+): boolean {
+  const applies = (by: Filter | undefined) =>
+    !by || (!!against && matchesFilter(state, against, by, null));
+  if (state.modifiers.some((m) => m.target === card.uid && m.status === status && applies(m.by)))
+    return true;
+  return permanentGrants(state, card, "grantStatus").some(
+    (grant) => grant.status === status && applies(grant.by),
+  );
 }
 
 /** Current cost of a card on the field: printed cost plus effects (rule 2-7-1). */
@@ -119,6 +133,24 @@ export function playCostOf(state: GameState, player: PlayerId, card: CardInstanc
     if (!conditionsMet(state, player, card, effect.conditions)) continue;
     for (const step of effect.steps) if (step.do === "costChange") cost += step.amount;
   }
+  // "Give blue Events in your hand −1 cost" from a card on the field.
+  for (const source of fieldCards(state, player)) {
+    for (const effect of definitionOf(state, source).effects ?? []) {
+      if (effect.timing !== "permanent" || effect.zone === "hand") continue;
+      if (!conditionsMet(state, player, source, effect.conditions)) continue;
+      for (const step of effect.steps) {
+        if (step.do !== "costChange" || step.target.zone !== "hand") continue;
+        if (matchesFilter(state, card, step.target.filter, source, false)) cost += step.amount;
+      }
+    }
+  }
+  const discount = state.modifiers.find(
+    (m) =>
+      m.target === state.players[player].leader.uid &&
+      m.nextPlay &&
+      matchesFilter(state, card, m.nextPlay.filter, null, false),
+  );
+  if (discount?.nextPlay) cost += discount.nextPlay.amount;
   return Math.max(0, cost);
 }
 
@@ -127,6 +159,7 @@ interface Grant {
   cost?: number;
   keyword?: Keyword;
   status?: Status;
+  by?: Filter;
 }
 
 type GrantStep = "powerUp" | "costChange" | "grantKeyword" | "grantStatus";
@@ -157,6 +190,7 @@ function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, gr
         for (const step of effect.steps) {
           if (step.do !== kind) continue;
           const t = step.target;
+          if (t.side === "chosen" || t.zone === "hand") continue;
           const applies =
             t.side === "this"
               ? source.uid === card.uid
@@ -169,7 +203,7 @@ function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, gr
           else if (step.do === "costChange")
             grants.push({ cost: powerAmount(state, player, step) });
           else if (step.do === "grantKeyword") grants.push({ keyword: step.keyword });
-          else grants.push({ status: step.status });
+          else grants.push({ status: step.status, ...(step.by ? { by: step.by } : {}) });
         }
       }
     }
@@ -182,8 +216,16 @@ export function powerAmount(
   controller: PlayerId,
   step: Extract<Step, { do: "powerUp" | "costChange" }>,
 ): number {
+  const p = state.players[controller];
+  if (step.do === "powerUp" && step.per) {
+    const { zone, filter, every = 1 } = step.per;
+    const cards = (zone === "hand" ? p.hand : p.trash).filter((c) =>
+      matchesFilter(state, c, filter, null, false),
+    );
+    return step.amount * Math.floor(cards.length / every);
+  }
   if (!step.perTrash) return step.amount;
-  return step.amount * Math.floor(state.players[controller].trash.length / step.perTrash);
+  return step.amount * Math.floor(p.trash.length / step.perTrash);
 }
 
 /** Whether `player`'s [On Play] effects are negated right now. */
@@ -256,6 +298,8 @@ export function conditionsMet(
       return (definitionOf(state, me.leader).types ?? []).includes(c.leaderHasType);
     if ("charactersAtLeast" in c) return me.characters.length >= c.charactersAtLeast;
     if ("handAtMost" in c) return me.hand.length <= c.handAtMost;
+    if ("handAtLeast" in c) return me.hand.length >= c.handAtLeast;
+    if ("thisRested" in c) return source.rested;
     if ("donOnFieldAtLeast" in c) return donOnField(state, controller) >= c.donOnFieldAtLeast;
     if ("donOnFieldAtMost" in c) return donOnField(state, controller) <= c.donOnFieldAtMost;
     if ("playedThisTurn" in c) return source.playedTurn === state.turn;
@@ -263,7 +307,7 @@ export function conditionsMet(
       const top = me.deck[0];
       return !!top && matchesFilter(state, top, c.deckTopMatches, source, false);
     }
-    if ("leaderIs" in c) return definitionOf(state, me.leader).name === c.leaderIs;
+    if ("leaderIs" in c) return namesOf(definitionOf(state, me.leader)).includes(c.leaderIs);
     if ("anyOf" in c) return c.anyOf.some((one) => conditionsMet(state, controller, source, [one]));
     if ("count" in c) {
       const n = countCards(state, controller, source, c.count);
@@ -327,9 +371,13 @@ export function matchesFilter(
   if (filter.type && !(def.types ?? []).includes(filter.type)) return false;
   if (filter.typeIncludes && !(def.types ?? []).some((t) => t.includes(filter.typeIncludes ?? "")))
     return false;
-  if (filter.name && def.name !== filter.name) return false;
-  if (filter.notName && def.name === filter.notName) return false;
-  if (filter.nameIncludes && !def.name.includes(filter.nameIncludes)) return false;
+  const names = namesOf(def);
+  if (filter.name && !names.includes(filter.name)) return false;
+  if (filter.notName && names.includes(filter.notName)) return false;
+  if (filter.nameIncludes && !names.some((n) => n.includes(filter.nameIncludes ?? "")))
+    return false;
+  if (filter.attribute && !(def.attribute ?? "").split("/").includes(filter.attribute))
+    return false;
   if (filter.color && !def.colors.includes(filter.color)) return false;
   if (filter.rested !== undefined && card.rested !== filter.rested) return false;
   if (filter.notThis && source && card.uid === source.uid) return false;
@@ -386,6 +434,13 @@ export function canPayCosts(
       if (matching.length < cost.trashFromHand) return false;
     }
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
+    if ("handToDeckBottom" in cost) fromHand += cost.handToDeckBottom;
+    if ("restCharacters" in cost) {
+      const own = p.characters.filter(
+        (c) => !c.rested && matchesFilter(state, c, cost.filter, source),
+      );
+      if (own.length < cost.restCharacters) return false;
+    }
     if ("returnOwnCharacter" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.returnOwnCharacter) return false;
