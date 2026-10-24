@@ -1,13 +1,9 @@
 {
   "name": "The opponent returns a DON!! to their DON!! deck",
-  "rules": [
-    "8-3-1-6"
-  ],
+  "rules": ["8-3-1-6"],
   "setup": {
     "p1": {
-      "hand": [
-        "TEST-OPP-RETURN-DON"
-      ]
+      "hand": ["TEST-OPP-RETURN-DON"]
     },
     "p2": {
       "don": {

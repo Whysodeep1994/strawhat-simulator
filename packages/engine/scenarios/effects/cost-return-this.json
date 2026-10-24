@@ -1,14 +1,9 @@
 {
   "name": "Returning this Character to hand pays the cost",
-  "rules": [
-    "8-3-1"
-  ],
+  "rules": ["8-3-1"],
   "setup": {
     "p1": {
-      "characters": [
-        "TEST-BOUNCE-SELF",
-        "TEST-FILLER"
-      ]
+      "characters": ["TEST-BOUNCE-SELF", "TEST-FILLER"]
     }
   },
   "actions": [

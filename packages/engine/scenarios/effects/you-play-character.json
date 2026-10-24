@@ -1,16 +1,10 @@
 {
   "name": "Playing a Character with no base effect from hand triggers the watcher",
-  "rules": [
-    "8-1-3-1"
-  ],
+  "rules": ["8-1-3-1"],
   "setup": {
     "p1": {
-      "hand": [
-        "TEST-C4-5000"
-      ],
-      "characters": [
-        "TEST-PLAY-WATCHER"
-      ],
+      "hand": ["TEST-C4-5000"],
+      "characters": ["TEST-PLAY-WATCHER"],
       "don": {
         "active": 4,
         "rested": 1

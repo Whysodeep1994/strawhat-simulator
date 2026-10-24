@@ -1,14 +1,9 @@
 {
   "name": "Draw until you have 3 cards in hand",
-  "rules": [
-    "4-5-1"
-  ],
+  "rules": ["4-5-1"],
   "setup": {
     "p1": {
-      "hand": [
-        "TEST-DRAW-TO",
-        "TEST-FILLER"
-      ]
+      "hand": ["TEST-DRAW-TO", "TEST-FILLER"]
     }
   },
   "actions": [

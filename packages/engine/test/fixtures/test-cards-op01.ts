@@ -71,7 +71,7 @@ export const OP01_EFFECT_CARDS: CardDefinition[] = [
           {
             do: "powerUp",
             target: {
-              side: "chosen",
+              side: "that",
             },
             amount: 1000,
           },
@@ -277,13 +277,9 @@ export const OP01_EFFECT_CARDS: CardDefinition[] = [
         timing: "permanent",
         steps: [
           {
-            do: "costChange",
-            target: {
-              side: "self",
-              zone: "hand",
-              filter: {
-                category: "event",
-              },
+            do: "handCostChange",
+            filter: {
+              category: "event",
             },
             amount: -1,
           },

@@ -3,231 +3,214 @@ import type { CardDefinition } from "../../src/index.js";
 /** Made-up cards for the effect blocks added for set OP-02. */
 export const OP02_EFFECT_CARDS: CardDefinition[] = [
   {
-    "id": "TEST-DON-WATCHER",
-    "name": "Test DON!! Watcher",
-    "category": "leader",
-    "colors": [
-      "black"
-    ],
-    "power": 5000,
-    "life": 4,
-    "effects": [
+    id: "TEST-DON-WATCHER",
+    name: "Test DON!! Watcher",
+    category: "leader",
+    colors: ["black"],
+    power: 5000,
+    life: 4,
+    effects: [
       {
-        "timing": "donGiven",
-        "steps": [
+        timing: "donGiven",
+        steps: [
           {
-            "do": "costChange",
-            "target": {
-              "side": "opponent",
-              "upTo": true
+            do: "costChange",
+            target: {
+              side: "opponent",
+              upTo: true,
             },
-            "amount": -1
-          }
-        ]
-      }
-    ]
+            amount: -1,
+          },
+        ],
+      },
+    ],
   },
   {
-    "id": "TEST-PLAY-WATCHER",
-    "name": "Test Play Watcher",
-    "category": "character",
-    "colors": [
-      "green"
-    ],
-    "cost": 2,
-    "power": 3000,
-    "effects": [
+    id: "TEST-PLAY-WATCHER",
+    name: "Test Play Watcher",
+    category: "character",
+    colors: ["green"],
+    cost: 2,
+    power: 3000,
+    effects: [
       {
-        "timing": "youPlayCharacter",
-        "played": {
-          "noBaseEffect": true
+        timing: "youPlayCharacter",
+        fromHand: true,
+        cardFilter: {
+          noBaseEffect: true,
         },
-        "steps": [
+        steps: [
           {
-            "do": "setDonActive",
-            "count": 1
-          }
-        ]
+            do: "setDonActive",
+            count: 1,
+          },
+        ],
       },
       {
-        "timing": "opponentPlaysCharacter",
-        "steps": [
+        timing: "opponentPlaysCharacter",
+        steps: [
           {
-            "do": "rest",
-            "target": {
-              "side": "opponent",
-              "upTo": true
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "TEST-BATTLE-KO",
-    "name": "Test Battle K.O.",
-    "category": "character",
-    "colors": [
-      "black"
-    ],
-    "cost": 3,
-    "power": 5000,
-    "effects": [
-      {
-        "timing": "koInBattle",
-        "steps": [
-          {
-            "do": "setActive",
-            "target": {
-              "side": "this"
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "TEST-UNTOUCHABLE",
-    "name": "Test Untouchable",
-    "category": "character",
-    "colors": [
-      "green"
-    ],
-    "cost": 3,
-    "power": 4000,
-    "effects": [
-      {
-        "timing": "permanent",
-        "conditions": [
-          {
-            "allDonRested": true
-          }
-        ],
-        "steps": [
-          {
-            "do": "grantStatus",
-            "target": {
-              "side": "this"
+            do: "rest",
+            target: {
+              side: "opponent",
+              upTo: true,
             },
-            "status": "cannotBeRemovedByOpponentsEffects"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "TEST-BOUNCE-SELF",
-    "name": "Test Bounce Self",
-    "category": "character",
-    "colors": [
-      "green"
-    ],
-    "cost": 2,
-    "power": 3000,
-    "effects": [
-      {
-        "timing": "activateMain",
-        "costs": [
-          {
-            "returnOwnCharacter": 1,
-            "filter": {
-              "isThis": true
-            }
-          }
+          },
         ],
-        "steps": [
-          {
-            "do": "draw",
-            "count": 1
-          }
-        ]
-      }
-    ]
+      },
+    ],
   },
   {
-    "id": "TEST-DRAW-TO",
-    "name": "Test Draw To",
-    "category": "event",
-    "colors": [
-      "blue"
-    ],
-    "cost": 0,
-    "effects": [
+    id: "TEST-BATTLE-KO",
+    name: "Test Battle K.O.",
+    category: "character",
+    colors: ["black"],
+    cost: 3,
+    power: 5000,
+    effects: [
       {
-        "timing": "main",
-        "steps": [
+        timing: "koInBattle",
+        steps: [
           {
-            "do": "drawTo",
-            "count": 3
-          }
-        ]
-      }
-    ]
+            do: "setActive",
+            target: {
+              side: "this",
+            },
+          },
+        ],
+      },
+    ],
   },
   {
-    "id": "TEST-OPP-RETURN-DON",
-    "name": "Test Opponent Returns DON!!",
-    "category": "event",
-    "colors": [
-      "purple"
-    ],
-    "cost": 0,
-    "effects": [
+    id: "TEST-UNTOUCHABLE",
+    name: "Test Untouchable",
+    category: "character",
+    colors: ["green"],
+    cost: 3,
+    power: 4000,
+    effects: [
       {
-        "timing": "main",
-        "steps": [
+        timing: "permanent",
+        conditions: [
           {
-            "do": "opponentReturnsDon",
-            "count": 1
-          }
-        ]
-      }
-    ]
+            allDonRested: true,
+          },
+        ],
+        steps: [
+          {
+            do: "grantStatus",
+            target: {
+              side: "this",
+            },
+            status: "cannotBeRemovedByOpponentsEffects",
+          },
+        ],
+      },
+    ],
   },
   {
-    "id": "TEST-KO-STAGE",
-    "name": "Test K.O. Stage",
-    "category": "event",
-    "colors": [
-      "black"
-    ],
-    "cost": 0,
-    "effects": [
+    id: "TEST-BOUNCE-SELF",
+    name: "Test Bounce Self",
+    category: "character",
+    colors: ["green"],
+    cost: 2,
+    power: 3000,
+    effects: [
       {
-        "timing": "main",
-        "steps": [
+        timing: "activateMain",
+        costs: [
           {
-            "do": "ko",
-            "target": {
-              "side": "opponent",
-              "zone": "stage",
-              "filter": {
-                "costAtMost": 3
+            returnOwnCharacter: 1,
+            filter: {
+              isThis: true,
+            },
+          },
+        ],
+        steps: [
+          {
+            do: "draw",
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-DRAW-TO",
+    name: "Test Draw To",
+    category: "event",
+    colors: ["blue"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "drawTo",
+            count: 3,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-OPP-RETURN-DON",
+    name: "Test Opponent Returns DON!!",
+    category: "event",
+    colors: ["purple"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "opponentReturnsDon",
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-KO-STAGE",
+    name: "Test K.O. Stage",
+    category: "event",
+    colors: ["black"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          {
+            do: "ko",
+            target: {
+              side: "opponent",
+              zone: "stage",
+              filter: {
+                costAtMost: 3,
               },
-              "upTo": true
-            }
-          }
-        ]
-      }
-    ]
+              upTo: true,
+            },
+          },
+        ],
+      },
+    ],
   },
   {
-    "id": "TEST-STAGE",
-    "name": "Test Stage",
-    "category": "stage",
-    "colors": [
-      "black"
-    ],
-    "cost": 1,
-    "effects": [
+    id: "TEST-STAGE-TRIGGER",
+    name: "Test Trigger Stage",
+    category: "stage",
+    colors: ["black"],
+    cost: 1,
+    effects: [
       {
-        "timing": "trigger",
-        "steps": [
+        timing: "trigger",
+        steps: [
           {
-            "do": "playThis"
-          }
-        ]
-      }
-    ]
-  }
+            do: "playThis",
+          },
+        ],
+      },
+    ],
+  },
 ];

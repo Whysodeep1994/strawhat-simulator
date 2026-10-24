@@ -69,6 +69,8 @@ export interface Modifier {
   negateOnPlay?: boolean;
   /** On a Leader: its player can't add Life cards to their hand with their own effects. */
   noLifeToHand?: boolean;
+  /** On a Leader: its player can't play cards matching `filter` (`fromHand`: only from the hand). */
+  cannotPlay?: { filter?: Filter; fromHand?: boolean };
   until: "turn" | "battle";
   /** For "turn": the last turn it lasts. Defaults to the current turn. */
   endsTurn?: number;
@@ -108,8 +110,6 @@ export type Frame =
       memo: string[];
       /** Cards revealed from the hand to pay a `revealFromHand` cost. */
       revealed?: string[];
-      /** Cards picked by the last step that picked cards, for "It gains ..." (`side: "chosen"`). */
-      chosen?: string[];
       /** Which option of a `oneOf` cost the player is paying. */
       picked?: number;
       /** How many cards the previous step moved, for "for every card trashed". */
@@ -117,8 +117,15 @@ export type Frame =
       answer: string[] | boolean | null;
       /** `replaceRemoval` only: the card the replacement would save. */
       replacing?: string;
+      /** The cards the last targeting step picked, for "that Character" (`side: "that"`). */
+      targets?: string[];
     }
-  | { kind: "battle"; step: "attack" | "block" | "counter" | "damage" | "end" }
+  | {
+      kind: "battle";
+      step: "attack" | "block" | "counter" | "damage" | "ko" | "end";
+      /** The losing Character a replacement effect may save from a K.O. in battle. */
+      saving?: string;
+    }
   | {
       kind: "damage";
       defender: PlayerId;
@@ -127,6 +134,8 @@ export type Frame =
       answer: boolean | null;
     }
   | { kind: "trigger-cleanup" }
+  /** Rule 5-2-1-6: the opening draw, after any "at the start of the game" effects. */
+  | { kind: "opening-draw" }
   | { kind: "end-phase"; stage: number };
 
 /** Who must act next, and what kind of decision it is. */
@@ -193,6 +202,8 @@ export interface GameState {
   afterBattle?: DelayedEffect[];
   /** A [Trigger] card being activated belongs to no area (rule 10-1-5-3). */
   limbo: CardInstance | null;
+  /** A player who takes an extra turn after this one ("take an extra turn"). */
+  extraTurn?: PlayerId;
   /** Seeded random state, so a game can be replayed exactly. */
   rng: number;
   nextUid: number;

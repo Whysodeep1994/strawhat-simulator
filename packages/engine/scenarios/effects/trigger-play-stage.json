@@ -1,13 +1,9 @@
 {
   "name": "A Stage's Trigger plays it",
-  "rules": [
-    "10-1-5"
-  ],
+  "rules": ["10-1-5"],
   "setup": {
     "p2": {
-      "life": [
-        "TEST-STAGE"
-      ]
+      "life": ["TEST-STAGE-TRIGGER"]
     }
   },
   "actions": [
@@ -28,6 +24,6 @@
     }
   ],
   "expect": {
-    "p2.stage.cardId": "TEST-STAGE"
+    "p2.stage.cardId": "TEST-STAGE-TRIGGER"
   }
 }

@@ -1223,5 +1223,8 @@ const cards: CardDefinition[] = [
 ];
 
 export const TEST_CATALOG: CardCatalog = Object.fromEntries(
-  [...cards, ...MORE_EFFECT_CARDS, ...OP01_EFFECT_CARDS, ...OP02_EFFECT_CARDS].map((c) => [c.id, c]),
+  [...cards, ...MORE_EFFECT_CARDS, ...OP01_EFFECT_CARDS, ...OP02_EFFECT_CARDS].map((c) => [
+    c.id,
+    c,
+  ]),
 );
