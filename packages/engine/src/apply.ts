@@ -160,6 +160,7 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
     const index = (def.effects ?? []).findIndex((e) => e.timing === "main");
     pushEffect(state, player, card.uid, index);
     queueFieldEffects(state, player, "eventActivated");
+    queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
     return;
   }
   putOnField(state, player, card, trash);
@@ -238,4 +239,5 @@ function counterEvent(state: GameState, player: PlayerId, uid: string): void {
   const index = (def.effects ?? []).findIndex((e) => e.timing === "counter");
   pushEffect(state, player, card.uid, index);
   queueFieldEffects(state, player, "eventActivated");
+  queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
 }

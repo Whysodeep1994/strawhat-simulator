@@ -53,6 +53,7 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `opponentCharacterReturned`   | "When your opponent's Character is returned to the owner's hand by your effect"                                          | 8-1-3-1 |
 | `battleKOReplacement`         | Set up by `replaceBattleKO`: "If any of your Characters would be K.O.'d in battle during this turn, you may ... instead" | 8-1-3-4 |
 | `eventActivated`              | "When you activate an Event" (you play an Event's [Main] or [Counter])                                                   | 8-1-3-1 |
+| `opponentActivatesEvent`      | "When your opponent activates an Event" (main or counter)                                                                | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -131,6 +132,7 @@ played on this turn"), plus:
 | `{ "charactersTotalCostAtLeast": 5 }`            | "If the total cost of your Characters is 5 or more"                                                       |
 | `{ "charactersFewerThanOpponentBy": 2 }`         | "If the number of your Characters is at least 2 less than the number of your opponent's Characters"       |
 | `{ "lifeLessThanOpponents": true }`              | "If you have less Life cards than your opponent"                                                          |
+| `{ "donFewerThanOpponentBy": 2 }`                | "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field"  |
 
 `count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
@@ -156,8 +158,11 @@ of costs the player pays one of, e.g. "rest your Leader or 1 of your DON!! cards
 `trashToDeckBottom` (place cards from your trash at the bottom of your deck), `returnGivenDon`
 ("return N of your currently given DON!! cards to your cost area rested"; the player picks which
 cards), `toDeckBottom` ("place 1 of your Characters at the bottom of your deck"; `"zone": "stage"` for
-Stages, optional `filter`), `trashToDeck` ("return 20 cards from your trash to your deck and shuffle
-it"), `koOwnCharacter` ("K.O. 1 of your Characters", optional `filter`), `playFromHand` ("play 1
+Stages, optional `filter`, `"side": "any"` for "place 1 Character with a cost of 2 or less at the
+bottom of the owner's deck", either player's), `trashToDeck` ("return 20 cards from your trash to your deck and shuffle
+it"), `koOwnCharacter` ("K.O. 1 of your Characters", optional `filter`), `trashOwnCharacter` ("trash 1
+of your Characters", not a K.O.; `"zone": "stage"` trashes your Stage, e.g. "1 [The Ark Noah] from
+your field"), `playFromHand` ("play 1
 [Kotori] from your hand"; the value is a filter),
 and `characterToLife` ("add 1 of your Characters with ... to the top of your Life cards
 face-up": `{ "characterToLife": 1, "filter": {...}, "faceUp": true }`), `thisToDeckBottom` ("place
@@ -201,6 +206,7 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `notName`: "other than [X]".
 - `costAtMostTotalLife`: "a cost equal to or less than the total of your and your opponent's Life cards".
 - `typeIncludes`: a type containing some text, e.g. `"Baroque Works"`.
+- `notTypeIncludes`: no type containing that text, e.g. `"Roger Pirates"` for Characters without a type including "Roger Pirates".
 - `attribute`: the printed attribute includes this, e.g. `"Slash"` (cards set `attribute`).
 - `anyOf`: a list of filters, any of which may match ("{Cross Guild} type or ...").
 - `noBaseEffect`: "with no base effect", a card without card text (rule 2-8-5): no effects and
@@ -285,6 +291,9 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `handDownTo`                     | "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent".                                                                                                          |
 | `trashToDeckBottom`              | `side` places `count` cards from their trash at the bottom of their deck, in the order they pick.                                                                                                 |
 | `handCostChange`                 | In a permanent effect on the field: "The cost of playing {X} cards from your hand will be reduced by 1" (`filter`, `amount`).                                                                     |
+| `handToDeckShuffle`              | "Your opponent returns all cards in their hand to their deck and shuffles their deck. Then, your opponent draws 5 cards" (`side`, `draw`).                                                        |
+| `cannotAttackLeader`             | "You cannot attack a Leader during this turn." Characters can still be attacked.                                                                                                                  |
+| `dealDamage`                     | "Deal 1 damage to your opponent": Life to hand with a [Trigger] check, or the game is won at 0 Life.                                                                                              |
 | `extraTurn`                      | "Take an extra turn after this one."                                                                                                                                                              |
 
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash", or
@@ -322,6 +331,9 @@ Step options:
   previous removal step moved).
 - `searchDeck` takes `"play": true` for "look at 5 cards ... and play up to 1 ...": the picked
   Character or Stage is played (with `rested` if it says so) and the rest go to the bottom.
+- `handToDeckBottom` takes `"side": "opponent"` for "your opponent must place 1 card from their
+  hand at the bottom of their deck" (they pick).
+- `playThis` on a Stage's [Trigger] plays the Stage.
 - `trashFromHand` takes `"ifYouDo": [steps]` for "you may trash 1 card from your hand. If you do, ..."
   (with `"upTo": true`).
 

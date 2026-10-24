@@ -1,0 +1,25 @@
+{
+  "name": "Damage from an effect while the opponent has 0 Life wins the game",
+  "rules": ["1-2-1-1-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-DEAL-DAMAGE"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "life": 0
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "winner": "p1"
+  }
+}

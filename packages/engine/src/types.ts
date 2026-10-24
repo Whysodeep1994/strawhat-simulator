@@ -74,6 +74,8 @@ export interface Modifier {
   noCharacterDonActive?: boolean;
   /** On a Leader: this many of its player's rested DON!! cards stay rested in their next Refresh Phase. */
   frozenDon?: number;
+  /** On a Leader: its player can't attack Leaders ("you cannot attack a Leader during this turn"). */
+  noLeaderAttacks?: boolean;
   until: "turn" | "battle";
   /** For "turn": the last turn it lasts. Defaults to the current turn. */
   endsTurn?: number;

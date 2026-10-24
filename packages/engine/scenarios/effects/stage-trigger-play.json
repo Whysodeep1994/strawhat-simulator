@@ -1,0 +1,31 @@
+{
+  "name": "A Stage [Trigger] that plays itself goes to the Stage area",
+  "rules": ["10-1-5"],
+  "setup": {
+    "p2": {
+      "life": ["TEST-STAGE-TRIGGER", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    },
+    {
+      "type": "confirm",
+      "player": "p2",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p2.life": 1,
+    "p2.stage.cardId": "TEST-STAGE-TRIGGER",
+    "p2.hand": 0
+  }
+}
