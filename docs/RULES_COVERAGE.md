@@ -325,8 +325,7 @@ Comprehensive Rules version 1.2.1.
 | 7-1-4-1-1-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 2 |
 | 7-1-4-1-1-3 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 2 |
 | 7-1-4-1-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
-| 7-1-4-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 4 |
-| 7-1-4-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 3 |
+| 7-1-4-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 5 |
 | 7-1-5 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-5-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 3 |
 | 7-1-5-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Phase 4 (effects) | 0 |

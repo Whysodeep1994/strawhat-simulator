@@ -62,7 +62,6 @@ const TIMING_NAMES: Record<Timing, string> = {
   drawOutsideDrawPhase: "When you draw a card outside of your Draw Phase,",
   lifeAddedToHand: "When a card is added to your hand from your Life,",
   lifeBecomesZero: "When your number of Life cards becomes 0,",
-  triggerActivated: "When a [Trigger] activates,",
   becomesRested: "When this Character becomes rested,",
   characterKOd: "When a Character is K.O.'d,",
   attackDealsDamage: "When this card's attack deals damage to your opponent's Life,",
@@ -177,8 +176,12 @@ function conditionText(condition: Condition): string {
     return "(If your opponent has more DON!! cards on their field than you)";
   if ("handAtLeast" in condition)
     return `(If you have ${condition.handAtLeast} or more cards in hand)`;
-  if ("trashAtLeast" in condition)
-    return `(If you have ${condition.trashAtLeast} or more cards in your trash)`;
+  if ("opponentHandAtLeast" in condition)
+    return `(If your opponent has ${condition.opponentHandAtLeast} or more cards in their hand)`;
+  if ("handFewerThanOpponentBy" in condition)
+    return `(If you have at least ${condition.handFewerThanOpponentBy} fewer cards in hand than your opponent)`;
+  if ("totalLifeAtMost" in condition)
+    return `(If you and your opponent have a total of ${condition.totalLifeAtMost} or less Life cards)`;
   return `(If the top card of your deck is a${filterText(condition.deckTopMatches)} card)`;
 }
 
@@ -308,9 +311,11 @@ function stepText(step: Step): string {
     case "searchDeck":
       return `Look at ${step.look} cards from the top of your deck; reveal up to ${step.take}${filterText(step.filter)} card${step.take === 1 ? "" : "s"} and add ${step.take === 1 ? "it" : "them"} to ${step.to === "lifeFaceUp" ? "the top of your Life cards face-up" : "your hand"}. Then, ${step.rest === "trash" ? "trash the rest" : "place the rest at the bottom of your deck in any order"}.`;
     case "playFromHand":
-      return `Play up to 1${filterText(step.filter)} card from your hand${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
+      return step.side === "opponent"
+        ? `Your opponent plays up to 1${filterText(step.filter)} card from their hand.`
+        : `Play up to 1${filterText(step.filter)} card from your hand${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
     case "playFromTrash":
-      return `Play up to 1${filterText(step.filter)} card from your trash${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
+      return `Play up to ${step.count ?? 1}${filterText(step.filter)} card(s)${step.differentNames ? " with different names" : ""} from your trash${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
     case "playRested":
       return "Your Character cards are played rested.";
     case "trashFromDeck":
@@ -320,16 +325,9 @@ function stepText(step: Step): string {
     case "winGame":
       return "You win the game.";
     case "lifeToHand":
-      return `Add ${step.count} card(s) from the ${step.from === "topOrBottom" ? "top or bottom" : step.fromBottom ? "bottom" : "top"} of your Life cards to your hand.`;
-      return step.side === "opponent"
-        ? `Your opponent plays up to 1${filterText(step.filter)} card from their hand.`
-        : `Play up to 1${filterText(step.filter)} card from your hand${step.rested ? " rested" : ""}.`;
-    case "playFromTrash":
-      return `Play up to ${step.count ?? 1}${filterText(step.filter)} card(s)${step.differentNames ? " with different names" : ""} from your trash${step.rested ? " rested" : ""}.`;
-    case "lifeToHand":
       return step.side === "opponent"
         ? `Your opponent adds ${step.count} card(s) from the top of their Life cards to their hand.`
-        : `Add ${step.count} card(s) from the ${step.fromBottom ? "bottom" : "top"} of your Life cards to your hand.`;
+        : `Add ${step.count} card(s) from the ${step.from === "topOrBottom" ? "top or bottom" : step.fromBottom ? "bottom" : "top"} of your Life cards to your hand.`;
     case "deckToLife":
       return `Add up to ${step.count} card(s) from the top of your deck to the top of your Life cards.`;
     case "trashLife":
@@ -386,6 +384,7 @@ function ifYouDoText(steps: Step[] | undefined): string {
 function targetText(target: Target): string {
   if (target.side === "this") return "this card";
   if (target.side === "that") return "that card";
+  if (target.side === "chosen") return `that card${withFilter(target.filter)}`;
   const owner = target.side === "self" ? "your" : target.side === "any" ? "the" : "your opponent's";
   const zone = target.zone ?? "characters";
   const count = target.count ?? 1;

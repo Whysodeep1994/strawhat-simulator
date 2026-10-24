@@ -33,16 +33,25 @@ export function effectOf(
 }
 
 /**
- * A card's effects, or none while a permanent effect negates them. Indexes stay the same:
- * negated effects are left out by returning an empty list.
+ * A card's effects, or none while they are negated on the field (rule 8-2). Indexes stay
+ * the same: negated effects are left out by returning an empty list.
  */
 export function effectsOf(state: GameState, card: CardInstance): EffectDefinition[] {
   const effects = definitionOf(state, card).effects ?? [];
   return effects.length > 0 && isNegated(state, card) ? [] : effects;
 }
 
-/** Whether a permanent `negateEffects` effect on the field covers this card. */
+/** Whether a "negate the effect of" step has given this field card the `negated` status. */
+function negatedByStatus(state: GameState, card: CardInstance): boolean {
+  return (
+    state.modifiers.some((m) => m.target === card.uid && m.status === "negated") &&
+    !!findOnField(state, card.uid)
+  );
+}
+
+/** Whether this field card's effects are negated: by a status or a permanent `negateEffects`. */
 export function isNegated(state: GameState, card: CardInstance): boolean {
+  if (negatedByStatus(state, card)) return true;
   const anyNegation = (["p1", "p2"] as const).some((player) =>
     fieldCards(state, player).some((source) =>
       (definitionOf(state, source).effects ?? []).some(
@@ -200,6 +209,7 @@ function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, gr
       const effects = definitionOf(state, source).effects ?? [];
       if (!effects.some((e) => e.timing === "permanent")) continue;
       // A negating card's own negation is not checked, so working out negation can't loop.
+      if (negatedByStatus(state, source)) continue;
       if (kind !== "negateEffects" && isNegated(state, source)) continue;
       for (const effect of effects) {
         if (effect.timing !== "permanent" || effect.zone === "hand") continue;
@@ -371,6 +381,9 @@ export function conditionsMet(
       return donOnField(state, opponentOf(controller)) > donOnField(state, controller);
     if ("handAtLeast" in c) return me.hand.length >= c.handAtLeast;
     if ("opponentHandAtLeast" in c) return them.hand.length >= c.opponentHandAtLeast;
+    if ("handFewerThanOpponentBy" in c)
+      return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
+    if ("totalLifeAtMost" in c) return me.life.length + them.life.length <= c.totalLifeAtMost;
     if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
     return false;
   });

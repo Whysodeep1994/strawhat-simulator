@@ -48,7 +48,7 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `drawOutsideDrawPhase`        | "When you draw a card outside of your Draw Phase"                    | 8-1-3-1 |
 | `lifeAddedToHand`             | "When a card is added to your hand from your Life"                   | 8-1-3-1 |
 | `lifeBecomesZero`             | "When your number of Life cards becomes 0"                           | 8-1-3-1 |
-| `triggerActivated`            | "When a [Trigger] activates" (yours)                                 | 8-1-3-1 |
+| `triggerActivated`            | "When a [Trigger] activates" (either player's)                       | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 

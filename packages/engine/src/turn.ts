@@ -123,7 +123,10 @@ export function knockOut(state: GameState, uid: string, byEffect = false, by?: P
     queueAbout(state, card, "yourCharacterKOd");
     if (by) removedByEffect(state, card, by);
     effectsOf(state, card).forEach((effect, index) => {
-      const timingMet = effect.timing === "onKO" || (effect.timing === "koByEffect" && byEffect);
+      const timingMet =
+        effect.timing === "onKO" ||
+        (effect.timing === "koByEffect" && byEffect) ||
+        (effect.timing === "koByOpponentsEffect" && byEffect && by !== undefined && by !== player);
       if (timingMet && conditionsMet(state, player, card, effect.conditions)) {
         state.pendingEffects.push({ controller: player, source: card.uid, effect: index });
       }
@@ -156,6 +159,8 @@ export function putOnField(
     const old = trash ? p.characters.find((c) => c.uid === trash) : undefined;
     if (old) moveFieldCardToTrash(state, old);
     p.characters.push(card);
+    // "Your Character cards are played rested."
+    if (playsRested(state, player)) card.rested = true;
     queueAbout(state, card, "youPlayCharacter");
   }
   queueEffects(state, player, card, "onPlay");

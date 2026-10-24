@@ -110,8 +110,6 @@ export type Frame =
       picked?: number;
       /** How many cards the previous step moved, for "for every card trashed". */
       previous?: number;
-      /** The cards the previous targeting step picked, for "that Character". */
-      chosen?: string[];
       answer: string[] | boolean | null;
       /** `replaceRemoval` only: the card the replacement would save. */
       replacing?: string;
