@@ -15,9 +15,18 @@ import {
 import type { CardInstance, Frame, GameState, PlayerId } from "./types.js";
 
 /** Rules 4-5-1 to 4-5-3. Drawing from an empty deck does nothing; rule 9-2-1-2 already ended the game. */
-export function drawCards(state: GameState, player: PlayerId, count: number): void {
+export function drawCards(state: GameState, player: PlayerId, count: number): number {
   const p = state.players[player];
-  p.hand.push(...p.deck.splice(0, count));
+  const drawn = p.deck.splice(0, count);
+  p.hand.push(...drawn);
+  return drawn.length;
+}
+
+/** Queues effects on `player`'s field with this timing, e.g. "when you draw a card ...". */
+export function queueFieldEffects(state: GameState, player: PlayerId, timing: Timing): void {
+  const p = state.players[player];
+  for (const card of [p.leader, ...p.characters, ...(p.stage ? [p.stage] : [])])
+    queueEffects(state, player, card, timing);
 }
 
 /**

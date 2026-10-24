@@ -31,6 +31,7 @@ import {
   pushEffect,
   putOnField,
   queueEffects,
+  queueFieldEffects,
   removedByEffect,
   startTurn,
 } from "./turn.js";
@@ -130,6 +131,10 @@ const ON_FIELD_TIMINGS = new Set([
   "donReturned",
   "characterRemovedByOpponent",
   "onOpponentsBlock",
+  "drawOutsideDrawPhase",
+  "lifeAddedToHand",
+  "lifeBecomesZero",
+  "triggerActivated",
   "becomesRested",
 ]);
 
@@ -324,8 +329,7 @@ function payCost(
         fromBottom = frame.answer === true;
         frame.answer = null;
       }
-      const card = takeLife(p.life, fromBottom ? p.life.length - 1 : 0);
-      if (card) p.hand.push(card);
+      const card = lifeCardToHand(state, frame.controller, fromBottom ? p.life.length - 1 : 0);
       frame.memo.push(card?.uid ?? "");
     }
     frame.memo = [];
@@ -402,6 +406,44 @@ function payCost(
     }
   } else if ("trashThis" in cost) {
     moveFieldCardToTrash(state, source);
+  } else if ("toDeckBottom" in cost) {
+    const own =
+      cost.zone === "stage"
+        ? p.stage
+          ? [p.stage]
+          : []
+        : p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+    const n = cost.toDeckBottom;
+    const chosen = choose(state, frame, frame.controller, own, n, n, "returnToDeckBottom");
+    if (chosen === "wait") return "wait";
+    for (const uid of chosen) removeFromField(state, uid, "deckBottom");
+  } else if ("trashToDeck" in cost) {
+    const pile = p.trash.filter((c) => c.uid !== source.uid);
+    const n = cost.trashToDeck;
+    const chosen = choose(state, frame, frame.controller, pile, n, n, "trashToDeck");
+    if (chosen === "wait") return "wait";
+    p.deck.push(...p.trash.filter((c) => chosen.includes(c.uid)));
+    p.trash = p.trash.filter((c) => !chosen.includes(c.uid));
+    state.rng = shuffleInPlace(p.deck, state.rng);
+  } else if ("koOwnCharacter" in cost) {
+    const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+    const n = cost.koOwnCharacter;
+    const chosen = choose(state, frame, frame.controller, own, n, n, "ko");
+    if (chosen === "wait") return "wait";
+    for (const uid of chosen) knockOut(state, uid, true);
+  } else if ("playFromHand" in cost) {
+    if (frame.memo.length === 0) {
+      const options = p.hand.filter(
+        (c) => c.uid !== source.uid && matchesFilter(state, c, cost.playFromHand, source, false),
+      );
+      const chosen = choose(state, frame, frame.controller, options, 1, 1, "playFromHand");
+      if (chosen === "wait") return "wait";
+      if (chosen.length === 0) return "continue";
+      frame.memo = chosen;
+    }
+    const outcome = playChosen(state, frame, frame.controller, p.hand, frame.memo[0] as string);
+    if (outcome === "wait") return "wait";
+    frame.memo = [];
   } else if ("characterToLife" in cost) {
     const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
     const n = cost.characterToLife;
@@ -515,12 +557,15 @@ function chooseTargets(
   target: Target,
   reason: string,
 ): string[] | "wait" {
+  // "That Character": the cards picked before, if they're still on the field.
+  const earlier = () =>
+    (frame.targets ?? [])
+      .map((uid) => findOnField(state, uid)?.card)
+      .filter((c): c is CardInstance => !!c && matchesFilter(state, c, target.filter, source));
+  if (target.side === "that") return earlier().map((c) => c.uid);
   let candidates =
     target.side === "chosen"
-      ? (frame.chosen ?? [])
-          .map((uid) => findOnField(state, uid)?.card)
-          .filter((c) => !!c && matchesFilter(state, c, target.filter, source))
-          .map((c) => c as CardInstance)
+      ? earlier()
       : targetCandidates(state, frame.controller, source, target);
   const count = target.count ?? 1;
   const total = target.totalPowerAtMost;
@@ -550,7 +595,7 @@ function chooseTargets(
     count,
     reason,
   );
-  if (picked !== "wait") frame.chosen = picked;
+  if (picked !== "wait") frame.targets = picked;
   return picked;
 }
 
@@ -564,7 +609,46 @@ function runStep(
   const p = state.players[controller];
   switch (step.do) {
     case "draw":
-      drawCards(state, controller, step.count);
+      if (drawCards(state, controller, step.count) > 0)
+        queueFieldEffects(state, controller, "drawOutsideDrawPhase");
+      return "continue";
+
+    case "trashThis":
+      if (findOnField(state, source.uid)) moveFieldCardToTrash(state, source);
+      return "continue";
+
+    case "handDownTo": {
+      const players = step.both ? [controller, opponentOf(controller)] : [controller];
+      for (const player of players) {
+        if (frame.memo.includes(player)) continue;
+        const hand = state.players[player].hand;
+        const excess = hand.length - step.count;
+        if (excess > 0) {
+          const chosen = choose(state, frame, player, hand, excess, excess, "trashFromHand");
+          if (chosen === "wait") return "wait";
+          moveFromHandToTrash(state, player, chosen);
+        }
+        frame.memo.push(player);
+      }
+      return "continue";
+    }
+
+    case "trashToDeckBottom": {
+      const player = step.side === "self" ? controller : opponentOf(controller);
+      const owner = state.players[player];
+      const chosen = choose(state, frame, player, owner.trash, step.count, step.count, step.do);
+      if (chosen === "wait") return "wait";
+      owner.deck.push(...chosen.map((uid) => owner.trash.find((c) => c.uid === uid)!));
+      owner.trash = owner.trash.filter((c) => !chosen.includes(c.uid));
+      return "continue";
+    }
+
+    case "handCostChange":
+      // Only works as a permanent effect (see playCostOf).
+      return "continue";
+
+    case "extraTurn":
+      state.extraTurn = controller;
       return "continue";
 
     case "ko":
@@ -628,6 +712,8 @@ function runStep(
       if (chosen === "wait") return "wait";
       moveFromHandToTrash(state, controller, chosen);
       frame.previous = chosen.length;
+      // "You may trash ...: If you do, ..."
+      if (step.ifYouDo && chosen.length > 0) frame.steps.splice(1, 0, ...step.ifYouDo);
       return "continue";
     }
 
@@ -1167,7 +1253,10 @@ function runRemoval(
       frame.memo[1] = `?${next}`;
       pushEffect(state, replacement.player, replacement.source, replacement.effect);
       const pushed = state.stack.at(-1);
-      if (pushed?.kind === "effect") pushed.replacing = next;
+      if (pushed?.kind === "effect") {
+        pushed.replacing = next;
+        pushed.targets = [next];
+      }
       return "yield";
     }
     frame.memo.splice(1, 1);
@@ -1203,8 +1292,9 @@ function findReplacement(
   controller: PlayerId,
   step: RemovalStep,
   uid: string,
+  inBattle = false,
 ): { player: PlayerId; source: string; effect: number } | null {
-  if (!wouldRemove(state, controller, step, uid)) return null;
+  if (!inBattle && !wouldRemove(state, controller, step, uid)) return null;
   const card = findOnField(state, uid)?.card;
   if (!card) return null;
   const owner = card.owner;
@@ -1215,6 +1305,7 @@ function findReplacement(
       if (effect.timing !== "replaceRemoval" || !r) continue;
       if (r.removal === "ko" && step.do !== "ko") continue;
       if (r.byOpponent && controller === owner) continue;
+      if (inBattle && !r.battle) continue;
       if (r.side === "this" ? holder.uid !== uid : !matchesFilter(state, card, r.filter, holder))
         continue;
       if (
@@ -1379,6 +1470,27 @@ function takeLife(life: CardInstance[], index: number): CardInstance | undefined
 function trashFromLife(state: GameState, player: PlayerId, count: number): void {
   const p = state.players[player];
   for (let i = 0; i < count && p.life.length > 0; i++) p.trash.unshift(takeLife(p.life, 0)!);
+  lifeLost(state, player);
+}
+
+/** Adds a Life card to its owner's hand: "when a card is added to your hand from your Life". */
+function lifeCardToHand(
+  state: GameState,
+  player: PlayerId,
+  index: number,
+): CardInstance | undefined {
+  const p = state.players[player];
+  const card = takeLife(p.life, index);
+  if (!card) return undefined;
+  p.hand.push(card);
+  queueFieldEffects(state, player, "lifeAddedToHand");
+  lifeLost(state, player);
+  return card;
+}
+
+/** "When your number of Life cards becomes 0". */
+function lifeLost(state: GameState, player: PlayerId): void {
+  if (state.players[player].life.length === 0) queueFieldEffects(state, player, "lifeBecomesZero");
 }
 
 /** Moves a Character to the top or bottom of its owner's Life cards (rule 3-10-2-1 for face-up). */
@@ -1552,11 +1664,28 @@ function runBattle(state: GameState, frame: FrameOf<"battle">): Outcome {
       // Rules 7-1-4-1 and 7-1-4-2.
       if (powerOf(state, attacker.card) < powerOf(state, target.card)) return "continue";
       if (target.zone === "characters") {
-        const safe =
-          hasStatus(state, target.card, "cannotBeKOdInBattle") ||
-          (attacker.zone === "leader" &&
-            hasStatus(state, target.card, "cannotBeKOdInBattleByLeaders"));
-        if (!safe) knockOut(state, target.card.uid);
+        if (hasStatus(state, target.card, "cannotBeKOdInBattle")) return "continue";
+        if (
+          attacker.zone === "leader" &&
+          hasStatus(state, target.card, "cannotBeKOdInBattleByLeaders")
+        )
+          return "continue";
+        const uid = target.card.uid;
+        const ko: RemovalStep = { do: "ko", target: { side: "opponent" } };
+        const replacement = findReplacement(state, state.turnPlayer, ko, uid, true);
+        if (replacement) {
+          // Rule 8-1-3-4: a replacement effect may save the Character.
+          frame.step = "ko";
+          frame.saving = uid;
+          pushEffect(state, replacement.player, replacement.source, replacement.effect);
+          const pushed = state.stack.at(-1);
+          if (pushed?.kind === "effect") {
+            pushed.replacing = uid;
+            pushed.targets = [uid];
+          }
+          return "continue";
+        }
+        knockOut(state, uid);
         return "continue";
       }
       // Rule 7-1-4-1-1-1.
@@ -1572,6 +1701,15 @@ function runBattle(state: GameState, frame: FrameOf<"battle">): Outcome {
         banish: hasKeywordNow(state, attacker.card, "banish"),
         answer: null,
       });
+      return "continue";
+    }
+
+    case "ko": {
+      frame.step = "end";
+      const uid = frame.saving ?? "";
+      const saved = state.prevented?.includes(uid) ?? false;
+      state.prevented = (state.prevented ?? []).filter((u) => u !== uid);
+      if (!saved && findOnField(state, uid)) knockOut(state, uid);
       return "continue";
     }
 
@@ -1597,10 +1735,12 @@ function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
         queueEffects(state, frame.defender, card, "takeDamage");
     if (frame.banish) {
       p.trash.unshift(takeLife(p.life, 0) as CardInstance);
+      lifeLost(state, frame.defender);
     } else if (top.faceUp && hasRule(state, frame.defender, "faceUpLifeToDeckBottom")) {
       p.deck.push(takeLife(p.life, 0) as CardInstance);
+      lifeLost(state, frame.defender);
     } else if (!hasTrigger) {
-      p.hand.push(takeLife(p.life, 0) as CardInstance);
+      lifeCardToHand(state, frame.defender, 0);
     } else if (frame.answer === null) {
       state.prompt = {
         kind: "confirm",
@@ -1616,8 +1756,11 @@ function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
       frame.remaining -= 1;
       if (!activate) {
         p.hand.push(card);
+        queueFieldEffects(state, frame.defender, "lifeAddedToHand");
+        lifeLost(state, frame.defender);
         continue;
       }
+      lifeLost(state, frame.defender);
       // Rule 10-1-5-3.
       for (const player of ["p1", "p2"] as const)
         for (const holder of fieldCards(state, player))
@@ -1673,6 +1816,9 @@ function runEndPhase(state: GameState, frame: FrameOf<"end-phase">): Outcome {
     (m) => m.until !== "turn" || (m.endsTurn ?? 0) > state.turn,
   );
   state.stack.splice(state.stack.lastIndexOf(frame), 1);
-  startTurn(state, other);
+  // "Take an extra turn after this one."
+  const next = state.extraTurn === turnPlayer ? turnPlayer : other;
+  delete state.extraTurn;
+  startTurn(state, next);
   return "continue";
 }
