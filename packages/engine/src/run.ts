@@ -117,6 +117,8 @@ const ON_FIELD_TIMINGS = new Set([
   "replaceRemoval",
   "donReturned",
   "becomesRested",
+  "characterKOd",
+  "attackDealsDamage",
 ]);
 
 function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {

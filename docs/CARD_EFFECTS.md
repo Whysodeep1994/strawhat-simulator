@@ -42,6 +42,26 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                            | 8-1-3-4 |
 | `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."          | 8-1-3-1 |
 | `becomesRested`               | "When this Character becomes rested" (attack, block, cost or effect) | 8-1-3-1 |
+| Timing                        | Card wording                                                         | Rules   |
+| ----------------------------- | --------------------------------------------------------------       | ------- |
+| `onPlay`                      | [On Play]                                                            | 10-2-6  |
+| `whenAttacking`               | [When Attacking]                                                     | 10-2-5  |
+| `onOpponentsAttack`           | [On Your Opponent's Attack]                                          | 10-2-16 |
+| `onBlock`                     | [On Block]                                                           | 10-2-15 |
+| `onKO`                        | [On K.O.]                                                            | 10-2-17 |
+| `koByEffect`                  | "When this Character is K.O.'d by an effect" (not in battle)         | 10-2-1  |
+| `activateMain`                | [Activate: Main]                                                     | 10-2-2  |
+| `main`                        | [Main] on Events                                                     | 10-2-3  |
+| `counter`                     | [Counter] on Events                                                  | 10-2-4  |
+| `trigger`                     | [Trigger]                                                            | 10-1-5  |
+| `endOfYourTurn`               | [End of Your Turn]                                                   | 10-2-7  |
+| `endOfOpponentsTurn`          | [End of Your Opponent's Turn]                                        | 10-2-8  |
+| `permanent`                   | Always-on text, e.g. "+1000 power"                                   | 8-1-3-3 |
+| `characterRestedByYourEffect` | "If a Character is rested by your effect"                            | 8-1-3-1 |
+| `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                            | 8-1-3-4 |
+| `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."          | 8-1-3-1 |
+| `characterKOd`                | "When a Character is K.O.'d" (either player's, any K.O.)             | 8-1-3-1 |
+| `attackDealsDamage`           | "When this card's attack deals damage to your opponent's Life"       | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
