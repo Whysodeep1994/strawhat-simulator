@@ -47,6 +47,8 @@ export interface Replacement {
   removal: "ko" | "remove";
   /** Only effects of the opponent ("by your opponent's effect"). */
   byOpponent?: boolean;
+  /** Also replaces a K.O. in battle ("If ... would be K.O.'d", without "by an effect"). */
+  battle?: boolean;
 }
 
 export type Timing =
@@ -69,8 +71,20 @@ export type Timing =
   | "replaceRemoval"
   /** "When ... DON!! cards on your field are returned to your DON!! deck". See `returnedAtLeast`. */
   | "donReturned"
+  /** "When you draw a card outside of your Draw Phase". */
+  | "drawOutsideDrawPhase"
+  /** "When a card is added to your hand from your Life". */
+  | "lifeAddedToHand"
+  /** "When your number of Life cards becomes 0". */
+  | "lifeBecomesZero"
+  /** "When a [Trigger] activates" (one of yours). */
+  | "triggerActivated"
   /** "When this Character becomes rested" (by attacking, blocking, a cost or an effect). */
   | "becomesRested"
+  /** "When a Character is K.O.'d": any Character, either player's, in battle or by an effect. */
+  | "characterKOd"
+  /** "When this card's attack deals damage to your opponent's Life". */
+  | "attackDealsDamage"
   /** "When you take damage": each time a Life card leaves for damage. */
   | "takeDamage"
   /** "When your Character [cardFilter] is K.O.'d". */
@@ -123,6 +137,13 @@ export type Condition =
   | { opponentDonOnFieldAtLeast: number }
   /** "If your Leader's type includes "Whitebeard Pirates"". */
   | { leaderTypeIncludes: string }
+  /** "If this Character has 7000 power or more". */
+  | { thisPowerAtLeast: number }
+  /** "If your opponent has more DON!! cards on their field than you". */
+  | { opponentHasMoreDon: true }
+  | { handAtLeast: number }
+  /** "If you have 10 or more cards in your trash". */
+  | { trashAtLeast: number }
   /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
   | { lifeAtMostOpponents: true }
   /** "If you have a total of 3 or more given DON!! cards" (Leader and Characters). */
@@ -183,6 +204,14 @@ export type Cost =
   | { trashThis: true }
   /** "Return N total of your currently given DON!! cards to your cost area rested." */
   | { returnGivenDon: number }
+  /** "Place 1 of your Characters (or Stages) at the bottom of your deck". */
+  | { toDeckBottom: number; zone?: "characters" | "stage"; filter?: Filter }
+  /** "Return 20 cards from your trash to your deck and shuffle it". */
+  | { trashToDeck: number }
+  /** "K.O. 1 of your Characters other than this Character". */
+  | { koOwnCharacter: number; filter?: Filter }
+  /** "Play 1 [Kotori] from your hand". */
+  | { playFromHand: Filter }
   /** "Add 1 of your Characters ... to the top of your Life cards (face-up)". */
   | { characterToLife: number; filter?: Filter; faceUp?: boolean }
 
@@ -193,6 +222,12 @@ export type Cost =
 
 /** Which cards a step can pick from. */
 export interface Target {
+  /**
+   * "this" means the card the effect is on. "any" means either player's cards. "that" means
+   * the cards the previous step picked, or the card a replacement effect saves ("that Character").
+   */
+  side: "self" | "opponent" | "this" | "any" | "that";
+  zone?: "leader" | "characters" | "leaderOrCharacters" | "stage";
   /** "this" means the card the effect is on. "any" means either player's cards. */
   side: "self" | "opponent" | "this" | "any";
   zone?: "leader" | "characters" | "leaderOrCharacters" | "stage" | "field";
@@ -201,6 +236,8 @@ export interface Target {
   count?: number;
   /** "Up to": the player may pick fewer, even 0 (rule 4-8). */
   upTo?: boolean;
+  /** "Up to 2 ... with a total power of 4000 or less". */
+  totalPowerAtMost?: number;
 }
 
 export interface Filter {
@@ -322,7 +359,20 @@ export type Step =
   | { do: "addDon"; count: number; rested?: boolean }
   | { do: "setDonActive"; count: number }
   /** The effect's player trashes cards from their hand. */
-  | { do: "trashFromHand"; count: number; upTo?: boolean; filter?: Filter }
+  /** `ifYouDo`: "you may trash ...: If you do, ..." (with `upTo`). */
+  | { do: "trashFromHand"; count: number; upTo?: boolean; filter?: Filter; ifYouDo?: Step[] }
+  /** "Trash this Stage" (or Character) as part of the effect. Not a K.O. */
+  | { do: "trashThis" }
+  /** "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent". */
+  | { do: "handDownTo"; count: number; both?: boolean }
+  /** "Your opponent places 3 cards from their trash at the bottom of their deck". */
+  | { do: "trashToDeckBottom"; side: "self" | "opponent"; count: number }
+  /**
+   * On a permanent field effect: "The cost of playing ... from your hand will be reduced by 1".
+   */
+  | { do: "handCostChange"; filter?: Filter; amount: number }
+  /** "Take an extra turn after this one". */
+  | { do: "extraTurn" }
   /** Place cards from your hand at the top of your deck. */
   | { do: "handToDeckTop"; count: number }
   /** Place cards from your hand at the bottom of your deck. */
@@ -330,7 +380,23 @@ export type Step =
   /** "Change the target of the attack to ...": the chosen card becomes the attack's target. */
   | { do: "redirectAttack"; target: Target }
   /** "Add up to 1 card from your hand to the top of your Life cards." */
-  | { do: "handToLife"; count: number }
+  /**
+   * "Add up to 1 card from your hand to the top of your Life cards." `fromTrash` also offers
+   * matching cards in your trash ("from your hand or trash"); `faceUp` adds them face-up.
+   */
+  | { do: "handToLife"; count: number; filter?: Filter; fromTrash?: boolean; faceUp?: boolean }
+  /** Trash all of your face-up Life cards. */
+  | { do: "trashFaceUpLife" }
+  | { do: "trashDeckTop"; count: number }
+  /**
+   * Permanent only: "Your face-up Life cards are placed at the bottom of your deck instead of
+   * being added to your hand, according to the rules" (damage, rule 7-1-4-1-1-2).
+   */
+  | { do: "faceUpLifeToDeckBottom" }
+  /** Permanent, on a Leader: "when your deck is reduced to 0, you win the game instead of losing". */
+  | { do: "winOnDeckOut" }
+  /** Permanent, on a Leader: "you can only include {type} type cards in your deck". Checked by `checkDeck`. */
+  | { do: "deckOnlyType"; type: string }
   /** Place the cards revealed by a `revealFromHand` cost at the top of your deck. */
   | { do: "revealedToDeckTop" }
   /** Add up to `count` (default 1) matching cards from your trash to your hand. */

@@ -302,7 +302,7 @@ Comprehensive Rules version 1.2.1.
 | 6-6-1-1-4 | 6-6 End Phase | Phase 4 (effects) | 0 |
 | 6-6-1-2 | 6-6 End Phase | Tested | 1 |
 | 6-6-1-3 | 6-6 End Phase | Tested | 1 |
-| 6-6-1-4 | 6-6 End Phase | Tested | 1 |
+| 6-6-1-4 | 6-6 End Phase | Tested | 2 |
 | 7-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-1-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 5 |
@@ -325,7 +325,7 @@ Comprehensive Rules version 1.2.1.
 | 7-1-4-1-1-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 2 |
 | 7-1-4-1-1-3 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 2 |
 | 7-1-4-1-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
-| 7-1-4-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 2 |
+| 7-1-4-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 3 |
 | 7-1-5 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 1 |
 | 7-1-5-1 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Tested | 3 |
 | 7-1-5-2 | 7-1 During the Main Phase, the turn player can rest an active Leader card in their Leader | Phase 4 (effects) | 0 |
@@ -349,8 +349,8 @@ Comprehensive Rules version 1.2.1.
 | 8-1-3-3-3 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-3-4 | 8-1 Effects | Tested | 1 |
 | 8-1-3-3-5 | 8-1 Effects | Phase 4 (effects) | 0 |
-| 8-1-3-4 | 8-1 Effects | Tested | 3 |
-| 8-1-3-4-1 | 8-1 Effects | Tested | 1 |
+| 8-1-3-4 | 8-1 Effects | Tested | 4 |
+| 8-1-3-4-1 | 8-1 Effects | Tested | 2 |
 | 8-1-3-4-2 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-4-3 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-4-4 | 8-1 Effects | Phase 4 (effects) | 0 |
@@ -428,7 +428,7 @@ Comprehensive Rules version 1.2.1.
 | 10-1-3 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-3-1 | 10-1 Keyword Effects | Tested | 2 |
 | 10-1-4 | 10-1 Keyword Effects | Tested | 1 |
-| 10-1-4-1 | 10-1 Keyword Effects | Tested | 6 |
+| 10-1-4-1 | 10-1 Keyword Effects | Tested | 7 |
 | 10-1-5 | 10-1 Keyword Effects | Tested | 2 |
 | 10-1-5-1 | 10-1 Keyword Effects | Tested | 1 |
 | 10-1-5-2 | 10-1 Keyword Effects | Tested | 1 |
@@ -453,7 +453,7 @@ Comprehensive Rules version 1.2.1.
 | 10-2-4-1-2 | 10-2 Keywords | Phase 4 (effects) | 0 |
 | 10-2-5 | 10-2 Keywords | Tested | 2 |
 | 10-2-5-1 | 10-2 Keywords | Tested | 1 |
-| 10-2-6 | 10-2 Keywords | Tested | 3 |
+| 10-2-6 | 10-2 Keywords | Tested | 4 |
 | 10-2-6-1 | 10-2 Keywords | Tested | 1 |
 | 10-2-7 | 10-2 Keywords | Tested | 1 |
 | 10-2-7-1 | 10-2 Keywords | Tested | 1 |
