@@ -108,6 +108,8 @@ export type Timing =
   | "youPlayCharacter"
   /** "When a [Trigger] activates" (either player's). */
   | "triggerActivated"
+  /** "When your opponent activates an Event" (the card is on your field). */
+  | "opponentActivatesEvent"
   /** Leader effects that read "at the start of the game" (rule 5-2-1-5-1). */
   | "startOfGame"
   /** "When this Character becomes rested by your opponent's Character's effect". */
@@ -177,6 +179,8 @@ export type Condition =
   | { donOnFieldAtMostOpponents: true }
   /** "If you have 5 or less active DON!! cards". */
   | { donActiveAtMost: number }
+  /** "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field". */
+  | { donFewerThanOpponentBy: number }
   /** "If this Character is rested". */
   | { thisRested: true }
   /** True if the condition doesn't hold. */
@@ -240,7 +244,7 @@ export type Cost =
   /** "Return N total of your currently given DON!! cards to your cost area rested." */
   | { returnGivenDon: number }
   /** "Place 1 of your Characters (or Stages) at the bottom of your deck". */
-  | { toDeckBottom: number; zone?: "characters" | "stage"; filter?: Filter }
+  | { toDeckBottom: number; zone?: "characters" | "stage"; filter?: Filter; side?: "any" }
   /** "Return 20 cards from your trash to your deck and shuffle it". */
   | { trashToDeck: number }
   /** "K.O. 1 of your Characters other than this Character". */
@@ -252,8 +256,8 @@ export type Cost =
 
   /** "Give 1 of your active DON!! cards to 1 of your Leader or Character cards". */
   | { giveActiveDon: number }
-  /** "Trash 1 of your Characters with a type including ...". Not a K.O. */
-  | { trashOwnCharacter: number; filter?: Filter }
+  /** "Trash 1 of your Characters with a type including ...". Not a K.O. `zone: "stage"` trashes your Stage. */
+  | { trashOwnCharacter: number; filter?: Filter; zone?: "stage" }
   /** "Rest 2 of your cards": active DON!! in the cost area, Leader, Characters, or Stage. */
   | { restCards: number };
 
@@ -430,8 +434,20 @@ export type Step =
   | { do: "extraTurn" }
   /** Place cards from your hand at the top of your deck. */
   | { do: "handToDeckTop"; count: number }
-  /** Place cards from your hand at the bottom of your deck. */
-  | { do: "handToDeckBottom"; count: number }
+  /**
+   * Place cards from your hand at the bottom of your deck. `side: "opponent"`: "your opponent
+   * must place 1 card from their hand at the bottom of their deck" (they pick).
+   */
+  | { do: "handToDeckBottom"; count: number; side?: "opponent" }
+  /** "[Side] returns all cards in their hand to their deck and shuffles it. Then, draws 5 cards." */
+  | { do: "handToDeckShuffle"; side: "self" | "opponent"; draw: number }
+  /** "You cannot attack a Leader during this turn." */
+  | { do: "cannotAttackLeader" }
+  /**
+   * "Deal 1 damage to your opponent" (rule 4-6-2: damage from an effect, [Trigger] included).
+   * `side: "self"`: "you take 1 damage".
+   */
+  | { do: "dealDamage"; count: number; side?: "self" }
   /** "Change the target of the attack to ...": the chosen card becomes the attack's target. */
   | { do: "redirectAttack"; target: Target }
   /**
@@ -629,8 +645,6 @@ export type Step =
    * `target`, or 1 from `target` and 1 from `with` ("your Leader and 1 Character").
    */
   | { do: "swapBasePower"; target: Target; with?: Target; duration?: Duration }
-  /** "You take 1 damage": Life cards leave as in battle, with [Trigger] (rule 10-1-5). */
-  | { do: "takeDamage"; count: number }
   /** "Your opponent returns 1 DON!! card from their field to their DON!! deck". */
   | { do: "opponentDonMinus"; count: number }
   /**

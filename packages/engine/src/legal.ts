@@ -184,6 +184,9 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
   const restedCharacters = opponent.characters.filter((c) => c.rested).map((c) => c.uid);
   const allCharacters = opponent.characters.map((c) => c.uid);
   const actions: Action[] = [];
+  const leaderAttacksBanned = state.modifiers.some(
+    (m) => m.target === p.leader.uid && m.noLeaderAttacks,
+  );
   for (const attacker of [p.leader, ...p.characters]) {
     if (
       attacker.rested ||
@@ -194,7 +197,10 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
     const attackable = hasKeywordNow(state, attacker, "canAttackActive")
       ? allCharacters
       : restedCharacters;
-    const targets = attackTargets(state, attacker, opponent.leader.uid, attackable);
+    const targets = attackTargets(state, attacker, opponent.leader.uid, attackable).filter(
+      // "You cannot attack a Leader during this turn."
+      (t) => t !== opponent.leader.uid || !leaderAttacksBanned,
+    );
     for (const target of targets)
       actions.push({ type: "attack", player, attacker: attacker.uid, target });
   }

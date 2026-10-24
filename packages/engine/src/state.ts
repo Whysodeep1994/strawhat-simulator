@@ -430,6 +430,11 @@ export function conditionsMet(
     if ("thisPowerAtLeast" in c) return powerOf(state, source) >= c.thisPowerAtLeast;
     if ("opponentHasMoreDon" in c)
       return donOnField(state, opponentOf(controller)) > donOnField(state, controller);
+    if ("donFewerThanOpponentBy" in c)
+      return (
+        donOnField(state, controller) <=
+        donOnField(state, opponentOf(controller)) - c.donFewerThanOpponentBy
+      );
     if ("handAtLeast" in c) return me.hand.length >= c.handAtLeast;
     if ("opponentHandAtLeast" in c) return them.hand.length >= c.opponentHandAtLeast;
     if ("handFewerThanOpponentBy" in c)
@@ -558,6 +563,22 @@ export function playBlocked(
 }
 
 /** DON!! cards on a player's field: active and rested in the cost area, plus given ones (rule 6-5-5). */
+/** The cards a `toDeckBottom` cost can place: your Stage, your Characters, or (`side: "any"`) any Character. */
+export function toDeckBottomOptions(
+  state: GameState,
+  player: PlayerId,
+  source: CardInstance,
+  cost: Extract<Cost, { toDeckBottom: number }>,
+): CardInstance[] {
+  const p = state.players[player];
+  if (cost.zone === "stage") return p.stage ? [p.stage] : [];
+  const pile =
+    cost.side === "any"
+      ? [...p.characters, ...state.players[opponentOf(player)].characters]
+      : p.characters;
+  return pile.filter((c) => matchesFilter(state, c, cost.filter, source));
+}
+
 export function donOnField(state: GameState, player: PlayerId): number {
   const p = state.players[player];
   return (
@@ -586,7 +607,8 @@ export function canPayCosts(
     if ("restDon" in cost) restDon += cost.restDon;
     if ("giveActiveDon" in cost) restDon += cost.giveActiveDon;
     if ("trashOwnCharacter" in cost) {
-      const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      const pile = cost.zone === "stage" ? (p.stage ? [p.stage] : []) : p.characters;
+      const own = pile.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.trashOwnCharacter) return false;
     }
     if ("donMinus" in cost) donMinus += cost.donMinus;
@@ -641,15 +663,11 @@ export function canPayCosts(
       if (matching.length < cost.trashToDeckBottom) return false;
     }
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
-    if ("toDeckBottom" in cost) {
-      const own =
-        cost.zone === "stage"
-          ? p.stage
-            ? [p.stage]
-            : []
-          : p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
-      if (own.length < cost.toDeckBottom) return false;
-    }
+    if (
+      "toDeckBottom" in cost &&
+      toDeckBottomOptions(state, player, source, cost).length < cost.toDeckBottom
+    )
+      return false;
     if ("trashToDeck" in cost) fromTrash += cost.trashToDeck;
     if ("koOwnCharacter" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
