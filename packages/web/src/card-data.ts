@@ -16,7 +16,7 @@ export interface Card extends CardDefinition {
   image?: string;
   rarity?: string;
   /** Battle attribute printed by the power, e.g. "Slash" or "Strike/Special". */
-  attribute?: string | null;
+  attribute?: string;
 }
 
 /** An official deck list from strawhat-card-data's decks/ folder. */
