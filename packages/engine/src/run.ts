@@ -140,6 +140,7 @@ const ON_FIELD_TIMINGS = new Set([
   "characterKOd",
   "attackDealsDamage",
   "opponentCharacterReturned",
+  "eventActivated",
 ]);
 
 function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
@@ -286,6 +287,8 @@ function payCost(
     moveFromHandToDeckBottom(state, frame.controller, chosen);
   } else if ("thisToDeckBottom" in cost) {
     removeFromField(state, source.uid, "deckBottom");
+  } else if ("returnThis" in cost) {
+    removeFromField(state, source.uid, "hand");
   } else if ("returnActiveDon" in cost) {
     returnDon(state, frame.controller, cost.returnActiveDon, true);
   } else if ("activeLeaderPower" in cost) {
@@ -708,7 +711,11 @@ function runStep(
     }
 
     case "setDonActive": {
-      const count = Math.min(step.count, p.donRested);
+      // "You cannot set DON!! cards as active using Character effects during this turn."
+      const locked =
+        definitionOf(state, source).category === "character" &&
+        state.modifiers.some((m) => m.target === p.leader.uid && m.noCharacterDonActive);
+      const count = locked ? 0 : Math.min(step.count, p.donRested);
       p.donRested -= count;
       p.donActive += count;
       return "continue";
@@ -859,6 +866,42 @@ function runStep(
         frame.memo = picked;
       }
       return playChosen(state, frame, controller, p.deck, frame.memo[0] as string, step.rested);
+    }
+
+    case "playFromLifeTop": {
+      if (frame.memo.length === 0) {
+        const top = p.life[0];
+        const def = top && definitionOf(state, top);
+        const playable =
+          !!def &&
+          (def.category === "character" || def.category === "stage") &&
+          !playBlocked(state, controller, top, false) &&
+          matchesFilter(state, top, step.filter, source, false);
+        const picked = playable ? choose(state, frame, controller, [top], 0, 1, step.do) : [];
+        if (picked === "wait") return "wait";
+        if (picked.length === 0) return "continue";
+        frame.memo = picked;
+      }
+      const card = p.life.find((c) => c.uid === frame.memo[0]);
+      if (card) delete card.faceUp;
+      return playChosen(state, frame, controller, p.life, frame.memo[0] as string);
+    }
+
+    case "noCharacterDonActive":
+      state.modifiers.push({ target: p.leader.uid, noCharacterDonActive: true, until: "turn" });
+      return "continue";
+
+    case "freezeOpponentDon": {
+      const them = state.players[opponentOf(controller)];
+      const count = Math.min(step.count, them.donRested);
+      if (count > 0)
+        state.modifiers.push({
+          target: them.leader.uid,
+          frozenDon: count,
+          until: "turn",
+          endsTurn: state.turn + 1,
+        });
+      return "continue";
     }
 
     case "playFromHand":
@@ -1458,7 +1501,7 @@ function findReplacement(
       if (effect.timing !== "replaceRemoval" || !r) continue;
       if (r.removal === "ko" && step.do !== "ko") continue;
       if (r.byOpponent && controller === owner) continue;
-      if (inBattle && !r.battle) continue;
+      if (inBattle ? !r.battle && !r.battleOnly : r.battleOnly) continue;
       if (r.side === "this" ? holder.uid !== uid : !matchesFilter(state, card, r.filter, holder))
         continue;
       if (

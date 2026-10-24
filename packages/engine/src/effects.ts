@@ -51,6 +51,8 @@ export interface Replacement {
   byOpponent?: boolean;
   /** Also replaces a K.O. in battle ("If ... would be K.O.'d", without "by an effect"). */
   battle?: boolean;
+  /** Only replaces a K.O. in battle ("If this Character would be K.O.'d in battle"). */
+  battleOnly?: boolean;
 }
 
 export type Timing =
@@ -110,6 +112,8 @@ export type Timing =
   | "triggerActivated"
   /** Leader effects that read "at the start of the game" (rule 5-2-1-5-1). */
   | "startOfGame"
+  /** "When you activate an Event": you play an Event's [Main] or [Counter] effect. */
+  | "eventActivated"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -174,7 +178,13 @@ export type Condition =
   /** "If the number of DON!! cards on your field is equal to or less than the number on your opponent's field". */
   | { donOnFieldAtMostOpponents: true }
   /** "If you have 5 or less active DON!! cards". */
-  | { donActiveAtMost: number };
+  | { donActiveAtMost: number }
+  /** "If the total cost of your Characters is 5 or more". */
+  | { charactersTotalCostAtLeast: number }
+  /** "If the number of your Characters is at least 2 less than the number of your opponent's Characters". */
+  | { charactersFewerThanOpponentBy: number }
+  /** "If you have less Life cards than your opponent". */
+  | { lifeLessThanOpponents: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -223,6 +233,8 @@ export type Cost =
   | { handToDeckBottom: number }
   /** Place this card (a Character or Stage) at the bottom of your deck. */
   | { thisToDeckBottom: true }
+  /** Return this Character to the owner's hand. */
+  | { returnThis: true }
   /** "Give your 1 active Leader −5000 power during this turn": the Leader must be active. */
   | { activeLeaderPower: number }
   /** "Return 2 of your active DON!! cards to your DON!! deck". */
@@ -473,6 +485,12 @@ export type Step =
   | { do: "arrangeDeckTop"; look: number; bottom?: boolean }
   /** "You may play" the top card of your deck if it matches. */
   | { do: "playFromDeckTop"; filter?: Filter; rested?: boolean }
+  /** "Reveal 1 card from the top of your Life cards. If that card is ..., you may play that card." */
+  | { do: "playFromLifeTop"; filter?: Filter }
+  /** "You cannot set DON!! cards as active using Character effects during this turn." */
+  | { do: "noCharacterDonActive" }
+  /** "Up to 1 of your opponent's rested DON!! cards will not become active in your opponent's next Refresh Phase." */
+  | { do: "freezeOpponentDon"; count: number }
   /**
    * Play a card from hand for free. `rested`: "play ... rested". `orTrash`: "from your hand
    * or trash". `differentColor`: it must share no color with the cards the previous step moved

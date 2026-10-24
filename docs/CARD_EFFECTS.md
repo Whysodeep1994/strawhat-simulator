@@ -52,6 +52,7 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `characterKOd`                | "When a Character is K.O.'d" (either player's, any K.O.)                                                                 | 8-1-3-1 |
 | `opponentCharacterReturned`   | "When your opponent's Character is returned to the owner's hand by your effect"                                          | 8-1-3-1 |
 | `battleKOReplacement`         | Set up by `replaceBattleKO`: "If any of your Characters would be K.O.'d in battle during this turn, you may ... instead" | 8-1-3-4 |
+| `eventActivated`              | "When you activate an Event" (you play an Event's [Main] or [Counter])                                                   | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -93,7 +94,8 @@ Punch] would be K.O.'d by an effect, you may trash this Character instead":
 `replaces` fields: `side` (`"self"` for your cards matching `filter`, `"this"` for the card
 itself), `removal` (`"ko"`, or `"remove"` for any removal from the field by K.O. or return), and
 `byOpponent: true` for "by your opponent's effect". Removals by effects only, unless the effect sets
-`battle: true` for wording that also covers a K.O. in battle ("If this Character would be K.O.'d").
+`battle: true` for wording that also covers a K.O. in battle ("If this Character would be K.O.'d"),
+or `battleOnly: true` for "If this Character would be K.O.'d in battle".
 The effect's steps can use the target `{ "side": "that" }` for the saved card ("give that Character
 −1000 power instead").
 
@@ -126,6 +128,9 @@ played on this turn"), plus:
 | `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"                                           |
 | `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                                                |
 | `{ "trashAtLeast": 10 }`                         | "If you have 10 or more cards in your trash"                                                              |
+| `{ "charactersTotalCostAtLeast": 5 }`            | "If the total cost of your Characters is 5 or more"                                                       |
+| `{ "charactersFewerThanOpponentBy": 2 }`         | "If the number of your Characters is at least 2 less than the number of your opponent's Characters"       |
+| `{ "lifeLessThanOpponents": true }`              | "If you have less Life cards than your opponent"                                                          |
 
 `count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
@@ -160,7 +165,7 @@ this card ... at the bottom of your deck"), `activeLeaderPower` ("give your 1 ac
 power during this turn"; the Leader must be active), and `returnActiveDon` ("return 2 of your
 active DON!! cards to your DON!! deck"; rested ones can't pay it). `returnOwnCharacter` takes
 `"to": "deckBottom"` for "place 1 of your Characters ... at the bottom of your deck", and
-`trashToDeckBottom` takes a `filter`.
+`trashToDeckBottom` takes a `filter`. `returnThis` is "return this Character to the owner's hand".
 
 Face-up Life cards are open to both players (rule 3-10-2-1): `viewFor` shows them in `life`, and
 a card is face-down again once it leaves the Life area.
@@ -248,6 +253,9 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `trashToHand`                    | Add up to `count` matching cards from your trash to your hand.                                                                                                                                    |
 | `arrangeDeckTop`                 | Look at the top `look` cards and put them back on top in any order; with `bottom`, any can go to the bottom instead. The player answers with the cards in order, top first.                       |
 | `playFromDeckTop`                | "You may play" the top card of your deck if it matches; `rested` plays it rested.                                                                                                                 |
+| `playFromLifeTop`                | "Reveal 1 card from the top of your Life cards. If that card is ..., you may play that card."                                                                                                     |
+| `noCharacterDonActive`           | "You cannot set DON!! cards as active using Character effects during this turn": later `setDonActive` steps on Characters do nothing.                                                             |
+| `freezeOpponentDon`              | "Up to `count` of your opponent's rested DON!! cards will not become active in your opponent's next Refresh Phase."                                                                               |
 | `noLifeToHand`                   | "You cannot add Life cards to your hand using your own effects during this turn."                                                                                                                 |
 | `chooseOne`                      | "Choose one": `options` are `{ "label", "steps" }`; `"chooser": "opponent"` for "your opponent chooses". The player answers with `{ "type": "chooseOne", "option": index }`.                      |
 | `restOpponentDon`                | Rest up to `count` of your opponent's active DON!! cards.                                                                                                                                         |
