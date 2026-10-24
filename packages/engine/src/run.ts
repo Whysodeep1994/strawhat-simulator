@@ -853,6 +853,43 @@ function runStep(
       return "continue";
     }
 
+    case "opponentHandToDeckBottom": {
+      const opponent = opponentOf(controller);
+      const hand = state.players[opponent].hand;
+      const chosen = choose(
+        state,
+        frame,
+        opponent,
+        hand,
+        step.count,
+        step.count,
+        "handToDeckBottom",
+      );
+      if (chosen === "wait") return "wait";
+      moveFromHandToDeckBottom(state, opponent, chosen);
+      return "continue";
+    }
+
+    case "activateEventFromTrash": {
+      // Back from the pushed [Main] effect.
+      if (frame.memo[0] === "activated") return "continue";
+      const options = p.trash.filter(
+        (c) =>
+          definitionOf(state, c).category === "event" &&
+          matchesFilter(state, c, step.filter, source, false) &&
+          (definitionOf(state, c).effects ?? []).some((e) => e.timing === "main"),
+      );
+      const picked =
+        options.length === 0 ? [] : choose(state, frame, controller, options, 0, 1, step.do);
+      if (picked === "wait") return "wait";
+      const card = options.find((c) => c.uid === picked[0]);
+      if (!card) return "continue";
+      const index = (definitionOf(state, card).effects ?? []).findIndex((e) => e.timing === "main");
+      frame.memo = ["activated"];
+      pushEffect(state, controller, card.uid, index);
+      return "yield";
+    }
+
     case "searchDeck": {
       if (step.play) return searchAndPlay(state, frame, source, step);
       const looked = p.deck.slice(0, step.look);

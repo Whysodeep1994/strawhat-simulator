@@ -164,6 +164,7 @@ function conditionText(condition: Condition): string {
   if ("handTrashedByEffectThisTurn" in condition)
     return "(During the turn in which a card in your hand is trashed by an effect)";
   if ("leaderMulticolored" in condition) return "(If your Leader is multicolored)";
+  if ("faceUpLifeAtLeast" in condition) return "(If you have a face-up Life card)";
   if ("donOnFieldAtMostOpponents" in condition)
     return "(If you have the same or fewer DON!! cards on your field than your opponent)";
   if ("donFewerThanOpponentBy" in condition)
@@ -331,6 +332,10 @@ function stepText(step: Step): string {
       return `At the end of this turn: ${step.steps.map(stepText).join(" ")}`;
     case "opponentTrashesFromHand":
       return `Your opponent trashes ${step.count} card(s) from their hand.`;
+    case "opponentHandToDeckBottom":
+      return `Your opponent places ${step.count} card(s) from their hand at the bottom of their deck.`;
+    case "activateEventFromTrash":
+      return `Activate the [Main] effect of up to 1${filterText(step.filter)} Event card in your trash.`;
     case "searchDeck":
       if (step.play)
         return `Look at ${step.look} cards from the top of your deck and play up to 1${filterText(step.filter)} card${step.rested ? " rested" : ""}. Then, place the rest at the bottom of your deck in any order.`;
@@ -463,6 +468,7 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.costAtMostOpponentLife) parts.push("a cost up to your opponent's Life count");
   if (filter.costAtMostTotalLife) parts.push("a cost up to the total of both players' Life cards");
   if (filter.noBaseEffect) parts.push("no base effect");
+  if (filter.lacksTiming) parts.push(`no ${filter.lacksTiming} effect`);
   if (filter.powerAtMost !== undefined) parts.push(`${filter.powerAtMost} power or less`);
   if (filter.powerAtLeast !== undefined) parts.push(`${filter.powerAtLeast} power or more`);
   if (filter.type) parts.push(`the {${filter.type}} type`);

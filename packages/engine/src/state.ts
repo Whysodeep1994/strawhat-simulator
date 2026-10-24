@@ -418,6 +418,8 @@ export function conditionsMet(
     if ("handFewerThanOpponentBy" in c)
       return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
     if ("totalLifeAtMost" in c) return me.life.length + them.life.length <= c.totalLifeAtMost;
+    if ("faceUpLifeAtLeast" in c)
+      return me.life.filter((l) => l.faceUp).length >= c.faceUpLifeAtLeast;
     if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
     if ("donOnFieldAtMostOpponents" in c)
       return donOnField(state, controller) <= donOnField(state, opponentOf(controller));
@@ -492,6 +494,8 @@ export function matchesFilter(
   if (filter.anyOf && !filter.anyOf.some((f) => matchesFilter(state, card, f, source, usePower)))
     return false;
   if (filter.noBaseEffect && ((def.effects ?? []).length > 0 || (def.keywords ?? []).length > 0))
+    return false;
+  if (filter.lacksTiming && (def.effects ?? []).some((e) => e.timing === filter.lacksTiming))
     return false;
   return true;
 }

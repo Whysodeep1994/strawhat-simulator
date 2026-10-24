@@ -123,6 +123,7 @@ played on this turn"), plus:
 | `{ "opponentHandAtLeast": 6 }`                   | "If your opponent has 6 or more cards in their hand"                                                      |
 | `{ "handTrashedByEffectThisTurn": true }`        | "During the turn in which a card in your hand is trashed by an effect"                                    |
 | `{ "donOnFieldAtMostOpponents": true }`          | "If the number of DON!! cards on your field is equal to or less than the number on your opponent's field" |
+| `{ "faceUpLifeAtLeast": 1 }`                     | "If you have a face-up Life card"                                                                         |
 | `{ "thisPowerAtLeast": 7000 }`                   | "If this Character has 7000 power or more"                                                                |
 | `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"                                           |
 | `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                                                |
@@ -207,6 +208,7 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `noBaseEffect`: "with no base effect", a card without card text (rule 2-8-5): no effects and
   no keywords.
 - `noCounter`: "Character cards without a Counter".
+- `lacksTiming`: "without a [When Attacking] effect" is `{ "lacksTiming": "whenAttacking" }`.
 - `notType`: not of this type. "If the only Characters on your field are {X} type Characters" is
   `{ "count": { "side": "self", "filter": { "notType": "X" } }, "atMost": 0 }`.
 
@@ -272,6 +274,8 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `reorderLife`                    | Look at all of your (`side`) Life cards and place them back in any order.                                                                                                                         |
 | `allLifeFaceDown`                | Turn all of your Life cards face-down.                                                                                                                                                            |
 | `trashLifeDownTo`                | "Trash cards from the top of your Life cards until you have 1 Life card."                                                                                                                         |
+| `opponentHandToDeckBottom`       | "Your opponent places 1 card from their hand at the bottom of their deck": the opponent picks.                                                                                                    |
+| `activateEventFromTrash`         | "Activate the [Main] effect of up to 1 Event card ... in your trash" (`filter`). The Event stays in the trash.                                                                                    |
 | `playRested`                     | In a `permanent` effect: "Your Character cards are played rested."                                                                                                                                |
 | `trashFromDeck`                  | Trash cards from the top of your deck; `perPrevious` for "the same number of cards as you did from your hand".                                                                                    |
 | `winGame`                        | "You win the game."                                                                                                                                                                               |

@@ -178,7 +178,9 @@ export type Condition =
   /** "If you have 5 or less active DON!! cards". */
   | { donActiveAtMost: number }
   /** "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field". */
-  | { donFewerThanOpponentBy: number };
+  | { donFewerThanOpponentBy: number }
+  /** "If you have a face-up Life card". */
+  | { faceUpLifeAtLeast: number };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -317,6 +319,8 @@ export interface Filter {
   noCounter?: boolean;
   /** "With no base effect": a card without card text (rule 2-8-5), so no effects or keywords. */
   noBaseEffect?: boolean;
+  /** "Without a [When Attacking] effect": the card has no effect with this timing. */
+  lacksTiming?: Timing;
 }
 
 /**
@@ -610,4 +614,8 @@ export type Step =
   /** "Turn all of your Life cards face-down." */
   | { do: "allLifeFaceDown" }
   /** "Trash cards from the top of your Life cards until you have 1 Life card." */
-  | { do: "trashLifeDownTo"; count: number };
+  | { do: "trashLifeDownTo"; count: number }
+  /** "Your opponent places 1 card from their hand at the bottom of their deck" (they pick). */
+  | { do: "opponentHandToDeckBottom"; count: number }
+  /** "Activate the [Main] effect of up to 1 Event card ... in your trash". */
+  | { do: "activateEventFromTrash"; filter?: Filter };

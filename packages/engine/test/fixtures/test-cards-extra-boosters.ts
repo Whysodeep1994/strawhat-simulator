@@ -734,4 +734,90 @@ export const EXTRA_BOOSTER_CARDS: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-HAND-BOTTOM",
+    name: "Test Hand to Bottom",
+    category: "character",
+    colors: ["blue"],
+    cost: 1,
+    power: 1000,
+    effects: [{ timing: "onPlay", steps: [{ do: "opponentHandToDeckBottom", count: 1 }] }],
+  },
+  {
+    id: "TEST-EVENT-REPLAY",
+    name: "Test Event Replay",
+    category: "character",
+    colors: ["purple"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [{ do: "activateEventFromTrash", filter: { costAtMost: 7 } }],
+      },
+    ],
+  },
+  {
+    id: "TEST-FACE-UP-KO",
+    name: "Test Face-Up K.O.",
+    category: "character",
+    colors: ["yellow"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "if",
+            conditions: [{ faceUpLifeAtLeast: 1 }],
+            steps: [{ do: "ko", target: { side: "opponent", upTo: true } }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-RUSH-NO-ATTACK-EFFECT",
+    name: "Test Rush Without When Attacking",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "grantKeyword",
+            target: { side: "self", filter: { lacksTiming: "whenAttacking" }, upTo: true },
+            keyword: "rush",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-ONLY-TEST-CREW",
+    name: "Test Only Test Crew",
+    category: "character",
+    colors: ["purple"],
+    cost: 1,
+    power: 1000,
+    types: ["Test Crew"],
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "if",
+            conditions: [
+              { count: { side: "self", filter: { notTypeIncludes: "Test" } }, atMost: 0 },
+            ],
+            steps: [{ do: "draw", count: 1 }],
+          },
+        ],
+      },
+    ],
+  },
 ];
