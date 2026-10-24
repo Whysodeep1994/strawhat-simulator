@@ -201,6 +201,7 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `notName`: "other than [X]".
 - `costAtMostTotalLife`: "a cost equal to or less than the total of your and your opponent's Life cards".
 - `typeIncludes`: a type containing some text, e.g. `"Baroque Works"`.
+- `notTypeIncludes`: no type containing that text, e.g. `"Roger Pirates"` for Characters without a type including "Roger Pirates".
 - `attribute`: the printed attribute includes this, e.g. `"Slash"` (cards set `attribute`).
 - `anyOf`: a list of filters, any of which may match ("{Cross Guild} type or ...").
 - `noBaseEffect`: "with no base effect", a card without card text (rule 2-8-5): no effects and

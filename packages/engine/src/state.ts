@@ -435,7 +435,9 @@ export function matchesFilter(
   if (!filter) return true;
   const def = definitionOf(state, card);
   const baseCost = def.cost ?? 0;
-  const basePower = findOnField(state, card.uid) ? basePowerOf(state, card) : (def.power ?? 0);
+  // Power is only worked out when the filter needs it: it can depend on permanent effects.
+  const basePower = () =>
+    findOnField(state, card.uid) ? basePowerOf(state, card) : (def.power ?? 0);
   const cost =
     filter.costAtMost !== undefined ||
     filter.costAtLeast !== undefined ||
@@ -444,7 +446,8 @@ export function matchesFilter(
     filter.costAtMostTotalLife
       ? costOf(state, card)
       : baseCost;
-  const power = usePower && findOnField(state, card.uid) ? powerOf(state, card) : basePower;
+  const power = () =>
+    usePower && findOnField(state, card.uid) ? powerOf(state, card) : basePower();
   if (filter.category && def.category !== filter.category) return false;
   if (filter.costAtMost !== undefined && cost > filter.costAtMost) return false;
   if (filter.costAtLeast !== undefined && cost < filter.costAtLeast) return false;
@@ -459,15 +462,20 @@ export function matchesFilter(
   if (filter.noCounter && def.counter) return false;
   if (filter.baseCostAtMost !== undefined && baseCost > filter.baseCostAtMost) return false;
   if (filter.baseCostAtLeast !== undefined && baseCost < filter.baseCostAtLeast) return false;
-  if (filter.powerAtMost !== undefined && power > filter.powerAtMost) return false;
-  if (filter.powerAtLeast !== undefined && power < filter.powerAtLeast) return false;
-  if (filter.basePowerAtMost !== undefined && basePower > filter.basePowerAtMost) return false;
-  if (filter.basePowerAtLeast !== undefined && basePower < filter.basePowerAtLeast) return false;
+  if (filter.powerAtMost !== undefined && power() > filter.powerAtMost) return false;
+  if (filter.powerAtLeast !== undefined && power() < filter.powerAtLeast) return false;
+  if (filter.basePowerAtMost !== undefined && basePower() > filter.basePowerAtMost) return false;
+  if (filter.basePowerAtLeast !== undefined && basePower() < filter.basePowerAtLeast) return false;
   if (filter.costAtMostDonOnField && source) {
     if (cost > donOnField(state, source.owner)) return false;
   }
   if (filter.type && !(def.types ?? []).includes(filter.type)) return false;
   if (filter.notType && (def.types ?? []).includes(filter.notType)) return false;
+  if (
+    filter.notTypeIncludes &&
+    (def.types ?? []).some((t) => t.includes(filter.notTypeIncludes ?? ""))
+  )
+    return false;
   if (filter.typeIncludes && !(def.types ?? []).some((t) => t.includes(filter.typeIncludes ?? "")))
     return false;
   const names = namesOf(def);
