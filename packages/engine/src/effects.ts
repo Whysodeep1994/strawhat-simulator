@@ -328,8 +328,6 @@ export type Step =
   | { do: "handDownTo"; count: number; both?: boolean }
   /** "Your opponent places 3 cards from their trash at the bottom of their deck". */
   | { do: "trashToDeckBottom"; side: "self" | "opponent"; count: number }
-  /** "Trash 1 card from the top of your deck". */
-  | { do: "deckToTrash"; count: number }
   /**
    * On a permanent field effect: "The cost of playing ... from your hand will be reduced by 1".
    */

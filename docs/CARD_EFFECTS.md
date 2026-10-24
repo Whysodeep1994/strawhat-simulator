@@ -233,7 +233,6 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `trashThis`                      | "Then, trash this Stage": trash the effect's own card. Not a K.O.                                                                                                                                 |
 | `handDownTo`                     | "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent".                                                                                                          |
 | `trashToDeckBottom`              | `side` places `count` cards from their trash at the bottom of their deck, in the order they pick.                                                                                                 |
-| `deckToTrash`                    | "Trash 1 card from the top of your deck."                                                                                                                                                         |
 | `handCostChange`                 | In a permanent effect on the field: "The cost of playing {X} cards from your hand will be reduced by 1" (`filter`, `amount`).                                                                     |
 | `extraTurn`                      | "Take an extra turn after this one."                                                                                                                                                              |
 

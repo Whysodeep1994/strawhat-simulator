@@ -313,8 +313,6 @@ function stepText(step: Step): string {
       return `${step.both ? "You and your opponent trash" : "Trash"} cards from your hand until you have ${step.count} cards.`;
     case "trashToDeckBottom":
       return `${step.side === "self" ? "Place" : "Your opponent places"} ${step.count} card(s) from the trash at the bottom of the deck.`;
-    case "deckToTrash":
-      return `Trash ${step.count} card(s) from the top of your deck.`;
     case "handCostChange":
       return `The cost of playing${filterText(step.filter)} cards from your hand changes by ${step.amount}.`;
     case "extraTurn":

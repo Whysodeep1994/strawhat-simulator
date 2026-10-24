@@ -609,10 +609,6 @@ function runStep(
       return "continue";
     }
 
-    case "deckToTrash":
-      p.trash.unshift(...p.deck.splice(0, step.count).reverse());
-      return "continue";
-
     case "handCostChange":
       // Only works as a permanent effect (see playCostOf).
       return "continue";
