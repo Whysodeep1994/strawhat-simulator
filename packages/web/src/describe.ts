@@ -59,6 +59,9 @@ const TIMING_NAMES: Record<Timing, string> = {
   characterKOd: "When a Character is K.O.'d,",
   attackDealsDamage: "When this card's attack deals damage to your opponent's Life,",
   koByOpponentsEffect: "When this Character is K.O.'d by your opponent's effect,",
+  opponentCharacterReturned:
+    "When your opponent's Character is returned to the owner's hand by your effect,",
+  battleKOReplacement: "If any of your Characters would be K.O.'d in battle during this turn,",
   permanent: "",
 };
 
@@ -146,6 +149,8 @@ function conditionText(condition: Condition): string {
   if ("handTrashedByEffectThisTurn" in condition)
     return "(During the turn in which a card in your hand is trashed by an effect)";
   if ("leaderMulticolored" in condition) return "(If your Leader is multicolored)";
+  if ("donOnFieldAtMostOpponents" in condition)
+    return "(If you have the same or fewer DON!! cards on your field than your opponent)";
   if ("trashAtLeast" in condition)
     return `(If you have ${condition.trashAtLeast} or more cards in your trash)`;
   if ("opponentDonOnFieldAtLeast" in condition)
@@ -195,6 +200,8 @@ function costText(cost: Cost): string {
   if ("handToDeckBottom" in cost)
     return `place ${cost.handToDeckBottom} card(s) from your hand at the bottom of your deck`;
   if ("thisToDeckBottom" in cost) return "place this card at the bottom of your deck";
+  if ("returnActiveDon" in cost)
+    return `return ${cost.returnActiveDon} of your active DON!! cards to your DON!! deck`;
   if ("activeLeaderPower" in cost)
     return `give your 1 active Leader −${Math.abs(cost.activeLeaderPower)} power during this turn`;
   if ("characterToLife" in cost)
@@ -300,6 +307,10 @@ function stepText(step: Step): string {
       return `${step.side === "self" ? "Your" : "Your opponent's"} [On Play] effects are negated${durationText(step.duration)}.`;
     case "setBasePower":
       return `${capital(targetText(step.target))}'s base power becomes ${step.power}${durationText(step.duration)}.`;
+    case "moveGivenDon":
+      return `Give up to 1 of your currently given DON!! cards to ${targetText(step.target)}.`;
+    case "replaceBattleKO":
+      return "If any of your Characters would be K.O.'d in battle during this turn, you may pay this card's other cost instead.";
     case "grantCounter":
       return `All of ${targetText(step.target)} in your hand have a +${step.amount} Counter.`;
     case "deckTopToBottom":
@@ -319,6 +330,7 @@ function stepText(step: Step): string {
 
 function targetText(target: Target): string {
   if (target.side === "this") return "this card";
+  if (target.side === "previous") return "the selected card";
   const owner = target.side === "self" ? "your" : target.side === "any" ? "the" : "your opponent's";
   const zone = target.zone ?? "characters";
   const count = target.count ?? 1;

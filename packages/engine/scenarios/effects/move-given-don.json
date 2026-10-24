@@ -1,0 +1,37 @@
+{
+  "name": "Move 1 given DON!! to a {Test Crew} Character",
+  "rules": ["6-5-5"],
+  "setup": {
+    "p1": {
+      "stage": "TEST-MOVE-DON",
+      "leader": {
+        "card": "TEST-LEADER",
+        "don": 2
+      },
+      "characters": ["TEST-C2-3000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.stage",
+      "effect": 0
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.leader"]
+    }
+  ],
+  "expect": {
+    "p1.leader.givenDon": 1,
+    "p1.characters.0.givenDon": 1,
+    "p1.characters.1.givenDon": 0
+  }
+}

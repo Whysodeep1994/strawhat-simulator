@@ -65,6 +65,8 @@ export interface Modifier {
   negateOnPlay?: boolean;
   /** On a Leader: its player can't add Life cards to their hand with their own effects. */
   noLifeToHand?: boolean;
+  /** On a Leader: an effect that may save its player's Characters from a K.O. in battle. */
+  battleKOReplace?: { source: string; effect: number };
   until: "turn" | "battle";
   /** For "turn": the last turn it lasts. Defaults to the current turn. */
   endsTurn?: number;
@@ -110,11 +112,20 @@ export type Frame =
       previous?: number;
       /** The cards the last removal step moved, for "a different color than the returned Character". */
       moved?: string[];
+      /** The cards the last targeting step picked, for a `"previous"` target. */
+      lastTargets?: string[];
+      /** Cards trashed from the hand to pay this effect's costs ("the trashed card"). */
+      costTrashed?: string[];
       answer: string[] | boolean | null;
       /** `replaceRemoval` only: the card the replacement would save. */
       replacing?: string;
     }
-  | { kind: "battle"; step: "attack" | "block" | "counter" | "damage" | "end" }
+  | {
+      kind: "battle";
+      step: "attack" | "block" | "counter" | "damage" | "koReplace" | "end";
+      /** "koReplace": the Character a `battleKOReplacement` effect may save. */
+      replacing?: string;
+    }
   | {
       kind: "damage";
       defender: PlayerId;

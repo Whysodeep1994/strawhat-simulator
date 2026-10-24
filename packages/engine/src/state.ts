@@ -18,6 +18,11 @@ export interface FieldLocation {
   card: CardInstance;
 }
 
+/** A card's name plus any "also treat this card's name as [X]" names (rule 2-1-2). */
+export function namesOf(def: CardDefinition): string[] {
+  return [def.name, ...(def.aliases ?? [])];
+}
+
 export function definitionOf(state: GameState, card: CardInstance): CardDefinition {
   const def = state.catalog[card.cardId];
   if (!def) throw new Error(`Unknown card id "${card.cardId}"`);
@@ -309,7 +314,7 @@ export function conditionsMet(
       const top = me.deck[0];
       return !!top && matchesFilter(state, top, c.deckTopMatches, source, false);
     }
-    if ("leaderIs" in c) return definitionOf(state, me.leader).name === c.leaderIs;
+    if ("leaderIs" in c) return namesOf(definitionOf(state, me.leader)).includes(c.leaderIs);
     if ("anyOf" in c) return c.anyOf.some((one) => conditionsMet(state, controller, source, [one]));
     if ("count" in c) {
       const n = countCards(state, controller, source, c.count);
@@ -338,6 +343,8 @@ export function conditionsMet(
     if ("opponentDonOnFieldAtLeast" in c)
       return donOnField(state, opponentOf(controller)) >= c.opponentDonOnFieldAtLeast;
     if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
+    if ("donOnFieldAtMostOpponents" in c)
+      return donOnField(state, controller) <= donOnField(state, opponentOf(controller));
     return false;
   });
 }
@@ -382,9 +389,11 @@ export function matchesFilter(
   if (filter.type && !(def.types ?? []).includes(filter.type)) return false;
   if (filter.typeIncludes && !(def.types ?? []).some((t) => t.includes(filter.typeIncludes ?? "")))
     return false;
-  if (filter.name && def.name !== filter.name) return false;
-  if (filter.notName && def.name === filter.notName) return false;
-  if (filter.nameIncludes && !def.name.includes(filter.nameIncludes)) return false;
+  const names = namesOf(def);
+  if (filter.name && !names.includes(filter.name)) return false;
+  if (filter.notName && names.includes(filter.notName)) return false;
+  if (filter.nameIncludes && !names.some((n) => n.includes(filter.nameIncludes ?? ""))) return false;
+  if (filter.notType && (def.types ?? []).includes(filter.notType)) return false;
   if (filter.color && !def.colors.includes(filter.color)) return false;
   if (filter.rested !== undefined && card.rested !== filter.rested) return false;
   if (filter.notThis && source && card.uid === source.uid) return false;
@@ -447,6 +456,7 @@ export function canPayCosts(
     if ("handToDeckBottom" in cost) fromHand += cost.handToDeckBottom;
     if ("thisToDeckBottom" in cost && !findOnField(state, source.uid)) return false;
     if ("activeLeaderPower" in cost && p.leader.rested) return false;
+    if ("returnActiveDon" in cost) restDon += cost.returnActiveDon;
     if ("returnOwnCharacter" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.returnOwnCharacter) return false;

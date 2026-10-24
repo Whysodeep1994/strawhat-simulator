@@ -67,6 +67,13 @@ export type Timing =
   | "koByOpponentsEffect"
   /** "When this card's attack deals damage to your opponent's Life". */
   | "attackDealsDamage"
+  /** "When your opponent's Character is returned to the owner's hand by your effect". */
+  | "opponentCharacterReturned"
+  /**
+   * Set up by a `replaceBattleKO` step: "If any of your Characters would be K.O.'d in battle
+   * during this turn, you may [costs] instead." Paying the costs saves the Character.
+   */
+  | "battleKOReplacement"
   /** "When this Character becomes rested" (by attacking, blocking, a cost or an effect). */
   | "becomesRested"
   /** Always on while its conditions hold (rule 8-1-3-3). */
@@ -120,7 +127,9 @@ export type Condition =
   /** "During the turn in which a card in your hand is trashed by an effect". */
   | { handTrashedByEffectThisTurn: true }
   /** "If you have 30 or more cards in your trash". */
-  | { trashAtLeast: number };
+  | { trashAtLeast: number }
+  /** "If the number of DON!! cards on your field is equal to or less than the number on your opponent's field". */
+  | { donOnFieldAtMostOpponents: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -171,6 +180,8 @@ export type Cost =
   | { thisToDeckBottom: true }
   /** "Give your 1 active Leader −5000 power during this turn": the Leader must be active. */
   | { activeLeaderPower: number }
+  /** "Return 2 of your active DON!! cards to your DON!! deck". */
+  | { returnActiveDon: number }
   /** Trash this card from the field. Not a K.O. */
   | { trashThis: true }
   /** "Return N total of your currently given DON!! cards to your cost area rested." */
@@ -180,8 +191,11 @@ export type Cost =
 
 /** Which cards a step can pick from. */
 export interface Target {
-  /** "this" means the card the effect is on. "any" means either player's cards. */
-  side: "self" | "opponent" | "this" | "any";
+  /**
+   * "this" means the card the effect is on. "any" means either player's cards. "previous" means
+   * the cards the previous targeting step picked ("the selected Character").
+   */
+  side: "self" | "opponent" | "this" | "any" | "previous";
   zone?: "leader" | "characters" | "leaderOrCharacters" | "stage";
   filter?: Filter;
   /** How many to pick. Defaults to 1. */
@@ -230,6 +244,8 @@ export interface Filter {
   anyOf?: Filter[];
   /** "Character cards without a Counter". */
   noCounter?: boolean;
+  /** Not of this type ("the only Characters on your field are {X} type": none without it). */
+  notType?: string;
   /** "With no base effect": a card without card text (rule 2-8-5), so no effects or keywords. */
   noBaseEffect?: boolean;
 }
@@ -385,7 +401,12 @@ export type Step =
       orTrash?: boolean;
       differentColor?: boolean;
     }
-  | { do: "playFromTrash"; filter?: Filter; rested?: boolean }
+  /** `sameNameAsTrashed`: "the same card name as the trashed card" (trashed to pay this effect's cost). */
+  | { do: "playFromTrash"; filter?: Filter; rested?: boolean; sameNameAsTrashed?: boolean }
+  /** "Give up to 1 of your currently given DON!! cards to [target]": moves 1 given DON!!. */
+  | { do: "moveGivenDon"; target: Target }
+  /** Sets up this card's `battleKOReplacement` effect (its index) for the rest of the turn. */
+  | { do: "replaceBattleKO"; effect: number }
   /** "You cannot add Life cards to your hand using your own effects during this turn." */
   | { do: "noLifeToHand" }
   /** Add Life cards to your hand, from the top or (`fromBottom`) the bottom. */

@@ -1,0 +1,25 @@
+{
+  "name": "A card that is also treated as [Test 6000] matches that name",
+  "rules": ["2-1-2"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-PLAY-6000", "TEST-ALIAS"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.0"]
+    }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.characters.0.cardId": "TEST-ALIAS"
+  }
+}
