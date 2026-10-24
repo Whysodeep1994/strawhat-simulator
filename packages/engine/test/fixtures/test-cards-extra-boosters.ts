@@ -758,15 +758,6 @@ export const EXTRA_BOOSTER_CARDS: CardDefinition[] = [
     ],
   },
   {
-    id: "TEST-PING",
-    name: "Test Ping",
-    category: "character",
-    colors: ["yellow"],
-    cost: 1,
-    power: 1000,
-    effects: [{ timing: "onPlay", steps: [{ do: "dealDamage", count: 1 }] }],
-  },
-  {
     id: "TEST-FACE-UP-KO",
     name: "Test Face-Up K.O.",
     category: "character",

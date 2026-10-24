@@ -1,10 +1,24 @@
 {
-  "name": "\"Deal 1 damage to your opponent\": the top Life card goes to their hand",
-  "rules": ["7-1-4-1-1-2"],
+  "name": "An effect deals 1 damage: the opponent adds a Life card to hand, then the effect goes on",
+  "rules": ["10-2-3"],
   "setup": {
-    "p1": { "hand": ["TEST-PING"], "don": { "active": 1 } },
-    "p2": { "life": ["TEST-C2-3000", "TEST-FILLER"] }
+    "p1": {
+      "hand": ["TEST-DEAL-DAMAGE"],
+      "don": {
+        "active": 1
+      }
+    }
   },
-  "actions": [{ "type": "playCard", "player": "p1", "card": "p1.hand.0" }],
-  "expect": { "p2.life": 1, "p2.hand": 1, "p2.hand.0.cardId": "TEST-C2-3000", "p1.characters": 1 }
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p2.life": 3,
+    "p2.hand": 1,
+    "p1.hand": 1
+  }
 }
