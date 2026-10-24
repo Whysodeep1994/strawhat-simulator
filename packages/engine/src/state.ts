@@ -392,7 +392,8 @@ export function matchesFilter(
   const names = namesOf(def);
   if (filter.name && !names.includes(filter.name)) return false;
   if (filter.notName && names.includes(filter.notName)) return false;
-  if (filter.nameIncludes && !names.some((n) => n.includes(filter.nameIncludes ?? ""))) return false;
+  if (filter.nameIncludes && !names.some((n) => n.includes(filter.nameIncludes ?? "")))
+    return false;
   if (filter.notType && (def.types ?? []).includes(filter.notType)) return false;
   if (filter.color && !def.colors.includes(filter.color)) return false;
   if (filter.rested !== undefined && card.rested !== filter.rested) return false;
