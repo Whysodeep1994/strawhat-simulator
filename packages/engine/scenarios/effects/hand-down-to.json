@@ -1,0 +1,14 @@
+{
+  "name": "Both players trash down to the hand size, effect player first",
+  "rules": ["10-2-6"],
+  "setup": {
+    "p1": { "hand": ["TEST-HAND-DOWN", "TEST-FILLER", "TEST-FILLER"], "don": { "active": 1 } },
+    "p2": { "hand": ["TEST-FILLER", "TEST-FILLER", "TEST-FILLER"] }
+  },
+  "actions": [
+    { "type": "playCard", "player": "p1", "card": "p1.hand.0" },
+    { "type": "choose", "player": "p1", "cards": ["p1.hand.0"] },
+    { "type": "choose", "player": "p2", "cards": ["p2.hand.0", "p2.hand.1"] }
+  ],
+  "expect": { "p1.hand": 1, "p2.hand": 1, "p2.trash": 2 }
+}

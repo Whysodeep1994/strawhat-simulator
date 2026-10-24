@@ -1,0 +1,10 @@
+{
+  "name": "Taking an extra turn starts the same player's turn again",
+  "rules": ["6-6-1-4"],
+  "setup": { "p1": { "characters": ["TEST-EXTRA-TURN"] } },
+  "actions": [
+    { "type": "activate", "player": "p1", "card": "p1.characters.0", "effect": 0 },
+    { "type": "endTurn", "player": "p1" }
+  ],
+  "expect": { "turnPlayer": "p1", "turn": 4 }
+}

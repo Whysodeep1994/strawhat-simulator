@@ -33,7 +33,7 @@ export interface CardDefinition {
   keywords?: Keyword[];
   types?: string[];
   /** Printed attribute, e.g. "Slash" or "Strike/Ranged". */
-  attribute?: string;
+  attribute?: string | null;
   effects?: EffectDefinition[];
   /** "Also treat this card's name as [X] according to the rules." */
   aliases?: string[];

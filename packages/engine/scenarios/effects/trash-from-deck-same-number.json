@@ -1,0 +1,26 @@
+{
+  "name": "Trash the same number of cards from the deck as from the hand",
+  "rules": ["10-2-14-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-MILL-SAME", "TEST-FILLER", "TEST-FILLER", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.0", "p1.hand.1"]
+    }
+  ],
+  "expect": {
+    "p1.hand": 1,
+    "p1.trash": 5,
+    "p1.deck": 18
+  }
+}

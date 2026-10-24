@@ -4,12 +4,16 @@ import {
   conditionsMet,
   counterOf,
   definitionOf,
+  effectsOf,
   fieldCards,
   findOnField,
   hasKeywordNow,
   hasStatus,
   matchesFilter,
+  oncePerTurnKey,
+  playBlocked,
   playCostOf,
+  powerOf,
 } from "./state.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
 
@@ -82,6 +86,13 @@ export function isLegal(state: GameState, action: Action): boolean {
     const prompt = state.prompt;
     if (prompt.kind !== "choose" || prompt.player !== action.player) return false;
     const unique = new Set(action.cards);
+    if (prompt.maxTotalPower !== undefined) {
+      const total = action.cards.reduce((sum, uid) => {
+        const card = findOnField(state, uid)?.card;
+        return sum + (card ? powerOf(state, card) : 0);
+      }, 0);
+      if (total > prompt.maxTotalPower) return false;
+    }
     return (
       unique.size === action.cards.length &&
       action.cards.length >= prompt.min &&
@@ -118,7 +129,7 @@ function playActions(state: GameState, player: PlayerId): Action[] {
   for (const card of p.hand) {
     const def = definitionOf(state, card);
     const cost = playCostOf(state, player, card);
-    if (cost > p.donActive) continue;
+    if (cost > p.donActive || playBlocked(state, player, card, true)) continue;
     if (def.category === "event") {
       const effect = (def.effects ?? []).find((e) => e.timing === "main");
       if (!effect || !conditionsMet(state, player, card, effect.conditions)) continue;
@@ -143,9 +154,13 @@ function playActions(state: GameState, player: PlayerId): Action[] {
 function activateActions(state: GameState, player: PlayerId): Action[] {
   const actions: Action[] = [];
   for (const card of fieldCards(state, player)) {
-    (definitionOf(state, card).effects ?? []).forEach((effect, index) => {
+    effectsOf(state, card).forEach((effect, index) => {
       if (effect.timing !== "activateMain") return;
-      if (effect.oncePerTurn && state.usedThisTurn.includes(`${card.uid}:${index}`)) return;
+      if (
+        effect.oncePerTurn &&
+        state.usedThisTurn.includes(oncePerTurnKey(card.uid, effect, index))
+      )
+        return;
       if (!conditionsMet(state, player, card, effect.conditions)) return;
       if (!canPayCosts(state, player, card, effect.costs ?? [])) return;
       actions.push({ type: "activate", player, card: card.uid, effect: index });
@@ -210,7 +225,9 @@ export function eligibleBlockers(state: GameState, player: PlayerId): CardInstan
   if (!attacker || hasKeywordNow(state, attacker.card, "unblockable")) return [];
   // Rule 10-1-4-1: effects can stop [Blocker] from being activated.
   const bans = state.modifiers.filter((m) => m.target === battle.attacker && m.noBlockers);
-  return state.players[player].characters.filter(
+  const p = state.players[player];
+  // A Leader with [Blocker] can block too.
+  return [p.leader, ...p.characters].filter(
     (c) =>
       !c.rested &&
       c.uid !== battle.target &&

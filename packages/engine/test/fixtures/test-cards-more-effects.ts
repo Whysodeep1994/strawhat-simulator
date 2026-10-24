@@ -448,6 +448,50 @@ export const MORE_EFFECT_CARDS: CardDefinition[] = [
     ],
   },
   {
+    id: "TEST-LEADER-BLOCKER",
+    name: "Test Leader Blocker",
+    category: "leader",
+    colors: ["green"],
+    power: 5000,
+    life: 4,
+    keywords: ["blocker"],
+  },
+  {
+    id: "TEST-SAVE-IN-BATTLE",
+    name: "Test Save In Battle",
+    category: "character",
+    colors: ["green"],
+    cost: 3,
+    power: 3000,
+    effects: [
+      {
+        timing: "replaceRemoval",
+        replaces: { side: "this", removal: "ko", battle: true },
+        optional: true,
+        costs: [{ trashFromHand: 1 }],
+        steps: [{ do: "powerUp", target: { side: "that" }, amount: -1000 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-EXTRA-TURN",
+    name: "Test Extra Turn",
+    category: "character",
+    colors: ["purple"],
+    cost: 1,
+    power: 1000,
+    effects: [{ timing: "activateMain", steps: [{ do: "extraTurn" }] }],
+  },
+  {
+    id: "TEST-HAND-DOWN",
+    name: "Test Hand Down",
+    category: "character",
+    colors: ["blue"],
+    cost: 1,
+    power: 1000,
+    effects: [{ timing: "onPlay", steps: [{ do: "handDownTo", count: 1, both: true }] }],
+  },
+  {
     id: "TEST-LIFE-COMPARE",
     name: "Test Life Compare",
     category: "character",
@@ -584,6 +628,171 @@ export const MORE_EFFECT_CARDS: CardDefinition[] = [
         steps: [{ do: "deckOnlyType", type: "Test Crew" }, { do: "winOnDeckOut" }],
       },
       { timing: "attackDealsDamage", optional: true, steps: [{ do: "trashDeckTop", count: 1 }] },
+    ],
+  },
+  {
+    id: "TEST-LEADER-SLASH",
+    name: "Test Leader Slash",
+    category: "leader",
+    colors: ["green"],
+    power: 5000,
+    life: 4,
+    attribute: "Slash",
+  },
+  {
+    id: "TEST-ONE-OF-COST",
+    name: "Test One Of Cost",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 2000,
+    effects: [
+      {
+        timing: "onPlay",
+        optional: true,
+        costs: [
+          { oneOf: [{ restOwn: { category: "leader", attribute: "Slash" } }, { restDon: 1 }] },
+        ],
+        steps: [
+          { do: "draw", count: 2 },
+          { do: "trashFromHand", count: 1 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRASHED-DISCOUNT",
+    name: "Test Trashed Discount",
+    category: "character",
+    colors: ["blue"],
+    cost: 6,
+    power: 6000,
+    effects: [
+      {
+        timing: "permanent",
+        zone: "hand",
+        conditions: [{ handTrashedByEffectThisTurn: true }],
+        steps: [{ do: "costChange", target: { side: "this" }, amount: -3 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-GIVEN-DON",
+    name: "Test Given DON",
+    category: "character",
+    colors: ["red"],
+    cost: 2,
+    power: 3000,
+    effects: [
+      {
+        timing: "permanent",
+        conditions: [{ givenDonAtLeast: 3 }],
+        steps: [{ do: "powerUp", target: { side: "this" }, amount: 3000 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-PER-COUNT",
+    name: "Test Per Count",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "powerUp",
+            target: { side: "opponent", upTo: true },
+            amount: -1000,
+            perCount: { side: "self", zone: "field" },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-NO-REST",
+    name: "Test No Rest",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "grantStatus",
+            target: { side: "opponent" },
+            status: "cannotBeRested",
+            duration: "opponentsNextTurn",
+          },
+          { do: "rest", target: { side: "opponent", upTo: true } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-BECOMES-RESTED",
+    name: "Test Becomes Rested",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "becomesRested",
+        conditions: [{ yourTurn: true }],
+        steps: [{ do: "draw", count: 1 }],
+      },
+    ],
+  },
+  {
+    id: "TEST-DECK-TRASH",
+    name: "Test Deck Trash",
+    category: "character",
+    colors: ["black"],
+    cost: 3,
+    power: 4000,
+    effects: [
+      {
+        timing: "whenAttacking",
+        optional: true,
+        costs: [{ trashFromDeckTop: 2 }],
+        steps: [
+          {
+            do: "if",
+            conditions: [{ opponentHandAtLeast: 7 }],
+            steps: [{ do: "opponentTrashesFromHand", count: 1 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-REDIRECT",
+    name: "Test Redirect",
+    category: "character",
+    colors: ["yellow"],
+    cost: 6,
+    power: 7000,
+    effects: [
+      {
+        timing: "onOpponentsAttack",
+        oncePerTurn: true,
+        optional: true,
+        costs: [{ lifeFaceDown: 1, from: "topOrBottom" }],
+        steps: [{ do: "redirectAttack", target: { side: "self", filter: { name: "Test 6000" } } }],
+      },
+      {
+        timing: "activateMain",
+        oncePerTurn: true,
+        optional: true,
+        costs: [{ lifeFaceUp: 1, from: "topOrBottom" }],
+        steps: [{ do: "giveRestedDon", target: { side: "self", zone: "leader" }, count: 1 }],
+      },
     ],
   },
 ];

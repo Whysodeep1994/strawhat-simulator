@@ -34,7 +34,33 @@ export function effectOf(
   card: CardInstance,
   index: number,
 ): EffectDefinition | undefined {
-  return definitionOf(state, card).effects?.[index];
+  return effectsOf(state, card)[index];
+}
+
+/**
+ * A card's effects, or none while a permanent effect negates them. Indexes stay the same:
+ * negated effects are left out by returning an empty list.
+ */
+export function effectsOf(state: GameState, card: CardInstance): EffectDefinition[] {
+  const effects = definitionOf(state, card).effects ?? [];
+  return effects.length > 0 && isNegated(state, card) ? [] : effects;
+}
+
+/** Whether a permanent `negateEffects` effect on the field covers this card. */
+export function isNegated(state: GameState, card: CardInstance): boolean {
+  const anyNegation = (["p1", "p2"] as const).some((player) =>
+    fieldCards(state, player).some((source) =>
+      (definitionOf(state, source).effects ?? []).some(
+        (e) => e.timing === "permanent" && e.steps.some((s) => s.do === "negateEffects"),
+      ),
+    ),
+  );
+  return anyNegation && permanentGrants(state, card, "negateEffects").length > 0;
+}
+
+/** The [Once Per Turn] key of an effect: shared by effects that name the same key. */
+export function oncePerTurnKey(uid: string, effect: EffectDefinition, index: number): string {
+  return `${uid}:${typeof effect.oncePerTurn === "string" ? effect.oncePerTurn : index}`;
 }
 
 /** Finds a card on the field (Leader, Character, or Stage area) by uid. */
@@ -85,12 +111,15 @@ export function powerOf(state: GameState, card: CardInstance): number {
 /** Printed power, unless an effect says "base power becomes X" (the latest one wins). */
 export function basePowerOf(state: GameState, card: CardInstance): number {
   const set = state.modifiers.filter((m) => m.target === card.uid && m.basePower !== undefined);
-  return set.at(-1)?.basePower ?? definitionOf(state, card).power ?? 0;
+  const permanent = permanentGrants(state, card, "setBasePower").at(-1)?.basePower;
+  return set.at(-1)?.basePower ?? permanent ?? definitionOf(state, card).power ?? 0;
 }
 
 /** Printed keywords plus any gained from effects. */
 export function keywordsOf(state: GameState, card: CardInstance): Keyword[] {
-  const keywords = new Set(definitionOf(state, card).keywords ?? []);
+  // Negated cards lose their printed keywords too; keywords given by other effects stay.
+  const printed = isNegated(state, card) ? [] : (definitionOf(state, card).keywords ?? []);
+  const keywords = new Set(printed);
   for (const m of state.modifiers) if (m.target === card.uid && m.keyword) keywords.add(m.keyword);
   for (const grant of permanentGrants(state, card, "grantKeyword"))
     if (grant.keyword) keywords.add(grant.keyword);
@@ -124,17 +153,34 @@ export function playCostOf(state: GameState, player: PlayerId, card: CardInstanc
     if (!conditionsMet(state, player, card, effect.conditions)) continue;
     for (const step of effect.steps) if (step.do === "costChange") cost += step.amount;
   }
+  // "The cost of playing ... from your hand will be reduced by 1" on your field.
+  for (const source of fieldCards(state, player)) {
+    for (const effect of definitionOf(state, source).effects ?? []) {
+      if (effect.timing !== "permanent" || effect.zone === "hand") continue;
+      if (!conditionsMet(state, player, source, effect.conditions)) continue;
+      for (const step of effect.steps)
+        if (step.do === "handCostChange" && matchesFilter(state, card, step.filter, source, false))
+          cost += step.amount;
+    }
+  }
   return Math.max(0, cost);
 }
 
 interface Grant {
   power?: number;
   cost?: number;
+  basePower?: number;
   keyword?: Keyword;
   status?: Status;
 }
 
-type GrantStep = "powerUp" | "costChange" | "grantKeyword" | "grantStatus";
+type GrantStep =
+  | "powerUp"
+  | "costChange"
+  | "grantKeyword"
+  | "grantStatus"
+  | "setBasePower"
+  | "negateEffects";
 
 /** Cards whose grants are being worked out, so an effect that reads its own result can't loop. */
 const inProgress = new Set<string>();
@@ -156,7 +202,11 @@ function permanentGrants(state: GameState, card: CardInstance, kind: GrantStep):
 function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, grants: Grant[]) {
   for (const player of ["p1", "p2"] as const) {
     for (const source of fieldCards(state, player)) {
-      for (const effect of definitionOf(state, source).effects ?? []) {
+      const effects = definitionOf(state, source).effects ?? [];
+      if (!effects.some((e) => e.timing === "permanent")) continue;
+      // A negating card's own negation is not checked, so working out negation can't loop.
+      if (kind !== "negateEffects" && isNegated(state, source)) continue;
+      for (const effect of effects) {
         if (effect.timing !== "permanent" || effect.zone === "hand") continue;
         if (!conditionsMet(state, player, source, effect.conditions)) continue;
         for (const step of effect.steps) {
@@ -174,7 +224,9 @@ function collectGrants(state: GameState, card: CardInstance, kind: GrantStep, gr
           else if (step.do === "costChange")
             grants.push({ cost: powerAmount(state, player, step) });
           else if (step.do === "grantKeyword") grants.push({ keyword: step.keyword });
-          else grants.push({ status: step.status });
+          else if (step.do === "grantStatus") grants.push({ status: step.status });
+          else if (step.do === "setBasePower") grants.push({ basePower: step.power });
+          else grants.push({});
         }
       }
     }
@@ -241,7 +293,7 @@ export function onPlayNegated(state: GameState, player: PlayerId): boolean {
   if (state.modifiers.some((m) => m.negateOnPlay && m.target === leader)) return true;
   for (const owner of ["p1", "p2"] as const) {
     for (const source of fieldCards(state, owner)) {
-      for (const effect of definitionOf(state, source).effects ?? []) {
+      for (const effect of effectsOf(state, source)) {
         if (effect.timing !== "permanent") continue;
         if (!conditionsMet(state, owner, source, effect.conditions)) continue;
         const negated = effect.steps.some(
@@ -259,7 +311,7 @@ function zoneMatches(state: GameState, card: CardInstance, zone: string | undefi
   const location = findOnField(state, card.uid);
   if (!location) return false;
   if (!zone || zone === "leaderOrCharacters") return location.zone !== "stage";
-  return location.zone === zone;
+  return zone === "field" || location.zone === zone;
 }
 
 /** Field cards counted by a `count` condition. */
@@ -270,20 +322,21 @@ function countCards(
   what: CardCount,
 ): number {
   const p = state.players[what.side === "self" ? controller : opponentOf(controller)];
-  const zone = what.zone ?? "characters";
-  const cards =
-    zone === "field"
-      ? fieldCards(state, p.leader.owner)
-      : zone === "leader"
-        ? [p.leader]
-        : zone === "characters"
-          ? p.characters
-          : zone === "stage"
-            ? p.stage
-              ? [p.stage]
-              : []
-            : [p.leader, ...p.characters];
-  return cards.filter((c) => matchesFilter(state, c, what.filter, source)).length;
+  return zoneCards(p, what.zone ?? "characters").filter((c) =>
+    matchesFilter(state, c, what.filter, source),
+  ).length;
+}
+
+/** A player's cards in a target zone. */
+export function zoneCards(
+  p: GameState["players"]["p1"],
+  zone: "leader" | "characters" | "leaderOrCharacters" | "stage" | "field",
+): CardInstance[] {
+  if (zone === "leader") return [p.leader];
+  if (zone === "characters") return p.characters;
+  if (zone === "stage") return p.stage ? [p.stage] : [];
+  if (zone === "field") return [p.leader, ...p.characters, ...(p.stage ? [p.stage] : [])];
+  return [p.leader, ...p.characters];
 }
 
 /** Rules 8-3-2 and 8-3-3. */
@@ -332,7 +385,6 @@ export function conditionsMet(
       return [me.leader, ...me.characters].reduce((n, x) => n + x.givenDon, 0) >= c.givenDonAtLeast;
     if ("leaderAttribute" in c)
       return (definitionOf(state, me.leader).attribute ?? "").includes(c.leaderAttribute);
-    if ("opponentHandAtLeast" in c) return them.hand.length >= c.opponentHandAtLeast;
     if ("handTrashedByEffectThisTurn" in c)
       return state.handTrashedTurn?.[controller] === state.turn;
     if ("leaderTypeIncludes" in c)
@@ -340,11 +392,15 @@ export function conditionsMet(
         t.includes(c.leaderTypeIncludes),
       );
     if ("leaderMulticolored" in c) return definitionOf(state, me.leader).colors.length > 1;
+    if ("donActiveAtMost" in c) return me.donActive <= c.donActiveAtMost;
     if ("opponentDonOnFieldAtLeast" in c)
       return donOnField(state, opponentOf(controller)) >= c.opponentDonOnFieldAtLeast;
+    if ("thisPowerAtLeast" in c) return powerOf(state, source) >= c.thisPowerAtLeast;
+    if ("opponentHasMoreDon" in c)
+      return donOnField(state, opponentOf(controller)) > donOnField(state, controller);
+    if ("handAtLeast" in c) return me.hand.length >= c.handAtLeast;
+    if ("opponentHandAtLeast" in c) return them.hand.length >= c.opponentHandAtLeast;
     if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
-    if ("donOnFieldAtMostOpponents" in c)
-      return donOnField(state, controller) <= donOnField(state, opponentOf(controller));
     return false;
   });
 }
@@ -364,6 +420,7 @@ export function matchesFilter(
     filter.costAtMost !== undefined ||
     filter.costAtLeast !== undefined ||
     filter.costAtMostOpponentLife ||
+    filter.costAtMostDonOnField ||
     filter.costAtMostTotalLife
       ? costOf(state, card)
       : baseCost;
@@ -386,7 +443,11 @@ export function matchesFilter(
   if (filter.powerAtLeast !== undefined && power < filter.powerAtLeast) return false;
   if (filter.basePowerAtMost !== undefined && basePower > filter.basePowerAtMost) return false;
   if (filter.basePowerAtLeast !== undefined && basePower < filter.basePowerAtLeast) return false;
+  if (filter.costAtMostDonOnField && source) {
+    if (cost > donOnField(state, source.owner)) return false;
+  }
   if (filter.type && !(def.types ?? []).includes(filter.type)) return false;
+  if (filter.notType && (def.types ?? []).includes(filter.notType)) return false;
   if (filter.typeIncludes && !(def.types ?? []).some((t) => t.includes(filter.typeIncludes ?? "")))
     return false;
   const names = namesOf(def);
@@ -422,6 +483,32 @@ export function leaveField(state: GameState, card: CardInstance): void {
   state.usedThisTurn = state.usedThisTurn.filter((k) => !k.startsWith(`${card.uid}:`));
 }
 
+/** DON!! cards given to a player's Leader and Characters. */
+export function givenDon(state: GameState, player: PlayerId): number {
+  const p = state.players[player];
+  return [p.leader, ...p.characters].reduce((n, c) => n + c.givenDon, 0);
+}
+
+/**
+ * Whether a "you cannot play ..." effect stops `player` playing this card now.
+ * `fromHand` is true for plays from the hand.
+ */
+export function playBlocked(
+  state: GameState,
+  player: PlayerId,
+  card: CardInstance,
+  fromHand: boolean,
+): boolean {
+  const leader = state.players[player].leader.uid;
+  return state.modifiers.some(
+    (m) =>
+      m.target === leader &&
+      m.cannotPlay &&
+      (fromHand || !m.cannotPlay.fromHand) &&
+      matchesFilter(state, card, m.cannotPlay.filter, null, false),
+  );
+}
+
 /** DON!! cards on a player's field: active and rested in the cost area, plus given ones (rule 6-5-5). */
 export function donOnField(state: GameState, player: PlayerId): number {
   const p = state.players[player];
@@ -447,6 +534,11 @@ export function canPayCosts(
   let fromTrash = 0;
   for (const cost of costs) {
     if ("restDon" in cost) restDon += cost.restDon;
+    if ("giveActiveDon" in cost) restDon += cost.giveActiveDon;
+    if ("trashOwnCharacter" in cost) {
+      const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      if (own.length < cost.trashOwnCharacter) return false;
+    }
     if ("donMinus" in cost) donMinus += cost.donMinus;
     if ("trashFromHand" in cost) {
       fromHand += cost.trashFromHand;
@@ -455,9 +547,6 @@ export function canPayCosts(
     }
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
     if ("handToDeckBottom" in cost) fromHand += cost.handToDeckBottom;
-    if ("thisToDeckBottom" in cost && !findOnField(state, source.uid)) return false;
-    if ("activeLeaderPower" in cost && p.leader.rested) return false;
-    if ("returnActiveDon" in cost) restDon += cost.returnActiveDon;
     if ("returnOwnCharacter" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.returnOwnCharacter) return false;
@@ -499,6 +588,26 @@ export function canPayCosts(
       if (matching.length < cost.trashToDeckBottom) return false;
     }
     if ("trashThis" in cost && !findOnField(state, source.uid)) return false;
+    if ("toDeckBottom" in cost) {
+      const own =
+        cost.zone === "stage"
+          ? p.stage
+            ? [p.stage]
+            : []
+          : p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      if (own.length < cost.toDeckBottom) return false;
+    }
+    if ("trashToDeck" in cost) fromTrash += cost.trashToDeck;
+    if ("koOwnCharacter" in cost) {
+      const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      if (own.length < cost.koOwnCharacter) return false;
+    }
+    if ("playFromHand" in cost) {
+      const matching = hand.filter((c) =>
+        matchesFilter(state, c, cost.playFromHand, source, false),
+      );
+      if (matching.length === 0) return false;
+    }
     if ("characterToLife" in cost) {
       const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.characterToLife) return false;
