@@ -41,6 +41,8 @@ export interface GameView {
   promptCards: CardInstance[];
   /** A [Trigger] card being resolved is revealed to both players (rule 10-1-5-1). */
   limbo: CardInstance | null;
+  /** Cards an effect just revealed to both players, e.g. from a hand (rule 11-2-1). */
+  revealed: CardInstance[];
 }
 
 /**
@@ -87,12 +89,16 @@ export function viewFor(state: GameState, viewer: PlayerId): GameView {
     ),
     promptCards: promptCardsFor(state, viewer),
     limbo: state.limbo,
+    revealed: (state.revealed ?? [])
+      .map((uid) => findCard(state, uid))
+      .filter((c): c is CardInstance => c !== null),
   });
 }
 
 function promptCardsFor(state: GameState, viewer: PlayerId): CardInstance[] {
   const prompt = state.prompt;
-  if (prompt.kind === "choose" && prompt.player === viewer) {
+  // Face-down options, such as cards in the opponent's hand, stay hidden.
+  if (prompt.kind === "choose" && prompt.player === viewer && !prompt.hidden) {
     const uids = [...new Set([...(prompt.revealed ?? []), ...prompt.options])];
     return uids.map((uid) => findCard(state, uid)).filter((c): c is CardInstance => c !== null);
   }

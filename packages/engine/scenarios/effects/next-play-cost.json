@@ -1,0 +1,33 @@
+{
+  "name": "The next matching Character costs 1 less, once",
+  "rules": ["6-5-3-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-DISCOUNT-NEXT", "TEST-C4-5000", "TEST-C4-5000"],
+      "don": {
+        "active": 7
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.characters": 2,
+    "p1.donActive": 0
+  }
+}

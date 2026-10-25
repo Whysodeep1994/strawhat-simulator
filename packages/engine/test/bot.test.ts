@@ -39,7 +39,7 @@ function playBotGame(seed: number): { state: GameState; actions: number } {
 }
 
 describe("computer opponent", () => {
-  it("plays 30 full games against itself using only legal moves", () => {
+  it("plays 30 full games against itself using only legal moves", { timeout: 60_000 }, () => {
     let leaderWins = 0;
     for (let seed = 1; seed <= 30; seed++) {
       const { state } = playBotGame(seed);

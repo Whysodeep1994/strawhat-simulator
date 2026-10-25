@@ -1,0 +1,29 @@
+{
+  "name": "It doesn't happen when a Character is attacked",
+  "rules": ["8-1-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C5-6000"]
+    },
+    "p2": {
+      "leader": "TEST-LEADER-ATTACKED",
+      "characters": [
+        {
+          "card": "TEST-FILLER",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.characters.0"
+    }
+  ],
+  "expect": {
+    "power.p2.leader": 5000
+  }
+}

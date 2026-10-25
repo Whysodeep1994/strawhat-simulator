@@ -1,0 +1,25 @@
+{
+  "name": "A rested lure is the only card the opponent can attack",
+  "rules": ["7-1-1-2"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-FILLER"]
+    },
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-LURE",
+          "rested": true
+        },
+        {
+          "card": "TEST-FILLER",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [],
+  "expect": {
+    "legal.p1.attack": 2
+  }
+}

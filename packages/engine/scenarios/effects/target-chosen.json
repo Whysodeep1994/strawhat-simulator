@@ -1,0 +1,36 @@
+{
+  "name": "\"It gains\" powers up the card the previous step picked",
+  "rules": ["8-3"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-WAKE-IT"],
+      "characters": [
+        {
+          "card": "TEST-FILLER",
+          "rested": true
+        },
+        {
+          "card": "TEST-C4-5000",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.characters.1"]
+    }
+  ],
+  "expect": {
+    "p1.characters.1.rested": false,
+    "power.p1.characters.1": 6000,
+    "power.p1.characters.0": 1000
+  }
+}

@@ -10,6 +10,7 @@ import {
   fieldCards,
   findOnField,
   hasStatus,
+  matchesFilter,
   playCostOf,
 } from "./state.js";
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
@@ -36,6 +37,7 @@ export class IllegalActionError extends Error {
 export function applyAction(state: GameState, action: Action): GameState {
   if (!isLegal(state, action)) throw new IllegalActionError(action);
   const next = structuredClone(state);
+  delete next.revealed;
   perform(next, action);
   processRules(next);
   advance(next);
@@ -150,6 +152,7 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
   if (!inHand) return;
   // Rule 6-5-3-1: the cost is worked out while the card is still in hand.
   const cost = playCostOf(state, player, inHand);
+  useNextPlayDiscount(state, player, inHand.uid);
   const [card] = p.hand.splice(position, 1);
   if (!card) return;
   const def = definitionOf(state, card);
@@ -163,7 +166,7 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
     pushEffect(state, player, card.uid, index);
     return;
   }
-  putOnField(state, player, card, trash);
+  putOnField(state, player, card, trash, true);
 }
 
 /** Rule 6-5-5-1. */
@@ -172,6 +175,12 @@ function giveDon(state: GameState, player: PlayerId, target: string): void {
   if (!location) return;
   state.players[player].donActive -= 1;
   location.card.givenDon += 1;
+  if (location.player === player) donGiven(state, player);
+}
+
+/** "When this Leader or any of your Characters is given a DON!! card". */
+export function donGiven(state: GameState, player: PlayerId): void {
+  for (const card of fieldCards(state, player)) queueEffects(state, player, card, "donGiven");
 }
 
 // --- Battle (rule 7) ----------------------------------------------------------
@@ -254,4 +263,17 @@ function counterEvent(state: GameState, player: PlayerId, uid: string): void {
   const index = (def.effects ?? []).findIndex((e) => e.timing === "counter");
   eventActivated(state, player, card);
   pushEffect(state, player, card.uid, index);
+}
+
+/** A "the next time you play ... the cost will be reduced" discount is used once. */
+function useNextPlayDiscount(state: GameState, player: PlayerId, uid: string): void {
+  const card = state.players[player].hand.find((c) => c.uid === uid);
+  if (!card) return;
+  const index = state.modifiers.findIndex(
+    (m) =>
+      m.target === state.players[player].leader.uid &&
+      m.nextPlay &&
+      matchesFilter(state, card, m.nextPlay.filter, null, false),
+  );
+  if (index >= 0) state.modifiers.splice(index, 1);
 }
