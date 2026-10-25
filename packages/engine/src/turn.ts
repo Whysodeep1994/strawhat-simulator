@@ -216,6 +216,7 @@ export function eventActivated(state: GameState, player: PlayerId, card: CardIns
     ...(state.activatedEvents ?? []).filter((e) => e.turn === state.turn),
     { player, cardId: card.cardId, turn: state.turn },
   ];
+  queueFieldEffects(state, player, "youActivateEvent");
   queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
 }
 

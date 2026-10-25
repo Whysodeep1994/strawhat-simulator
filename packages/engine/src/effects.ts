@@ -219,8 +219,6 @@ export type Condition =
   | { not: Condition }
   /** "If your opponent's Leader has the <Slash> attribute". */
   | { opponentLeaderAttribute: string }
-  /** "If your deck has 0 cards". */
-  | { deckAtMost: number }
   /** "If it is your second turn or later": how many turns you have started, this one included. */
   | { yourTurnsAtLeast: number }
   /** Your opponent has at least this many active DON!! cards. */

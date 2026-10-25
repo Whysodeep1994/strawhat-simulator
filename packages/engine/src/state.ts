@@ -532,7 +532,6 @@ export function conditionsMet(
         me.trash.filter((t) => matchesFilter(state, t, c.trashFilter, null, false)).length >=
         c.trashAtLeast
       );
-    if ("deckAtMost" in c) return me.deck.length <= c.deckAtMost;
     if ("yourTurnsAtLeast" in c) return me.turnsTaken >= c.yourTurnsAtLeast;
     if ("opponentDonActiveAtLeast" in c) return them.donActive >= c.opponentDonActiveAtLeast;
     if ("activatedEventThisTurn" in c)

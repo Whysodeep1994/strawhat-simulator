@@ -205,7 +205,6 @@ function conditionText(condition: Condition): string {
     return `(If you have ${condition.donGivenAtLeast} or more given DON!! cards)`;
   if ("trashAtLeast" in condition)
     return `(If you have ${condition.trashAtLeast} or more${filterText(condition.trashFilter)} cards in your trash)`;
-  if ("deckAtMost" in condition) return `(If your deck has ${condition.deckAtMost} or less cards)`;
   if ("yourTurnsAtLeast" in condition)
     return `(If it is your turn number ${condition.yourTurnsAtLeast} or later)`;
   if ("opponentDonActiveAtLeast" in condition)

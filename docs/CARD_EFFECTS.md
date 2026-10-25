@@ -145,7 +145,6 @@ played on this turn"), `handAtLeast`, `thisRested` ("if this Character is rested
 | `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                                                |
 | `{ "trashAtLeast": 10 }`                         | "If you have 10 or more cards in your trash"                                                              |
 | `{ "trashAtLeast": 4, "trashFilter": {...} }`    | "If you have 4 or more Events in your trash" (only matching cards count)                                  |
-| `{ "deckAtMost": 0 }`                            | "If your deck has 0 cards"                                                                                |
 | `{ "yourTurnsAtLeast": 2 }`                      | "If it is your second turn or later"                                                                      |
 | `{ "opponentDonActiveAtLeast": 1 }`              | Your opponent has 1 or more active DON!! cards                                                            |
 | `{ "activatedEventThisTurn": {...} }`            | "If you have activated an Event with a base cost of 3 or more during this turn" (a filter)                |
