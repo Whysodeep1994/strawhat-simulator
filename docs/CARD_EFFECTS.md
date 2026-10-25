@@ -23,44 +23,46 @@ opponent's Characters with a cost of 3 or less" is written as:
 
 ## Timings
 
-| Timing                        | Card wording                                                                                                             | Rules   |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------- |
-| `onPlay`                      | [On Play]                                                                                                                | 10-2-6  |
-| `whenAttacking`               | [When Attacking]                                                                                                         | 10-2-5  |
-| `onOpponentsAttack`           | [On Your Opponent's Attack]                                                                                              | 10-2-16 |
-| `onBlock`                     | [On Block]                                                                                                               | 10-2-15 |
-| `onKO`                        | [On K.O.]                                                                                                                | 10-2-17 |
-| `koByEffect`                  | "When this Character is K.O.'d by an effect" (not in battle)                                                             | 10-2-1  |
-| `activateMain`                | [Activate: Main]                                                                                                         | 10-2-2  |
-| `main`                        | [Main] on Events                                                                                                         | 10-2-3  |
-| `counter`                     | [Counter] on Events                                                                                                      | 10-2-4  |
-| `trigger`                     | [Trigger]                                                                                                                | 10-1-5  |
-| `endOfYourTurn`               | [End of Your Turn]                                                                                                       | 10-2-7  |
-| `endOfOpponentsTurn`          | [End of Your Opponent's Turn]                                                                                            | 10-2-8  |
-| `permanent`                   | Always-on text, e.g. "+1000 power"                                                                                       | 8-1-3-3 |
-| `characterRestedByYourEffect` | "If a Character is rested by your effect"                                                                                | 8-1-3-1 |
-| `replaceRemoval`              | "If ... would be K.O.'d ..., ... instead"                                                                                | 8-1-3-4 |
-| `donReturned`                 | "When 2 or more DON!! cards on your field are returned ..."                                                              | 8-1-3-1 |
-| `becomesRested`               | "When this Character becomes rested" (attack, block, cost or effect)                                                     | 8-1-3-1 |
-| `koByOpponentsEffect`         | "When this Character is K.O.'d by your opponent's effect"                                                                | 10-2-1  |
-| `characterRemovedByOpponent`  | "When your Character is removed ... by your opponent's effect"                                                           | 8-1-3-1 |
-| `onOpponentsBlock`            | "When your opponent activates [Blocker]"                                                                                 | 8-1-3-1 |
-| `drawOutsideDrawPhase`        | "When you draw a card outside of your Draw Phase"                                                                        | 8-1-3-1 |
-| `lifeAddedToHand`             | "When a card is added to your hand from your Life"                                                                       | 8-1-3-1 |
-| `lifeBecomesZero`             | "When your number of Life cards becomes 0"                                                                               | 8-1-3-1 |
-| `triggerActivated`            | "When a [Trigger] activates" (either player's)                                                                           | 8-1-3-1 |
-| `restedByOpponentsCharacter`  | "When this Character becomes rested by your opponent's Character's effect"                                               |
-| `characterKOd`                | "When a Character is K.O.'d" (either player's, any K.O.)                                                                 | 8-1-3-1 |
-| `opponentCharacterReturned`   | "When your opponent's Character is returned to the owner's hand by your effect"                                          | 8-1-3-1 |
-| `battleKOReplacement`         | Set up by `replaceBattleKO`: "If any of your Characters would be K.O.'d in battle during this turn, you may ... instead" | 8-1-3-4 |
-| `opponentActivatesEvent`      | "When your opponent activates an Event" (Main or Counter)                                                                | 8-1-3-1 |
-| `youActivateEvent`            | "When you activate an Event" (Main or Counter)                                                                           | 8-1-3-1 |
-| `opponentCharacterKOd`        | "When your opponent's Character is K.O.'d" (battle or effect)                                                            | 8-1-3-1 |
-| `donGiven`                    | "When this Leader or any of your Characters is given a DON!! card"                                                       | 8-1-3-1 |
-| `youPlayCharacter`            | "When you play a Character" (`cardFilter`; `fromHand` for "from your hand")                                              | 8-1-3-1 |
-| `opponentPlaysCharacter`      | "When your opponent plays a Character" (`cardFilter`)                                                                    | 8-1-3-1 |
-| `koInBattle`                  | "When this Character battles and K.O.'s your opponent's Character"                                                       | 8-1-3-1 |
-| `youDealDamage`               | "When you deal damage to your opponent's Life" (any of your attacks)                                                     | 8-1-3-1 |
+| Timing                         | Card wording                                                                                                             | Rules   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------- |
+| `onPlay`                       | [On Play]                                                                                                                | 10-2-6  |
+| `whenAttacking`                | [When Attacking]                                                                                                         | 10-2-5  |
+| `onOpponentsAttack`            | [On Your Opponent's Attack]                                                                                              | 10-2-16 |
+| `onBlock`                      | [On Block]                                                                                                               | 10-2-15 |
+| `onKO`                         | [On K.O.]                                                                                                                | 10-2-17 |
+| `koByEffect`                   | "When this Character is K.O.'d by an effect" (not in battle)                                                             | 10-2-1  |
+| `activateMain`                 | [Activate: Main]                                                                                                         | 10-2-2  |
+| `main`                         | [Main] on Events                                                                                                         | 10-2-3  |
+| `counter`                      | [Counter] on Events                                                                                                      | 10-2-4  |
+| `trigger`                      | [Trigger]                                                                                                                | 10-1-5  |
+| `endOfYourTurn`                | [End of Your Turn]                                                                                                       | 10-2-7  |
+| `endOfOpponentsTurn`           | [End of Your Opponent's Turn]                                                                                            | 10-2-8  |
+| `permanent`                    | Always-on text, e.g. "+1000 power"                                                                                       | 8-1-3-3 |
+| `characterRestedByYourEffect`  | "If a Character is rested by your effect"                                                                                | 8-1-3-1 |
+| `replaceRemoval`               | "If ... would be K.O.'d ..., ... instead"                                                                                | 8-1-3-4 |
+| `donReturned`                  | "When 2 or more DON!! cards on your field are returned ..."                                                              | 8-1-3-1 |
+| `becomesRested`                | "When this Character becomes rested" (attack, block, cost or effect)                                                     | 8-1-3-1 |
+| `koByOpponentsEffect`          | "When this Character is K.O.'d by your opponent's effect"                                                                | 10-2-1  |
+| `characterRemovedByOpponent`   | "When your Character is removed ... by your opponent's effect"                                                           | 8-1-3-1 |
+| `onOpponentsBlock`             | "When your opponent activates [Blocker]"                                                                                 | 8-1-3-1 |
+| `drawOutsideDrawPhase`         | "When you draw a card outside of your Draw Phase"                                                                        | 8-1-3-1 |
+| `lifeAddedToHand`              | "When a card is added to your hand from your Life"                                                                       | 8-1-3-1 |
+| `lifeBecomesZero`              | "When your number of Life cards becomes 0"                                                                               | 8-1-3-1 |
+| `triggerActivated`             | "When a [Trigger] activates" (either player's)                                                                           | 8-1-3-1 |
+| `characterKOd`                 | "When a Character is K.O.'d" (either player's, any K.O.)                                                                 | 8-1-3-1 |
+| `opponentCharacterReturned`    | "When your opponent's Character is returned to the owner's hand by your effect"                                          | 8-1-3-1 |
+| `battleKOReplacement`          | Set up by `replaceBattleKO`: "If any of your Characters would be K.O.'d in battle during this turn, you may ... instead" | 8-1-3-4 |
+| `opponentActivatesEvent`       | "When your opponent activates an Event" (main or counter)                                                                | 8-1-3-1 |
+| `characterRemovedByYourEffect` | "When a Character is removed from the field by your effect" (either player's Character)                                  | 8-1-3-1 |
+| `restedByOpponentsCharacter`   | "When this Character becomes rested by your opponent's Character's effect"                                               |
+| -----------------------------  | ------------------------------------------------------------------------------------------------------------------------ | ------- |
+| `youActivateEvent`             | "When you activate an Event" (Main or Counter)                                                                           | 8-1-3-1 |
+| `opponentCharacterKOd`         | "When your opponent's Character is K.O.'d" (battle or effect)                                                            | 8-1-3-1 |
+| `donGiven`                     | "When this Leader or any of your Characters is given a DON!! card"                                                       | 8-1-3-1 |
+| `youPlayCharacter`             | "When you play a Character" (`cardFilter`; `fromHand` for "from your hand")                                              | 8-1-3-1 |
+| `opponentPlaysCharacter`       | "When your opponent plays a Character" (`cardFilter`)                                                                    | 8-1-3-1 |
+| `koInBattle`                   | "When this Character battles and K.O.'s your opponent's Character"                                                       | 8-1-3-1 |
+| `youDealDamage`                | "When you deal damage to your opponent's Life" (any of your attacks)                                                     | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -142,6 +144,7 @@ played on this turn"), `handAtLeast`, `thisRested` ("if this Character is rested
 | `{ "not": { ... } }`                             | True when the nested condition doesn't hold                                                               |
 | `{ "opponentLeaderAttribute": "Slash" }`         | "If your opponent's Leader has the <Slash> attribute"                                                     |
 | `{ "donFewerThanOpponentBy": 2 }`                | "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field"  |
+| `{ "lifeFewerThanOpponent": true }`              | "If you have less Life cards than your opponent"                                                          |
 
 `count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
@@ -180,6 +183,9 @@ this card ... at the bottom of your deck"), `activeLeaderPower` ("give your 1 ac
 power during this turn"; the Leader must be active), and `returnActiveDon` ("return 2 of your
 active DON!! cards to your DON!! deck"; rested ones can't pay it). `returnOwnCharacter` takes
 `"to": "deckBottom"` for "place 1 of your Characters ... at the bottom of your deck", and
+`trashToDeckBottom` takes a `filter`. `returnThis` ("you may return this Character to the
+owner's hand") and `restOpponentCharacter` ("rest 1 of your opponent's Characters", e.g. as a
+replacement: "you may rest 1 of your opponent's Characters instead") complete the list.
 `trashToDeckBottom` takes a `filter`. `restCards` is "rest 2 of your cards": active DON!! in the cost area or
 your Leader, Characters, or Stage; the player picks the field cards and the rest are DON!!.
 
@@ -309,13 +315,15 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `handDownTo`                     | "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent".                                                                                                                                                                      |
 | `trashToDeckBottom`              | `side` places `count` cards from their trash at the bottom of their deck, in the order they pick.                                                                                                                                                             |
 | `handCostChange`                 | In a permanent effect on the field: "The cost of playing {X} cards from your hand will be reduced by 1" (`filter`, `amount`).                                                                                                                                 |
-| `swapBasePower`                  | "Select 2 ... Swap the base power of the selected cards with each other": 2 cards from `target`, or 1 from `target` and 1 from `with`.                                                                                                                        |
-| `opponentDonMinus`               | "Your opponent returns 1 DON!! card from their field to their DON!! deck".                                                                                                                                                                                    |
-| `koImmunity`                     | Permanent: "This Character cannot be K.O.'d by effects of your opponent's Characters with 5000 base power or less" (`from` is the filter for those cards).                                                                                                    |
 | `handToDeckShuffle`              | "Your opponent returns all cards in their hand to their deck and shuffles their deck. Then, your opponent draws 5 cards" (`side`, `draw`).                                                                                                                    |
 | `cannotAttackLeader`             | "You cannot attack a Leader during this turn." Characters can still be attacked.                                                                                                                                                                              |
 | `dealDamage`                     | "Deal 1 damage to your opponent": Life to hand with a [Trigger] check, or the game is won at 0 Life. `"side": "self"` is "you take 1 damage".                                                                                                                 |
+| `setPower`                       | "Set the power of up to 1 of your opponent's Characters to 0 during this turn" (`target`, `power`, `duration`). Later changes still apply on top.                                                                                                             |
+| `opponentDonNoRefresh`           | "Up to 1 of your opponent's rested ... DON!! cards will not become active in your opponent's next Refresh Phase" (`count`).                                                                                                                                   |
 | `extraTurn`                      | "Take an extra turn after this one."                                                                                                                                                                                                                          |
+| `swapBasePower`                  | "Select 2 ... Swap the base power of the selected cards with each other": 2 cards from `target`, or 1 from `target` and 1 from `with`.                                                                                                                        |
+| `opponentDonMinus`               | "Your opponent returns 1 DON!! card from their field to their DON!! deck".                                                                                                                                                                                    |
+| `koImmunity`                     | Permanent: "This Character cannot be K.O.'d by effects of your opponent's Characters with 5000 base power or less" (`from` is the filter for those cards).                                                                                                    |
 
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash", or
 `perCount` (a `count`-style `{ "side", "zone", "filter" }`) for "for every {Straw Hat Crew} type
@@ -325,8 +333,9 @@ card on your field".
 your trash"), and `perRestedDon: 3` for "for every 3 of your rested DON!! cards".
 
 Durations (`duration` on `negateOnPlay`, `powerUp`, `grantKeyword`, `grantStatus`, `costChange`, `noBlockers`):
-`"turn"` (the default), `"battle"`, and `"opponentsNextTurn"` for "until the end of your
-opponent's next turn" or "... next End Phase".
+`"turn"` (the default), `"battle"`, `"opponentsNextTurn"` for "until the end of your
+opponent's next turn" or "... next End Phase", and `"yourNextTurn"` for "until the end of your
+next turn".
 
 Statuses for `grantStatus`: `cannotAttack`, `cannotBlock` ("your opponent cannot activate
 [Blocker]" on a chosen Character), `cannotBeKOdInBattle`, `cannotBeKOdByEffects`,
@@ -356,6 +365,15 @@ Step options:
 - `handToDeckBottom` takes `"side": "opponent"` for "your opponent must place 1 card from their
   hand at the bottom of their deck" (they pick).
 - `playThis` on a Stage's [Trigger] plays the Stage.
+- `draw` takes `"side": "opponent"` for "your opponent draws 1 card".
+- `trashToDeckBottom` takes `"upTo": true` ("any number of", with a large `count`), a `filter`,
+  and `"youChoose": true` for "place up to 1 card from your opponent's trash at the bottom of
+  their deck" (you pick). It sets the count for `perPrevious`; `powerUp` takes
+  `"perPreviousEvery": 3` for "+1000 for every 3 cards placed".
+- `handToDeckTop` takes `"orBottom": true` for "place 2 cards from your hand at the top or bottom
+  of your deck in any order".
+- `playFromDeckTop` takes `"restToBottom": true` for "Then, place the rest at the bottom of your
+  deck": the revealed card goes to the bottom if it isn't played.
 - `trashFromHand` takes `"ifYouDo": [steps]` for "you may trash 1 card from your hand. If you do, ..."
   (with `"upTo": true`).
 

@@ -1,0 +1,29 @@
+{
+  "name": "An opponent's rested DON!! card stays rested in their next Refresh Phase",
+  "rules": ["6-2-4"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-DON-STAY"]
+    },
+    "p2": {
+      "don": {
+        "rested": 2
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "endTurn",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p2.donRested": 1,
+    "p2.donActive": 1
+  }
+}
