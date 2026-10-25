@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { applyAction, chooseBotAction, createGame, type GameState } from "../src/index.js";
+import { applyAction, chooseBotAction, createGame, powerOf, type GameState } from "../src/index.js";
+import { isLegal } from "../src/legal.js";
 import { TEST_CATALOG } from "./fixtures/test-cards.js";
 
 const deck = [
@@ -55,5 +56,41 @@ describe("computer opponent", () => {
     expect(state.winner).not.toBeNull();
     const loser = state.winner === "p1" ? "p2" : "p1";
     expect(state.players[loser].life.length).toBe(0);
+  });
+
+  it("keeps to a total power limit when choosing cards", () => {
+    let state = createGame({
+      catalog: TEST_CATALOG,
+      decks: {
+        p1: { leader: "TEST-LEADER", deck: deck.slice(0, 50) },
+        p2: { leader: "TEST-LEADER", deck: deck.slice(2, 52) },
+      },
+      seed: 3,
+    });
+    // Let the bots play until one side has a few Characters on the field.
+    while (state.players.p1.characters.length < 3 && state.winner === null) {
+      const prompt = state.prompt;
+      if (prompt.kind === "gameOver") break;
+      state = applyAction(state, chooseBotAction(state, prompt.player));
+    }
+    const targets = state.players.p1.characters;
+    expect(targets.length).toBeGreaterThanOrEqual(3);
+    const smallest = Math.min(...targets.map((c) => powerOf(state, c)));
+    state = {
+      ...state,
+      prompt: {
+        kind: "choose",
+        player: "p2",
+        options: targets.map((c) => c.uid),
+        min: 0,
+        max: 2,
+        reason: "ko",
+        source: state.players.p2.leader.uid,
+        maxTotalPower: smallest,
+      },
+    };
+    const action = chooseBotAction(state, "p2");
+    expect(action.type).toBe("choose");
+    expect(isLegal(state, action)).toBe(true);
   });
 });

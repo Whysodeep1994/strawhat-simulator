@@ -126,6 +126,8 @@ export type Timing =
   | "youPlayCharacter"
   /** Leader effects that read "at the start of the game" (rule 5-2-1-5-1). */
   | "startOfGame"
+  /** "When this Character becomes rested by your opponent's Character's effect". */
+  | "restedByOpponentsCharacter"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -202,7 +204,13 @@ export type Condition =
   /** "If you have 5 or less active DON!! cards". */
   | { donActiveAtMost: number }
   /** "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field". */
-  | { donFewerThanOpponentBy: number };
+  | { donFewerThanOpponentBy: number }
+  /** "If this Character is rested". */
+  | { thisRested: true }
+  /** True if the condition doesn't hold. */
+  | { not: Condition }
+  /** "If your opponent's Leader has the <Slash> attribute". */
+  | { opponentLeaderAttribute: string };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -277,7 +285,9 @@ export type Cost =
   /** "Give 1 of your active DON!! cards to 1 of your Leader or Character cards". */
   | { giveActiveDon: number }
   /** "Trash 1 of your Characters with a type including ...". Not a K.O. `zone: "stage"` trashes your Stage. */
-  | { trashOwnCharacter: number; filter?: Filter; zone?: "stage" };
+  | { trashOwnCharacter: number; filter?: Filter; zone?: "stage" }
+  /** "Rest 2 of your cards": active DON!! in the cost area, Leader, Characters, or Stage. */
+  | { restCards: number };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -488,15 +498,26 @@ export type Step =
   | { do: "handToDeckShuffle"; side: "self" | "opponent"; draw: number }
   /** "You cannot attack a Leader during this turn." */
   | { do: "cannotAttackLeader" }
-  /** "Deal 1 damage to your opponent" (rule 4-6-2: damage from an effect, [Trigger] included). */
-  | { do: "dealDamage"; count: number }
+  /**
+   * "Deal 1 damage to your opponent" (rule 4-6-2: damage from an effect, [Trigger] included).
+   * `side: "self"`: "you take 1 damage".
+   */
+  | { do: "dealDamage"; count: number; side?: "self" }
   /** "Change the target of the attack to ...": the chosen card becomes the attack's target. */
   | { do: "redirectAttack"; target: Target }
   /**
    * "Add up to 1 card from your hand to the top of your Life cards." `fromTrash` also offers
    * matching cards in your trash ("from your hand or trash"); `faceUp` adds them face-up.
    */
-  | { do: "handToLife"; count: number; filter?: Filter; fromTrash?: boolean; faceUp?: boolean }
+  | {
+      do: "handToLife";
+      count: number;
+      filter?: Filter;
+      fromTrash?: boolean;
+      faceUp?: boolean;
+      /** Only from the trash ("from your trash ... add it to the top of your Life cards"). */
+      onlyTrash?: boolean;
+    }
   /** Trash all of your face-up Life cards. */
   | { do: "trashFaceUpLife" }
   /** Trash cards from the top of your deck. */
@@ -545,7 +566,7 @@ export type Step =
       play?: boolean;
       rested?: boolean;
       /** "Add ... to the top of your Life cards face-up" instead of to your hand. */
-      to?: "lifeFaceUp" | "trash";
+      to?: "lifeFaceUp" | "trash" | "play";
     }
   /** Place cards from the top of your deck at the bottom ("place the revealed card at the bottom"). */
   | { do: "deckTopToBottom"; count: number }
@@ -555,7 +576,8 @@ export type Step =
    */
   | { do: "arrangeDeckTop"; look: number; bottom?: boolean }
   /** "You may play" the top card of your deck if it matches. */
-  | { do: "playFromDeckTop"; filter?: Filter; rested?: boolean }
+  /** `must`: the card is played without asking (used after `searchDeck` with `to: "play"`). */
+  | { do: "playFromDeckTop"; filter?: Filter; rested?: boolean; must?: boolean }
   /**
    * Play a card from hand for free. `rested`: "play ... rested". `orTrash`: "from your hand
    * or trash". `differentColor`: it must share no color with the cards the previous step moved
@@ -681,7 +703,14 @@ export type Step =
   /** A whole sub-sequence that only happens "if" a condition holds (rule 8-3-3). */
   | { do: "if"; conditions: Condition[]; steps: Step[] }
   /** "[Leader]'s base power becomes 7000": replaces the printed power (rule 2-6-1). */
-  | { do: "setBasePower"; target: Target; power: number; duration?: Duration }
+  /** `leaderBase`: "becomes the same as your Leader's base power" (`power` is then ignored). */
+  | {
+      do: "setBasePower";
+      target: Target;
+      power: number;
+      leaderBase?: boolean;
+      duration?: Duration;
+    }
   /** "Set the cost of ... to 0": replaces the printed cost. */
   | { do: "setCost"; target: Target; cost: number; duration?: Duration }
   /** "This Character's base power becomes the same as the selected Character's power during this turn." */
@@ -691,4 +720,16 @@ export type Step =
   /** "Turn all of your Life cards face-down." */
   | { do: "allLifeFaceDown" }
   /** "Trash cards from the top of your Life cards until you have 1 Life card." */
-  | { do: "trashLifeDownTo"; count: number };
+  | { do: "trashLifeDownTo"; count: number }
+  /**
+   * "Select 2 ... Swap the base power of the selected cards with each other". Picks 2 from
+   * `target`, or 1 from `target` and 1 from `with` ("your Leader and 1 Character").
+   */
+  | { do: "swapBasePower"; target: Target; with?: Target; duration?: Duration }
+  /** "Your opponent returns 1 DON!! card from their field to their DON!! deck". */
+  | { do: "opponentDonMinus"; count: number }
+  /**
+   * Permanent: "This Character cannot be K.O.'d by effects of your opponent's
+   * Characters with 5000 base power or less" (`from` describes those cards).
+   */
+  | { do: "koImmunity"; from: Filter };
