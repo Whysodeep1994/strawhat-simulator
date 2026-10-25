@@ -15,10 +15,10 @@ import {
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
 import {
   drawCards,
+  eventActivated,
   pushEffect,
   putOnField,
   queueEffects,
-  queueFieldEffects,
   startTurn,
 } from "./turn.js";
 
@@ -159,8 +159,8 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
   if (def.category === "event") {
     p.trash.unshift(card);
     const index = (def.effects ?? []).findIndex((e) => e.timing === "main");
+    eventActivated(state, player, card);
     pushEffect(state, player, card.uid, index);
-    queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
     return;
   }
   putOnField(state, player, card, trash);
@@ -252,6 +252,6 @@ function counterEvent(state: GameState, player: PlayerId, uid: string): void {
   p.donRested += cost;
   p.trash.unshift(card);
   const index = (def.effects ?? []).findIndex((e) => e.timing === "counter");
+  eventActivated(state, player, card);
   pushEffect(state, player, card.uid, index);
-  queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
 }

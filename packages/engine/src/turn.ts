@@ -201,6 +201,18 @@ export function moveFieldCardToTrash(state: GameState, card: CardInstance): void
   p.trash.unshift(card);
 }
 
+/**
+ * Notes an Event activated by `player` (for "if you have activated an Event ... during this
+ * turn") and fires the opponent's "when your opponent activates an Event" effects.
+ */
+export function eventActivated(state: GameState, player: PlayerId, card: CardInstance): void {
+  state.activatedEvents = [
+    ...(state.activatedEvents ?? []).filter((e) => e.turn === state.turn),
+    { player, cardId: card.cardId, turn: state.turn },
+  ];
+  queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
+}
+
 export function pushEffect(
   state: GameState,
   controller: PlayerId,

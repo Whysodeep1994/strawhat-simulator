@@ -190,6 +190,13 @@ function conditionText(condition: Condition): string {
     return `(If you have ${condition.donGivenAtLeast} or more given DON!! cards)`;
   if ("trashAtLeast" in condition)
     return `(If you have ${condition.trashAtLeast} or more${filterText(condition.trashFilter)} cards in your trash)`;
+  if ("deckAtMost" in condition) return `(If your deck has ${condition.deckAtMost} or less cards)`;
+  if ("yourTurnsAtLeast" in condition)
+    return `(If it is your turn number ${condition.yourTurnsAtLeast} or later)`;
+  if ("opponentDonActiveAtLeast" in condition)
+    return `(If your opponent has ${condition.opponentDonActiveAtLeast} or more active DON!! cards)`;
+  if ("activatedEventThisTurn" in condition)
+    return `(If you have activated a${filterText(condition.activatedEventThisTurn)} Event during this turn)`;
   if ("leaderAttribute" in condition)
     return `(If your Leader has the <${condition.leaderAttribute}> attribute)`;
   if ("opponentDonOnFieldAtLeast" in condition)
@@ -280,6 +287,8 @@ function costText(cost: Cost): string {
   if ("giveActiveDon" in cost)
     return `give ${cost.giveActiveDon} of your active DON!! cards to your Leader or a Character`;
   if ("restCards" in cost) return `rest ${cost.restCards} of your cards`;
+  if ("giveOpponentDon" in cost)
+    return `give ${cost.giveOpponentDon} of your opponent's rested DON!! cards to 1 of their Characters`;
   if ("trashOwnCharacter" in cost)
     return `trash ${cost.trashOwnCharacter} of your ${cost.zone === "stage" ? "Stages" : "Characters"}${withFilter(cost.filter)}`;
   if ("returnThis" in cost) return "return this Character to the owner's hand";
@@ -293,7 +302,7 @@ function stepText(step: Step): string {
     case "draw":
       return `${step.side === "opponent" ? "Your opponent draws" : "Draw"} ${step.count} card${step.count === 1 ? "" : "s"}${perCountText(step.perCount)}.`;
     case "powerUp":
-      return `Give ${targetText(step.target)} ${step.amount >= 0 ? "+" : "−"}${Math.abs(step.amount)} power${durationText(step.duration)}${step.perPrevious ? ` for every ${step.perPreviousEvery ?? 1} card(s) moved` : ""}${perCountText(step.perCount)}.`;
+      return `Give ${targetText(step.target)} ${step.amount >= 0 ? "+" : "−"}${Math.abs(step.amount)} power${durationText(step.duration)}${step.perPrevious ? ` for every ${step.perPreviousEvery ?? 1} card(s) moved` : ""}${perCountText(step.perCount)}${step.perGivenDonOf ? ` for every DON!! card given to ${targetText(step.perGivenDonOf)}` : ""}${step.perTopLifeCost ? " per 1 cost on the top card of your Life cards" : ""}.`;
     case "grantKeyword":
       return `${capital(targetText(step.target))} gains [${KEYWORD_NAMES[step.keyword]}]${durationText(step.duration)}.`;
     case "grantStatus":
@@ -313,7 +322,7 @@ function stepText(step: Step): string {
     case "noBlockers":
       return `Your opponent cannot activate [Blocker] when ${targetText(step.target)} attacks${durationText(step.duration)}.`;
     case "giveRestedDon":
-      return `Give up to ${step.count} rested DON!! card${step.count === 1 ? "" : "s"} to ${targetText(step.target)}.`;
+      return `Give up to ${step.count} ${step.fromCostArea ? "" : "rested "}DON!! card${step.count === 1 ? "" : "s"} from its owner's cost area to ${targetText(step.target)}.`;
     case "addDon":
       return `Add up to ${step.count} DON!! card${step.count === 1 ? "" : "s"} from your DON!! deck${step.rested ? " and rest it" : ""}.`;
     case "setDonActive":
@@ -425,7 +434,15 @@ function stepText(step: Step): string {
     case "swapBasePower":
       return `Select ${step.with ? `${targetText(step.target)} and ${targetText(step.with)}` : targetText(step.target)}. Swap the base power of the selected cards with each other${durationText(step.duration)}.`;
     case "opponentDonMinus":
-      return `Your opponent returns ${step.count} DON!! card(s) from their field to their DON!! deck.`;
+      return `Your opponent returns ${step.count}${step.active ? " active" : ""} DON!! card(s) from their field to their DON!! deck.`;
+    case "restImmunity":
+      return `This Character cannot be rested by effects of your opponent's${filterText(step.from)} cards.`;
+    case "activateEvent":
+      return `Activate up to 1${filterText(step.filter)} Event from your hand.`;
+    case "deckOutAtEndOfTurn":
+      return "You do not lose when your deck has 0 cards. You lose at the end of the turn in which your deck becomes 0 cards.";
+    case "donDeckSize":
+      return `Your DON!! deck consists of ${step.count} cards.`;
     case "koImmunity":
       return `This Character cannot be K.O.'d by effects of your opponent's${filterText(step.from)} cards.`;
     case "moveGivenDon":
@@ -533,6 +550,9 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.keyword) parts.push(`[${KEYWORD_NAMES[filter.keyword]}]`);
   if (filter.lacksKeyword) parts.push(`no [${KEYWORD_NAMES[filter.lacksKeyword]}]`);
   if (filter.attribute) parts.push(`the <${filter.attribute}> attribute`);
+  if (filter.givenDonAtLeast !== undefined)
+    parts.push(`${filter.givenDonAtLeast} or more DON!! cards given`);
+  if (filter.costEqualsGivenDon) parts.push("a cost equal to the DON!! cards given to it");
   if (parts.length === 0) return "";
   const rested = filter.rested ? " that are rested" : "";
   const rest = parts.filter((p) => p !== "rested");
