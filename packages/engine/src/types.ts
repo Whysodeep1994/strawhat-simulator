@@ -39,6 +39,8 @@ export interface PlayerState {
   donDeck: number;
   donActive: number;
   donRested: number;
+  /** Rested DON!! cards that stay rested in this player's next Refresh Phase. */
+  donNoRefresh?: number;
   turnsTaken: number;
 }
 

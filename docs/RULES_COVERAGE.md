@@ -270,7 +270,7 @@ Comprehensive Rules version 1.2.1.
 | 6-2-1 | 6-2 Refresh Phase | Phase 4 (effects) | 0 |
 | 6-2-2 | 6-2 Refresh Phase | Phase 4 (effects) | 0 |
 | 6-2-3 | 6-2 Refresh Phase | Tested | 2 |
-| 6-2-4 | 6-2 Refresh Phase | Tested | 3 |
+| 6-2-4 | 6-2 Refresh Phase | Tested | 4 |
 | 6-3 | 6-3 Draw Phase | Tested | 1 |
 | 6-3-1 | 6-3 Draw Phase | Tested | 4 |
 | 6-4 | 6-4 DON!! Phase | Tested | 1 |
@@ -336,7 +336,7 @@ Comprehensive Rules version 1.2.1.
 | 8-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-2 | 8-1 Effects | Tested | 4 |
 | 8-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
-| 8-1-3-1 | 8-1 Effects | Tested | 10 |
+| 8-1-3-1 | 8-1 Effects | Tested | 11 |
 | 8-1-3-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-3-1-2 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
@@ -349,7 +349,7 @@ Comprehensive Rules version 1.2.1.
 | 8-1-3-3-3 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-3-4 | 8-1 Effects | Tested | 1 |
 | 8-1-3-3-5 | 8-1 Effects | Phase 4 (effects) | 0 |
-| 8-1-3-4 | 8-1 Effects | Tested | 5 |
+| 8-1-3-4 | 8-1 Effects | Tested | 6 |
 | 8-1-3-4-1 | 8-1 Effects | Tested | 3 |
 | 8-1-3-4-2 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-4-3 | 8-1 Effects | Phase 4 (effects) | 0 |
@@ -369,7 +369,7 @@ Comprehensive Rules version 1.2.1.
 | 8-2-3 | 8-2 Valid and Invalid Effects | Phase 4 (effects) | 0 |
 | 8-2-4 | 8-2 Valid and Invalid Effects | Phase 4 (effects) | 0 |
 | 8-3 | 8-3 Activation Cost and Conditions | Section heading | 0 |
-| 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 20 |
+| 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 21 |
 | 8-3-1-1 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-1-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-3 | 8-3 Activation Cost and Conditions | Tested | 21 |
@@ -380,13 +380,13 @@ Comprehensive Rules version 1.2.1.
 | 8-3-1-7 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-8 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2 | 8-3 Activation Cost and Conditions | Tested | 7 |
-| 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 15 |
+| 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 17 |
 | 8-3-2-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2-3 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-4 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-5 | 8-3 Activation Cost and Conditions | Tested | 1 |
-| 8-3-3 | 8-3 Activation Cost and Conditions | Tested | 12 |
-| 8-4 | 8-4 Activation and Resolution | Tested | 5 |
+| 8-3-3 | 8-3 Activation Cost and Conditions | Tested | 14 |
+| 8-4 | 8-4 Activation and Resolution | Tested | 8 |
 | 8-4-1 | 8-4 Activation and Resolution | Tested | 2 |
 | 8-4-1-1 | 8-4 Activation and Resolution | Tested | 1 |
 | 8-4-1-2 | 8-4 Activation and Resolution | Tested | 1 |
@@ -488,9 +488,9 @@ Comprehensive Rules version 1.2.1.
 | 11-1-1-2 | 11-1 Infinite Loops | Phase 4 (effects) | 0 |
 | 11-1-1-3 | 11-1 Infinite Loops | Phase 4 (effects) | 0 |
 | 11-2 | 11-2 Revealing Cards | Section heading | 0 |
-| 11-2-1 | 11-2 Revealing Cards | Tested | 5 |
+| 11-2-1 | 11-2 Revealing Cards | Tested | 7 |
 | 11-2-2 | 11-2 Revealing Cards | Phase 4 (effects) | 0 |
 | 11-3 | 11-3 Viewing Secret Areas | Tested | 4 |
-| 11-3-1 | 11-3 Viewing Secret Areas | Tested | 4 |
+| 11-3-1 | 11-3 Viewing Secret Areas | Tested | 5 |
 | 11-3-2 | 11-3 Viewing Secret Areas | Tested | 1 |
 | 11-3-3 | 11-3 Viewing Secret Areas | Phase 4 (effects) | 0 |

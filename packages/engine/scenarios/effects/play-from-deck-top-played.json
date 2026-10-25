@@ -1,0 +1,26 @@
+{
+  "name": "A revealed card that matches can be played instead",
+  "rules": ["11-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-REVEAL-OR-BOTTOM"],
+      "deck": ["TEST-C2-3000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.deck.0"]
+    }
+  ],
+  "expect": {
+    "p1.deck.0.cardId": "TEST-FILLER",
+    "p1.characters": 2
+  }
+}

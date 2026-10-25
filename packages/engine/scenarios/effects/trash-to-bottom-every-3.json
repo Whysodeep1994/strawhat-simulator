@@ -1,0 +1,36 @@
+{
+  "name": "Place any number from your trash at the bottom; +1000 for every 3",
+  "rules": ["8-3-3"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-TRASH-BOTTOM-EVERY"],
+      "trash": [
+        "TEST-FILLER",
+        "TEST-FILLER",
+        "TEST-FILLER",
+        "TEST-FILLER",
+        "TEST-FILLER",
+        "TEST-FILLER",
+        "TEST-FILLER",
+        "TEST-KO-ANY"
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.trash.0", "p1.trash.1", "p1.trash.2", "p1.trash.3", "p1.trash.4", "p1.trash.5"]
+    }
+  ],
+  "expect": {
+    "modifiers.0.power": 2000,
+    "p1.trash": 2,
+    "p1.deck": 26
+  }
+}

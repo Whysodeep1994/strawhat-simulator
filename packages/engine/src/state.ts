@@ -413,6 +413,7 @@ export function conditionsMet(
       return me.donRested + rested >= c.restedCardsAtLeast;
     }
     if ("lifeAtMostOpponents" in c) return me.life.length <= them.life.length;
+    if ("lifeFewerThanOpponent" in c) return me.life.length < them.life.length;
     if ("givenDonAtLeast" in c)
       return [me.leader, ...me.characters].reduce((n, x) => n + x.givenDon, 0) >= c.givenDonAtLeast;
     if ("leaderAttribute" in c)
@@ -579,6 +580,13 @@ export function toDeckBottomOptions(
   return pile.filter((c) => matchesFilter(state, c, cost.filter, source));
 }
 
+/** The opponent's active Characters a `restOpponentCharacter` cost can rest. */
+export function restableOpponentCharacters(state: GameState, player: PlayerId): CardInstance[] {
+  return state.players[opponentOf(player)].characters.filter(
+    (c) => !c.rested && !hasStatus(state, c, "cannotBeRested"),
+  );
+}
+
 export function donOnField(state: GameState, player: PlayerId): number {
   const p = state.players[player];
   return (
@@ -620,6 +628,12 @@ export function canPayCosts(
     if ("handToDeckTop" in cost) fromHand += cost.handToDeckTop;
     if ("handToDeckBottom" in cost) fromHand += cost.handToDeckBottom;
     if ("thisToDeckBottom" in cost && !findOnField(state, source.uid)) return false;
+    if ("returnThis" in cost && findOnField(state, source.uid)?.zone !== "characters") return false;
+    if (
+      "restOpponentCharacter" in cost &&
+      restableOpponentCharacters(state, player).length < cost.restOpponentCharacter
+    )
+      return false;
     if ("activeLeaderPower" in cost && p.leader.rested) return false;
     if ("returnActiveDon" in cost) restDon += cost.returnActiveDon;
     if ("returnOwnCharacter" in cost) {
