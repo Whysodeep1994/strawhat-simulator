@@ -45,6 +45,8 @@ export const BASE_RULES: DeckFormat = { id: "base", name: "Base rules" };
 export function copyLimit(format: DeckFormat, catalog: CardCatalog, cardId: string): number {
   const id = baseId(cardId);
   if (format.banned?.includes(id) || !inLegalBlock(format, catalog, cardId)) return 0;
+  // "You may have any number of this card in your deck."
+  if (catalog[cardId]?.anyNumberInDeck) return format.deckSize ?? 50;
   const max = format.maxCopies ?? 4;
   return Math.min(max, format.restricted?.[id] ?? max);
 }

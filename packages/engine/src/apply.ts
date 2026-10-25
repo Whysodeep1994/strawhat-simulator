@@ -10,6 +10,7 @@ import {
   fieldCards,
   findOnField,
   matchesFilter,
+  hasStatus,
   playCostOf,
 } from "./state.js";
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
@@ -193,6 +194,21 @@ function declareAttack(state: GameState, player: PlayerId, attacker: string, tar
   location.card.rested = true;
   state.battle = { attacker, target, blocked: false };
   state.stack.push({ kind: "battle", step: "attack" });
+  // "Cannot attack unless your opponent trashes 2 cards from their hand whenever they attack".
+  if (hasStatus(state, location.card, "mustTrashToAttack"))
+    state.stack.push({
+      kind: "effect",
+      controller: player,
+      source: attacker,
+      cardId: location.card.cardId,
+      effect: -1,
+      stage: "steps",
+      costIndex: 0,
+      steps: [{ do: "trashFromHand", count: 2 }],
+      memo: [],
+      answer: null,
+      rule: true,
+    });
   queueEffects(state, player, location.card, "whenAttacking");
   queueEffects(state, player, location.card, "becomesRested");
   for (const card of fieldCards(state, opponentOf(player))) {

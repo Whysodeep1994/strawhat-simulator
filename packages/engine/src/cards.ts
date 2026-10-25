@@ -35,6 +35,8 @@ export interface CardDefinition {
   /** Printed attribute, e.g. "Slash" or "Strike/Ranged". */
   attribute?: string | null;
   effects?: EffectDefinition[];
+  /** "Under the rules of this game, you may have any number of this card in your deck." */
+  anyNumberInDeck?: boolean;
   /** "Also treat this card's name as [X] according to the rules." */
   aliases?: string[];
   /** The block icon printed on the card (1, 2, … or "X"); formats use it to rotate older cards out. */

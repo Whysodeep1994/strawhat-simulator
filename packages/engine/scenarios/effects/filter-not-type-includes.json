@@ -1,0 +1,13 @@
+{
+  "name": "\"Only Characters with a type including ...\" counts the Characters without it",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C2-3000"],
+      "hand": ["TEST-ONLY-TEST-CREW", "TEST-ONLY-TEST-CREW"],
+      "don": { "active": 2 }
+    }
+  },
+  "actions": [{ "type": "playCard", "player": "p1", "card": "p1.hand.0" }],
+  "expect": { "p1.hand": 2 }
+}

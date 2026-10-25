@@ -3,7 +3,7 @@
   "rules": ["8-3-2-1"],
   "setup": {
     "p1": {
-      "hand": ["TEST-TRASH-EVENTS"],
+      "hand": ["TEST-TRASH-EVENTS-2"],
       "don": {
         "active": 1
       },

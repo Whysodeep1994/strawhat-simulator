@@ -71,7 +71,7 @@ export const OP11_EFFECT_CARDS: CardDefinition[] = [
     ],
   },
   {
-    id: "TEST-OPP-RESTED",
+    id: "TEST-OPP-RESTED-ACT",
     name: "Test Opponent Rested",
     category: "character",
     colors: ["green"],
@@ -95,7 +95,7 @@ export const OP11_EFFECT_CARDS: CardDefinition[] = [
     effects: [{ timing: "startOfYourTurn", steps: [{ do: "trashFromDeck", count: 1 }] }],
   },
   {
-    id: "TEST-LIFE-WATCH",
+    id: "TEST-LIFE-WATCH-ANY",
     name: "Test Life Watch",
     category: "character",
     colors: ["yellow"],

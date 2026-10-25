@@ -3,7 +3,7 @@
   "rules": ["8-3-2-1"],
   "setup": {
     "p1": {
-      "characters": ["TEST-OPP-RESTED"]
+      "characters": ["TEST-OPP-RESTED-ACT"]
     },
     "p2": {
       "don": {

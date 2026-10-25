@@ -191,7 +191,8 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
     if (
       attacker.rested ||
       hasStatus(state, attacker, "cannotAttack") ||
-      hasStatus(state, attacker, "cannotBeRested")
+      hasStatus(state, attacker, "cannotBeRested") ||
+      (hasStatus(state, attacker, "mustTrashToAttack") && p.hand.length < 2)
     )
       continue;
     const attackable = hasKeywordNow(state, attacker, "canAttackActive")

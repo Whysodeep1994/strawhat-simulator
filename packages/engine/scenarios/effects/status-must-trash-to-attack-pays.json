@@ -1,0 +1,40 @@
+{
+  "name": "Attacking trashes 2 cards from the attacker's hand",
+  "rules": ["7-1-1-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-ATTACK-TAX"]
+    },
+    "p2": {
+      "characters": ["TEST-FILLER"],
+      "hand": ["TEST-FILLER", "TEST-FILLER"],
+      "turnsTaken": 2
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "endTurn",
+      "player": "p1"
+    },
+    {
+      "type": "attack",
+      "player": "p2",
+      "attacker": "p2.characters.0",
+      "target": "p1.leader"
+    },
+    {
+      "type": "choose",
+      "player": "p2",
+      "cards": ["p2.hand.0", "p2.hand.1"]
+    }
+  ],
+  "expect": {
+    "p2.hand": 1,
+    "p2.trash": 2
+  }
+}

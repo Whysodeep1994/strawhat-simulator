@@ -29,10 +29,10 @@ export const OP12_EFFECT_CARDS: CardDefinition[] = [
   character("TEST-ATTACK-LEADER-DRAW", "Test Attack Leader Draw", [
     { timing: "whenAttacking", conditions: [{ attackingLeader: true }], steps: [draw] },
   ]),
-  character("TEST-TRASH-EVENTS", "Test Trash Events", [
+  character("TEST-TRASH-EVENTS-2", "Test Trash Events", [
     {
       timing: "onPlay",
-      conditions: [{ trashAtLeast: 2, filter: { category: "event" } }],
+      conditions: [{ trashAtLeast: 2, trashFilter: { category: "event" } }],
       steps: [draw],
     },
   ]),

@@ -3,7 +3,7 @@
   "rules": ["8-3-2-1"],
   "setup": {
     "p1": {
-      "characters": ["TEST-ACTIVE-DRAW"]
+      "characters": ["TEST-THIS-ACTIVE"]
     }
   },
   "actions": [

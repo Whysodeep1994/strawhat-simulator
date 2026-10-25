@@ -22,7 +22,8 @@ export function validateDeck(catalog: CardCatalog, leaderId: string, deck: strin
     }
   }
   for (const [id, count] of copies) {
-    if (count > 4) errors.push(`${count} copies of "${id}"; the limit is 4`);
+    if (count > 4 && !catalog[id]?.anyNumberInDeck)
+      errors.push(`${count} copies of "${id}"; the limit is 4`);
   }
   return [...new Set(errors)];
 }
