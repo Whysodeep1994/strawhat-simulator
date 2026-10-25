@@ -356,6 +356,14 @@ export function powerAmount(
  */
 export function counterOf(state: GameState, player: PlayerId, card: CardInstance): number {
   let counter = definitionOf(state, card).counter ?? 0;
+  // "This card in your hand has a +2000 Counter".
+  for (const effect of definitionOf(state, card).effects ?? []) {
+    if (effect.timing !== "permanent" || effect.zone !== "hand") continue;
+    if (!conditionsMet(state, player, card, effect.conditions)) continue;
+    for (const step of effect.steps)
+      if (step.do === "grantCounter" && step.target.side === "this")
+        counter = step.becomes ? step.amount : counter + step.amount;
+  }
   for (const source of fieldCards(state, player)) {
     for (const effect of definitionOf(state, source).effects ?? []) {
       if (effect.timing !== "permanent" || effect.zone === "hand") continue;
@@ -561,6 +569,7 @@ export function conditionsMet(
           ),
       );
     if ("thisRested" in c) return source.rested;
+    if ("leaderAttacked" in c) return state.battle?.target === me.leader.uid;
     if ("not" in c) return !conditionsMet(state, controller, source, [c.not]);
     if ("opponentLeaderAttribute" in c)
       return (definitionOf(state, them.leader).attribute ?? "").includes(c.opponentLeaderAttribute);
@@ -611,6 +620,7 @@ export function matchesFilter(
   )
     return false;
   if (filter.noCounter && def.counter) return false;
+  if (filter.hasCounter && !(def.counter ?? 0)) return false;
   if (filter.baseCostAtMost !== undefined && baseCost > filter.baseCostAtMost) return false;
   if (filter.baseCostAtLeast !== undefined && baseCost < filter.baseCostAtLeast) return false;
   if (filter.powerAtMost !== undefined && power() > filter.powerAtMost) return false;

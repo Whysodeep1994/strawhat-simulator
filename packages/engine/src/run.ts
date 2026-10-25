@@ -6,6 +6,7 @@ import {
   basePowerOf,
   canPayCosts,
   conditionsMet,
+  costOf,
   countCards,
   definitionOf,
   donOnField,
@@ -674,10 +675,12 @@ function chooseTargets(
       ? earlier()
       : targetCandidates(state, frame.controller, source, target);
   const count = target.count ?? 1;
-  const total = target.totalPowerAtMost;
+  const total = target.totalPowerAtMost ?? target.totalCostAtMost;
   if (total !== undefined) {
+    const valueOf = (c: CardInstance) =>
+      target.totalPowerAtMost !== undefined ? powerOf(state, c) : costOf(state, c);
     // Only cards that fit within the total on their own can be part of a pick.
-    candidates = candidates.filter((c) => powerOf(state, c) <= total);
+    candidates = candidates.filter((c) => valueOf(c) <= total);
     if (!Array.isArray(frame.answer) && candidates.length > 0) {
       state.prompt = {
         kind: "choose",
@@ -687,7 +690,9 @@ function chooseTargets(
         max: Math.min(count, candidates.length),
         reason,
         source: frame.source,
-        maxTotalPower: total,
+        ...(target.totalPowerAtMost !== undefined
+          ? { maxTotalPower: total }
+          : { maxTotalCost: total }),
       };
       return "wait";
     }
@@ -1164,6 +1169,7 @@ function runStep(
         ? [owner.hand, owner.trash]
         : [step.do === "playFromHand" ? owner.hand : owner.trash];
       const played = step.played ?? [];
+      const budget = step.do === "playFromHand" ? step.totalCostAtMost : undefined;
       // "A different color than the returned Character."
       const avoid =
         step.do === "playFromHand" && step.differentColor
@@ -1188,6 +1194,7 @@ function runStep(
             !def.colors.some((color) => avoid.includes(color)) &&
             (!sameName || namesOf(def).some((n) => sameName.includes(n))) &&
             !played.includes(def.name) &&
+            (budget === undefined || (def.cost ?? 0) <= budget) &&
             !playBlocked(state, player, c, step.do === "playFromHand") &&
             matchesFilter(state, c, step.filter, source, false)
           );
@@ -1206,6 +1213,9 @@ function runStep(
       if (outcome === "continue" && (step.count ?? 1) > 1) {
         const next = { ...step, count: (step.count ?? 1) - 1 };
         if (step.differentNames) next.played = [...played, name];
+        if (next.do === "playFromHand" && budget !== undefined)
+          next.totalCostAtMost =
+            budget - (definitionOf(state, findCard(state, uid) as CardInstance).cost ?? 0);
         frame.steps.splice(1, 0, next);
       }
       // "If you do, ..."
@@ -1633,6 +1643,7 @@ function runStep(
     case "deckOutAtEndOfTurn":
     case "donDeckSize":
     case "rushFromTrash":
+    case "attackOnlyThis":
       // Permanent effects, worked out where they apply.
       return "continue";
 
