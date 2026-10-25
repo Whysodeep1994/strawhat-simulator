@@ -355,6 +355,200 @@ select {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
+/* Title menu: the game's front door, a short list of big choices like a console game. */
+
+.home.at-title {
+  justify-content: center;
+  gap: clamp(20px, 5vh, 44px);
+}
+.home.at-title .legal {
+  margin-top: 0;
+}
+.title-menu {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+.title-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.menu-item {
+  width: 100%;
+  justify-content: space-between;
+  padding: 0.75em 1.3em;
+  border-radius: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  background: rgba(8, 16, 32, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.menu-label {
+  font-family: Bangers, Impact, "Arial Black", sans-serif;
+  font-size: 1.7rem;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+.menu-item.current:not(:disabled),
+.menu-item:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  background: linear-gradient(90deg, rgba(245, 200, 76, 0.28), rgba(8, 16, 32, 0.85) 70%);
+  box-shadow:
+    0 0 0 1px var(--gold),
+    0 0 26px var(--gold-soft);
+  transform: translateX(6px);
+}
+.menu-item.current:not(:disabled) .menu-label {
+  color: var(--gold);
+}
+.menu-soon {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #d5def2;
+}
+.menu-hint {
+  min-height: 2.6em;
+  margin: 0;
+  text-align: center;
+  color: #fde9c4;
+  font-size: 0.95rem;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+.loading-line {
+  margin: 0;
+  color: #fde9c4;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+
+/* Screens under the title menu */
+
+.sub-screen {
+  width: min(1180px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sub-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.sub-head h1 {
+  margin: 0;
+  font-family: Bangers, Impact, "Arial Black", sans-serif;
+  font-weight: 400;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  letter-spacing: 0.05em;
+  color: #fff8e6;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.55);
+}
+.sub-head button {
+  background: rgba(8, 16, 32, 0.78);
+}
+.settings-grid {
+  width: min(520px, 100%);
+}
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+}
+.tabs button {
+  white-space: nowrap;
+  padding-inline: 0.6em;
+  border-color: transparent;
+  background: transparent;
+  font-weight: 700;
+}
+.tabs button.on {
+  background: var(--bg-2);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.tabs .count {
+  font-weight: 400;
+}
+.empty-decks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.empty-decks p {
+  margin: 0;
+}
+.deck-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--deck-color), var(--deck-color-2));
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+.deck-preview-art {
+  display: block;
+  aspect-ratio: 4 / 3;
+  background: rgba(0, 0, 0, 0.3);
+}
+.deck-preview-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 18%;
+  display: block;
+}
+.deck-preview-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  background: linear-gradient(90deg, rgba(5, 10, 20, 0.55), rgba(5, 10, 20, 0.85));
+}
+.deck-preview-info strong {
+  font-size: 1.3rem;
+  line-height: 1.15;
+}
+.deck-preview-info span {
+  font-size: 0.85rem;
+  color: #d5def2;
+}
+.badge.static {
+  position: static;
+  margin-bottom: 4px;
+}
+.copy-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.copy-row select {
+  flex: 1 1 240px;
+  width: auto;
+}
+
+@media (max-width: 560px) {
+  .deck-preview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* Default playmats: original designs, a sea chart for you and a night sea for the opponent. */
 :root {
   --compass: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.13'%3E%3Ccircle cx='100' cy='100' r='92'/%3E%3Ccircle cx='100' cy='100' r='70'/%3E%3Ccircle cx='100' cy='100' r='30'/%3E%3Cpath d='M100 2v196M2 100h196M31 31l138 138M169 31L31 169'/%3E%3C/g%3E%3Cpath d='M100 14l9 86-9 86-9-86z M14 100l86-9 86 9-86 9z' fill='%23ffffff' fill-opacity='.08'/%3E%3C/svg%3E");
@@ -1213,7 +1407,7 @@ button.pile {
   }
 }
 
-/* My decks on the home screen */
+/* My decks in the Deck Builder screen */
 
 .new-deck {
   background: rgba(255, 255, 255, 0.04);
@@ -1232,21 +1426,8 @@ button.pile {
 .new-deck .deck-info {
   background: none;
 }
-.my-deck {
-  position: relative;
-  display: flex;
-}
-.my-deck .deck-tile {
-  flex: 1;
-}
 .deck-tile.unready .deck-art {
   filter: grayscale(0.7) brightness(0.7);
-}
-.edit-deck {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  background: rgba(5, 10, 20, 0.8);
 }
 
 /* Deck builder */
