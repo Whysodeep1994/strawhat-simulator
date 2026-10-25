@@ -3,9 +3,24 @@ import { isLegal } from "./legal.js";
 import { endGame, processRules } from "./rules.js";
 import { advance } from "./run.js";
 import { shuffleInPlace } from "./rng.js";
-import { definitionOf, effectsOf, fieldCards, findOnField, playCostOf } from "./state.js";
+import {
+  counterOf,
+  definitionOf,
+  effectsOf,
+  fieldCards,
+  findOnField,
+  hasStatus,
+  playCostOf,
+} from "./state.js";
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
-import { drawCards, pushEffect, putOnField, queueEffects, startTurn } from "./turn.js";
+import {
+  drawCards,
+  pushEffect,
+  putOnField,
+  queueEffects,
+  queueFieldEffects,
+  startTurn,
+} from "./turn.js";
 
 export class IllegalActionError extends Error {
   constructor(action: Action) {
@@ -145,6 +160,7 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
     p.trash.unshift(card);
     const index = (def.effects ?? []).findIndex((e) => e.timing === "main");
     pushEffect(state, player, card.uid, index);
+    queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
     return;
   }
   putOnField(state, player, card, trash);
@@ -167,6 +183,21 @@ function declareAttack(state: GameState, player: PlayerId, attacker: string, tar
   location.card.rested = true;
   state.battle = { attacker, target, blocked: false };
   state.stack.push({ kind: "battle", step: "attack" });
+  // "Cannot attack unless your opponent trashes 2 cards from their hand whenever they attack".
+  if (hasStatus(state, location.card, "mustTrashToAttack"))
+    state.stack.push({
+      kind: "effect",
+      controller: player,
+      source: attacker,
+      cardId: location.card.cardId,
+      effect: -1,
+      stage: "steps",
+      costIndex: 0,
+      steps: [{ do: "trashFromHand", count: 2 }],
+      memo: [],
+      answer: null,
+      rule: true,
+    });
   queueEffects(state, player, location.card, "whenAttacking");
   queueEffects(state, player, location.card, "becomesRested");
   for (const card of fieldCards(state, opponentOf(player))) {
@@ -189,6 +220,9 @@ function block(state: GameState, blocker: string): void {
   setBattleStep(state, "counter");
   queueEffects(state, location.player, location.card, "onBlock");
   queueEffects(state, location.player, location.card, "becomesRested");
+  const attacker = opponentOf(location.player);
+  for (const card of fieldCards(state, attacker))
+    queueEffects(state, attacker, card, "onOpponentsBlock");
 }
 
 /** Rule 7-1-3-1-1. */
@@ -200,7 +234,7 @@ function counter(state: GameState, player: PlayerId, uid: string, target: string
   );
   if (!card) return;
   p.trash.unshift(card);
-  const value = definitionOf(state, card).counter ?? 0;
+  const value = counterOf(state, player, card);
   state.modifiers.push({ target, power: value, until: "battle" });
 }
 
@@ -219,4 +253,5 @@ function counterEvent(state: GameState, player: PlayerId, uid: string): void {
   p.trash.unshift(card);
   const index = (def.effects ?? []).findIndex((e) => e.timing === "counter");
   pushEffect(state, player, card.uid, index);
+  queueFieldEffects(state, opponentOf(player), "opponentActivatesEvent");
 }

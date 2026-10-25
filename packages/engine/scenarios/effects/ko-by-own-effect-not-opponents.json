@@ -1,0 +1,28 @@
+{
+  "name": "A K.O. by your own effect is not \"by your opponent's effect\"",
+  "rules": ["10-2-1-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-COMEBACK"],
+      "hand": ["TEST-KO-OWN"],
+      "don": {
+        "active": 5
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.characters.0"]
+    }
+  ],
+  "expect": {
+    "p1.characters": 0
+  }
+}

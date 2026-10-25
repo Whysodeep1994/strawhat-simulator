@@ -1,0 +1,37 @@
+{
+  "name": "K.O. up to 2 with a total power of 4000 or less refuses a pick over the total",
+  "rules": ["4-8"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-TOTAL-POWER"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "characters": ["TEST-C2-3000", "TEST-BLOCKER", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.0", "p2.characters.1"],
+      "illegal": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p2.characters.1", "p2.characters.2"]
+    }
+  ],
+  "expect": {
+    "p2.characters": 1,
+    "p2.characters.0.cardId": "TEST-C2-3000"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "2 fewer DON!! on your field than your opponent's meets the condition",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-DON-FEWER"],
+      "don": {
+        "active": 1
+      }
+    },
+    "p2": {
+      "don": {
+        "active": 3
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

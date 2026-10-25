@@ -1,0 +1,27 @@
+{
+  "name": "More DON!! than your opponent turns it off",
+  "rules": ["8-3-2"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-DON-COMPARE"],
+      "don": {
+        "active": 4
+      }
+    },
+    "p2": {
+      "don": {
+        "rested": 3
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 0
+  }
+}

@@ -2,6 +2,7 @@ import type { Action } from "./actions.js";
 import {
   canPayCosts,
   conditionsMet,
+  counterOf,
   definitionOf,
   effectsOf,
   fieldCards,
@@ -12,6 +13,7 @@ import {
   oncePerTurnKey,
   playBlocked,
   playCostOf,
+  powerOf,
 } from "./state.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
 
@@ -84,6 +86,13 @@ export function isLegal(state: GameState, action: Action): boolean {
     const prompt = state.prompt;
     if (prompt.kind !== "choose" || prompt.player !== action.player) return false;
     const unique = new Set(action.cards);
+    if (prompt.maxTotalPower !== undefined) {
+      const total = action.cards.reduce((sum, uid) => {
+        const card = findOnField(state, uid)?.card;
+        return sum + (card ? powerOf(state, card) : 0);
+      }, 0);
+      if (total > prompt.maxTotalPower) return false;
+    }
     return (
       unique.size === action.cards.length &&
       action.cards.length >= prompt.min &&
@@ -175,17 +184,24 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
   const restedCharacters = opponent.characters.filter((c) => c.rested).map((c) => c.uid);
   const allCharacters = opponent.characters.map((c) => c.uid);
   const actions: Action[] = [];
+  const leaderAttacksBanned = state.modifiers.some(
+    (m) => m.target === p.leader.uid && m.noLeaderAttacks,
+  );
   for (const attacker of [p.leader, ...p.characters]) {
     if (
       attacker.rested ||
       hasStatus(state, attacker, "cannotAttack") ||
-      hasStatus(state, attacker, "cannotBeRested")
+      hasStatus(state, attacker, "cannotBeRested") ||
+      (hasStatus(state, attacker, "mustTrashToAttack") && p.hand.length < 2)
     )
       continue;
     const attackable = hasKeywordNow(state, attacker, "canAttackActive")
       ? allCharacters
       : restedCharacters;
-    const targets = attackTargets(state, attacker, opponent.leader.uid, attackable);
+    const targets = attackTargets(state, attacker, opponent.leader.uid, attackable).filter(
+      // "You cannot attack a Leader during this turn."
+      (t) => t !== opponent.leader.uid || !leaderAttacksBanned,
+    );
     for (const target of targets)
       actions.push({ type: "attack", player, attacker: attacker.uid, target });
   }
@@ -216,7 +232,9 @@ export function eligibleBlockers(state: GameState, player: PlayerId): CardInstan
   if (!attacker || hasKeywordNow(state, attacker.card, "unblockable")) return [];
   // Rule 10-1-4-1: effects can stop [Blocker] from being activated.
   const bans = state.modifiers.filter((m) => m.target === battle.attacker && m.noBlockers);
-  return state.players[player].characters.filter(
+  const p = state.players[player];
+  // A Leader with [Blocker] can block too.
+  return [p.leader, ...p.characters].filter(
     (c) =>
       !c.rested &&
       c.uid !== battle.target &&
@@ -234,7 +252,7 @@ function counterActions(state: GameState, player: PlayerId): Action[] {
   const actions: Action[] = [];
   for (const card of p.hand) {
     const def = definitionOf(state, card);
-    if (def.category === "character" && def.counter) {
+    if (def.category === "character" && counterOf(state, player, card) > 0) {
       for (const target of targets)
         actions.push({ type: "counter", player, card: card.uid, target });
     }

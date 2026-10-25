@@ -1,0 +1,21 @@
+{
+  "name": "Without the permanent effect a card without a Counter can't be used as a counter",
+  "rules": ["7-1-3-1-1"],
+  "setup": {
+    "p2": {
+      "hand": ["TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.leader"
+    }
+  ],
+  "expect": {
+    "prompt.kind": "counter",
+    "legal.p2.counter": 0
+  }
+}

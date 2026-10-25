@@ -1,0 +1,33 @@
+{
+  "name": "Play a Character that is a different color than the returned one",
+  "rules": ["8-4"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-C2-3000"],
+      "hand": ["TEST-OTHER-COLOR", "TEST-RED-GREEN", "TEST-GREEN"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.0"],
+      "illegal": true
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.1"]
+    }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.characters.0.cardId": "TEST-GREEN",
+    "p1.hand": 2
+  }
+}

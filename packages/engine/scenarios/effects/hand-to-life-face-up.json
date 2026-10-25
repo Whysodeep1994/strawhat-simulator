@@ -1,0 +1,36 @@
+{
+  "name": "Add a card from hand to the top of Life face-up, then take 1 Life from the bottom",
+  "rules": ["3-10-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-HAND-TO-LIFE", "TEST-C2-3000"],
+      "don": {
+        "active": 2
+      },
+      "life": 3
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.hand.0"]
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p1.life": 3,
+    "p1.life.0.faceUp": true,
+    "p1.life.0.cardId": "TEST-C2-3000",
+    "p1.hand": 1
+  }
+}

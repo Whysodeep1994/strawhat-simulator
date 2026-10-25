@@ -1,0 +1,29 @@
+{
+  "name": "\"Cannot be K.O.'d in battle by Leaders\" survives a Leader's attack",
+  "rules": ["7-1-4-2"],
+  "setup": {
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-NOT-BY-LEADERS",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.characters": 1
+  }
+}

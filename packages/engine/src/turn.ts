@@ -15,9 +15,18 @@ import {
 import type { CardInstance, Frame, GameState, PlayerId } from "./types.js";
 
 /** Rules 4-5-1 to 4-5-3. Drawing from an empty deck does nothing; rule 9-2-1-2 already ended the game. */
-export function drawCards(state: GameState, player: PlayerId, count: number): void {
+export function drawCards(state: GameState, player: PlayerId, count: number): number {
   const p = state.players[player];
-  p.hand.push(...p.deck.splice(0, count));
+  const drawn = p.deck.splice(0, count);
+  p.hand.push(...drawn);
+  return drawn.length;
+}
+
+/** Queues effects on `player`'s field with this timing, e.g. "when you draw a card ...". */
+export function queueFieldEffects(state: GameState, player: PlayerId, timing: Timing): void {
+  const p = state.players[player];
+  for (const card of [p.leader, ...p.characters, ...(p.stage ? [p.stage] : [])])
+    queueEffects(state, player, card, timing);
 }
 
 /**
@@ -49,8 +58,11 @@ function queueAbout(state: GameState, card: CardInstance, timing: Timing): void 
  * the card leaves, so its type and power can still be checked.
  */
 export function removedByEffect(state: GameState, card: CardInstance, by: PlayerId): void {
-  if (by !== card.owner && findOnField(state, card.uid)?.zone === "characters")
-    queueAbout(state, card, "yourCharacterRemovedByOpponent");
+  if (findOnField(state, card.uid)?.zone !== "characters") return;
+  if (by !== card.owner) queueAbout(state, card, "yourCharacterRemovedByOpponent");
+  queueAbout(state, card, "yourCharacterRemovedByEffect");
+  // "When a Character is removed from the field by your effect".
+  queueFieldEffects(state, by, "characterRemovedByYourEffect");
 }
 
 /** Rules 6-2 to 6-5. */
@@ -70,8 +82,11 @@ export function startTurn(state: GameState, player: PlayerId): void {
   }
   for (const card of [p.leader, ...p.characters, ...(p.stage ? [p.stage] : [])])
     if (!hasStatus(state, card, "noRefresh")) card.rested = false;
-  p.donActive += p.donRested;
-  p.donRested = 0;
+  // "Will not become active in your opponent's next Refresh Phase" for DON!! cards.
+  const stay = Math.min(p.donNoRefresh ?? 0, p.donRested);
+  p.donActive += p.donRested - stay;
+  p.donRested = stay;
+  delete p.donNoRefresh;
 
   // Draw Phase, rule 6-3-1.
   state.phase = "draw";
@@ -103,8 +118,8 @@ export function startTurn(state: GameState, player: PlayerId): void {
 
 /**
  * Rules 10-2-1-2 and 10-2-17: [On K.O.] conditions are checked while the card
- * is still on the field; the effect then resolves from the trash. `byEffect`
- * is false for a K.O. in battle.
+ * is still on the field; the effect then resolves from the trash. `by` is the
+ * player whose effect K.O.s the card, and is left out for a K.O. in battle.
  */
 export function knockOut(state: GameState, uid: string, byEffect = false, by?: PlayerId): void {
   for (const player of ["p1", "p2"] as const) {
@@ -114,7 +129,10 @@ export function knockOut(state: GameState, uid: string, byEffect = false, by?: P
     queueAbout(state, card, "yourCharacterKOd");
     if (by) removedByEffect(state, card, by);
     effectsOf(state, card).forEach((effect, index) => {
-      const timingMet = effect.timing === "onKO" || (effect.timing === "koByEffect" && byEffect);
+      const timingMet =
+        effect.timing === "onKO" ||
+        (effect.timing === "koByEffect" && byEffect) ||
+        (effect.timing === "koByOpponentsEffect" && byEffect && by !== undefined && by !== player);
       if (timingMet && conditionsMet(state, player, card, effect.conditions)) {
         state.pendingEffects.push({ controller: player, source: card.uid, effect: index });
       }
@@ -147,9 +165,22 @@ export function putOnField(
     const old = trash ? p.characters.find((c) => c.uid === trash) : undefined;
     if (old) moveFieldCardToTrash(state, old);
     p.characters.push(card);
+    // "Your Character cards are played rested."
+    if (playsRested(state, player)) card.rested = true;
     queueAbout(state, card, "youPlayCharacter");
   }
   queueEffects(state, player, card, "onPlay");
+}
+
+function playsRested(state: GameState, player: PlayerId): boolean {
+  return fieldCards(state, player).some((source) =>
+    effectsOf(state, source).some(
+      (effect) =>
+        effect.timing === "permanent" &&
+        effect.steps.some((s) => s.do === "playRested") &&
+        conditionsMet(state, player, source, effect.conditions),
+    ),
+  );
 }
 
 /** Trashing by rule (3-7-6-1-1, 3-8-5-1) or by a "trash this Character" cost is not a K.O. */

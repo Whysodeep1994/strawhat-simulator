@@ -86,8 +86,6 @@ export function buildScenarioState(setup: ScenarioSetup, catalog: CardCatalog): 
 
   const player = (id: PlayerId): PlayerState => {
     const s = setup[id] ?? {};
-    const life = pile(s.life, 4, id);
-    for (const card of life.slice(0, s.lifeFaceUp ?? 0)) card.faceUp = true;
     const defaultTurns = id === firstPlayer ? Math.ceil(turn / 2) : Math.floor(turn / 2);
     return {
       leader: fieldCard(s.leader ?? DEFAULT_LEADER, id),
@@ -96,7 +94,7 @@ export function buildScenarioState(setup: ScenarioSetup, catalog: CardCatalog): 
       hand: (s.hand ?? []).map((c) => make(c, id)),
       trash: (s.trash ?? []).map((c) => make(c, id)),
       deck: pile(s.deck, 20, id),
-      life,
+      life: pile(s.life, 4, id),
       donDeck: s.don?.deck ?? 0,
       donActive: s.don?.active ?? 0,
       donRested: s.don?.rested ?? 0,
@@ -104,9 +102,14 @@ export function buildScenarioState(setup: ScenarioSetup, catalog: CardCatalog): 
     };
   };
 
+  const players = { p1: player("p1"), p2: player("p2") };
+  for (const id of ["p1", "p2"] as const) {
+    for (const card of players[id].life.slice(0, setup[id]?.lifeFaceUp ?? 0)) card.faceUp = true;
+  }
+
   return {
     catalog,
-    players: { p1: player("p1"), p2: player("p2") },
+    players,
     turn,
     turnPlayer,
     firstPlayer,

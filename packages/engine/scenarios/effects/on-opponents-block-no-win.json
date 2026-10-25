@@ -1,0 +1,29 @@
+{
+  "name": "Blocking when both players have Life does not win",
+  "rules": ["1-2-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-BLOCK-WIN"]
+    },
+    "p2": {
+      "characters": ["TEST-BLOCKER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "block",
+      "player": "p2",
+      "blocker": "p2.characters.0"
+    }
+  ],
+  "expect": {
+    "winner": null,
+    "prompt.kind": "counter"
+  }
+}
