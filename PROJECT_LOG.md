@@ -28,6 +28,10 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-25: Fixed a freeze found while testing the 979-card data (OP-06 and OP-14 added).
+  Playing OP14-090 Mr.1 (Daz.Bonez) hung the game: its "if there is a Character with a cost of 0
+  or 8 or more" check re-worked every other Character's cost inside each cost, which grows
+  exponentially. Grants are now worked out once per lookup. New test in permanent-effects.test.ts.
 - 2026-10-24: Prototype fixes found while testing the 518-card data (EB-01, EB-02, full OP-09,
   ST-31 to 36) with 84 computer-vs-computer games across every deck. The computer froze on "K.O.
   up to 2 Characters with a total power of 4000 or less" because it picked over the limit; it now
@@ -131,9 +135,9 @@ Each phase has a check the project owner can do without reading code.
 
 - Performance: each action copies the whole game state and re-lists legal moves. A random
   game takes about 70 ms. Fine for now; optimize in Phase 8.
-- Performance: permanent effects with conditions that count cards by power (for example ST-30)
-  re-work each other's grants on every check, so a late-game move can take 0.1 to 0.4 s.
-  Caching grants per game state would fix it.
+- Performance: permanent effects with conditions that count cards by power or cost (for example
+  ST-30) still re-work grants on every top-level check, so a move with a full board takes about
+  25 ms. Grants are cached within one lookup (2026-10-25); caching per game state would go further.
 
 ## Rules questions
 
