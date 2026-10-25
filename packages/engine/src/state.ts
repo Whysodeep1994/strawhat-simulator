@@ -211,16 +211,29 @@ type GrantStep =
 /** Cards whose grants are being worked out, so an effect that reads its own result can't loop. */
 const inProgress = new Set<string>();
 
+/**
+ * Grants already worked out during the current outermost lookup. Without it, conditions like
+ * "if there is a Character with a cost of 0" (OP14-090) re-check every Character's cost inside
+ * every other Character's cost, which grows exponentially and freezes the game.
+ */
+let lookupCache: Map<string, Grant[]> | null = null;
+
 /** Power, cost, keywords, or statuses given to `card` by permanent effects on the field (rule 8-1-3-3). */
 function permanentGrants(state: GameState, card: CardInstance, kind: GrantStep): Grant[] {
-  const grants: Grant[] = [];
   const key = `${card.uid}:${kind}`;
-  if (inProgress.has(key) || !findOnField(state, card.uid)) return grants;
+  if (inProgress.has(key) || !findOnField(state, card.uid)) return [];
+  const cached = lookupCache?.get(key);
+  if (cached) return cached;
+  const outermost = inProgress.size === 0;
+  if (outermost) lookupCache = new Map();
+  const grants: Grant[] = [];
   inProgress.add(key);
   try {
     collectGrants(state, card, kind, grants);
+    lookupCache?.set(key, grants);
   } finally {
     inProgress.delete(key);
+    if (outermost) lookupCache = null;
   }
   return grants;
 }
