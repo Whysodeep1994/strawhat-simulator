@@ -1,0 +1,28 @@
+{
+  "name": "\"Until the end of your next turn\" lasts through the opponent's turn",
+  "rules": ["8-4"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-NEXT-TURN-POWER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "endTurn",
+      "player": "p1"
+    },
+    {
+      "type": "endTurn",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "modifiers": 1,
+    "turnPlayer": "p1"
+  }
+}

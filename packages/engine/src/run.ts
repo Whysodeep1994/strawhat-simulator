@@ -24,6 +24,7 @@ import {
   onPlayNegated,
   playBlocked,
   toDeckBottomOptions,
+  restableOpponentCharacters,
   powerAmount,
   powerOf,
   zoneCards,
@@ -142,6 +143,7 @@ const ON_FIELD_TIMINGS = new Set([
   "lifeBecomesZero",
   "triggerActivated",
   "opponentActivatesEvent",
+  "characterRemovedByYourEffect",
   "becomesRested",
   "characterKOd",
   "attackDealsDamage",
@@ -292,6 +294,17 @@ function payCost(
     const chosen = choose(state, frame, frame.controller, hand, n, n, "handToDeckBottom");
     if (chosen === "wait") return "wait";
     moveFromHandToDeckBottom(state, frame.controller, chosen);
+  } else if ("returnThis" in cost) {
+    removeFromField(state, source.uid, "hand");
+  } else if ("restOpponentCharacter" in cost) {
+    const n = cost.restOpponentCharacter;
+    const options = restableOpponentCharacters(state, frame.controller);
+    const chosen = choose(state, frame, frame.controller, options, n, n, "rest");
+    if (chosen === "wait") return "wait";
+    for (const uid of chosen) {
+      const card = findOnField(state, uid)?.card;
+      if (card) restCard(state, frame.controller, card, false);
+    }
   } else if ("thisToDeckBottom" in cost) {
     removeFromField(state, source.uid, "deckBottom");
   } else if ("returnActiveDon" in cost) {
@@ -646,10 +659,12 @@ function runStep(
   const controller = frame.controller;
   const p = state.players[controller];
   switch (step.do) {
-    case "draw":
-      if (drawCards(state, controller, step.count) > 0)
-        queueFieldEffects(state, controller, "drawOutsideDrawPhase");
+    case "draw": {
+      const who = step.side === "opponent" ? opponentOf(controller) : controller;
+      if (drawCards(state, who, step.count) > 0)
+        queueFieldEffects(state, who, "drawOutsideDrawPhase");
       return "continue";
+    }
 
     case "trashThis":
       if (findOnField(state, source.uid)) moveFieldCardToTrash(state, source);
@@ -674,10 +689,14 @@ function runStep(
     case "trashToDeckBottom": {
       const player = step.side === "self" ? controller : opponentOf(controller);
       const owner = state.players[player];
-      const chosen = choose(state, frame, player, owner.trash, step.count, step.count, step.do);
+      const pile = owner.trash.filter((c) => matchesFilter(state, c, step.filter, source, false));
+      const chooser = step.youChoose ? controller : player;
+      const min = step.upTo ? 0 : step.count;
+      const chosen = choose(state, frame, chooser, pile, min, step.count, step.do);
       if (chosen === "wait") return "wait";
       owner.deck.push(...chosen.map((uid) => owner.trash.find((c) => c.uid === uid)!));
       owner.trash = owner.trash.filter((c) => !chosen.includes(c.uid));
+      frame.previous = chosen.length;
       return "continue";
     }
 
@@ -702,6 +721,7 @@ function runStep(
     case "setActive":
     case "noBlockers":
     case "setBasePower":
+    case "setPower":
     case "giveRestedDon": {
       // Given DON!! come from the target's owner, so only your own cost area can be checked early.
       if (
@@ -725,7 +745,11 @@ function runStep(
       if (targets === "wait") return "wait";
       const applied =
         step.do === "powerUp" && step.perPrevious
-          ? { ...step, amount: step.amount * (frame.previous ?? 0) }
+          ? {
+              ...step,
+              amount:
+                step.amount * Math.floor((frame.previous ?? 0) / (step.perPreviousEvery ?? 1)),
+            }
           : step.do === "powerUp" && step.perGivenDonOf
             ? { ...step, amount: step.amount * perDon }
             : step;
@@ -830,6 +854,18 @@ function runStep(
       const chosen = choose(state, frame, controller, p.hand, step.count, step.count, step.do);
       if (chosen === "wait") return "wait";
       moveFromHandToDeckTop(state, controller, chosen);
+      // "At the top or bottom of your deck in any order": the player arranges them.
+      if (step.orBottom && chosen.length > 0)
+        frame.steps.splice(1, 0, { do: "arrangeDeckTop", look: chosen.length, bottom: true });
+      return "continue";
+    }
+
+    case "opponentDonNoRefresh": {
+      const opponent = state.players[opponentOf(controller)];
+      opponent.donNoRefresh = Math.min(
+        opponent.donRested,
+        (opponent.donNoRefresh ?? 0) + step.count,
+      );
       return "continue";
     }
 
@@ -999,7 +1035,11 @@ function runStep(
           ? choose(state, frame, controller, [top], step.must ? 1 : 0, 1, step.do)
           : [];
         if (picked === "wait") return "wait";
-        if (picked.length === 0) return "continue";
+        if (picked.length === 0) {
+          // "Then, place the rest at the bottom of your deck."
+          if (step.restToBottom && top) p.deck.push(...p.deck.splice(0, 1));
+          return "continue";
+        }
         frame.memo = picked;
       }
       return playChosen(state, frame, controller, p.deck, frame.memo[0] as string, step.rested);
@@ -1702,11 +1742,12 @@ function lasting(
   duration: Duration = "turn",
   ownNextTurn = false,
 ): Pick<Modifier, "until" | "endsTurn"> {
-  if (duration !== "opponentsNextTurn") return { until: duration };
+  if (duration !== "opponentsNextTurn" && duration !== "yourNextTurn") return { until: duration };
   // The opponent's next turn is the next turn if it's the controller's turn now. With
   // `ownNextTurn`, it lasts into `controller`'s own next turn instead.
   const now = state.turnPlayer === controller;
-  if (ownNextTurn) return { until: "turn", endsTurn: state.turn + (now ? 2 : 1) };
+  if (ownNextTurn || duration === "yourNextTurn")
+    return { until: "turn", endsTurn: state.turn + (now ? 2 : 1) };
   return { until: "turn", endsTurn: state.turn + (now ? 1 : 2) };
 }
 
@@ -1732,6 +1773,13 @@ function applyToTarget(
       state.modifiers.push({
         target: uid,
         cost: powerAmount(state, controller, step),
+        ...lasting(state, controller, step.duration),
+      });
+      return;
+    case "setPower":
+      state.modifiers.push({
+        target: uid,
+        power: step.power - powerOf(state, card),
         ...lasting(state, controller, step.duration),
       });
       return;

@@ -1,0 +1,22 @@
+{
+  "name": "A revealed card that isn't played goes to the bottom of the deck",
+  "rules": ["11-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-REVEAL-OR-BOTTOM"],
+      "deck": ["TEST-C4-5000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.deck.0.cardId": "TEST-FILLER",
+    "p1.deck.1.cardId": "TEST-C4-5000",
+    "p1.characters": 1
+  }
+}
