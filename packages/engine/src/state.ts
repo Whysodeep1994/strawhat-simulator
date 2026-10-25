@@ -509,11 +509,18 @@ export function conditionsMet(
     if ("handFewerThanOpponentBy" in c)
       return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
     if ("totalLifeAtMost" in c) return me.life.length + them.life.length <= c.totalLifeAtMost;
-    if ("trashAtLeast" in c) return me.trash.length >= c.trashAtLeast;
+    if ("trashAtLeast" in c)
+      return (
+        me.trash.filter((t) => matchesFilter(state, t, c.trashFilter, null, false)).length >=
+        c.trashAtLeast
+      );
     if ("thisRested" in c) return source.rested;
     if ("not" in c) return !conditionsMet(state, controller, source, [c.not]);
     if ("opponentLeaderAttribute" in c)
       return (definitionOf(state, them.leader).attribute ?? "").includes(c.opponentLeaderAttribute);
+    if ("charactersFewerThanOpponent" in c) return me.characters.length < them.characters.length;
+    if ("faceUpLifeAtLeast" in c)
+      return me.life.filter((l) => l.faceUp).length >= c.faceUpLifeAtLeast;
     if ("donOnFieldAtMostOpponents" in c)
       return donOnField(state, controller) <= donOnField(state, opponentOf(controller));
     return false;
@@ -720,6 +727,8 @@ export function canPayCosts(
       restableOpponentCharacters(state, player).length < cost.restOpponentCharacter
     )
       return false;
+    if ("thisToHand" in cost && !findOnField(state, source.uid)) return false;
+    if ("thisPower" in cost && !findOnField(state, source.uid)) return false;
     if ("activeLeaderPower" in cost && p.leader.rested) return false;
     if ("returnActiveDon" in cost) restDon += cost.returnActiveDon;
     if ("returnOwnCharacter" in cost) {

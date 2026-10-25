@@ -28,6 +28,10 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-25: Fixed main after the PR #30 merge. The merge commit dropped the EB-03 to PRB-02
+  blocks (opponentHandToDeckBottom, activateEventFromTrash, setPowerToZero, draw perCount,
+  faceUpLifeAtLeast, charactersFewerThanOpponent, trashAtLeast trashFilter) and typecheck failed.
+  Redid the merge with both sides kept.
 - 2026-10-25: Fixed a freeze found while testing the 979-card data (OP-06 and OP-14 added).
   Playing OP14-090 Mr.1 (Daz.Bonez) hung the game: its "if there is a Character with a cost of 0
   or 8 or more" check re-worked every other Character's cost inside each cost, which grows

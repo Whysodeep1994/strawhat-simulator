@@ -64,6 +64,7 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `youDealDamage`                | "When you deal damage to your opponent's Life" (any of your attacks)                                                     | 8-1-3-1 |
 | `yourCharacterRemovedByEffect` | "When your Character [`cardFilter`] is removed from the field by an effect" (yours or your opponent's)                   | 8-1-3-1 |
 | `opponentLifeRemoved`          | "When a card is removed from your opponent's Life cards" (damage or an effect)                                           | 8-1-3-1 |
+| `opponentCharacterKOd`         | "When your opponent's Character is K.O.'d" (in battle or by an effect)                                                   | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -146,6 +147,7 @@ played on this turn"), `handAtLeast`, `thisRested` ("if this Character is rested
 | `{ "thisRested": true }`                         | "If this Character is rested"                                                                             |
 | `{ "not": { ... } }`                             | True when the nested condition doesn't hold                                                               |
 | `{ "opponentLeaderAttribute": "Slash" }`         | "If your opponent's Leader has the <Slash> attribute"                                                     |
+| `{ "trashAtLeast": 4, "trashFilter": {...} }`    | "If you have 4 or more Events in your trash": only trash cards matching `trashFilter` count               |
 | `{ "donFewerThanOpponentBy": 2 }`                | "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field"  |
 | `{ "lifeFewerThanOpponent": true }`              | "If you have less Life cards than your opponent"                                                          |
 | `{ "trashHas": { "name": "Chess" } }`            | "If you have [Chess] in your trash"                                                                       |
@@ -336,6 +338,9 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `opponentDonMinus`               | "Your opponent returns 1 DON!! card from their field to their DON!! deck".                                                                                                                                                                                    |
 | `koImmunity`                     | Permanent: "This Character cannot be K.O.'d by effects of your opponent's Characters with 5000 base power or less" (`from` is the filter for those cards).                                                                                                    |
 | `donDownToOpponent`              | "Return DON!! cards from your field to your DON!! deck until you have the same number of DON!! cards on your field as your opponent".                                                                                                                         |
+| `opponentHandToDeckBottom`       | "Your opponent places 1 card from their hand at the bottom of their deck": the opponent picks.                                                                                                                                                                |
+| `activateEventFromTrash`         | "Activate the [Main] effect of up to 1 Event card ... in your trash" (`filter`). The Event stays in the trash.                                                                                                                                                |
+| `setPowerToZero`                 | "Set the power of up to 1 of your opponent's Characters to 0 during this turn" (`target`, `duration`): gives −(its current power).                                                                                                                            |
 
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash", or
 `perCount` (a `count`-style `{ "side", "zone", "filter" }`) for "for every {Straw Hat Crew} type

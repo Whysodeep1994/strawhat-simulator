@@ -692,7 +692,10 @@ function runStep(
   switch (step.do) {
     case "draw": {
       const who = step.side === "opponent" ? opponentOf(controller) : controller;
-      if (drawCards(state, who, step.count) > 0)
+      const n = step.perCount
+        ? step.count * countCards(state, controller, source, step.perCount)
+        : step.count;
+      if (n > 0 && drawCards(state, who, n) > 0)
         queueFieldEffects(state, who, "drawOutsideDrawPhase");
       return "continue";
     }
@@ -754,6 +757,7 @@ function runStep(
     case "setBasePower":
     case "setCost":
     case "setPower":
+    case "setPowerToZero":
     case "giveRestedDon": {
       if (step.do === "giveRestedDon" && p.donRested === 0) return "continue";
       const targets = chooseTargets(state, frame, source, step.target, step.do);

@@ -311,7 +311,7 @@ function costText(cost: Cost): string {
 function stepText(step: Step): string {
   switch (step.do) {
     case "draw":
-      return `${step.side === "opponent" ? "Your opponent draws" : "Draw"} ${step.count} card${step.count === 1 ? "" : "s"}.`;
+      return `${step.side === "opponent" ? "Your opponent draws" : "Draw"} ${step.count} card${step.count === 1 ? "" : "s"}${perCountText(step.perCount)}.`;
     case "powerUp":
       return `Give ${targetText(step.target)} ${step.amount >= 0 ? "+" : "−"}${Math.abs(step.amount)} power${durationText(step.duration)}${step.perPrevious ? ` for every ${step.perPreviousEvery ?? 1} card(s) moved` : ""}${perCountText(step.perCount)}.`;
     case "grantKeyword":
