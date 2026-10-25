@@ -1,24 +1,32 @@
-import { setOf, type CardCatalog } from "@strawhat/engine";
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import type { CardCatalog } from "@strawhat/engine";
+import { useEffect, useMemo, useState } from "react";
 import { Board } from "./Board.js";
-import { loadCardData, setLabel, type CardData, type PlayableDeck } from "./card-data.js";
+import { loadCardData, type CardData } from "./card-data.js";
 import { DeckBuilder } from "./DeckBuilder.js";
+import {
+  deckTitle,
+  MatPicker,
+  MyDecksScreen,
+  PlaySetup,
+  RANDOM,
+  SubScreen,
+  TitleMenu,
+  type Screen,
+} from "./Home.js";
 import { newLocalGame, type LocalGame } from "./local-game.js";
 import {
   cardList,
+  copyOf,
   loadDecks,
   newDeck,
   playable,
-  problemsOf,
   saveDecks,
   type SavedDeck,
 } from "./my-decks.js";
-import { loadMat, readMatImage, saveMat, type MatSeat } from "./playmat.js";
+import { loadMat, saveMat, type MatSeat } from "./playmat.js";
 import { Scenery } from "./Scenery.js";
 
 export type Mats = Record<MatSeat, string | null>;
-
-const RANDOM = "random";
 
 export function App() {
   const [data, setData] = useState<CardData | null>(null);
@@ -33,6 +41,7 @@ export function App() {
   const [myDecks, setMyDecks] = useState<SavedDeck[]>(loadDecks);
   const [editing, setEditing] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
+  const [screen, setScreen] = useState<Screen>("title");
 
   // Every deck that can start a game: the starter decks, then the player's own legal decks.
   const decks = useMemo(
@@ -60,7 +69,10 @@ export function App() {
       (loaded) => {
         if (!live) return;
         setData(loaded);
-        setDeckId((id) => id ?? loaded.decks[0]?.id ?? null);
+        // Start on the player's own first ready deck, else the first official starter deck.
+        const ready = loadDecks().find((d) => playable(d, loaded));
+        const starter = loaded.decks.find((d) => d.official) ?? loaded.decks[0];
+        setDeckId((id) => id ?? ready?.id ?? starter?.id ?? null);
       },
       (e: unknown) => live && setLoadError(e instanceof Error ? e.message : String(e)),
     );
@@ -81,6 +93,21 @@ export function App() {
     const seed = Math.floor(Math.random() * 2 ** 31);
     setGame(newLocalGame(data.catalog as CardCatalog, { human: mine, bot: theirs }, seed));
   };
+
+  const addDeck = (deck: SavedDeck) => {
+    storeDecks([...myDecks, deck]);
+    setEditing(deck.id);
+  };
+
+  // Escape steps back from a menu screen to the title menu, like a game's "back" button.
+  useEffect(() => {
+    if (screen === "title" || game || editing) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setScreen("title");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [screen, game, editing]);
 
   const setMat = (seat: MatSeat, image: string | null) => {
     setMats((m) => ({ ...m, [seat]: image }));
@@ -125,131 +152,82 @@ export function App() {
     );
   }
 
+  const back = () => setScreen("title");
+  const playmats = (
+    <section className="panel">
+      <h2>Playmats</h2>
+      <div className="mat-pickers">
+        <MatPicker
+          seat="you"
+          label="Your playmat"
+          image={mats.you}
+          onChange={(image) => setMat("you", image)}
+        />
+        <MatPicker
+          seat="opponent"
+          label="Opponent's playmat"
+          image={mats.opponent}
+          onChange={(image) => setMat("opponent", image)}
+        />
+      </div>
+    </section>
+  );
+
   return (
     <>
       <Scenery />
-      <main className="home">
-        <header className="home-title">
-          <h1>
-            Strawhat <span>Simulator</span>
-          </h1>
-          <p>Set sail for a game of the One Piece Card Game.</p>
-        </header>
-
-        {loadError ? (
-          <section className="panel">
-            <h2>The cards didn't load</h2>
-            <p className="note">{loadError}</p>
-            <button onClick={() => window.location.reload()}>Try again</button>
-          </section>
-        ) : !data ? (
-          <section className="panel loading" aria-busy="true">
-            Loading cards…
-          </section>
-        ) : (
-          <div className="home-grid">
-            <section className="panel decks" aria-labelledby="deck-heading">
-              <div className="panel-head">
-                <h2 id="deck-heading">Starter decks</h2>
-                <span className="count">{data.decks.length} ready</span>
-              </div>
-              <div className="deck-grid">
-                {data.decks.map((deck) => (
-                  <DeckTile
-                    key={deck.id}
-                    deck={deck}
-                    data={data}
-                    chosen={deck.id === deckId}
-                    onChoose={() => setDeckId(deck.id)}
-                  />
-                ))}
-              </div>
-              <p className="note">
-                Starter decks are played as printed, even where their cards have rotated out of
-                Standard. More are on their way; a practice deck stands in until a set's official
-                list is added.
+      <main className={`home ${screen === "title" ? "at-title" : ""}`}>
+        {screen === "title" ? (
+          <>
+            <header className="home-title">
+              <h1>
+                Strawhat <span>Simulator</span>
+              </h1>
+              <p>Set sail for a game of the One Piece Card Game.</p>
+            </header>
+            {loadError ? (
+              <section className="panel">
+                <h2>The cards didn't load</h2>
+                <p className="note">{loadError}</p>
+                <button onClick={() => window.location.reload()}>Try again</button>
+              </section>
+            ) : (
+              <TitleMenu ready={!!data} deckCount={myDecks.length} onPick={setScreen} />
+            )}
+            {!data && !loadError && (
+              <p className="loading-line" aria-busy="true">
+                Loading cards…
               </p>
-
-              <div className="panel-head">
-                <h2>My decks</h2>
-                <span className="count">Standard format</span>
-              </div>
-              <div className="deck-grid">
-                {myDecks.map((saved) => {
-                  const ready = playable(saved, data);
-                  return (
-                    <MyDeckTile
-                      key={saved.id}
-                      saved={saved}
-                      data={data}
-                      chosen={saved.id === deckId}
-                      problems={ready ? 0 : problemsOf(saved, data).length}
-                      onChoose={() => ready && setDeckId(saved.id)}
-                      onEdit={() => setEditing(saved.id)}
-                    />
-                  );
-                })}
-                <button
-                  className="deck-tile new-deck"
-                  onClick={() => {
-                    const deck = newDeck();
-                    storeDecks([...myDecks, deck]);
-                    setEditing(deck.id);
-                  }}
-                >
-                  <span className="plus" aria-hidden="true">
-                    +
-                  </span>
-                  <span className="deck-info">
-                    <strong>Build a deck</strong>
-                    <span>Search every card and save your own</span>
-                  </span>
-                </button>
-              </div>
-              {saveFailed && (
-                <p className="note">This browser isn't letting us save decks (private mode?).</p>
-              )}
-            </section>
-
-            <aside className="home-side">
-              <section className="panel">
-                <h2>Opponent</h2>
-                <label className="field">
-                  <span>The computer plays</span>
-                  <select value={opponentId} onChange={(e) => setOpponentId(e.target.value)}>
-                    <option value={RANDOM}>A random deck</option>
-                    {decks.map((deck) => (
-                      <option key={deck.id} value={deck.id}>
-                        {deckTitle(deck, data)} · {deckSubtitle(deck)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </section>
-
-              <section className="panel">
-                <h2>Playmats</h2>
-                <div className="mat-pickers">
-                  <MatPicker
-                    seat="you"
-                    label="Your playmat"
-                    image={mats.you}
-                    onChange={(image) => setMat("you", image)}
-                  />
-                  <MatPicker
-                    seat="opponent"
-                    label="Opponent's playmat"
-                    image={mats.opponent}
-                    onChange={(image) => setMat("opponent", image)}
-                  />
-                </div>
-              </section>
-
-              <button className="primary big" onClick={start} disabled={!deckId}>
-                Play against the computer
-              </button>
-            </aside>
-          </div>
+            )}
+          </>
+        ) : screen === "settings" ? (
+          <SubScreen title="Settings" onBack={back}>
+            <div className="settings-grid">{playmats}</div>
+          </SubScreen>
+        ) : !data ? null : screen === "play" ? (
+          <SubScreen title="Play" onBack={back}>
+            <PlaySetup
+              data={data}
+              myDecks={myDecks}
+              deckId={deckId}
+              opponentId={opponentId}
+              onDeck={setDeckId}
+              onOpponent={setOpponentId}
+              onStart={start}
+              onBuild={() => setScreen("decks")}
+            />
+          </SubScreen>
+        ) : (
+          <SubScreen title="Deck Builder" onBack={back}>
+            <MyDecksScreen
+              data={data}
+              myDecks={myDecks}
+              saveFailed={saveFailed}
+              onEdit={setEditing}
+              onNew={() => addDeck(newDeck())}
+              onCopy={(deck) => addDeck(copyOf(deck, `My ${deckTitle(deck, data)}`))}
+            />
+          </SubScreen>
         )}
 
         <footer className="legal">
@@ -258,161 +236,5 @@ export function App() {
         </footer>
       </main>
     </>
-  );
-}
-
-function deckTitle(deck: PlayableDeck, data: CardData): string {
-  return data.catalog[deck.leader]?.name ?? deck.name;
-}
-
-function deckSubtitle(deck: PlayableDeck): string {
-  if (deck.mine) return deck.name;
-  return deck.official ? deck.name : `${setLabel(setOf(deck.leader))} practice`;
-}
-
-function MyDeckTile({
-  saved,
-  data,
-  chosen,
-  problems,
-  onChoose,
-  onEdit,
-}: {
-  saved: SavedDeck;
-  data: CardData;
-  chosen: boolean;
-  problems: number;
-  onChoose: () => void;
-  onEdit: () => void;
-}) {
-  const leader = saved.leader ? data.catalog[saved.leader] : undefined;
-  const art = data.imageUrl(leader);
-  const colors = leader?.colors ?? [];
-  const count = cardList(saved).length;
-  return (
-    <div className="my-deck">
-      <button
-        className={`deck-tile ${chosen ? "chosen" : ""} ${problems ? "unready" : ""}`}
-        onClick={problems ? onEdit : onChoose}
-        aria-pressed={chosen}
-        style={{
-          ["--deck-color" as string]: `var(--c-${colors[0] ?? "black"})`,
-          ["--deck-color-2" as string]: `var(--c-${colors[1] ?? colors[0] ?? "black"})`,
-        }}
-      >
-        <span className="deck-art">
-          {art ? <img src={art} alt="" loading="lazy" draggable={false} /> : null}
-        </span>
-        <span className="deck-info">
-          <strong>{saved.name}</strong>
-          <span>
-            {leader?.name ?? "No Leader yet"} · {count}/50
-          </span>
-        </span>
-        <span className={`badge ${problems ? "practice" : "official"}`}>
-          {problems ? `${problems} to fix` : "Mine"}
-        </span>
-      </button>
-      <button className="small edit-deck" onClick={onEdit}>
-        Edit
-      </button>
-    </div>
-  );
-}
-
-function DeckTile({
-  deck,
-  data,
-  chosen,
-  onChoose,
-}: {
-  deck: PlayableDeck;
-  data: CardData;
-  chosen: boolean;
-  onChoose: () => void;
-}) {
-  const leader = data.catalog[deck.leader];
-  const art = data.imageUrl(leader);
-  const colors = leader?.colors ?? [];
-  return (
-    <button
-      className={`deck-tile ${chosen ? "chosen" : ""}`}
-      onClick={onChoose}
-      aria-pressed={chosen}
-      style={{
-        ["--deck-color" as string]: `var(--c-${colors[0] ?? "black"})`,
-        ["--deck-color-2" as string]: `var(--c-${colors[1] ?? colors[0] ?? "black"})`,
-      }}
-    >
-      <span className="deck-art">
-        {art ? <img src={art} alt="" loading="lazy" draggable={false} /> : null}
-      </span>
-      <span className="deck-info">
-        <strong>{deckTitle(deck, data)}</strong>
-        <span>{deckSubtitle(deck)}</span>
-      </span>
-      <span className={`badge ${deck.official ? "official" : "practice"}`}>
-        {deck.official ? "Official" : "Practice"}
-      </span>
-    </button>
-  );
-}
-
-function MatPicker({
-  seat,
-  label,
-  image,
-  onChange,
-}: {
-  seat: MatSeat;
-  label: string;
-  image: string | null;
-  /** Returns false when the picture can't be kept for next time. */
-  onChange: (image: string | null) => boolean;
-}) {
-  const [message, setMessage] = useState<string | null>(null);
-
-  async function upload(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    try {
-      const saved = onChange(await readMatImage(file));
-      setMessage(saved ? null : "Using it for now, but this browser won't keep it for next time.");
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : String(err));
-    }
-  }
-
-  return (
-    <div className="mat-picker">
-      <div
-        className={`mat-preview ${seat} ${image ? "custom" : ""}`}
-        style={image ? { backgroundImage: `url("${image}")` } : undefined}
-        aria-label={image ? `${label}: your picture` : `${label}: the default mat`}
-        role="img"
-      />
-      <div className="mat-picker-text">
-        <strong>{label}</strong>
-        <div className="row">
-          <label className="button small">
-            Upload image
-            <input type="file" accept="image/*" onChange={(e) => void upload(e)} />
-          </label>
-          {image && (
-            <button
-              className="ghost small"
-              onClick={() => {
-                onChange(null);
-                setMessage(null);
-              }}
-            >
-              Use default
-            </button>
-          )}
-        </div>
-        {message && <p className="note">{message}</p>}
-      </div>
-    </div>
   );
 }
