@@ -83,6 +83,7 @@ export function Board({ data, game, mats, onChange, onRestart, onExit }: Props) 
   const art = (card: CardInstance | null | undefined) => data.imageUrl(def(card));
   const prompt = view.prompt;
   const myPrompt = prompt.kind !== "gameOver" && prompt.player === me ? prompt : null;
+  const pickedPower = picked.reduce((sum, uid) => sum + (view.powers[uid] ?? 0), 0);
 
   // A new decision resets anything half-done.
   useEffect(() => {
@@ -396,6 +397,8 @@ export function Board({ data, game, mats, onChange, onRestart, onExit }: Props) 
                 ? `Choose ${myPrompt.max}.`
                 : `Choose ${myPrompt.min === 0 ? "up to" : `${myPrompt.min} to`} ${myPrompt.max}.`}{" "}
             From {nameOf(def, view, myPrompt.source)}.
+            {myPrompt.maxTotalPower !== undefined &&
+              ` Their total power can be up to ${myPrompt.maxTotalPower} (now ${pickedPower}).`}
           </p>
           <div className="card-row wrap">
             {view.promptCards.map((card) => {
@@ -429,7 +432,11 @@ export function Board({ data, game, mats, onChange, onRestart, onExit }: Props) 
           <div className="row">
             <button
               className="primary"
-              disabled={picked.length < myPrompt.min || picked.length > myPrompt.max}
+              disabled={
+                picked.length < myPrompt.min ||
+                picked.length > myPrompt.max ||
+                (myPrompt.maxTotalPower !== undefined && pickedPower > myPrompt.maxTotalPower)
+              }
               onClick={() => act({ type: "choose", player: me, cards: picked })}
             >
               {myPrompt.max === 0
