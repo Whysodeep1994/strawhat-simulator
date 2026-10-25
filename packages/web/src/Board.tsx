@@ -43,7 +43,6 @@ interface Menu {
 const BOT_DELAY_MS = 650;
 
 const CHOOSE_TEXT: Record<string, string> = {
-  activateEventFromHand: "Choose an Event to activate",
   ko: "Choose cards to K.O.",
   rest: "Choose cards to rest",
   setActive: "Choose cards to set as active",

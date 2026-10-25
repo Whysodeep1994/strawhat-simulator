@@ -142,6 +142,11 @@ played on this turn"), plus:
 | `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"                                           |
 | `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                                                |
 | `{ "trashAtLeast": 10 }`                         | "If you have 10 or more cards in your trash"                                                              |
+| `{ "trashAtLeast": 4, "trashFilter": {...} }`    | "If you have 4 or more Events in your trash" (only matching cards count)                                  |
+| `{ "deckAtMost": 0 }`                            | "If your deck has 0 cards"                                                                                |
+| `{ "yourTurnsAtLeast": 2 }`                      | "If it is your second turn or later"                                                                      |
+| `{ "opponentDonActiveAtLeast": 1 }`              | Your opponent has 1 or more active DON!! cards                                                            |
+| `{ "activatedEventThisTurn": {...} }`            | "If you have activated an Event with a base cost of 3 or more during this turn" (a filter)                |
 | `{ "thisRested": true }`                         | "If this Character is rested"                                                                             |
 | `{ "not": { ... } }`                             | True when the nested condition doesn't hold                                                               |
 | `{ "opponentLeaderAttribute": "Slash" }`         | "If your opponent's Leader has the <Slash> attribute"                                                     |
@@ -203,6 +208,8 @@ owner's hand") and `restOpponentCharacter` ("rest 1 of your opponent's Character
 replacement: "you may rest 1 of your opponent's Characters instead") complete the list.
 `restCards` is "rest 2 of your cards": active DON!! in the cost area or
 your Leader, Characters, or Stage; the player picks the field cards and the rest are DON!!.
+`giveOpponentDon` is "give 1 of your opponent's rested DON!! cards to 1 of your opponent's
+Characters"; the player picks the Character.
 
 Face-up Life cards are open to both players (rule 3-10-2-1): `viewFor` shows them in `life`, and
 a card is face-down again once it leaves the Life area.
@@ -244,6 +251,8 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `noBaseEffect`: "with no base effect", a card without card text (rule 2-8-5): no effects and
   no keywords.
 - `noCounter`: "Character cards without a Counter".
+- `givenDonAtLeast`: "with 2 or more DON!! cards given" (1 for "with a DON!! card given").
+- `costEqualsGivenDon`: "has a cost equal to the number of DON!! cards given to it".
 - `lacksKeyword`: "without [Blocker]" is `{ "lacksKeyword": "blocker" }`.
 - `lacksTiming`: "without a [When Attacking] effect" is `{ "lacksTiming": "whenAttacking" }`.
 - `notType`: not of this type. "If the only Characters on your field are {X} type Characters" is
@@ -274,7 +283,7 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `returnToHand`                   | Return to the owner's hand.                                                                                                                                                                                                                                   |
 | `returnToDeckBottom`             | Place at the bottom of the owner's deck.                                                                                                                                                                                                                      |
 | `noBlockers`                     | "Your opponent cannot activate [Blocker]" when the target attacks.                                                                                                                                                                                            |
-| `giveRestedDon`                  | Give rested DON!! from the cost area.                                                                                                                                                                                                                         |
+| `giveRestedDon`                  | Give rested DON!! from the cost area of the target's owner (`"fromCostArea": true` takes active ones too).                                                                                                                                                    |
 | `addDon`                         | Add DON!! from the DON!! deck, active or rested.                                                                                                                                                                                                              |
 | `setDonActive`                   | Set rested DON!! as active.                                                                                                                                                                                                                                   |
 | `trashFromHand`                  | You trash cards from your hand (optional `filter`).                                                                                                                                                                                                           |
@@ -287,7 +296,7 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `characterToLife`                | Add a Character to the top or bottom of its owner's Life; `faceUp` for face-up.                                                                                                                                                                               |
 | `lifeToDeckTop`                  | Look at all your Life; place 1 on top of your deck, the rest back in any order.                                                                                                                                                                               |
 | `trashCharacter`                 | Trash Characters from the field. Not a K.O., so no [On K.O.].                                                                                                                                                                                                 |
-| `addThisToHand`                  | [Trigger] only: add this card to your hand.                                                                                                                                                                                                                   |
+| `addThisToHand`                  | [Trigger]: add this card to your hand. [On K.O.]: add it from your trash.                                                                                                                                                                                     |
 | `playThis`                       | Play this card: a [Trigger] card, or this card from the trash (e.g. [On K.O.]). `rested` plays it rested.                                                                                                                                                     |
 | `handToDeckTop`                  | Place cards from your hand at the top of your deck.                                                                                                                                                                                                           |
 | `trashToHand`                    | Add up to `count` matching cards from your trash to your hand.                                                                                                                                                                                                |
@@ -322,6 +331,11 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `handDownTo`                     | "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent".                                                                                                                                                                      |
 | `trashToDeckBottom`              | `side` places `count` cards from their trash at the bottom of their deck, in the order they pick.                                                                                                                                                             |
 | `handCostChange`                 | In a permanent effect on the field: "The cost of playing {X} cards from your hand will be reduced by 1" (`filter`, `amount`).                                                                                                                                 |
+| `swapBasePower`                  | "Select 2 ... Swap the base power of the selected cards with each other": 2 cards from `target`, or 1 from `target` and 1 from `with`.                                                                                                                        |
+| `opponentDonMinus`               | "Your opponent returns 1 DON!! card from their field to their DON!! deck" (`"active": true`: only active ones).                                                                                                                                               |
+| `koImmunity`                     | Permanent: "This Character cannot be K.O.'d by effects of your opponent's Characters with 5000 base power or less" (`from` is the filter for those cards).                                                                                                    |
+| `restImmunity`                   | Permanent: "This Character cannot be rested by your opponent's Leader and Character effects" (`from` is the filter for those cards).                                                                                                                          |
+| `activateEvent`                  | "Activate up to 1 {Dressrosa} type Event ... from your hand" (`filter`): the Event is trashed and its [Main] effect happens without paying its cost.                                                                                                          |
 | `handToDeckShuffle`              | "Your opponent returns all cards in their hand to their deck and shuffles their deck. Then, your opponent draws 5 cards" (`side`, `draw`).                                                                                                                    |
 | `cannotAttackLeader`             | "You cannot attack a Leader during this turn." Characters can still be attacked.                                                                                                                                                                              |
 | `dealDamage`                     | "Deal 1 damage to your opponent": Life to hand with a [Trigger] check, or the game is won at 0 Life. `"side": "self"` is "you take 1 damage".                                                                                                                 |
@@ -341,13 +355,14 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `guessCost`                      | "Choose a cost and reveal 1 card from the top of your opponent's deck. If the revealed card has the chosen cost, ...": the nested `steps` happen on a match. The card stays on top.                                                                           |
 | `restrictAttackTargets`          | "This Leader cannot attack your opponent's Characters with a base cost of 7 or less during this turn": `filter` is for the targets it can't attack.                                                                                                           |
 | `notPlayableByEffects`           | A permanent effect with `"zone": "hand"`: "This card in your hand cannot be played by effects." It can still be played from the hand.                                                                                                                         |
-| `activateEventFromHand`          | "Activate up to 1 ... Event from your hand": its [Main] resolves without paying its cost. `filter` picks which Events.                                                                                                                                        |
 | `nextPlayCostChange`             | "The next time you play [Trafalgar Law] from your hand during this turn, the cost will be reduced by 2": `filter` and `amount`; it's used up by the next matching play.                                                                                       |
 | `noDrawByOwnEffects`             | "You cannot draw cards using your own effects during this turn": later `draw` steps do nothing.                                                                                                                                                               |
 
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash", or
 `perCount` (a `count`-style `{ "side", "zone", "filter" }`) for "for every {Straw Hat Crew} type
-card on your field". `draw` and `trashFromHand` take the same `perCount`: "Draw a card for each
+card on your field". `powerUp` also takes `perGivenDonOf` (a target: "for every DON!! card given to
+that Character", the player picks the card) and `perTopLifeCost: true` ("reveal 1 card from the
+top of your Life cards; +1000 per 1 cost on the revealed card"). `draw` and `trashFromHand` take the same `perCount`: "Draw a card for each
 of your {Neptunian} type Characters. Then, trash the same number of cards from your hand" is
 `draw` and `trashFromHand`, each with `count: 1` and the same `perCount`.
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash" (add
@@ -431,6 +446,9 @@ Some Leaders change the rules of the game. Write them as steps in a `permanent` 
 - `faceUpLifeToDeckBottom`: "Your face-up Life cards are placed at the bottom of your deck
   instead of being added to your hand, according to the rules" (damage only; no [Trigger] check).
 - `winOnDeckOut`: "when your deck is reduced to 0, you win the game instead of losing".
+- `deckOutAtEndOfTurn`: "you do not lose when your deck has 0 cards. You lose at the end of the
+  turn in which your deck becomes 0 cards."
+- `donDeckSize` (`"count": 6`): "your DON!! deck consists of 6 cards" (read when the game is set up).
 - `deckOnlyType` (`"type": "East Blue"`): "you can only include {East Blue} type cards in your
   deck". `checkDeck` flags other cards.
 

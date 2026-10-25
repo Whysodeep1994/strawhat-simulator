@@ -73,7 +73,7 @@ export const OP12_EFFECT_CARDS: CardDefinition[] = [
     effects: [{ timing: "permanent", zone: "hand", steps: [{ do: "notPlayableByEffects" }] }],
   },
   character("TEST-ACTIVATE-EVENT", "Test Activate Event", [
-    { timing: "onPlay", steps: [{ do: "activateEventFromHand", filter: { costAtMost: 5 } }] },
+    { timing: "onPlay", steps: [{ do: "activateEvent", filter: { costAtMost: 5 } }] },
   ]),
   {
     id: "TEST-EVENT-DRAW-2",

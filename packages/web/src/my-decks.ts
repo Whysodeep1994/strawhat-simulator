@@ -88,3 +88,8 @@ function isSavedDeck(value: unknown): value is SavedDeck {
     deck.cards !== null
   );
 }
+
+/** A new saved deck that starts as a copy of a Quick deck, for the player to tweak. */
+export function copyOf(deck: PlayableDeck, name: string): SavedDeck {
+  return { ...fromList(newDeck(), deck.leader, deck.deck), name };
+}

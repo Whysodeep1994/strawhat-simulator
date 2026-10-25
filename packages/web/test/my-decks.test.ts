@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildCardData, type Card } from "../src/card-data.js";
-import { cardList, fromList, newDeck, playable, problemsOf } from "../src/my-decks.js";
+import { cardList, copyOf, fromList, newDeck, playable, problemsOf } from "../src/my-decks.js";
 
 const leader: Card = {
   id: "ST99-001",
@@ -71,6 +71,15 @@ describe("my decks", () => {
     const banned = fromList(newDeck(), "ST99-001", [...fifty.slice(0, 49), "ST99-015"]);
     expect(problemsOf(banned, data)[0]?.message).toMatch(/banned in Standard/);
     expect(playable(fromList(newDeck(), undefined, fifty), data)).toBeNull();
+  });
+
+  it("can start as a copy of a Quick deck", () => {
+    const quick = { id: "ST99", name: "Test", leader: "ST99-001", deck: fifty, official: true };
+    const copy = copyOf(quick, "My Test");
+    expect(copy.name).toBe("My Test");
+    expect(copy.leader).toBe("ST99-001");
+    expect(cardList(copy)).toEqual([...fifty].sort((a, b) => a.localeCompare(b)));
+    expect(copy.id).not.toBe(quick.id);
   });
 
   it("use the base rules until the Standard list is in the card data", () => {
