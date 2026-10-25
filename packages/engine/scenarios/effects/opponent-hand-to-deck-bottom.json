@@ -1,0 +1,14 @@
+{
+  "name": "\"Your opponent places 1 card from their hand at the bottom of their deck\": they pick it",
+  "rules": ["8-4"],
+  "setup": {
+    "p1": { "hand": ["TEST-HAND-BOTTOM"], "don": { "active": 1 } },
+    "p2": { "hand": ["TEST-FILLER", "TEST-C2-3000"] }
+  },
+  "actions": [
+    { "type": "playCard", "player": "p1", "card": "p1.hand.0" },
+    { "type": "choose", "player": "p1", "cards": ["p2.hand.1"], "illegal": true },
+    { "type": "choose", "player": "p2", "cards": ["p2.hand.1"] }
+  ],
+  "expect": { "p2.hand": 1, "p2.hand.0.cardId": "TEST-FILLER", "p2.deck.20.cardId": "TEST-C2-3000" }
+}

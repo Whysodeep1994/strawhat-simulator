@@ -127,6 +127,8 @@ played on this turn"), plus:
 | `{ "opponentHandAtLeast": 6 }`                   | "If your opponent has 6 or more cards in their hand"                                                      |
 | `{ "handTrashedByEffectThisTurn": true }`        | "During the turn in which a card in your hand is trashed by an effect"                                    |
 | `{ "donOnFieldAtMostOpponents": true }`          | "If the number of DON!! cards on your field is equal to or less than the number on your opponent's field" |
+| `{ "faceUpLifeAtLeast": 1 }`                     | "If you have a face-up Life card"                                                                         |
+| `{ "charactersFewerThanOpponent": true }`        | "If you have less Characters than your opponent"                                                          |
 | `{ "thisPowerAtLeast": 7000 }`                   | "If this Character has 7000 power or more"                                                                |
 | `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"                                           |
 | `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                                                |
@@ -140,10 +142,11 @@ played on this turn"), plus:
 | `{ "opponentRestedCardsAtLeast": 7 }`            | "If your opponent has 7 or more rested cards" (rested DON!!, Leader, Characters, Stage)                   |
 | `{ "thisActive": true }`                         | "If this Character is active"                                                                             |
 
-`count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`;
+`count` takes `side` (`"self"`, `"opponent"`, or `"any"` for both players), an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
 and `filter`, and `atLeast` (default 1) and/or `atMost`. "If you do not have 5 Characters with a
 cost of 5 or more" is `{ "count": { "side": "self", "filter": { "costAtLeast": 5 } }, "atMost": 4 }`.
+`"side": "any"` counts both players' cards ("if there are 2 or more Characters with a cost of 8 or more").
 
 ## Costs
 
@@ -172,7 +175,9 @@ your field"), `playFromHand` ("play 1
 [Kotori] from your hand"; the value is a filter),
 and `characterToLife` ("add 1 of your Characters with ... to the top of your Life cards
 face-up": `{ "characterToLife": 1, "filter": {...}, "faceUp": true }`), `thisToDeckBottom` ("place
-this card ... at the bottom of your deck"), `activeLeaderPower` ("give your 1 active Leader −5000
+this card ... at the bottom of your deck"), `thisToHand` ("return this Character to the owner's
+hand"), `thisPower` ("give this Character −2000 power during this turn": `{ "thisPower": -2000 }`),
+`activeLeaderPower` ("give your 1 active Leader −5000
 power during this turn"; the Leader must be active), and `returnActiveDon` ("return 2 of your
 active DON!! cards to your DON!! deck"; rested ones can't pay it). `returnOwnCharacter` takes
 `"to": "deckBottom"` for "place 1 of your Characters ... at the bottom of your deck", and
@@ -222,6 +227,8 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `noBaseEffect`: "with no base effect", a card without card text (rule 2-8-5): no effects and
   no keywords.
 - `noCounter`: "Character cards without a Counter".
+- `lacksKeyword`: "without [Blocker]" is `{ "lacksKeyword": "blocker" }`.
+- `lacksTiming`: "without a [When Attacking] effect" is `{ "lacksTiming": "whenAttacking" }`.
 - `notType`: not of this type. "If the only Characters on your field are {X} type Characters" is
   `{ "count": { "side": "self", "filter": { "notType": "X" } }, "atMost": 0 }`.
 
@@ -311,7 +318,9 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash", or
 `perCount` (a `count`-style `{ "side", "zone", "filter" }`) for "for every {Straw Hat Crew} type
-card on your field".
+card on your field". `draw` and `trashFromHand` take the same `perCount`: "Draw a card for each
+of your {Neptunian} type Characters. Then, trash the same number of cards from your hand" is
+`draw` and `trashFromHand`, each with `count: 1` and the same `perCount`.
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash" (add
 `trashFilter` to count only some cards, e.g. `{ "category": "event" }` for "every 2 Events in
 your trash"), and `perRestedDon: 3` for "for every 3 of your rested DON!! cards".

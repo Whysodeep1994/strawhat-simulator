@@ -96,6 +96,8 @@ export type Timing =
   | "becomesRested"
   /** "When a Character is K.O.'d": any Character, either player's, in battle or by an effect. */
   | "characterKOd"
+  /** "When your opponent's Character is K.O.'d", in battle or by an effect. */
+  | "opponentCharacterKOd"
   /** "When this card's attack deals damage to your opponent's Life". */
   | "attackDealsDamage"
   /** "When you take damage": each time a Life card leaves for damage. */
@@ -166,7 +168,7 @@ export type Condition =
   | { opponentHasMoreDon: true }
   | { handAtLeast: number }
   /** "If you have 10 or more cards in your trash". */
-  | { trashAtLeast: number }
+  | { trashAtLeast: number; trashFilter?: Filter }
   /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
   | { lifeAtMostOpponents: true }
   /** "If you have a total of 3 or more given DON!! cards" (Leader and Characters). */
@@ -204,7 +206,8 @@ export type Condition =
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
-  side: "self" | "opponent";
+  /** "any" counts both players' cards ("if there are 2 or more Characters with a cost of 8 or more"). */
+  side: "self" | "opponent" | "any";
   /** Defaults to "characters". "field" is the Leader, Characters, and Stage. */
   zone?: "leader" | "characters" | "leaderOrCharacters" | "stage" | "field";
   filter?: Filter;
@@ -249,6 +252,10 @@ export type Cost =
   | { handToDeckBottom: number }
   /** Place this card (a Character or Stage) at the bottom of your deck. */
   | { thisToDeckBottom: true }
+  /** "Return this Character to the owner's hand". */
+  | { thisToHand: true }
+  /** "Give this Character −2000 power during this turn". */
+  | { thisPower: number }
   /** "Give your 1 active Leader −5000 power during this turn": the Leader must be active. */
   | { activeLeaderPower: number }
   /** "Return 2 of your active DON!! cards to your DON!! deck". */
@@ -341,6 +348,8 @@ export interface Filter {
   hasTrigger?: boolean;
   /** The card has this keyword right now, e.g. [Blocker]. */
   keyword?: Keyword;
+  /** The card doesn't have this keyword right now ("without [Blocker]"). */
+  lacksKeyword?: Keyword;
   /** The printed attribute includes this, e.g. "Slash". */
   attribute?: string;
   /** At least one of these filters matches ("{Cross Guild} type or ..."). */
@@ -349,6 +358,8 @@ export interface Filter {
   noCounter?: boolean;
   /** "With no base effect": a card without card text (rule 2-8-5), so no effects or keywords. */
   noBaseEffect?: boolean;
+  /** "Without a [When Attacking] effect": the card has no effect with this timing. */
+  lacksTiming?: Timing;
 }
 
 /**
@@ -449,7 +460,15 @@ export type Step =
   | { do: "setDonActive"; count: number }
   /** The effect's player trashes cards from their hand. */
   /** `ifYouDo`: "you may trash ...: If you do, ..." (with `upTo`). */
-  | { do: "trashFromHand"; count: number; upTo?: boolean; filter?: Filter; ifYouDo?: Step[] }
+  /** `perCount` multiplies `count` like `draw` ("Then, trash the same number of cards from your hand"). */
+  | {
+      do: "trashFromHand";
+      count: number;
+      upTo?: boolean;
+      filter?: Filter;
+      ifYouDo?: Step[];
+      perCount?: CardCount;
+    }
   /** "Trash this Stage" (or Character) as part of the effect. Not a K.O. */
   | { do: "trashThis" }
   /** "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent". */

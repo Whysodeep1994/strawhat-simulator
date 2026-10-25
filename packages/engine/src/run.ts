@@ -5,6 +5,7 @@ import {
   basePowerOf,
   canPayCosts,
   conditionsMet,
+  countCards,
   definitionOf,
   donOnField,
   effectOf,
@@ -146,6 +147,7 @@ const ON_FIELD_TIMINGS = new Set([
   "opponentLifeRemoved",
   "becomesRested",
   "characterKOd",
+  "opponentCharacterKOd",
   "attackDealsDamage",
   "opponentCharacterReturned",
   "restedByOpponentsCharacter",
@@ -310,6 +312,10 @@ function payCost(
     }
   } else if ("thisToDeckBottom" in cost) {
     removeFromField(state, source.uid, "deckBottom");
+  } else if ("thisToHand" in cost) {
+    removeFromField(state, source.uid, "hand");
+  } else if ("thisPower" in cost) {
+    state.modifiers.push({ target: source.uid, power: cost.thisPower, until: "turn" });
   } else if ("returnActiveDon" in cost) {
     returnDon(state, frame.controller, cost.returnActiveDon, true);
   } else if ("activeLeaderPower" in cost) {
@@ -790,8 +796,11 @@ function runStep(
 
     case "trashFromHand": {
       const options = p.hand.filter((c) => matchesFilter(state, c, step.filter, source, false));
-      const min = step.upTo ? 0 : step.count;
-      const chosen = choose(state, frame, controller, options, min, step.count, "trashFromHand");
+      const count = step.perCount
+        ? step.count * countCards(state, controller, source, step.perCount)
+        : step.count;
+      const min = step.upTo ? 0 : count;
+      const chosen = choose(state, frame, controller, options, min, count, "trashFromHand");
       if (chosen === "wait") return "wait";
       moveFromHandToTrash(state, controller, chosen);
       frame.previous = chosen.length;
@@ -945,6 +954,43 @@ function runStep(
       if (chosen === "wait") return "wait";
       moveFromHandToTrash(state, opponent, chosen);
       return "continue";
+    }
+
+    case "opponentHandToDeckBottom": {
+      const opponent = opponentOf(controller);
+      const hand = state.players[opponent].hand;
+      const chosen = choose(
+        state,
+        frame,
+        opponent,
+        hand,
+        step.count,
+        step.count,
+        "handToDeckBottom",
+      );
+      if (chosen === "wait") return "wait";
+      moveFromHandToDeckBottom(state, opponent, chosen);
+      return "continue";
+    }
+
+    case "activateEventFromTrash": {
+      // Back from the pushed [Main] effect.
+      if (frame.memo[0] === "activated") return "continue";
+      const options = p.trash.filter(
+        (c) =>
+          definitionOf(state, c).category === "event" &&
+          matchesFilter(state, c, step.filter, source, false) &&
+          (definitionOf(state, c).effects ?? []).some((e) => e.timing === "main"),
+      );
+      const picked =
+        options.length === 0 ? [] : choose(state, frame, controller, options, 0, 1, step.do);
+      if (picked === "wait") return "wait";
+      const card = options.find((c) => c.uid === picked[0]);
+      if (!card) return "continue";
+      const index = (definitionOf(state, card).effects ?? []).findIndex((e) => e.timing === "main");
+      frame.memo = ["activated"];
+      pushEffect(state, controller, card.uid, index);
+      return "yield";
     }
 
     case "searchDeck": {
@@ -1737,6 +1783,13 @@ function applyToTarget(
         basePower: step.leaderBase
           ? basePowerOf(state, state.players[controller].leader)
           : step.power,
+        ...lasting(state, controller, step.duration),
+      });
+      return;
+    case "setPowerToZero":
+      state.modifiers.push({
+        target: uid,
+        power: -Math.max(0, powerOf(state, card)),
         ...lasting(state, controller, step.duration),
       });
       return;

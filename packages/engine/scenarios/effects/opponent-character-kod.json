@@ -1,0 +1,33 @@
+{
+  "name": "\"When your opponent's Character is K.O.'d, draw 1 card\"",
+  "rules": ["8-1-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-KO-WATCH"]
+    },
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-C2-3000",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.leader",
+      "target": "p2.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.characters": 0,
+    "p1.hand": 1
+  }
+}

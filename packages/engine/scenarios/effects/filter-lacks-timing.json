@@ -1,0 +1,17 @@
+{
+  "name": "\"Without a [When Attacking] effect\" leaves out Characters that have one",
+  "rules": ["8-4"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-ATTACK-POWER", "TEST-FILLER"],
+      "hand": ["TEST-RUSH-NO-ATTACK-EFFECT"],
+      "don": { "active": 1 }
+    }
+  },
+  "actions": [
+    { "type": "playCard", "player": "p1", "card": "p1.hand.0" },
+    { "type": "choose", "player": "p1", "cards": ["p1.characters.0"], "illegal": true },
+    { "type": "choose", "player": "p1", "cards": ["p1.characters.1"] }
+  ],
+  "expect": { "modifiers": 1, "modifiers.0.target": "c3" }
+}

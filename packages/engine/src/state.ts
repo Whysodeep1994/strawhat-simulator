@@ -360,16 +360,22 @@ function zoneMatches(state: GameState, card: CardInstance, zone: string | undefi
 }
 
 /** Field cards counted by a `count` condition. */
-function countCards(
+export function countCards(
   state: GameState,
   controller: PlayerId,
   source: CardInstance | null,
   what: CardCount,
 ): number {
-  const p = state.players[what.side === "self" ? controller : opponentOf(controller)];
-  return zoneCards(p, what.zone ?? "characters").filter((c) =>
-    matchesFilter(state, c, what.filter, source),
-  ).length;
+  const players: PlayerId[] =
+    what.side === "any"
+      ? ["p1", "p2"]
+      : [what.side === "self" ? controller : opponentOf(controller)];
+  let n = 0;
+  for (const id of players)
+    n += zoneCards(state.players[id], what.zone ?? "characters").filter((c) =>
+      matchesFilter(state, c, what.filter, source),
+    ).length;
+  return n;
 }
 
 /** A player's cards in a target zone. */
@@ -543,10 +549,13 @@ export function matchesFilter(
   if (filter.notThis && source && card.uid === source.uid) return false;
   if (filter.hasTrigger && !(def.effects ?? []).some((e) => e.timing === "trigger")) return false;
   if (filter.keyword && !hasKeywordNow(state, card, filter.keyword)) return false;
+  if (filter.lacksKeyword && hasKeywordNow(state, card, filter.lacksKeyword)) return false;
   if (filter.attribute && !(def.attribute ?? "").includes(filter.attribute)) return false;
   if (filter.anyOf && !filter.anyOf.some((f) => matchesFilter(state, card, f, source, usePower)))
     return false;
   if (filter.noBaseEffect && ((def.effects ?? []).length > 0 || (def.keywords ?? []).length > 0))
+    return false;
+  if (filter.lacksTiming && (def.effects ?? []).some((e) => e.timing === filter.lacksTiming))
     return false;
   return true;
 }
