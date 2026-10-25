@@ -2,6 +2,7 @@ import type { Action } from "./actions.js";
 import { applyAction } from "./apply.js";
 import type { CardCatalog } from "./cards.js";
 import { legalActions } from "./legal.js";
+import { costOf, powerOf } from "./state.js";
 import type { CardInstance, GameState, PlayerId, PlayerState } from "./types.js";
 
 /**
@@ -172,11 +173,18 @@ function resolveCard(state: GameState, ref: string): string {
 }
 
 /**
- * Reads "p1.characters.0.rested", "winner", "prompt.kind", or
- * "legal.p1.attack" (the number of legal actions of that type).
+ * Reads "p1.characters.0.rested", "winner", "prompt.kind",
+ * "legal.p1.attack" (the number of legal actions of that type), or
+ * "power.p1.leader" and "cost.p2.characters.0" (current power and cost).
  */
 function readPath(state: GameState, path: string, countArrays = true): unknown {
   const parts = path.split(".");
+  // "power.p1.characters.0" and "cost.p2.characters.0": current power and cost after effects.
+  if (parts[0] === "power" || parts[0] === "cost") {
+    const card = readPath(state, parts.slice(1).join("."), false) as CardInstance | undefined;
+    if (!card || typeof card !== "object" || !("uid" in card)) return undefined;
+    return parts[0] === "power" ? powerOf(state, card) : costOf(state, card);
+  }
   if (parts[0] === "legal") {
     const player = parts[1] as PlayerId;
     return legalActions(state, player).filter((a) => a.type === parts[2]).length;

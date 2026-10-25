@@ -1,0 +1,26 @@
+{
+  "name": "A Character is played from anywhere in the deck",
+  "rules": ["8-3"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-TUTOR-PLAY"],
+      "deck": ["TEST-EVENT-C1", "TEST-FILLER", "TEST-C4-5000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.deck.2"]
+    }
+  ],
+  "expect": {
+    "p1.characters.0.cardId": "TEST-C4-5000",
+    "p1.deck": 2
+  }
+}

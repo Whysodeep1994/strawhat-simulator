@@ -1,0 +1,21 @@
+{
+  "name": "The opponent picks the card to trash, face-down",
+  "rules": ["8-3"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-BLIND-TRASH", "TEST-FILLER", "TEST-C4-5000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "prompt.player": "p2",
+    "prompt.hidden": true,
+    "prompt.options": 2
+  }
+}

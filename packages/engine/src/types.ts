@@ -59,8 +59,14 @@ export interface Modifier {
   /** "Base power becomes X": replaces the printed power. */
   basePower?: number;
   cost?: number;
+  /** "Set the cost of ... to 0": replaces the printed cost. */
+  setCost?: number;
   keyword?: Keyword;
   status?: Status;
+  /** The status only works against these cards ("by <Strike> attribute Characters"). */
+  by?: Filter;
+  /** On a Leader: the next card its player plays matching `filter` costs `amount` more (or less). */
+  nextPlay?: { filter?: Filter; amount: number };
   /** The opponent can't activate [Blocker] Characters matching this when the target attacks. */
   noBlockers?: Filter;
   /** The target is a Leader: its player's [On Play] effects are negated. */
@@ -166,6 +172,8 @@ export type Prompt =
       source: string;
       /** Extra cards only the chooser sees, e.g. every card looked at in a search (rule 11-3-1). */
       revealed?: string[];
+      /** The options are face-down to the chooser, e.g. cards in the opponent's hand. */
+      hidden?: boolean;
       /** "With a total power of 4000 or less": the picked cards' power must add up to at most this. */
       maxTotalPower?: number;
     }
@@ -207,6 +215,10 @@ export interface GameState {
   activatedEvents?: { player: PlayerId; cardId: string; turn: number }[];
   /** Cards whose pending removal a replacement effect prevented (rule 8-1-3-4). */
   prevented?: string[];
+  /** Cards an effect just revealed to both players, e.g. from a hand. Cleared by the next action. */
+  revealed?: string[];
+  /** Steps waiting for the end of the current battle ("at the end of this battle"). */
+  afterBattle?: DelayedEffect[];
   /** A [Trigger] card being activated belongs to no area (rule 10-1-5-3). */
   limbo: CardInstance | null;
   /** A player who takes an extra turn after this one ("take an extra turn"). */
