@@ -64,8 +64,11 @@ function queueAbout(state: GameState, card: CardInstance, timing: Timing): void 
  * the card leaves, so its type and power can still be checked.
  */
 export function removedByEffect(state: GameState, card: CardInstance, by: PlayerId): void {
-  if (by !== card.owner && findOnField(state, card.uid)?.zone === "characters")
-    queueAbout(state, card, "yourCharacterRemovedByOpponent");
+  if (findOnField(state, card.uid)?.zone !== "characters") return;
+  if (by !== card.owner) queueAbout(state, card, "yourCharacterRemovedByOpponent");
+  queueAbout(state, card, "yourCharacterRemovedByEffect");
+  // "When a Character is removed from the field by your effect".
+  queueFieldEffects(state, by, "characterRemovedByYourEffect");
 }
 
 /** Rules 6-2 to 6-5. */
@@ -85,8 +88,11 @@ export function startTurn(state: GameState, player: PlayerId): void {
   }
   for (const card of [p.leader, ...p.characters, ...(p.stage ? [p.stage] : [])])
     if (!hasStatus(state, card, "noRefresh")) card.rested = false;
-  p.donActive += p.donRested;
-  p.donRested = 0;
+  // "Will not become active in your opponent's next Refresh Phase" for DON!! cards.
+  const stay = Math.min(p.donNoRefresh ?? 0, p.donRested);
+  p.donActive += p.donRested - stay;
+  p.donRested = stay;
+  delete p.donNoRefresh;
 
   // Draw Phase, rule 6-3-1.
   state.phase = "draw";

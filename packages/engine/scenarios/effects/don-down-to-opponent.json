@@ -1,0 +1,28 @@
+{
+  "name": "Return DON!! cards until you have as many as your opponent",
+  "rules": ["8-3-1-6"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-DON-DOWN"],
+      "don": {
+        "active": 5
+      }
+    },
+    "p2": {
+      "don": {
+        "active": 2
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.donActive": 2,
+    "p1.donDeck": 3
+  }
+}

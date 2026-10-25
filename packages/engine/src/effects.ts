@@ -112,8 +112,16 @@ export type Timing =
   | "triggerActivated"
   /** "When your opponent activates an Event" (the card is on your field). */
   | "opponentActivatesEvent"
+  /** "When a Character is removed from the field by your effect" (either player's Character). */
+  | "characterRemovedByYourEffect"
+  /** "When your Character [cardFilter] is removed from the field by an effect" (either player's). */
+  | "yourCharacterRemovedByEffect"
+  /** "When a card is removed from your opponent's Life cards" (damage or an effect). */
+  | "opponentLifeRemoved"
   /** Leader effects that read "at the start of the game" (rule 5-2-1-5-1). */
   | "startOfGame"
+  /** "When this Character becomes rested by your opponent's Character's effect". */
+  | "restedByOpponentsCharacter"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -181,10 +189,20 @@ export type Condition =
   | { donActiveAtMost: number }
   /** "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field". */
   | { donFewerThanOpponentBy: number }
-  /** "If you have a face-up Life card". */
-  | { faceUpLifeAtLeast: number }
-  /** "If you have less Characters than your opponent". */
-  | { charactersFewerThanOpponent: true };
+  /** "If you have less Life cards than your opponent". */
+  | { lifeFewerThanOpponent: true }
+  /** "If this Character is rested". */
+  | { thisRested: true }
+  /** True if the condition doesn't hold. */
+  | { not: Condition }
+  /** "If your opponent's Leader has the <Slash> attribute". */
+  | { opponentLeaderAttribute: string }
+  /** "If you have [Kuromarimo] in your trash": a card matching the filter is in your trash. */
+  | { trashHas: Filter }
+  /** "If your opponent has 7 or more rested cards" (DON!! in the cost area, Leader, Characters, Stage). */
+  | { opponentRestedCardsAtLeast: number }
+  /** "If this Character is active". */
+  | { thisActive: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -260,7 +278,13 @@ export type Cost =
   /** "Give 1 of your active DON!! cards to 1 of your Leader or Character cards". */
   | { giveActiveDon: number }
   /** "Trash 1 of your Characters with a type including ...". Not a K.O. `zone: "stage"` trashes your Stage. */
-  | { trashOwnCharacter: number; filter?: Filter; zone?: "stage" };
+  | { trashOwnCharacter: number; filter?: Filter; zone?: "stage" }
+  /** "Return this Character to the owner's hand". */
+  | { returnThis: true }
+  /** "Rest 1 of your opponent's Characters" (e.g. as a replacement cost). */
+  | { restOpponentCharacter: number }
+  /** "Rest 2 of your cards": active DON!! in the cost area, Leader, Characters, or Stage. */
+  | { restCards: number };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -304,6 +328,10 @@ export interface Filter {
   notType?: string;
   /** "With a cost equal to or less than the number of DON!! cards on your field". */
   costAtMostDonOnField?: boolean;
+  /** "With a cost equal to or less than the number of DON!! cards on your opponent's field". */
+  costAtMostOpponentDonOnField?: boolean;
+  /** "With a cost equal to or less than your number of Life cards". */
+  costAtMostLife?: boolean;
   /** A type containing this text, e.g. "Baroque Works". */
   typeIncludes?: string;
   /** No type containing this text. */
@@ -337,9 +365,10 @@ export interface Filter {
 /**
  * "turn" and "battle" end with the turn or battle. "opponentsNextTurn" lasts
  * until the end of the effect player's opponent's next turn ("until the end of
- * your opponent's next End Phase").
+ * your opponent's next End Phase"). "yourNextTurn" lasts until the end of the effect
+ * player's own next turn ("until the end of your next turn").
  */
-export type Duration = "turn" | "battle" | "opponentsNextTurn";
+export type Duration = "turn" | "battle" | "opponentsNextTurn" | "yourNextTurn";
 
 /** Things a card can or can't do, given by `grantStatus`. */
 export type Status =
@@ -353,6 +382,10 @@ export type Status =
   | "noRefresh"
   /** "Cannot be K.O.'d in battle by Leaders". */
   | "cannotBeKOdInBattleByLeaders"
+  /** "Cannot be K.O.'d in battle by <Slash> attribute cards". */
+  | "cannotBeKOdInBattleBySlash"
+  /** "Cannot attack unless your opponent trashes 2 cards from their hand whenever they attack". */
+  | "mustTrashToAttack"
   /** "Negate the effect of ...": the card's effects and keywords don't work (rule 8-2). */
   | "negated"
   /** "Cannot be rested": it can't attack, block, or be rested by effects or costs. */
@@ -361,8 +394,8 @@ export type Status =
   | "cannotBeRemovedByOpponentsEffects";
 
 export type Step =
-  /** With `perCount`, `count` is multiplied by the count ("draw a card for each of your {X} type Characters"). */
-  | { do: "draw"; count: number; perCount?: CardCount }
+  /** `side: "opponent"`: "your opponent draws 1 card". */
+  | { do: "draw"; count: number; side?: "opponent" }
   /**
    * With `perPrevious`, `amount` is multiplied by how many cards the previous step moved.
    * `perTrash`: "+amount for every N cards in your trash" (only cards matching `trashFilter`,
@@ -374,6 +407,8 @@ export type Step =
       amount: number;
       duration?: Duration;
       perPrevious?: boolean;
+      /** With `perPrevious`: "for every 3 cards placed", so the count is divided by this. */
+      perPreviousEvery?: number;
       perTrash?: number;
       trashFilter?: Filter;
       perRestedDon?: number;
@@ -438,16 +473,31 @@ export type Step =
   | { do: "trashThis" }
   /** "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent". */
   | { do: "handDownTo"; count: number; both?: boolean }
-  /** "Your opponent places 3 cards from their trash at the bottom of their deck". */
-  | { do: "trashToDeckBottom"; side: "self" | "opponent"; count: number }
+  /**
+   * "Your opponent places 3 cards from their trash at the bottom of their deck". With
+   * `youChoose`, the effect's player picks the cards ("place up to 1 card from your
+   * opponent's trash at the bottom of their deck"). `upTo` allows fewer, even 0
+   * ("any number of"), and `filter` limits which cards.
+   */
+  | {
+      do: "trashToDeckBottom";
+      side: "self" | "opponent";
+      count: number;
+      upTo?: boolean;
+      filter?: Filter;
+      youChoose?: boolean;
+    }
   /**
    * On a permanent field effect: "The cost of playing ... from your hand will be reduced by 1".
    */
   | { do: "handCostChange"; filter?: Filter; amount: number }
   /** "Take an extra turn after this one". */
   | { do: "extraTurn" }
-  /** Place cards from your hand at the top of your deck. */
-  | { do: "handToDeckTop"; count: number }
+  /**
+   * Place cards from your hand at the top of your deck. `orBottom`: "at the top or bottom of
+   * your deck in any order".
+   */
+  | { do: "handToDeckTop"; count: number; orBottom?: boolean }
   /**
    * Place cards from your hand at the bottom of your deck. `side: "opponent"`: "your opponent
    * must place 1 card from their hand at the bottom of their deck" (they pick).
@@ -457,15 +507,26 @@ export type Step =
   | { do: "handToDeckShuffle"; side: "self" | "opponent"; draw: number }
   /** "You cannot attack a Leader during this turn." */
   | { do: "cannotAttackLeader" }
-  /** "Deal 1 damage to your opponent" (rule 4-6-2: damage from an effect, [Trigger] included). */
-  | { do: "dealDamage"; count: number }
+  /**
+   * "Deal 1 damage to your opponent" (rule 4-6-2: damage from an effect, [Trigger] included).
+   * `side: "self"`: "you take 1 damage".
+   */
+  | { do: "dealDamage"; count: number; side?: "self" }
   /** "Change the target of the attack to ...": the chosen card becomes the attack's target. */
   | { do: "redirectAttack"; target: Target }
   /**
    * "Add up to 1 card from your hand to the top of your Life cards." `fromTrash` also offers
    * matching cards in your trash ("from your hand or trash"); `faceUp` adds them face-up.
    */
-  | { do: "handToLife"; count: number; filter?: Filter; fromTrash?: boolean; faceUp?: boolean }
+  | {
+      do: "handToLife";
+      count: number;
+      filter?: Filter;
+      fromTrash?: boolean;
+      faceUp?: boolean;
+      /** Only from the trash ("from your trash ... add it to the top of your Life cards"). */
+      onlyTrash?: boolean;
+    }
   /** Trash all of your face-up Life cards. */
   | { do: "trashFaceUpLife" }
   /** Trash cards from the top of your deck. */
@@ -501,7 +562,7 @@ export type Step =
       play?: boolean;
       rested?: boolean;
       /** "Add ... to the top of your Life cards face-up" instead of to your hand. */
-      to?: "lifeFaceUp";
+      to?: "lifeFaceUp" | "play";
     }
   /** Place cards from the top of your deck at the bottom ("place the revealed card at the bottom"). */
   | { do: "deckTopToBottom"; count: number }
@@ -510,8 +571,20 @@ export type Step =
    * any of them can go to the bottom instead ("at the top or bottom of the deck in any order").
    */
   | { do: "arrangeDeckTop"; look: number; bottom?: boolean }
-  /** "You may play" the top card of your deck if it matches. */
-  | { do: "playFromDeckTop"; filter?: Filter; rested?: boolean }
+  /**
+   * "You may play" the top card of your deck if it matches. `restToBottom`: "Then, place the
+   * rest at the bottom of your deck" (the revealed card, if it wasn't played). `must`: the card
+   * is played without asking (used after `searchDeck` with `to: "play"`).
+   */
+  | {
+      do: "playFromDeckTop";
+      filter?: Filter;
+      rested?: boolean;
+      restToBottom?: boolean;
+      must?: boolean;
+      /** "Then, place the rest at the top or bottom of your deck." */
+      restTopOrBottom?: boolean;
+    }
   /**
    * Play a card from hand for free. `rested`: "play ... rested". `orTrash`: "from your hand
    * or trash". `differentColor`: it must share no color with the cards the previous step moved
@@ -626,7 +699,29 @@ export type Step =
   /** A whole sub-sequence that only happens "if" a condition holds (rule 8-3-3). */
   | { do: "if"; conditions: Condition[]; steps: Step[] }
   /** "[Leader]'s base power becomes 7000": replaces the printed power (rule 2-6-1). */
-  | { do: "setBasePower"; target: Target; power: number; duration?: Duration }
+  /** `leaderBase`: "becomes the same as your Leader's base power" (`power` is then ignored). */
+  | {
+      do: "setBasePower";
+      target: Target;
+      power: number;
+      leaderBase?: boolean;
+      duration?: Duration;
+    }
+  /**
+   * "Set the power of ... to 0 during this turn": the card's power becomes `power` now, and
+   * later changes still apply on top.
+   */
+  | { do: "setPower"; target: Target; power: number; duration?: Duration }
+  /**
+   * "Up to 1 of your opponent's rested DON!! cards will not become active in your opponent's
+   * next Refresh Phase".
+   */
+  | { do: "opponentDonNoRefresh"; count: number }
+  /**
+   * "Return DON!! cards from your field to your DON!! deck until you have the same number of
+   * DON!! cards on your field as your opponent" (rested first, as for DON!! −X).
+   */
+  | { do: "donDownToOpponent" }
   /** "This Character's base power becomes the same as the selected Character's power during this turn." */
   | { do: "copyPower"; target: Target }
   /** "Look at all of your (opponent's) Life cards and place them back in any order." */
@@ -635,9 +730,15 @@ export type Step =
   | { do: "allLifeFaceDown" }
   /** "Trash cards from the top of your Life cards until you have 1 Life card." */
   | { do: "trashLifeDownTo"; count: number }
-  /** "Your opponent places 1 card from their hand at the bottom of their deck" (they pick). */
-  | { do: "opponentHandToDeckBottom"; count: number }
-  /** "Activate the [Main] effect of up to 1 Event card ... in your trash". */
-  | { do: "activateEventFromTrash"; filter?: Filter }
-  /** "Set the power of up to 1 of your opponent's Characters to 0": gives −(its current power). */
-  | { do: "setPowerToZero"; target: Target; duration?: Duration };
+  /**
+   * "Select 2 ... Swap the base power of the selected cards with each other". Picks 2 from
+   * `target`, or 1 from `target` and 1 from `with` ("your Leader and 1 Character").
+   */
+  | { do: "swapBasePower"; target: Target; with?: Target; duration?: Duration }
+  /** "Your opponent returns 1 DON!! card from their field to their DON!! deck". */
+  | { do: "opponentDonMinus"; count: number }
+  /**
+   * Permanent: "This Character cannot be K.O.'d by effects of your opponent's
+   * Characters with 5000 base power or less" (`from` describes those cards).
+   */
+  | { do: "koImmunity"; from: Filter };

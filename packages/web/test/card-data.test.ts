@@ -50,6 +50,12 @@ describe("practice decks", () => {
     expect(deck!.name).toBe("ST-99 practice deck");
   });
 
+  it("get one deck per Leader when a set has several", () => {
+    const second: Card = { ...leader, id: "ST99-016", name: "Second" };
+    const data = buildCardData([...cards, second], [], "./card-data/");
+    expect(data.decks.map((d) => d.id)).toEqual(["ST99-001-practice", "ST99-016-practice"]);
+  });
+
   it("aren't built when the set has too few cards for 50", () => {
     expect(practiceDeck([leader, ...characters.slice(0, 12)], leader)).toBeNull();
   });
@@ -73,13 +79,17 @@ describe("card data", () => {
 
   it("skips an official list that isn't a legal deck, and falls back to practice", () => {
     const data = buildCardData(cards, [official], "./card-data/");
-    expect(data.decks.map((d) => [d.id, d.official])).toEqual([["ST99-practice", false]]);
+    expect(data.decks.map((d) => [d.id, d.official])).toEqual([["ST99-001-practice", false]]);
   });
 
   it("finds card images next to the card data", () => {
     const data = buildCardData(cards, [], "./card-data/");
     expect(data.imageUrl(leader)).toBe("./card-data/images/ST99-001.png");
     expect(data.imageUrl(offColor)).toBeUndefined();
+    expect(data.imageUrl({ ...leader, image: "/_blob/abc" })).toBe("/_blob/abc");
+    expect(data.imageUrl({ ...leader, image: "https://example.com/a.webp" })).toBe(
+      "https://example.com/a.webp",
+    );
   });
 
   it("shows official text line by line, with the [Trigger] last", () => {

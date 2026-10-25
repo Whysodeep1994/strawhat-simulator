@@ -1,0 +1,23 @@
+{
+  "name": "\"Turn 2 cards from the top of your Life cards face-up\"",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-LIFE-UP-2"],
+      "life": 3
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    }
+  ],
+  "expect": {
+    "p1.hand": 1,
+    "p1.life.0.faceUp": true,
+    "p1.life.1.faceUp": true
+  }
+}
