@@ -25,7 +25,15 @@ export function chooseBotAction(state: GameState, player: PlayerId): Action {
     case "confirm":
       return actions.find((a) => a.type === "confirm" && a.accept) ?? first;
     case "choose":
-      return chooseCards(state, player, prompt.options, prompt.min, prompt.max, prompt.reason);
+      return chooseCards(
+        state,
+        player,
+        prompt.options,
+        prompt.min,
+        prompt.max,
+        prompt.reason,
+        prompt.maxTotalPower,
+      );
     case "block":
       return blockOrPass(state, player, actions);
     case "counter":
@@ -118,6 +126,7 @@ function chooseCards(
   min: number,
   max: number,
   reason: string,
+  maxTotalPower?: number,
 ): Action {
   const cards = options
     .map((uid) => findCard(state, uid))
@@ -132,8 +141,21 @@ function chooseCards(
   }
   // Effects that help: pick as many as allowed, the most valuable first. On the opponent's
   // cards (K.O., rest, bounce) the most valuable is the biggest threat.
-  const best = [...cards].sort((a, b) => value(b) - value(a)).slice(0, Math.max(min, max));
-  return { type: "choose", player, cards: best.map((c) => c.uid) };
+  const ranked = [...cards].sort((a, b) => value(b) - value(a));
+  if (maxTotalPower === undefined) {
+    return { type: "choose", player, cards: ranked.slice(0, max).map((c) => c.uid) };
+  }
+  // "Up to N Characters with a total power of X or less": take the best that still fit.
+  const picked: CardInstance[] = [];
+  let total = 0;
+  for (const card of ranked) {
+    if (picked.length === max) break;
+    const power = powerOf(state, card);
+    if (total + power > maxTotalPower) continue;
+    picked.push(card);
+    total += power;
+  }
+  return { type: "choose", player, cards: picked.map((c) => c.uid) };
 }
 
 // Small helpers.
