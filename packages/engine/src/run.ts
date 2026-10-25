@@ -1,4 +1,4 @@
-import type { Cost, Duration, Step, Target } from "./effects.js";
+import type { Cost, Duration, EffectDefinition, Step, Target } from "./effects.js";
 import { eligibleBlockers } from "./legal.js";
 import { endGame, processRules } from "./rules.js";
 import {
@@ -142,6 +142,8 @@ const ON_FIELD_TIMINGS = new Set([
   "triggerActivated",
   "opponentActivatesEvent",
   "characterRemovedByYourEffect",
+  "yourCharacterRemovedByEffect",
+  "opponentLifeRemoved",
   "becomesRested",
   "characterKOd",
   "attackDealsDamage",
@@ -149,10 +151,13 @@ const ON_FIELD_TIMINGS = new Set([
   "restedByOpponentsCharacter",
 ]);
 
+const RULE_EFFECT: EffectDefinition = { timing: "main", steps: [] };
+
 function runEffect(state: GameState, frame: FrameOf<"effect">): Outcome {
   const source = findCard(state, frame.source);
   if (!source) return "done";
-  const effect = effectOf(state, source, frame.effect);
+  // A rule's frame (e.g. "trashes 2 cards whenever they attack") has its own steps.
+  const effect = frame.rule ? RULE_EFFECT : effectOf(state, source, frame.effect);
   if (!effect) return "done";
   const key = oncePerTurnKey(frame.source, effect, frame.effect);
 
@@ -387,8 +392,9 @@ function payCost(
     const faceUp = "lifeFaceUp" in cost;
     const count = faceUp ? cost.lifeFaceUp : cost.lifeFaceDown;
     for (let i = frame.memo.length; i < count; i++) {
-      // Only a card that isn't already facing that way can be turned.
-      const top = p.life[0];
+      // Only a card that isn't already facing that way can be turned. "Turn 2 cards from the
+      // top" turns the top cards one after another.
+      const top = cost.from === "topOrBottom" ? p.life[0] : p.life[i];
       const bottom = p.life.at(-1);
       const topOk = !!top && !!top.faceUp !== faceUp;
       const bottomOk = cost.from === "topOrBottom" && !!bottom && !!bottom.faceUp !== faceUp;
@@ -804,6 +810,12 @@ function runStep(
       return "continue";
     }
 
+    case "donDownToOpponent": {
+      const excess = donOnField(state, controller) - donOnField(state, opponentOf(controller));
+      if (excess > 0) returnDon(state, controller, excess);
+      return "continue";
+    }
+
     case "opponentDonNoRefresh": {
       const opponent = state.players[opponentOf(controller)];
       opponent.donNoRefresh = Math.min(
@@ -982,6 +994,8 @@ function runStep(
         if (picked.length === 0) {
           // "Then, place the rest at the bottom of your deck."
           if (step.restToBottom && top) p.deck.push(...p.deck.splice(0, 1));
+          if (step.restTopOrBottom && top)
+            frame.steps.splice(1, 0, { do: "arrangeDeckTop", look: 1, bottom: true });
           return "continue";
         }
         frame.memo = picked;
@@ -1099,6 +1113,7 @@ function runStep(
         const card = takeLife(owner.life, fromBottom ? owner.life.length - 1 : 0)!;
         owner.hand.push(card);
         frame.memo.push(card.uid);
+        lifeLost(state, owner === p ? controller : opponentOf(controller));
       }
       return "continue";
     }
@@ -1823,6 +1838,7 @@ function lifeCardToHand(
 
 /** "When your number of Life cards becomes 0". */
 function lifeLost(state: GameState, player: PlayerId): void {
+  queueFieldEffects(state, opponentOf(player), "opponentLifeRemoved");
   if (state.players[player].life.length === 0) queueFieldEffects(state, player, "lifeBecomesZero");
 }
 
@@ -2001,6 +2017,11 @@ function runBattle(state: GameState, frame: FrameOf<"battle">): Outcome {
         if (
           attacker.zone === "leader" &&
           hasStatus(state, target.card, "cannotBeKOdInBattleByLeaders")
+        )
+          return "continue";
+        if (
+          (definitionOf(state, attacker.card).attribute ?? "").includes("Slash") &&
+          hasStatus(state, target.card, "cannotBeKOdInBattleBySlash")
         )
           return "continue";
         const uid = target.card.uid;

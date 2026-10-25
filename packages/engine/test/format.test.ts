@@ -111,6 +111,18 @@ describe("deck formats", () => {
     expect(copyLimit(season, old, "TEST-C2-3000")).toBe(0);
   });
 
+  it("allow any number of a card that says so", () => {
+    const any = {
+      ...catalog,
+      "TEST-FILLER": { ...catalog["TEST-FILLER"]!, anyNumberInDeck: true },
+    };
+    expect(copyLimit(standard, any, "TEST-FILLER")).toBe(50);
+    const deck = [...Array<string>(10).fill("TEST-FILLER"), ...legal.slice(0, 40)];
+    expect(checkDeck(any, standard, "TEST-LEADER", deck).map((p) => p.message)).not.toContain(
+      expect.stringContaining("TEST-FILLER"),
+    );
+  });
+
   it("treat parallel prints like their card number", () => {
     const withParallel = { ...catalog, "TEST-RUSH_p1": catalog["TEST-RUSH"]! };
     expect(copyLimit(standard, withParallel, "TEST-RUSH_p1")).toBe(0);

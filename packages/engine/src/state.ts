@@ -427,6 +427,13 @@ export function conditionsMet(
     }
     if ("lifeAtMostOpponents" in c) return me.life.length <= them.life.length;
     if ("lifeFewerThanOpponent" in c) return me.life.length < them.life.length;
+    if ("trashHas" in c)
+      return me.trash.some((t) => matchesFilter(state, t, c.trashHas, source, false));
+    if ("opponentRestedCardsAtLeast" in c) {
+      const rested = fieldCards(state, opponentOf(controller)).filter((card) => card.rested).length;
+      return them.donRested + rested >= c.opponentRestedCardsAtLeast;
+    }
+    if ("thisActive" in c) return !source.rested;
     if ("givenDonAtLeast" in c)
       return [me.leader, ...me.characters].reduce((n, x) => n + x.givenDon, 0) >= c.givenDonAtLeast;
     if ("leaderAttribute" in c)
@@ -483,6 +490,8 @@ export function matchesFilter(
     filter.costAtLeast !== undefined ||
     filter.costAtMostOpponentLife ||
     filter.costAtMostDonOnField ||
+    filter.costAtMostOpponentDonOnField ||
+    filter.costAtMostLife ||
     filter.costAtMostTotalLife
       ? costOf(state, card)
       : baseCost;
@@ -508,6 +517,12 @@ export function matchesFilter(
   if (filter.basePowerAtLeast !== undefined && basePower() < filter.basePowerAtLeast) return false;
   if (filter.costAtMostDonOnField && source) {
     if (cost > donOnField(state, source.owner)) return false;
+  }
+  if (filter.costAtMostOpponentDonOnField && source) {
+    if (cost > donOnField(state, opponentOf(source.owner))) return false;
+  }
+  if (filter.costAtMostLife && source) {
+    if (cost > state.players[source.owner].life.length) return false;
   }
   if (filter.type && !(def.types ?? []).includes(filter.type)) return false;
   if (filter.notType && (def.types ?? []).includes(filter.notType)) return false;
@@ -674,6 +689,10 @@ export function canPayCosts(
     if ("lifeFaceUp" in cost) {
       const ends = cost.from === "topOrBottom" ? [p.life[0], p.life.at(-1)] : [p.life[0]];
       if (!ends.some((c) => c && !c.faceUp)) return false;
+      // "Turn 2 cards from the top of your Life cards face-up".
+      const top = p.life.slice(0, cost.lifeFaceUp);
+      if (cost.from !== "topOrBottom" && top.filter((c) => !c.faceUp).length < cost.lifeFaceUp)
+        return false;
     }
     if ("lifeFaceDown" in cost) {
       const ends = cost.from === "topOrBottom" ? [p.life[0], p.life.at(-1)] : [p.life[0]];
