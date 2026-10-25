@@ -1,0 +1,26 @@
+{
+  "name": "\"At the end of this battle\" happens after damage",
+  "rules": ["7-1-5"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-HIT-AND-RUN"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 3,
+    "p1.characters": 0,
+    "p1.deck": 21
+  }
+}

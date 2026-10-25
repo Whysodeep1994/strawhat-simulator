@@ -46,7 +46,8 @@ export function copyLimit(format: DeckFormat, catalog: CardCatalog, cardId: stri
   const id = baseId(cardId);
   if (format.banned?.includes(id) || !inLegalBlock(format, catalog, cardId)) return 0;
   // "You may have any number of this card in your deck."
-  if (catalog[cardId]?.anyNumberInDeck) return format.deckSize ?? 50;
+  if (catalog[cardId]?.anyNumberInDeck ?? catalog[id]?.anyNumberInDeck)
+    return format.deckSize ?? 50;
   const max = format.maxCopies ?? 4;
   return Math.min(max, format.restricted?.[id] ?? max);
 }

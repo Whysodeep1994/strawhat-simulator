@@ -1,0 +1,27 @@
+{
+  "name": "\"Look at 3 cards and trash up to 2\" puts the rest at the bottom",
+  "rules": ["8-3"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-SEARCH-TO-TRASH"],
+      "deck": ["TEST-C2-3000", "TEST-FILLER", "TEST-C5-6000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p1",
+      "cards": ["p1.deck.0", "p1.deck.2"]
+    }
+  ],
+  "expect": {
+    "p1.trash": 3,
+    "p1.deck": 2,
+    "p1.deck.1.cardId": "TEST-FILLER"
+  }
+}

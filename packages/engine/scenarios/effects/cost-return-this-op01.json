@@ -1,0 +1,21 @@
+{
+  "name": "Returning this Character to hand pays the cost",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-BOUNCE-SELF", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.hand": 2
+  }
+}

@@ -200,12 +200,17 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
       : restedCharacters;
     // "This Leader cannot attack your opponent's Characters with a base cost of 7 or less."
     const banned = state.modifiers.filter((m) => m.target === attacker.uid && m.noAttackTargets);
-    const targets = attackTargets(state, attacker, opponent.leader.uid, attackable).filter((t) => {
+    let targets = attackTargets(state, attacker, opponent.leader.uid, attackable).filter((t) => {
       // "You cannot attack a Leader during this turn."
       if (t === opponent.leader.uid) return !leaderAttacksBanned;
       const card = opponent.characters.find((c) => c.uid === t);
       return !card || !banned.some((m) => matchesFilter(state, card, m.noAttackTargets, attacker));
     });
+    // "Your opponent cannot attack any card other than [this Character]."
+    const lures = [opponent.leader, ...opponent.characters].filter((c) =>
+      hasStatus(state, c, "onlyAttackTarget"),
+    );
+    if (lures.length > 0) targets = targets.filter((t) => lures.some((c) => c.uid === t));
     for (const target of targets)
       actions.push({ type: "attack", player, attacker: attacker.uid, target });
   }

@@ -9,7 +9,7 @@ export const OP10_EFFECT_CARDS: CardDefinition[] = [
     colors: ["purple"],
     cost: 1,
     power: 1000,
-    effects: [{ timing: "eventActivated", steps: [{ do: "draw", count: 1 }] }],
+    effects: [{ timing: "youActivateEvent", steps: [{ do: "draw", count: 1 }] }],
   },
   {
     id: "TEST-TOTAL-COST",
@@ -46,7 +46,7 @@ export const OP10_EFFECT_CARDS: CardDefinition[] = [
     ],
   },
   {
-    id: "TEST-LIFE-LESS",
+    id: "TEST-LIFE-FEWER-RUSH",
     name: "Test Life Less",
     category: "character",
     colors: ["yellow"],

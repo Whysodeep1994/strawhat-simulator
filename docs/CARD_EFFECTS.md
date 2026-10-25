@@ -55,15 +55,20 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `opponentActivatesEvent`                  | "When your opponent activates an Event" (main or counter)                                                                                                                             | 8-1-3-1 |
 | `characterRemovedByYourEffect`            | "When a Character is removed from the field by your effect" (either player's Character)                                                                                               | 8-1-3-1 |
 | `restedByOpponentsCharacter`              | "When this Character becomes rested by your opponent's Character's effect"                                                                                                            |
+| `youActivateEvent`                        | "When you activate an Event" (Main or Counter)                                                                                                                                        | 8-1-3-1 |
+| `opponentCharacterKOd`                    | "When your opponent's Character is K.O.'d" (battle or effect)                                                                                                                         | 8-1-3-1 |
+| `donGiven`                                | "When this Leader or any of your Characters is given a DON!! card"                                                                                                                    | 8-1-3-1 |
+| `youPlayCharacter`                        | "When you play a Character" (`cardFilter`; `fromHand` for "from your hand")                                                                                                           | 8-1-3-1 |
+| `opponentPlaysCharacter`                  | "When your opponent plays a Character" (`cardFilter`)                                                                                                                                 | 8-1-3-1 |
+| `koInBattle`                              | "When this Character battles and K.O.'s your opponent's Character"                                                                                                                    | 8-1-3-1 |
+| `youDealDamage`                           | "When you deal damage to your opponent's Life" (any of your attacks)                                                                                                                  | 8-1-3-1 |
 | `yourCharacterRemovedByEffect`            | "When your Character [`cardFilter`] is removed from the field by an effect" (yours or your opponent's)                                                                                | 8-1-3-1 |
 | `opponentLifeRemoved`                     | "When a card is removed from your opponent's Life cards" (damage or an effect)                                                                                                        | 8-1-3-1 |
 | `opponentCharacterKOd`                    | "When your opponent's Character is K.O.'d" (in battle or by an effect)                                                                                                                | 8-1-3-1 |
-| `eventActivated`                          | "When you activate an Event" (you play an Event's [Main] or [Counter])                                                                                                                | 8-1-3-1 |
 | `opponentActivatesTrigger`                | "When your opponent activates a [Trigger]"                                                                                                                                            | 8-1-3-1 |
 | `startOfYourTurn`                         | "This effect can be activated at the start of your turn" (after the Refresh Phase, before the Draw Phase)                                                                             | 6-2-1   |
 | `lifeCardRemoved`                         | "When a card is removed from your or your opponent's Life cards" (damage, costs and effects)                                                                                          | 8-1-3-1 |
 | `handTrashedByOwnEffect`                  | "When a card is trashed from your hand by your {Navy} type card's effect": `cardFilter` is for the card whose effect trashed them; `draw` with `"perPrevious": true` draws 1 per card | 8-1-3-1 |
-| `opponentPlaysCharacter`                  | "When your opponent plays a Character with a base cost of 8 or more" (`cardFilter` is for the played card)                                                                            | 8-1-3-1 |
 | `opponentPlaysCharacterByCharacterEffect` | "When your opponent plays a Character using a Character's effect"                                                                                                                     | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
@@ -118,7 +123,7 @@ The effect's steps can use the target `{ "side": "that" }` for the saved card ("
 (a filter for the top card of your deck, for "Reveal 1 card from the top of your deck. If that
 card is..."), `donOnFieldAtLeast` and `donOnFieldAtMost` ("if you have 8 or more DON!! cards on
 your field", counting active, rested and given DON!!), `playedThisTurn` ("if this Character was
-played on this turn"), plus:
+played on this turn"), `handAtLeast`, `thisRested` ("if this Character is rested"), plus:
 
 | Condition                                        | Card wording                                                                                              |
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
@@ -129,6 +134,9 @@ played on this turn"), plus:
 | `{ "restedCardsAtLeast": 6 }`                    | "If you have 6 or more rested cards" (DON!! and field cards)                                              |
 | `{ "leaderTypeIncludes": "Whitebeard Pirates" }` | "If your Leader's type includes "Whitebeard Pirates""                                                     |
 | `{ "lifeAtMostOpponents": true }`                | "If the number of your Life cards is equal to or less than your opponent's"                               |
+| `{ "lifeLessThanOpponents": true }`              | "If you have less Life cards than your opponent"                                                          |
+| `{ "deckAtMost": 20 }`                           | "If you have 20 or less cards in your deck"                                                               |
+| `{ "thisIsAttackTarget": true }`                 | This card is the target of the current attack ("when this Leader ... is attacked")                        |
 | `{ "leaderMulticolored": true }`                 | "If your Leader is multicolored"                                                                          |
 | `{ "opponentDonOnFieldAtLeast": 5 }`             | "If your opponent has 5 or more DON!! cards on their field"                                               |
 | `{ "givenDonAtLeast": 3 }`                       | "If you have a total of 3 or more given DON!! cards"                                                      |
@@ -143,7 +151,6 @@ played on this turn"), plus:
 | `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                                                |
 | `{ "trashAtLeast": 10 }`                         | "If you have 10 or more cards in your trash"                                                              |
 | `{ "trashAtLeast": 4, "trashFilter": {...} }`    | "If you have 4 or more Events in your trash" (only matching cards count)                                  |
-| `{ "deckAtMost": 0 }`                            | "If your deck has 0 cards"                                                                                |
 | `{ "yourTurnsAtLeast": 2 }`                      | "If it is your second turn or later"                                                                      |
 | `{ "opponentDonActiveAtLeast": 1 }`              | Your opponent has 1 or more active DON!! cards                                                            |
 | `{ "activatedEventThisTurn": {...} }`            | "If you have activated an Event with a base cost of 3 or more during this turn" (a filter)                |
@@ -181,14 +188,15 @@ type including ... from your hand"; they stay in hand, with an optional `filter`
 `restOwn` (rest 1 of your active Leader, Characters or Stage matching a filter, e.g.
 `{ "restOwn": { "name": "Uta" } }`), `restThis`, `trashThis` ("trash this Character", not a K.O.), `lifeToHand` (add Life cards to
 your hand; `"from": "topOrBottom"` lets the player take the bottom one), `trashLife` (trash from
-the top of your Life), `lifeFaceUp` (turn the top Life card face-up; it must be face-down),
+the top of your Life; `"from": "topOrBottom"` lets the player trash the bottom one), `lifeFaceUp` (turn the top Life card face-up; it must be face-down),
 `lifeFaceDown` (turn a face-up Life card face-down; both take `"from": "topOrBottom"` to let the
 player pick the end), `trashFromDeckTop` (trash cards from the top of your deck), `oneOf` (a list
 of costs the player pays one of, e.g. "rest your Leader or 1 of your DON!! cards":
 `{ "oneOf": [{ "restOwn": { "category": "leader" } }, { "restDon": 1 }] }`),
 `trashToDeckBottom` (place cards from your trash at the bottom of your deck), `returnGivenDon`
 ("return N of your currently given DON!! cards to your cost area rested"; the player picks which
-cards), `toDeckBottom` ("place 1 of your Characters at the bottom of your deck"; `"zone": "stage"` for
+cards), `handToDeckBottom` ("place 1 card from your hand at the bottom of your deck"),
+`restCharacters` ("rest 2 of your Characters", with an optional `filter`), `toDeckBottom` ("place 1 of your Characters at the bottom of your deck"; `"zone": "stage"` for
 Stages, optional `filter`, `"side": "any"` for "place 1 Character with a cost of 2 or less at the
 bottom of the owner's deck", either player's), `trashToDeck` ("return 20 cards from your trash to your deck and shuffle
 it"), `koOwnCharacter` ("K.O. 1 of your Characters", optional `filter`), `trashOwnCharacter` ("trash 1
@@ -248,6 +256,10 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `notTypeIncludes`: no type containing that text, e.g. `"Roger Pirates"` for Characters without a type including "Roger Pirates".
 - `attribute`: the printed attribute includes this, e.g. `"Slash"` (cards set `attribute`).
 - `anyOf`: a list of filters, any of which may match ("{Cross Guild} type or ...").
+
+Names match a card's `alsoNamed` too ("Also treat this card's name as [Kouzuki Oden]"). A card
+with `anyNumberInDeck: true` has no copy limit in deck building.
+
 - `noBaseEffect`: "with no base effect", a card without card text (rule 2-8-5): no effects and
   no keywords.
 - `noCounter`: "Character cards without a Counter".
@@ -312,6 +324,12 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `trashDeckTop`                   | Trash cards from the top of your deck.                                                                                                                                                                                                                        |
 | `revealedToDeckTop`              | Place the cards revealed by a `revealFromHand` cost at the top of your deck.                                                                                                                                                                                  |
 | `setBasePower`                   | "[Leader]'s base power becomes 7000", with an optional `duration`. `leaderBase` copies your Leader's base power.                                                                                                                                              |
+| `revealOpponentHand`             | "Choose 2 cards from your opponent's hand; your opponent reveals those cards." With `ifRevealed` and `steps`: "If the revealed card is an Event, ...". Picked face-down.                                                                                      |
+| `lifeToDeckBottom`               | Place the top Life card(s) of `side` at the bottom of the owner's deck.                                                                                                                                                                                       |
+| `searchWholeDeck`                | "Reveal up to 1 [X] from your deck and add it to your hand. Then, shuffle your deck." `play: true` plays it instead.                                                                                                                                          |
+| `atEndOfBattle`                  | The nested steps happen when this battle ends.                                                                                                                                                                                                                |
+| `nextPlayCostChange`             | "The next time you play a ... card during this turn, the cost will be reduced by 1" (`amount: -1`).                                                                                                                                                           |
+| `setCost`                        | "Set the cost of up to 1 of your opponent's Characters ... to 0": replaces the printed cost for the `duration`.                                                                                                                                               |
 | `grantCounter`                   | Permanent only: matching Character cards in your hand have +`amount` Counter.                                                                                                                                                                                 |
 | `moveGivenDon`                   | "Give up to 1 of your currently given DON!! cards to ...": the player picks where it comes from, then the target.                                                                                                                                             |
 | `replaceBattleKO`                | Sets up the card's own `battleKOReplacement` effect (`effect` is its index) for the rest of the turn.                                                                                                                                                         |
@@ -379,7 +397,8 @@ Statuses for `grantStatus`: `cannotAttack`, `cannotBlock` ("your opponent cannot
 `cannotBeKOdByOpponentsEffects`, `cannotBeKOdInBattleByLeaders`, `cannotBeKOdByNonSpecialCharacters` ("cannot be K.O.'d by
 effects of Characters without the <Special> attribute"), `cannotBeKOdInBattleBySlash` ("cannot be K.O.'d in
 battle by <Slash> attribute cards"), `cannotBeRestedByOpponentsEffects` (unlike
-`cannotBeRested`, the card can still attack and block), `noRefresh` (it stays rested through its owner's next Refresh
+`cannotBeRested`, the card can still attack and block), `onlyAttackTarget` ("your opponent cannot attack
+any card other than this Character"), `noRefresh` (it stays rested through its owner's next Refresh
 Phase, whatever the `duration`), `cannotBeRested` (it
 can't attack, block, or be rested by costs or effects), and `negated` ("negate the effect of ..."):
 a negated card's effects and printed keywords stop working (rule 8-2).
@@ -435,7 +454,18 @@ Step options:
 
 A Leader with [Blocker] can block like a Character.
 
-`powerUp` takes `perTrash: 4` for "+X power for every 4 cards in your trash".
+`powerUp` takes `perTrash: 4` for "+X power for every 4 cards in your trash", and `per` for
+"for every card in your hand" (`{ "zone": "hand" }`) or "for every 2 Events in your trash"
+(`{ "zone": "trash", "filter": { "category": "event" }, "every": 2 }`).
+
+More step options:
+
+- `searchDeck` takes `"to": "trash"` for "look at 5 cards from the top of your deck and trash up
+  to 2 cards" (the rest go to the bottom).
+- `trashFromHand` takes `"chooser": "opponent"` for "your opponent chooses 1 card from your hand;
+  trash that card" (picked face-down).
+- `grantStatus` takes `by` (a filter) for "cannot be K.O.'d in battle by <Strike> attribute
+  Characters".
 
 `searchDeck` takes `"to": "lifeFaceUp"` for "add ... to the top of your Life cards face-up".
 

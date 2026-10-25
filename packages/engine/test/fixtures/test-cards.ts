@@ -1,6 +1,9 @@
 import type { CardCatalog, CardDefinition } from "../../src/index.js";
 import { EXTRA_BOOSTER_CARDS } from "./test-cards-extra-boosters.js";
 import { MORE_EFFECT_CARDS } from "./test-cards-more-effects.js";
+import { OP01_EFFECT_CARDS } from "./test-cards-op01.js";
+import { OP02_EFFECT_CARDS } from "./test-cards-op02.js";
+import { OP03_EFFECT_CARDS } from "./test-cards-op03.js";
 import { OP06_EFFECT_CARDS } from "./test-cards-op06.js";
 import { OP07_EFFECT_CARDS } from "./test-cards-op07.js";
 import { OP08_EFFECT_CARDS } from "./test-cards-op08.js";
@@ -1240,5 +1243,8 @@ export const TEST_CATALOG: CardCatalog = Object.fromEntries(
     ...OP11_EFFECT_CARDS,
     ...OP12_EFFECT_CARDS,
     ...EXTRA_BOOSTER_CARDS,
+    ...OP01_EFFECT_CARDS,
+    ...OP02_EFFECT_CARDS,
+    ...OP03_EFFECT_CARDS,
   ].map((c) => [c.id, c]),
 );
