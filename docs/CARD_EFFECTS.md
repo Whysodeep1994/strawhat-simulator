@@ -49,11 +49,12 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `lifeAddedToHand`                         | "When a card is added to your hand from your Life"                                                                                                                                    | 8-1-3-1 |
 | `lifeBecomesZero`                         | "When your number of Life cards becomes 0"                                                                                                                                            | 8-1-3-1 |
 | `triggerActivated`                        | "When a [Trigger] activates" (either player's)                                                                                                                                        | 8-1-3-1 |
-| `restedByOpponentsCharacter`              | "When this Character becomes rested by your opponent's Character's effect"                                                                                                            |
 | `characterKOd`                            | "When a Character is K.O.'d" (either player's, any K.O.)                                                                                                                              | 8-1-3-1 |
 | `opponentCharacterReturned`               | "When your opponent's Character is returned to the owner's hand by your effect"                                                                                                       | 8-1-3-1 |
 | `battleKOReplacement`                     | Set up by `replaceBattleKO`: "If any of your Characters would be K.O.'d in battle during this turn, you may ... instead"                                                              | 8-1-3-4 |
 | `opponentActivatesEvent`                  | "When your opponent activates an Event" (main or counter)                                                                                                                             | 8-1-3-1 |
+| `characterRemovedByYourEffect`            | "When a Character is removed from the field by your effect" (either player's Character)                                                                                               | 8-1-3-1 |
+| `restedByOpponentsCharacter`              | "When this Character becomes rested by your opponent's Character's effect"                                                                                                            |
 | `eventActivated`                          | "When you activate an Event" (you play an Event's [Main] or [Counter])                                                                                                                | 8-1-3-1 |
 | `opponentActivatesTrigger`                | "When your opponent activates a [Trigger]"                                                                                                                                            | 8-1-3-1 |
 | `startOfYourTurn`                         | "This effect can be activated at the start of your turn" (after the Refresh Phase, before the Draw Phase)                                                                             | 6-2-1   |
@@ -141,8 +142,8 @@ played on this turn"), plus:
 | `{ "opponentLeaderAttribute": "Slash" }`         | "If your opponent's Leader has the <Slash> attribute"                                                     |
 | `{ "charactersTotalCostAtLeast": 5 }`            | "If the total cost of your Characters is 5 or more"                                                       |
 | `{ "charactersFewerThanOpponentBy": 2 }`         | "If the number of your Characters is at least 2 less than the number of your opponent's Characters"       |
-| `{ "lifeLessThanOpponents": true }`              | "If you have less Life cards than your opponent"                                                          |
 | `{ "donFewerThanOpponentBy": 2 }`                | "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field"  |
+| `{ "lifeFewerThanOpponent": true }`              | "If you have less Life cards than your opponent"                                                          |
 | `{ "totalLifeAtLeast": 5 }`                      | "If you and your opponent have a total of 5 or more Life cards"                                           |
 | `{ "opponentRestedCardsAtLeast": 5 }`            | "If your opponent has 5 or more rested cards" (DON!! and field cards)                                     |
 | `{ "leaderColorIncludes": "blue" }`              | "If your Leader's colors include blue"                                                                    |
@@ -187,9 +188,11 @@ this card ... at the bottom of your deck"), `activeLeaderPower` ("give your 1 ac
 power during this turn"; the Leader must be active), and `returnActiveDon` ("return 2 of your
 active DON!! cards to your DON!! deck"; rested ones can't pay it). `returnOwnCharacter` takes
 `"to": "deckBottom"` for "place 1 of your Characters ... at the bottom of your deck", and
-`trashToDeckBottom` takes a `filter`. `restCards` is "rest 2 of your cards": active DON!! in the cost area or
+`trashToDeckBottom` takes a `filter`. `returnThis` ("you may return this Character to the
+owner's hand") and `restOpponentCharacter` ("rest 1 of your opponent's Characters", e.g. as a
+replacement: "you may rest 1 of your opponent's Characters instead") complete the list.
+`restCards` is "rest 2 of your cards": active DON!! in the cost area or
 your Leader, Characters, or Stage; the player picks the field cards and the rest are DON!!.
-`returnThis` is "return this Character to the owner's hand".
 
 Face-up Life cards are open to both players (rule 3-10-2-1): `viewFor` shows them in `life`, and
 a card is face-down again once it leaves the Life area.
@@ -307,13 +310,15 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `handDownTo`                     | "Trash cards from your hand until you have 5 cards"; `both` for "you and your opponent".                                                                                                                                                                      |
 | `trashToDeckBottom`              | `side` places `count` cards from their trash at the bottom of their deck, in the order they pick.                                                                                                                                                             |
 | `handCostChange`                 | In a permanent effect on the field: "The cost of playing {X} cards from your hand will be reduced by 1" (`filter`, `amount`).                                                                                                                                 |
-| `swapBasePower`                  | "Select 2 ... Swap the base power of the selected cards with each other": 2 cards from `target`, or 1 from `target` and 1 from `with`.                                                                                                                        |
-| `opponentDonMinus`               | "Your opponent returns 1 DON!! card from their field to their DON!! deck".                                                                                                                                                                                    |
-| `koImmunity`                     | Permanent: "This Character cannot be K.O.'d by effects of your opponent's Characters with 5000 base power or less" (`from` is the filter for those cards).                                                                                                    |
 | `handToDeckShuffle`              | "Your opponent returns all cards in their hand to their deck and shuffles their deck. Then, your opponent draws 5 cards" (`side`, `draw`).                                                                                                                    |
 | `cannotAttackLeader`             | "You cannot attack a Leader during this turn." Characters can still be attacked.                                                                                                                                                                              |
 | `dealDamage`                     | "Deal 1 damage to your opponent": Life to hand with a [Trigger] check, or the game is won at 0 Life. `"side": "self"` is "you take 1 damage".                                                                                                                 |
+| `setPower`                       | "Set the power of up to 1 of your opponent's Characters to 0 during this turn" (`target`, `power`, `duration`). Later changes still apply on top.                                                                                                             |
+| `opponentDonNoRefresh`           | "Up to 1 of your opponent's rested ... DON!! cards will not become active in your opponent's next Refresh Phase" (`count`).                                                                                                                                   |
 | `extraTurn`                      | "Take an extra turn after this one."                                                                                                                                                                                                                          |
+| `swapBasePower`                  | "Select 2 ... Swap the base power of the selected cards with each other": 2 cards from `target`, or 1 from `target` and 1 from `with`.                                                                                                                        |
+| `opponentDonMinus`               | "Your opponent returns 1 DON!! card from their field to their DON!! deck".                                                                                                                                                                                    |
+| `koImmunity`                     | Permanent: "This Character cannot be K.O.'d by effects of your opponent's Characters with 5000 base power or less" (`from` is the filter for those cards).                                                                                                    |
 | `playFromLifeTop`                | "Reveal 1 card from the top of your Life cards. If that card is ..., you may play that card."                                                                                                                                                                 |
 | `noCharacterDonActive`           | "You cannot set DON!! cards as active using Character effects during this turn": later `setDonActive` steps on Characters do nothing.                                                                                                                         |
 | `lookAtOpponentDeckTop`          | "Look at 1 card from the top of your opponent's deck." Only the player looking sees it.                                                                                                                                                                       |
@@ -323,7 +328,6 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `activateEventFromHand`          | "Activate up to 1 ... Event from your hand": its [Main] resolves without paying its cost. `filter` picks which Events.                                                                                                                                        |
 | `nextPlayCostChange`             | "The next time you play [Trafalgar Law] from your hand during this turn, the cost will be reduced by 2": `filter` and `amount`; it's used up by the next matching play.                                                                                       |
 | `noDrawByOwnEffects`             | "You cannot draw cards using your own effects during this turn": later `draw` steps do nothing.                                                                                                                                                               |
-| `freezeOpponentDon`              | "Up to `count` of your opponent's rested DON!! cards will not become active in your opponent's next Refresh Phase."                                                                                                                                           |
 
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash", or
 `perCount` (a `count`-style `{ "side", "zone", "filter" }`) for "for every {Straw Hat Crew} type
@@ -333,8 +337,9 @@ card on your field".
 your trash"), and `perRestedDon: 3` for "for every 3 of your rested DON!! cards".
 
 Durations (`duration` on `negateOnPlay`, `powerUp`, `grantKeyword`, `grantStatus`, `costChange`, `noBlockers`):
-`"turn"` (the default), `"battle"`, and `"opponentsNextTurn"` for "until the end of your
-opponent's next turn" or "... next End Phase".
+`"turn"` (the default), `"battle"`, `"opponentsNextTurn"` for "until the end of your
+opponent's next turn" or "... next End Phase", and `"yourNextTurn"` for "until the end of your
+next turn".
 
 Statuses for `grantStatus`: `cannotAttack`, `cannotBlock` ("your opponent cannot activate
 [Blocker]" on a chosen Character), `cannotBeKOdInBattle`, `cannotBeKOdByEffects`,
@@ -366,9 +371,15 @@ Step options:
 - `handToDeckBottom` takes `"side": "opponent"` for "your opponent must place 1 card from their
   hand at the bottom of their deck" (they pick).
 - `playThis` on a Stage's [Trigger] plays the Stage.
-- `handToDeckTop` takes `"topOrBottom": true` for "place 2 cards from your hand at the top or bottom of
-  your deck in any order".
-- `trashToDeckBottom` takes a `filter` ("your opponent places 3 Events from their trash ...").
+- `draw` takes `"side": "opponent"` for "your opponent draws 1 card".
+- `trashToDeckBottom` takes `"upTo": true` ("any number of", with a large `count`), a `filter`,
+  and `"youChoose": true` for "place up to 1 card from your opponent's trash at the bottom of
+  their deck" (you pick). It sets the count for `perPrevious`; `powerUp` takes
+  `"perPreviousEvery": 3` for "+1000 for every 3 cards placed".
+- `handToDeckTop` takes `"orBottom": true` for "place 2 cards from your hand at the top or bottom
+  of your deck in any order".
+- `playFromDeckTop` takes `"restToBottom": true` for "Then, place the rest at the bottom of your
+  deck": the revealed card goes to the bottom if it isn't played.
 - `characterToLife` takes `"top": true` for "add it to the top of your Life cards" (no choice of the bottom).
 - `atEndOfTurn` remembers the cards picked or played before it, so its steps can use `{ "side": "that" }`
   for "place the Character played by this effect at the bottom of the owner's deck at the end of this turn".

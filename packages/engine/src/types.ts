@@ -39,6 +39,8 @@ export interface PlayerState {
   donDeck: number;
   donActive: number;
   donRested: number;
+  /** Rested DON!! cards that stay rested in this player's next Refresh Phase. */
+  donNoRefresh?: number;
   turnsTaken: number;
 }
 
@@ -72,8 +74,6 @@ export interface Modifier {
   cannotPlay?: { filter?: Filter; fromHand?: boolean };
   /** On a Leader: its player can't set DON!! cards as active with Character effects. */
   noCharacterDonActive?: boolean;
-  /** On a Leader: this many of its player's rested DON!! cards stay rested in their next Refresh Phase. */
-  frozenDon?: number;
   /** On a Leader: its player can't attack Leaders ("you cannot attack a Leader during this turn"). */
   noLeaderAttacks?: boolean;
   /** The target can't attack cards matching this ("cannot attack Characters with a base cost of 7 or less"). */

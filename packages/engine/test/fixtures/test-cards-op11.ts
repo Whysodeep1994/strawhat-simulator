@@ -201,15 +201,6 @@ export const OP11_EFFECT_CARDS: CardDefinition[] = [
     ],
   },
   {
-    id: "TEST-HAND-TOP-OR-BOTTOM",
-    name: "Test Hand Top or Bottom",
-    category: "character",
-    colors: ["blue"],
-    cost: 1,
-    power: 1000,
-    effects: [{ timing: "onPlay", steps: [{ do: "handToDeckTop", count: 2, topOrBottom: true }] }],
-  },
-  {
     id: "TEST-TRASH-EVENTS-BOTTOM",
     name: "Test Trash Events Bottom",
     category: "character",

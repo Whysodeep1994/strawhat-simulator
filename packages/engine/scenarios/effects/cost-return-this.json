@@ -1,5 +1,5 @@
 {
-  "name": "Cost: return this Character to the owner's hand",
+  "name": "\"You may return this Character to the owner's hand\" then the opponent draws",
   "rules": ["8-3-1"],
   "setup": {
     "p1": {
@@ -12,11 +12,16 @@
       "player": "p1",
       "card": "p1.characters.0",
       "effect": 0
+    },
+    {
+      "type": "confirm",
+      "player": "p1",
+      "accept": true
     }
   ],
   "expect": {
     "p1.characters": 0,
-    "p1.hand": 2,
-    "p1.hand.0.cardId": "TEST-RETURN-THIS"
+    "p1.hand": 1,
+    "p2.hand": 1
   }
 }

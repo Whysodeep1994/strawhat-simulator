@@ -55,23 +55,8 @@ export const OP10_EFFECT_CARDS: CardDefinition[] = [
     effects: [
       {
         timing: "permanent",
-        conditions: [{ lifeLessThanOpponents: true }],
+        conditions: [{ lifeFewerThanOpponent: true }],
         steps: [{ do: "grantKeyword", target: { side: "this" }, keyword: "rush" }],
-      },
-    ],
-  },
-  {
-    id: "TEST-RETURN-THIS",
-    name: "Test Return This",
-    category: "character",
-    colors: ["blue"],
-    cost: 1,
-    power: 1000,
-    effects: [
-      {
-        timing: "activateMain",
-        costs: [{ returnThis: true }],
-        steps: [{ do: "draw", count: 1 }],
       },
     ],
   },
@@ -127,6 +112,6 @@ export const OP10_EFFECT_CARDS: CardDefinition[] = [
     colors: ["green"],
     cost: 1,
     power: 1000,
-    effects: [{ timing: "onPlay", steps: [{ do: "freezeOpponentDon", count: 1 }] }],
+    effects: [{ timing: "onPlay", steps: [{ do: "opponentDonNoRefresh", count: 1 }] }],
   },
 ];
