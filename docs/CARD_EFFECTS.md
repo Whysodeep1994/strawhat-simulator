@@ -55,6 +55,9 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `opponentActivatesEvent`       | "When your opponent activates an Event" (main or counter)                                                                | 8-1-3-1 |
 | `characterRemovedByYourEffect` | "When a Character is removed from the field by your effect" (either player's Character)                                  | 8-1-3-1 |
 | `restedByOpponentsCharacter`   | "When this Character becomes rested by your opponent's Character's effect"                                               |
+| `yourCharacterRemovedByEffect` | "When your Character [`cardFilter`] is removed from the field by an effect" (yours or your opponent's)                   | 8-1-3-1 |
+| `opponentLifeRemoved`          | "When a card is removed from your opponent's Life cards" (damage or an effect)                                           | 8-1-3-1 |
+| `opponentCharacterKOd`         | "When your opponent's Character is K.O.'d" (in battle or by an effect)                                                   | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -125,11 +128,13 @@ played on this turn"), plus:
 | `{ "opponentHandAtLeast": 6 }`                   | "If your opponent has 6 or more cards in their hand"                                                      |
 | `{ "handTrashedByEffectThisTurn": true }`        | "During the turn in which a card in your hand is trashed by an effect"                                    |
 | `{ "donOnFieldAtMostOpponents": true }`          | "If the number of DON!! cards on your field is equal to or less than the number on your opponent's field" |
+| `{ "faceUpLifeAtLeast": 1 }`                     | "If you have a face-up Life card"                                                                         |
+| `{ "charactersFewerThanOpponent": true }`        | "If you have less Characters than your opponent"                                                          |
 | `{ "thisPowerAtLeast": 7000 }`                   | "If this Character has 7000 power or more"                                                                |
 | `{ "opponentHasMoreDon": true }`                 | "If your opponent has more DON!! cards on their field than you"                                           |
 | `{ "handAtLeast": 5 }`                           | "If you have 5 or more cards in your hand"                                                                |
 | `{ "trashAtLeast": 10 }`                         | "If you have 10 or more cards in your trash"                                                              |
-| `{ "trashAtLeast": 4, "filter": {...} }`         | "If you have 4 or more Events in your trash" (only matching cards count)                                  |
+| `{ "trashAtLeast": 4, "trashFilter": {...} }`    | "If you have 4 or more Events in your trash" (only matching cards count)                                  |
 | `{ "deckAtMost": 0 }`                            | "If your deck has 0 cards"                                                                                |
 | `{ "yourTurnsAtLeast": 2 }`                      | "If it is your second turn or later"                                                                      |
 | `{ "opponentDonActiveAtLeast": 1 }`              | Your opponent has 1 or more active DON!! cards                                                            |
@@ -137,13 +142,18 @@ played on this turn"), plus:
 | `{ "thisRested": true }`                         | "If this Character is rested"                                                                             |
 | `{ "not": { ... } }`                             | True when the nested condition doesn't hold                                                               |
 | `{ "opponentLeaderAttribute": "Slash" }`         | "If your opponent's Leader has the <Slash> attribute"                                                     |
+| `{ "trashAtLeast": 4, "trashFilter": {...} }`    | "If you have 4 or more Events in your trash": only trash cards matching `trashFilter` count               |
 | `{ "donFewerThanOpponentBy": 2 }`                | "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field"  |
 | `{ "lifeFewerThanOpponent": true }`              | "If you have less Life cards than your opponent"                                                          |
+| `{ "trashHas": { "name": "Chess" } }`            | "If you have [Chess] in your trash"                                                                       |
+| `{ "opponentRestedCardsAtLeast": 7 }`            | "If your opponent has 7 or more rested cards" (rested DON!!, Leader, Characters, Stage)                   |
+| `{ "thisActive": true }`                         | "If this Character is active"                                                                             |
 
-`count` takes `side` (`"self"` or `"opponent"`), an optional `zone` (default `"characters"`;
+`count` takes `side` (`"self"`, `"opponent"`, or `"any"` for both players), an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
 and `filter`, and `atLeast` (default 1) and/or `atMost`. "If you do not have 5 Characters with a
 cost of 5 or more" is `{ "count": { "side": "self", "filter": { "costAtLeast": 5 } }, "atMost": 4 }`.
+`"side": "any"` counts both players' cards ("if there are 2 or more Characters with a cost of 8 or more").
 
 ## Costs
 
@@ -172,7 +182,9 @@ your field"), `playFromHand` ("play 1
 [Kotori] from your hand"; the value is a filter),
 and `characterToLife` ("add 1 of your Characters with ... to the top of your Life cards
 face-up": `{ "characterToLife": 1, "filter": {...}, "faceUp": true }`), `thisToDeckBottom` ("place
-this card ... at the bottom of your deck"), `activeLeaderPower` ("give your 1 active Leader −5000
+this card ... at the bottom of your deck"), `thisToHand` ("return this Character to the owner's
+hand"), `thisPower` ("give this Character −2000 power during this turn": `{ "thisPower": -2000 }`),
+`activeLeaderPower` ("give your 1 active Leader −5000
 power during this turn"; the Leader must be active), and `returnActiveDon` ("return 2 of your
 active DON!! cards to your DON!! deck"; rested ones can't pay it). `returnOwnCharacter` takes
 `"to": "deckBottom"` for "place 1 of your Characters ... at the bottom of your deck", and
@@ -226,6 +238,8 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `noCounter`: "Character cards without a Counter".
 - `givenDonAtLeast`: "with 2 or more DON!! cards given" (1 for "with a DON!! card given").
 - `costEqualsGivenDon`: "has a cost equal to the number of DON!! cards given to it".
+- `lacksKeyword`: "without [Blocker]" is `{ "lacksKeyword": "blocker" }`.
+- `lacksTiming`: "without a [When Attacking] effect" is `{ "lacksTiming": "whenAttacking" }`.
 - `notType`: not of this type. "If the only Characters on your field are {X} type Characters" is
   `{ "count": { "side": "self", "filter": { "notType": "X" } }, "atMost": 0 }`.
 
@@ -316,12 +330,18 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `swapBasePower`                  | "Select 2 ... Swap the base power of the selected cards with each other": 2 cards from `target`, or 1 from `target` and 1 from `with`.                                                                                                                        |
 | `opponentDonMinus`               | "Your opponent returns 1 DON!! card from their field to their DON!! deck".                                                                                                                                                                                    |
 | `koImmunity`                     | Permanent: "This Character cannot be K.O.'d by effects of your opponent's Characters with 5000 base power or less" (`from` is the filter for those cards).                                                                                                    |
+| `donDownToOpponent`              | "Return DON!! cards from your field to your DON!! deck until you have the same number of DON!! cards on your field as your opponent".                                                                                                                         |
+| `opponentHandToDeckBottom`       | "Your opponent places 1 card from their hand at the bottom of their deck": the opponent picks.                                                                                                                                                                |
+| `activateEventFromTrash`         | "Activate the [Main] effect of up to 1 Event card ... in your trash" (`filter`). The Event stays in the trash.                                                                                                                                                |
+| `setPowerToZero`                 | "Set the power of up to 1 of your opponent's Characters to 0 during this turn" (`target`, `duration`): gives −(its current power).                                                                                                                            |
 
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash", or
 `perCount` (a `count`-style `{ "side", "zone", "filter" }`) for "for every {Straw Hat Crew} type
 card on your field". `powerUp` also takes `perGivenDonOf` (a target: "for every DON!! card given to
 that Character", the player picks the card) and `perTopLifeCost: true` ("reveal 1 card from the
-top of your Life cards; +1000 per 1 cost on the revealed card").
+top of your Life cards; +1000 per 1 cost on the revealed card"). `draw` and `trashFromHand` take the same `perCount`: "Draw a card for each
+of your {Neptunian} type Characters. Then, trash the same number of cards from your hand" is
+`draw` and `trashFromHand`, each with `count: 1` and the same `perCount`.
 `powerUp` and `costChange` take `perTrash: 4` for "+X for every 4 cards in your trash" (add
 `trashFilter` to count only some cards, e.g. `{ "category": "event" }` for "every 2 Events in
 your trash"), and `perRestedDon: 3` for "for every 3 of your rested DON!! cards".
@@ -365,6 +385,16 @@ Step options:
   `"perPreviousEvery": 3` for "+1000 for every 3 cards placed".
 - `handToDeckTop` takes `"orBottom": true` for "place 2 cards from your hand at the top or bottom
   of your deck in any order".
+- `playFromDeckTop` takes `"restTopOrBottom": true` for "Then, place the rest at the top or bottom
+  of your deck".
+- `lifeFaceUp: 2` turns the top 2 Life cards face-up; all of them must be face-down.
+- Filters `costAtMostLife` ("a cost equal to or less than your number of Life cards") and
+  `costAtMostOpponentDonOnField` ("... the number of DON!! cards on your opponent's field").
+- Statuses `cannotBeKOdInBattleBySlash` ("cannot be K.O.'d in battle by <Slash> attribute cards") and
+  `mustTrashToAttack` ("cannot attack unless your opponent trashes 2 cards from their hand whenever
+  they attack": attacking needs 2 cards in hand, and the attacker's owner trashes 2).
+- A card with `"anyNumberInDeck": true` ("you may have any number of this card in your deck") has no
+  copy limit.
 - `playFromDeckTop` takes `"restToBottom": true` for "Then, place the rest at the bottom of your
   deck": the revealed card goes to the bottom if it isn't played.
 - `trashFromHand` takes `"ifYouDo": [steps]` for "you may trash 1 card from your hand. If you do, ..."

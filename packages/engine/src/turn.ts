@@ -66,6 +66,7 @@ function queueAbout(state: GameState, card: CardInstance, timing: Timing): void 
 export function removedByEffect(state: GameState, card: CardInstance, by: PlayerId): void {
   if (findOnField(state, card.uid)?.zone !== "characters") return;
   if (by !== card.owner) queueAbout(state, card, "yourCharacterRemovedByOpponent");
+  queueAbout(state, card, "yourCharacterRemovedByEffect");
   // "When a Character is removed from the field by your effect".
   queueFieldEffects(state, by, "characterRemovedByYourEffect");
 }
@@ -132,6 +133,9 @@ export function knockOut(state: GameState, uid: string, byEffect = false, by?: P
     const card = p.characters.find((c) => c.uid === uid);
     if (!card) continue;
     queueAbout(state, card, "yourCharacterKOd");
+    // "When your opponent's Character is K.O.'d".
+    for (const holder of fieldCards(state, opponentOf(player)))
+      queueEffects(state, opponentOf(player), holder, "opponentCharacterKOd", card);
     if (by) removedByEffect(state, card, by);
     effectsOf(state, card).forEach((effect, index) => {
       const timingMet =

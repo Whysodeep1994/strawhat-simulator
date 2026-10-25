@@ -126,6 +126,8 @@ export type Frame =
       replacing?: string;
       /** The cards the last targeting step picked, for "that Character" (`side: "that"`). */
       targets?: string[];
+      /** A frame the rules start, with its own `steps` and no effect on the source card. */
+      rule?: boolean;
     }
   | {
       kind: "battle";

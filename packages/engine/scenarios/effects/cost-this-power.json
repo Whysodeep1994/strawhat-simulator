@@ -1,0 +1,22 @@
+{
+  "name": "Cost \"give this Character \u22122000 power during this turn\"",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-SELF-WEAKEN"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    }
+  ],
+  "expect": {
+    "p1.hand": 1,
+    "modifiers.0.power": -2000,
+    "modifiers.0.target": "c2"
+  }
+}
