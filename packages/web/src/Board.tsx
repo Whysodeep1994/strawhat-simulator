@@ -13,11 +13,15 @@ import { officialText, type Card, type CardData } from "./card-data.js";
 import { CardView, DonCard, type Glow } from "./CardView.js";
 import { cardText } from "./describe.js";
 import { botStep, botToAct, humanAct, type LocalGame } from "./local-game.js";
+import { MIN_TURNS, qualifies, TIER_POINTS, trophyById } from "./trophies.js";
+import { Medal } from "./TrophyToasts.js";
 
 interface Props {
   data: CardData;
   game: LocalGame;
   mats: Mats;
+  /** Trophies this game earned, once it is over. */
+  trophies?: string[];
   onChange: (game: LocalGame) => void;
   onRestart: () => void;
   onExit: () => void;
@@ -61,7 +65,7 @@ const CHOOSE_TEXT: Record<string, string> = {
 
 type DefOf = (card: CardInstance | null | undefined) => Card | undefined;
 
-export function Board({ data, game, mats, onChange, onRestart, onExit }: Props) {
+export function Board({ data, game, mats, trophies = [], onChange, onRestart, onExit }: Props) {
   const me = game.human;
   const them = opponentOf(me);
   const view = useMemo(() => viewFor(game.state, me), [game.state, me]);
@@ -514,6 +518,26 @@ export function Board({ data, game, mats, onChange, onRestart, onExit }: Props) 
                 ? "Both players lost at the same time."
                 : "Better luck next time."}
           </p>
+          {trophies.length > 0 ? (
+            <ul className="result-trophies">
+              {trophies.map((id) => {
+                const trophy = trophyById(id);
+                return trophy ? (
+                  <li key={id}>
+                    <Medal tier={trophy.tier} />
+                    <strong>{trophy.name}</strong>
+                    <span>+{TIER_POINTS[trophy.tier]}</span>
+                  </li>
+                ) : null;
+              })}
+            </ul>
+          ) : !qualifies(game.stats, game.state) ? (
+            <p className="note">
+              {game.stats.conceded
+                ? "Conceded games don't count toward trophies."
+                : `Games count toward trophies after ${MIN_TURNS} of your own turns.`}
+            </p>
+          ) : null}
           <div className="row">
             <button className="primary" onClick={onRestart}>
               Play again
