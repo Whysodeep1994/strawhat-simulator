@@ -336,7 +336,7 @@ Comprehensive Rules version 1.2.1.
 | 8-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-2 | 8-1 Effects | Tested | 4 |
 | 8-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
-| 8-1-3-1 | 8-1 Effects | Tested | 13 |
+| 8-1-3-1 | 8-1 Effects | Tested | 17 |
 | 8-1-3-1-1 | 8-1 Effects | Tested | 1 |
 | 8-1-3-1-2 | 8-1 Effects | Phase 4 (effects) | 0 |
 | 8-1-3-1-3 | 8-1 Effects | Phase 4 (effects) | 0 |
@@ -369,7 +369,7 @@ Comprehensive Rules version 1.2.1.
 | 8-2-3 | 8-2 Valid and Invalid Effects | Phase 4 (effects) | 0 |
 | 8-2-4 | 8-2 Valid and Invalid Effects | Phase 4 (effects) | 0 |
 | 8-3 | 8-3 Activation Cost and Conditions | Section heading | 0 |
-| 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 22 |
+| 8-3-1 | 8-3 Activation Cost and Conditions | Tested | 24 |
 | 8-3-1-1 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-1-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-3 | 8-3 Activation Cost and Conditions | Tested | 21 |
@@ -380,13 +380,13 @@ Comprehensive Rules version 1.2.1.
 | 8-3-1-7 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-1-8 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2 | 8-3 Activation Cost and Conditions | Tested | 7 |
-| 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 21 |
+| 8-3-2-1 | 8-3 Activation Cost and Conditions | Tested | 28 |
 | 8-3-2-2 | 8-3 Activation Cost and Conditions | Phase 4 (effects) | 0 |
 | 8-3-2-3 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-4 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-5 | 8-3 Activation Cost and Conditions | Tested | 1 |
 | 8-3-3 | 8-3 Activation Cost and Conditions | Tested | 16 |
-| 8-4 | 8-4 Activation and Resolution | Tested | 8 |
+| 8-4 | 8-4 Activation and Resolution | Tested | 11 |
 | 8-4-1 | 8-4 Activation and Resolution | Tested | 2 |
 | 8-4-1-1 | 8-4 Activation and Resolution | Tested | 1 |
 | 8-4-1-2 | 8-4 Activation and Resolution | Tested | 1 |

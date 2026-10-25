@@ -202,7 +202,11 @@ export type Condition =
   /** "If your opponent has 7 or more rested cards" (DON!! in the cost area, Leader, Characters, Stage). */
   | { opponentRestedCardsAtLeast: number }
   /** "If this Character is active". */
-  | { thisActive: true };
+  | { thisActive: true }
+  /** "If you have a face-up Life card". */
+  | { faceUpLifeAtLeast: number }
+  /** "If you have less Characters than your opponent". */
+  | { charactersFewerThanOpponent: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -394,8 +398,11 @@ export type Status =
   | "cannotBeRemovedByOpponentsEffects";
 
 export type Step =
-  /** `side: "opponent"`: "your opponent draws 1 card". */
-  | { do: "draw"; count: number; side?: "opponent" }
+  /**
+   * `side: "opponent"`: "your opponent draws 1 card". With `perCount`, `count` is multiplied by
+   * the count ("draw a card for each of your {X} type Characters").
+   */
+  | { do: "draw"; count: number; side?: "opponent"; perCount?: CardCount }
   /**
    * With `perPrevious`, `amount` is multiplied by how many cards the previous step moved.
    * `perTrash`: "+amount for every N cards in your trash" (only cards matching `trashFilter`,
@@ -741,4 +748,10 @@ export type Step =
    * Permanent: "This Character cannot be K.O.'d by effects of your opponent's
    * Characters with 5000 base power or less" (`from` describes those cards).
    */
-  | { do: "koImmunity"; from: Filter };
+  | { do: "koImmunity"; from: Filter }
+  /** "Your opponent places 1 card from their hand at the bottom of their deck" (they pick). */
+  | { do: "opponentHandToDeckBottom"; count: number }
+  /** "Activate the [Main] effect of up to 1 Event card ... in your trash". */
+  | { do: "activateEventFromTrash"; filter?: Filter }
+  /** "Set the power of up to 1 of your opponent's Characters to 0": gives −(its current power). */
+  | { do: "setPowerToZero"; target: Target; duration?: Duration };
