@@ -1,0 +1,16 @@
+{
+  "name": "\"If you have 2 or more active DON!! cards\" gives +1000",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-DON-ACTIVE-AT-LEAST"],
+      "don": {
+        "active": 2
+      }
+    }
+  },
+  "actions": [],
+  "expect": {
+    "power.p1.characters.0": 2000
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "\"A total of 4 or less cards in your Life area and hand\" draws 1",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-LIFE-AND-HAND", "TEST-FILLER"],
+      "life": 2,
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 2
+  }
+}

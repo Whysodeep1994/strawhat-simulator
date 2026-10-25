@@ -1,0 +1,23 @@
+{
+  "name": "Return your hand to your deck and draw the same number of cards",
+  "rules": ["10-2-6"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-HAND-SHUFFLE-RETURNED", "TEST-FILLER", "TEST-FILLER", "TEST-FILLER"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 3,
+    "p1.deck": 20
+  }
+}

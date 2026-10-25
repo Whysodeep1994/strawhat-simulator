@@ -209,6 +209,10 @@ export type Condition =
   | { donOnFieldAtMostOpponents: true }
   /** "If you have 5 or less active DON!! cards". */
   | { donActiveAtMost: number }
+  /** "If you have 2 or more active DON!! cards". */
+  | { donActiveAtLeast: number }
+  /** "If you have a total of 4 or less cards in your Life area and hand". */
+  | { lifeAndHandAtMost: number }
   /** "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field". */
   | { donFewerThanOpponentBy: number }
   /** "If you have less Life cards than your opponent". */
@@ -404,6 +408,8 @@ export interface Filter {
   costEqualsGivenDon?: boolean;
   /** "Without a [When Attacking] effect": the card has no effect with this timing. */
   lacksTiming?: Timing;
+  /** The attacker or the attacked card of the current battle ("the Character you battled with"). */
+  inBattle?: boolean;
 }
 
 /**
@@ -582,7 +588,8 @@ export type Step =
    */
   | { do: "handToDeckBottom"; count: number; side?: "opponent" }
   /** "[Side] returns all cards in their hand to their deck and shuffles it. Then, draws 5 cards." */
-  | { do: "handToDeckShuffle"; side: "self" | "opponent"; draw: number }
+  /** `draw: "returned"` draws as many cards as were returned to the deck. */
+  | { do: "handToDeckShuffle"; side: "self" | "opponent"; draw: number | "returned" }
   /** "You cannot attack a Leader during this turn." */
   | { do: "cannotAttackLeader" }
   /**

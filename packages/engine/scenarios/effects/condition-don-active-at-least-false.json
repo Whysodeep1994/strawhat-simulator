@@ -1,0 +1,17 @@
+{
+  "name": "With 1 active DON!!, \"2 or more active DON!! cards\" does nothing",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-DON-ACTIVE-AT-LEAST"],
+      "don": {
+        "active": 1,
+        "rested": 3
+      }
+    }
+  },
+  "actions": [],
+  "expect": {
+    "power.p1.characters.0": 1000
+  }
+}
