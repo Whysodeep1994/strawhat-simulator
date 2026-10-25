@@ -86,7 +86,14 @@ export function buildCardData(
     decks,
     format: standard ?? { ...BASE_RULES, id: "standard", name: "Standard" },
     formatLoaded: standard !== undefined,
-    imageUrl: (card) => (card?.image ? `${base}${card.image}` : undefined),
+    // Paths are relative to the card data; a full or root-relative URL (an image hosted
+    // elsewhere) is used as it is.
+    imageUrl: (card) =>
+      card?.image
+        ? /^([a-z]+:|\/)/i.test(card.image)
+          ? card.image
+          : `${base}${card.image}`
+        : undefined,
   };
 }
 
@@ -108,7 +115,7 @@ export function practiceDeck(cards: Card[], leader: Card): PlayableDeck | null {
   }
   const deck = [...copies].flatMap(([id, n]) => Array<string>(n).fill(id));
   return {
-    id: `${set}-practice`,
+    id: `${leader.id}-practice`,
     name: `${setLabel(set)} practice deck`,
     leader: leader.id,
     deck,
