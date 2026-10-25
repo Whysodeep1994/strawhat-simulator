@@ -211,6 +211,8 @@ export interface GameState {
   delayed: DelayedEffect[];
   /** The last turn in which each player's hand had a card trashed by an effect. */
   handTrashedTurn?: Partial<Record<PlayerId, number>>;
+  /** Events activated this turn ("if you have activated an Event ... during this turn"). */
+  activatedEvents?: { player: PlayerId; cardId: string; turn: number }[];
   /** Cards whose pending removal a replacement effect prevented (rule 8-1-3-4). */
   prevented?: string[];
   /** Cards an effect just revealed to both players, e.g. from a hand. Cleared by the next action. */

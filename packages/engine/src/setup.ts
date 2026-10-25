@@ -46,7 +46,7 @@ export function createGame(options: NewGameOptions): GameState {
       characters: [],
       stage: null,
       life: [],
-      donDeck: 10,
+      donDeck: donDeckSize(catalog, decks[player].leader),
       donActive: 0,
       donRested: 0,
       turnsTaken: 0,
@@ -80,4 +80,11 @@ export function createGame(options: NewGameOptions): GameState {
     rng,
     nextUid,
   };
+}
+
+/** 10 DON!! cards (rule 5-1-2-3), unless the Leader says otherwise ("your DON!! deck consists of 6 cards"). */
+function donDeckSize(catalog: CardCatalog, leader: string): number {
+  for (const effect of catalog[leader]?.effects ?? [])
+    for (const step of effect.steps) if (step.do === "donDeckSize") return step.count;
+  return 10;
 }

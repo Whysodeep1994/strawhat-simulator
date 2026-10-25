@@ -219,6 +219,14 @@ export type Condition =
   | { not: Condition }
   /** "If your opponent's Leader has the <Slash> attribute". */
   | { opponentLeaderAttribute: string }
+  /** "If your deck has 0 cards". */
+  | { deckAtMost: number }
+  /** "If it is your second turn or later": how many turns you have started, this one included. */
+  | { yourTurnsAtLeast: number }
+  /** Your opponent has at least this many active DON!! cards. */
+  | { opponentDonActiveAtLeast: number }
+  /** "If you have activated an Event with a base cost of 3 or more during this turn". */
+  | { activatedEventThisTurn: Filter }
   /** "If you have [Kuromarimo] in your trash": a card matching the filter is in your trash. */
   | { trashHas: Filter }
   /** "If your opponent has 7 or more rested cards" (DON!! in the cost area, Leader, Characters, Stage). */
@@ -314,7 +322,9 @@ export type Cost =
   /** "Rest 1 of your opponent's Characters" (e.g. as a replacement cost). */
   | { restOpponentCharacter: number }
   /** "Rest 2 of your cards": active DON!! in the cost area, Leader, Characters, or Stage. */
-  | { restCards: number };
+  | { restCards: number }
+  /** "Give 1 of your opponent's rested DON!! cards to 1 of your opponent's Characters". */
+  | { giveOpponentDon: number };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -390,6 +400,10 @@ export interface Filter {
   noCounter?: boolean;
   /** "With no base effect": a card without card text (rule 2-8-5), so no effects or keywords. */
   noBaseEffect?: boolean;
+  /** "With 2 or more DON!! cards given". */
+  givenDonAtLeast?: number;
+  /** "Has a cost equal to the number of DON!! cards given to it". */
+  costEqualsGivenDon?: boolean;
   /** "Without a [When Attacking] effect": the card has no effect with this timing. */
   lacksTiming?: Timing;
 }
@@ -460,6 +474,13 @@ export type Step =
       perRestedDon?: number;
       /** "For every {Straw Hat Crew} type card on your field": amount × the count. */
       perCount?: CardCount;
+      /**
+       * "For every DON!! card given to that Character": the player first picks 1 card from
+       * this target, and `amount` is multiplied by the DON!! given to it.
+       */
+      perGivenDonOf?: Target;
+      /** "Reveal 1 card from the top of your Life cards; +amount per 1 cost on the revealed card". */
+      perTopLifeCost?: boolean;
     }
   /**
    * Permanent effects only: matching Character cards in your hand have +amount Counter
@@ -503,8 +524,13 @@ export type Step =
    * limits which [Blocker] Characters are stopped (e.g. 5000 power or more).
    */
   | { do: "noBlockers"; target: Target; blockers?: Filter; duration?: Duration }
-  /** Give rested DON!! from the cost area (e.g. "Give up to 1 rested DON!! card to your Leader"). */
-  | { do: "giveRestedDon"; target: Target; count: number }
+  /**
+   * Give rested DON!! from the cost area of the target's owner ("Give up to 1 rested DON!! card
+   * to your Leader", "give up to 3 of your opponent's rested DON!! cards to 1 of their
+   * Characters"). `fromCostArea`: "DON!! cards from ... cost area", so active ones too
+   * (rested first).
+   */
+  | { do: "giveRestedDon"; target: Target; count: number; fromCostArea?: boolean }
   /** Put DON!! from the DON!! deck into the cost area. */
   | { do: "addDon"; count: number; rested?: boolean }
   | { do: "setDonActive"; count: number }
@@ -747,7 +773,7 @@ export type Step =
   | { do: "characterToLife"; target: Target; faceUp?: boolean }
   /** "Look at all your Life cards; place 1 at the top of your deck and the rest back in any order." */
   | { do: "lifeToDeckTop" }
-  /** Trigger only: add this card to your hand. */
+  /** Trigger: add this card to your hand. [On K.O.]: "add this Character card from your trash to your hand". */
   | { do: "addThisToHand" }
   /** Trash Characters from the field. This is not a K.O. (rule 10-2-14). */
   | { do: "trashCharacter"; target: Target }
@@ -815,13 +841,33 @@ export type Step =
    * `target`, or 1 from `target` and 1 from `with` ("your Leader and 1 Character").
    */
   | { do: "swapBasePower"; target: Target; with?: Target; duration?: Duration }
-  /** "Your opponent returns 1 DON!! card from their field to their DON!! deck". */
-  | { do: "opponentDonMinus"; count: number }
+  /**
+   * "Your opponent returns 1 DON!! card from their field to their DON!! deck". `active`: only
+   * their active DON!! ("1 of their active DON!! cards").
+   */
+  | { do: "opponentDonMinus"; count: number; active?: boolean }
   /**
    * Permanent: "This Character cannot be K.O.'d by effects of your opponent's
    * Characters with 5000 base power or less" (`from` describes those cards).
    */
   | { do: "koImmunity"; from: Filter }
+  /**
+   * Permanent: "This Character cannot be rested by your opponent's Leader and Character
+   * effects" (`from` describes those cards).
+   */
+  | { do: "restImmunity"; from: Filter }
+  /**
+   * "Activate up to 1 {Dressrosa} type Event ... from your hand": the Event is trashed and its
+   * [Main] effect happens now, without paying its cost.
+   */
+  | { do: "activateEvent"; filter?: Filter }
+  /**
+   * Permanent, on a Leader: "you do not lose when your deck has 0 cards. You lose at the end of
+   * the turn in which your deck becomes 0 cards."
+   */
+  | { do: "deckOutAtEndOfTurn" }
+  /** Leader only: "your DON!! deck consists of 6 cards". Read when the game is set up. */
+  | { do: "donDeckSize"; count: number }
   /** "Your opponent places 1 card from their hand at the bottom of their deck" (they pick). */
   | { do: "opponentHandToDeckBottom"; count: number }
   /** "Activate the [Main] effect of up to 1 Event card ... in your trash". */

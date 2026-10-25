@@ -14,7 +14,14 @@ import {
   playCostOf,
 } from "./state.js";
 import { opponentOf, type GameState, type PlayerId } from "./types.js";
-import { drawCards, pushEffect, putOnField, queueEffects, startTurn } from "./turn.js";
+import {
+  drawCards,
+  eventActivated,
+  pushEffect,
+  putOnField,
+  queueEffects,
+  startTurn,
+} from "./turn.js";
 
 export class IllegalActionError extends Error {
   constructor(action: Action) {
@@ -155,8 +162,8 @@ function playCard(state: GameState, player: PlayerId, uid: string, trash?: strin
   if (def.category === "event") {
     p.trash.unshift(card);
     const index = (def.effects ?? []).findIndex((e) => e.timing === "main");
+    eventActivated(state, player, card);
     pushEffect(state, player, card.uid, index);
-    eventActivated(state, player);
     return;
   }
   putOnField(state, player, card, trash, true);
@@ -254,28 +261,6 @@ function counterEvent(state: GameState, player: PlayerId, uid: string): void {
   p.donRested += cost;
   p.trash.unshift(card);
   const index = (def.effects ?? []).findIndex((e) => e.timing === "counter");
+  eventActivated(state, player, card);
   pushEffect(state, player, card.uid, index);
-  eventActivated(state, player);
-}
-
-/** "When you activate an Event" and "When your opponent activates an Event". */
-function eventActivated(state: GameState, player: PlayerId): void {
-  for (const card of fieldCards(state, player))
-    queueEffects(state, player, card, "youActivateEvent");
-  const other = opponentOf(player);
-  for (const card of fieldCards(state, other))
-    queueEffects(state, other, card, "opponentActivatesEvent");
-}
-
-/** A "the next time you play ... the cost will be reduced" discount is used once. */
-function useNextPlayDiscount(state: GameState, player: PlayerId, uid: string): void {
-  const card = state.players[player].hand.find((c) => c.uid === uid);
-  if (!card) return;
-  const index = state.modifiers.findIndex(
-    (m) =>
-      m.target === state.players[player].leader.uid &&
-      m.nextPlay &&
-      matchesFilter(state, card, m.nextPlay.filter, null, false),
-  );
-  if (index >= 0) state.modifiers.splice(index, 1);
 }
