@@ -1,0 +1,10 @@
+{
+  "name": "\"If you have a face-up Life card\" needs one",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": { "hand": ["TEST-FACE-UP-KO", "TEST-FACE-UP-KO"], "don": { "active": 2 } },
+    "p2": { "characters": ["TEST-FILLER"] }
+  },
+  "actions": [{ "type": "playCard", "player": "p1", "card": "p1.hand.0" }],
+  "expect": { "p2.characters": 1, "p1.characters": 1 }
+}

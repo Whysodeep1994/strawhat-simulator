@@ -734,4 +734,233 @@ export const EXTRA_BOOSTER_CARDS: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-HAND-BOTTOM",
+    name: "Test Hand to Bottom",
+    category: "character",
+    colors: ["blue"],
+    cost: 1,
+    power: 1000,
+    effects: [{ timing: "onPlay", steps: [{ do: "opponentHandToDeckBottom", count: 1 }] }],
+  },
+  {
+    id: "TEST-EVENT-REPLAY",
+    name: "Test Event Replay",
+    category: "character",
+    colors: ["purple"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [{ do: "activateEventFromTrash", filter: { costAtMost: 7 } }],
+      },
+    ],
+  },
+  {
+    id: "TEST-FACE-UP-KO",
+    name: "Test Face-Up K.O.",
+    category: "character",
+    colors: ["yellow"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "if",
+            conditions: [{ faceUpLifeAtLeast: 1 }],
+            steps: [{ do: "ko", target: { side: "opponent", upTo: true } }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-RUSH-NO-ATTACK-EFFECT",
+    name: "Test Rush Without When Attacking",
+    category: "character",
+    colors: ["red"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "grantKeyword",
+            target: { side: "self", filter: { lacksTiming: "whenAttacking" }, upTo: true },
+            keyword: "rush",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-ONLY-TEST-CREW",
+    name: "Test Only Test Crew",
+    category: "character",
+    colors: ["purple"],
+    cost: 1,
+    power: 1000,
+    types: ["Test Crew"],
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "if",
+            conditions: [
+              { count: { side: "self", filter: { notTypeIncludes: "Test" } }, atMost: 0 },
+            ],
+            steps: [{ do: "draw", count: 1 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-POWER-ZERO",
+    name: "Test Power Zero",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          { do: "setPowerToZero", target: { side: "opponent", upTo: true }, duration: "turn" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-DRAW-PER",
+    name: "Test Draw Per",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          { do: "draw", count: 1, perCount: { side: "self" } },
+          { do: "trashFromHand", count: 1, perCount: { side: "self" } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRASH-EVENTS",
+    name: "Test Trash Events",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "if",
+            conditions: [{ trashAtLeast: 2, trashFilter: { category: "event" } }],
+            steps: [{ do: "draw", count: 1 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-KO-WATCH",
+    name: "Test K.O. Watch",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [{ timing: "opponentCharacterKOd", steps: [{ do: "draw", count: 1 }] }],
+  },
+  {
+    id: "TEST-COUNT-ANY",
+    name: "Test Count Any",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "if",
+            conditions: [{ count: { side: "any", filter: { costAtLeast: 2 } }, atLeast: 2 }],
+            steps: [{ do: "draw", count: 1 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-FEWER-CHARS",
+    name: "Test Fewer Characters",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "if",
+            conditions: [{ charactersFewerThanOpponent: true }],
+            steps: [{ do: "draw", count: 1 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-NO-BLOCKER-KO",
+    name: "Test No-Blocker K.O.",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "onPlay",
+        steps: [
+          {
+            do: "ko",
+            target: { side: "opponent", upTo: true, filter: { lacksKeyword: "blocker" } },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-SELF-BOUNCE",
+    name: "Test Self Bounce",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 3000,
+    effects: [
+      { timing: "activateMain", costs: [{ thisToHand: true }], steps: [{ do: "draw", count: 1 }] },
+    ],
+  },
+  {
+    id: "TEST-SELF-WEAKEN",
+    name: "Test Self Weaken",
+    category: "character",
+    colors: ["green"],
+    cost: 1,
+    power: 3000,
+    effects: [
+      { timing: "activateMain", costs: [{ thisPower: -2000 }], steps: [{ do: "draw", count: 1 }] },
+    ],
+  },
 ];

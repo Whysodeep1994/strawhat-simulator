@@ -1,17 +1,14 @@
 {
-  "name": "K.O.ing an opponent's Character triggers \"when your opponent's Character is K.O.'d\"",
+  "name": "\"When your opponent's Character is K.O.'d, draw 1 card\"",
   "rules": ["8-1-3-1"],
   "setup": {
     "p1": {
-      "characters": ["TEST-KO-WATCHER-OP01", "TEST-C4-5000"],
-      "don": {
-        "deck": 3
-      }
+      "characters": ["TEST-KO-WATCH"]
     },
     "p2": {
       "characters": [
         {
-          "card": "TEST-FILLER",
+          "card": "TEST-C2-3000",
           "rested": true
         }
       ]
@@ -21,7 +18,7 @@
     {
       "type": "attack",
       "player": "p1",
-      "attacker": "p1.characters.1",
+      "attacker": "p1.leader",
       "target": "p2.characters.0"
     },
     {
@@ -31,6 +28,6 @@
   ],
   "expect": {
     "p2.characters": 0,
-    "p1.donActive": 1
+    "p1.hand": 1
   }
 }

@@ -85,8 +85,6 @@ export type Timing =
   | "opponentActivatesEvent"
   /** "When you activate an Event" (Main or Counter). */
   | "youActivateEvent"
-  /** "When your opponent's Character is K.O.'d", in battle or by an effect. */
-  | "opponentCharacterKOd"
   /** "When this Leader or any of your Characters is given a DON!! card". */
   | "donGiven"
   /** "When your opponent plays a Character [cardFilter]". */
@@ -110,6 +108,8 @@ export type Timing =
   | "becomesRested"
   /** "When a Character is K.O.'d": any Character, either player's, in battle or by an effect. */
   | "characterKOd"
+  /** "When your opponent's Character is K.O.'d", in battle or by an effect. */
+  | "opponentCharacterKOd"
   /** "When this card's attack deals damage to your opponent's Life". */
   | "attackDealsDamage"
   /** "When you take damage": each time a Life card leaves for damage. */
@@ -126,6 +126,10 @@ export type Timing =
   | "youPlayCharacter"
   /** "When a Character is removed from the field by your effect" (either player's Character). */
   | "characterRemovedByYourEffect"
+  /** "When your Character [cardFilter] is removed from the field by an effect" (either player's). */
+  | "yourCharacterRemovedByEffect"
+  /** "When a card is removed from your opponent's Life cards" (damage or an effect). */
+  | "opponentLifeRemoved"
   /** Leader effects that read "at the start of the game" (rule 5-2-1-5-1). */
   | "startOfGame"
   /** "When this Character becomes rested by your opponent's Character's effect". */
@@ -180,7 +184,7 @@ export type Condition =
   /** "If your opponent has more DON!! cards on their field than you". */
   | { opponentHasMoreDon: true }
   /** "If you have 10 or more cards in your trash". */
-  | { trashAtLeast: number }
+  | { trashAtLeast: number; trashFilter?: Filter }
   /** "If the number of your Life cards is equal to or less than the number of your opponent's Life cards". */
   | { lifeAtMostOpponents: true }
   /** "If you have less Life cards than your opponent". */
@@ -214,11 +218,18 @@ export type Condition =
   /** True if the condition doesn't hold. */
   | { not: Condition }
   /** "If your opponent's Leader has the <Slash> attribute". */
-  | { opponentLeaderAttribute: string };
+  | { opponentLeaderAttribute: string }
+  /** "If you have [Kuromarimo] in your trash": a card matching the filter is in your trash. */
+  | { trashHas: Filter }
+  /** "If your opponent has 7 or more rested cards" (DON!! in the cost area, Leader, Characters, Stage). */
+  | { opponentRestedCardsAtLeast: number }
+  /** "If this Character is active". */
+  | { thisActive: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
-  side: "self" | "opponent";
+  /** "any" counts both players' cards ("if there are 2 or more Characters with a cost of 8 or more"). */
+  side: "self" | "opponent" | "any";
   /** Defaults to "characters". "field" is the Leader, Characters, and Stage. */
   zone?: "leader" | "characters" | "leaderOrCharacters" | "stage" | "field";
   filter?: Filter;
@@ -263,6 +274,10 @@ export type Cost =
   | { handToDeckBottom: number }
   /** Place this card (a Character or Stage) at the bottom of your deck. */
   | { thisToDeckBottom: true }
+  /** "Return this Character to the owner's hand". */
+  | { thisToHand: true }
+  /** "Give this Character −2000 power during this turn". */
+  | { thisPower: number }
   /** "Give your 1 active Leader −5000 power during this turn": the Leader must be active. */
   | { activeLeaderPower: number }
   /** "Return 2 of your active DON!! cards to your DON!! deck". */
@@ -339,6 +354,10 @@ export interface Filter {
   notType?: string;
   /** "With a cost equal to or less than the number of DON!! cards on your field". */
   costAtMostDonOnField?: boolean;
+  /** "With a cost equal to or less than the number of DON!! cards on your opponent's field". */
+  costAtMostOpponentDonOnField?: boolean;
+  /** "With a cost equal to or less than your number of Life cards". */
+  costAtMostLife?: boolean;
   /** A type containing this text, e.g. "Baroque Works". */
   typeIncludes?: string;
   /** No type containing this text. */
@@ -357,6 +376,8 @@ export interface Filter {
   hasTrigger?: boolean;
   /** The card has this keyword right now, e.g. [Blocker]. */
   keyword?: Keyword;
+  /** The card doesn't have this keyword right now ("without [Blocker]"). */
+  lacksKeyword?: Keyword;
   /** The printed attribute includes this, e.g. "Slash". */
   attribute?: string;
   /** At least one of these filters matches ("{Cross Guild} type or ..."). */
@@ -365,6 +386,8 @@ export interface Filter {
   noCounter?: boolean;
   /** "With no base effect": a card without card text (rule 2-8-5), so no effects or keywords. */
   noBaseEffect?: boolean;
+  /** "Without a [When Attacking] effect": the card has no effect with this timing. */
+  lacksTiming?: Timing;
 }
 
 /**
@@ -397,6 +420,10 @@ export type Status =
   | "onlyAttackTarget"
   /** "Cannot be K.O.'d in battle by Leaders". */
   | "cannotBeKOdInBattleByLeaders"
+  /** "Cannot be K.O.'d in battle by <Slash> attribute cards". */
+  | "cannotBeKOdInBattleBySlash"
+  /** "Cannot attack unless your opponent trashes 2 cards from their hand whenever they attack". */
+  | "mustTrashToAttack"
   /** "Negate the effect of ...": the card's effects and keywords don't work (rule 8-2). */
   | "negated"
   /** "Cannot be rested": it can't attack, block, or be rested by effects or costs. */
@@ -478,6 +505,7 @@ export type Step =
    * The effect's player trashes cards from their hand. `chooser: "opponent"`: "your opponent
    * chooses 1 card from your hand; trash that card" (picked face-down).
    * `ifYouDo`: "you may trash ...: If you do, ..." (with `upTo`).
+   * `perCount` multiplies `count` like `draw` ("Then, trash the same number of cards from your hand").
    */
   | {
       do: "trashFromHand";
@@ -486,6 +514,7 @@ export type Step =
       filter?: Filter;
       chooser?: "opponent";
       ifYouDo?: Step[];
+      perCount?: CardCount;
     }
   /** "Trash this Stage" (or Character) as part of the effect. Not a K.O. */
   | { do: "trashThis" }
@@ -613,6 +642,8 @@ export type Step =
       rested?: boolean;
       restToBottom?: boolean;
       must?: boolean;
+      /** "Then, place the rest at the top or bottom of your deck." */
+      restTopOrBottom?: boolean;
     }
   /**
    * Play a card from hand for free. `rested`: "play ... rested". `orTrash`: "from your hand
@@ -759,6 +790,11 @@ export type Step =
    * next Refresh Phase".
    */
   | { do: "opponentDonNoRefresh"; count: number }
+  /**
+   * "Return DON!! cards from your field to your DON!! deck until you have the same number of
+   * DON!! cards on your field as your opponent" (rested first, as for DON!! −X).
+   */
+  | { do: "donDownToOpponent" }
   /** "This Character's base power becomes the same as the selected Character's power during this turn." */
   | { do: "copyPower"; target: Target }
   /** "Look at all of your (opponent's) Life cards and place them back in any order." */

@@ -12,7 +12,13 @@ import {
   leaveField,
   matchesFilter,
 } from "./state.js";
-import type { CardInstance, Frame, GameState, PlayerId } from "./types.js";
+import {
+  opponentOf,
+  type CardInstance,
+  type Frame,
+  type GameState,
+  type PlayerId,
+} from "./types.js";
 
 /** Rules 4-5-1 to 4-5-3. Drawing from an empty deck does nothing; rule 9-2-1-2 already ended the game. */
 export function drawCards(state: GameState, player: PlayerId, count: number): number {
@@ -62,6 +68,7 @@ function queueAbout(state: GameState, card: CardInstance, timing: Timing, fromHa
 export function removedByEffect(state: GameState, card: CardInstance, by: PlayerId): void {
   if (findOnField(state, card.uid)?.zone !== "characters") return;
   if (by !== card.owner) queueAbout(state, card, "yourCharacterRemovedByOpponent");
+  queueAbout(state, card, "yourCharacterRemovedByEffect");
   // "When a Character is removed from the field by your effect".
   queueFieldEffects(state, by, "characterRemovedByYourEffect");
 }
@@ -128,6 +135,9 @@ export function knockOut(state: GameState, uid: string, byEffect = false, by?: P
     const card = p.characters.find((c) => c.uid === uid);
     if (!card) continue;
     queueAbout(state, card, "yourCharacterKOd");
+    // "When your opponent's Character is K.O.'d".
+    for (const holder of fieldCards(state, opponentOf(player)))
+      queueEffects(state, opponentOf(player), holder, "opponentCharacterKOd", card);
     if (by) removedByEffect(state, card, by);
     effectsOf(state, card).forEach((effect, index) => {
       const timingMet =
@@ -141,9 +151,6 @@ export function knockOut(state: GameState, uid: string, byEffect = false, by?: P
     p.characters = p.characters.filter((c) => c.uid !== uid);
     leaveField(state, card);
     p.trash.unshift(card);
-    const other = player === "p1" ? "p2" : "p1";
-    for (const watcher of fieldCards(state, other))
-      queueEffects(state, other, watcher, "opponentCharacterKOd");
     // "When a Character is K.O.'d" effects on either player's field.
     for (const watcher of ["p1", "p2"] as const)
       for (const source of fieldCards(state, watcher))

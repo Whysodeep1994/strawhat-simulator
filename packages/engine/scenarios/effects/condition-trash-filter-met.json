@@ -1,0 +1,23 @@
+{
+  "name": "\"If you have 2 or more Events in your trash\" with 2 Events",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-TRASH-EVENTS"],
+      "trash": ["TEST-EVENT", "TEST-EVENT"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

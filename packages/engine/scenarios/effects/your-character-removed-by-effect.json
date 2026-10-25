@@ -1,0 +1,30 @@
+{
+  "name": "\"When your Character is removed from the field by an effect\"",
+  "rules": ["8-1-3-1"],
+  "setup": {
+    "turn": 4,
+    "turnPlayer": "p2",
+    "p1": {
+      "characters": ["TEST-REMOVED-ANY", "TEST-FILLER"]
+    },
+    "p2": {
+      "hand": ["TEST-KO-ANY"]
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p2",
+      "card": "p2.hand.0"
+    },
+    {
+      "type": "choose",
+      "player": "p2",
+      "cards": ["p1.characters.1"]
+    }
+  ],
+  "expect": {
+    "p1.characters": 1,
+    "p1.hand": 1
+  }
+}

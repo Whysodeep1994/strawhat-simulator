@@ -1,0 +1,20 @@
+{
+  "name": "\"If this Character is active\"",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-THIS-ACTIVE"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

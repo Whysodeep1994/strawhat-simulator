@@ -1,0 +1,14 @@
+{
+  "name": "\"Your Character without [Blocker]\": a [Blocker] does not match",
+  "rules": ["8-1-3-1"],
+  "setup": {
+    "p1": { "hand": ["TEST-NO-BLOCKER-KO"], "don": { "active": 1 } },
+    "p2": { "characters": ["TEST-BLOCKER", "TEST-FILLER"] }
+  },
+  "actions": [
+    { "type": "playCard", "player": "p1", "card": "p1.hand.0" },
+    { "type": "choose", "player": "p1", "cards": ["p2.characters.0"], "illegal": true },
+    { "type": "choose", "player": "p1", "cards": ["p2.characters.1"] }
+  ],
+  "expect": { "p2.characters": 1, "p2.characters.0.cardId": "TEST-BLOCKER" }
+}

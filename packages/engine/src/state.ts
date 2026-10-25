@@ -235,16 +235,29 @@ type GrantStep =
 /** Cards whose grants are being worked out, so an effect that reads its own result can't loop. */
 const inProgress = new Set<string>();
 
+/**
+ * Grants already worked out during the current outermost lookup. Without it, conditions like
+ * "if there is a Character with a cost of 0" (OP14-090) re-check every Character's cost inside
+ * every other Character's cost, which grows exponentially and freezes the game.
+ */
+let lookupCache: Map<string, Grant[]> | null = null;
+
 /** Power, cost, keywords, or statuses given to `card` by permanent effects on the field (rule 8-1-3-3). */
 function permanentGrants(state: GameState, card: CardInstance, kind: GrantStep): Grant[] {
-  const grants: Grant[] = [];
   const key = `${card.uid}:${kind}`;
-  if (inProgress.has(key) || !findOnField(state, card.uid)) return grants;
+  if (inProgress.has(key) || !findOnField(state, card.uid)) return [];
+  const cached = lookupCache?.get(key);
+  if (cached) return cached;
+  const outermost = inProgress.size === 0;
+  if (outermost) lookupCache = new Map();
+  const grants: Grant[] = [];
   inProgress.add(key);
   try {
     collectGrants(state, card, kind, grants);
+    lookupCache?.set(key, grants);
   } finally {
     inProgress.delete(key);
+    if (outermost) lookupCache = null;
   }
   return grants;
 }
@@ -384,16 +397,22 @@ function zoneMatches(state: GameState, card: CardInstance, zone: string | undefi
 }
 
 /** Field cards counted by a `count` condition. */
-function countCards(
+export function countCards(
   state: GameState,
   controller: PlayerId,
   source: CardInstance | null,
   what: CardCount,
 ): number {
-  const p = state.players[what.side === "self" ? controller : opponentOf(controller)];
-  return zoneCards(p, what.zone ?? "characters").filter((c) =>
-    matchesFilter(state, c, what.filter, source),
-  ).length;
+  const players: PlayerId[] =
+    what.side === "any"
+      ? ["p1", "p2"]
+      : [what.side === "self" ? controller : opponentOf(controller)];
+  let n = 0;
+  for (const id of players)
+    n += zoneCards(state.players[id], what.zone ?? "characters").filter((c) =>
+      matchesFilter(state, c, what.filter, source),
+    ).length;
+  return n;
 }
 
 /** A player's cards in a target zone. */
@@ -457,6 +476,13 @@ export function conditionsMet(
     if ("deckAtMost" in c) return me.deck.length <= c.deckAtMost;
     if ("thisIsAttackTarget" in c) return state.battle?.target === source.uid;
     if ("lifeFewerThanOpponent" in c) return me.life.length < them.life.length;
+    if ("trashHas" in c)
+      return me.trash.some((t) => matchesFilter(state, t, c.trashHas, source, false));
+    if ("opponentRestedCardsAtLeast" in c) {
+      const rested = fieldCards(state, opponentOf(controller)).filter((card) => card.rested).length;
+      return them.donRested + rested >= c.opponentRestedCardsAtLeast;
+    }
+    if ("thisActive" in c) return !source.rested;
     if ("givenDonAtLeast" in c)
       return [me.leader, ...me.characters].reduce((n, x) => n + x.givenDon, 0) >= c.givenDonAtLeast;
     if ("leaderAttribute" in c)
@@ -512,6 +538,8 @@ export function matchesFilter(
     filter.costAtLeast !== undefined ||
     filter.costAtMostOpponentLife ||
     filter.costAtMostDonOnField ||
+    filter.costAtMostOpponentDonOnField ||
+    filter.costAtMostLife ||
     filter.costAtMostTotalLife
       ? costOf(state, card)
       : baseCost;
@@ -538,6 +566,12 @@ export function matchesFilter(
   if (filter.costAtMostDonOnField && source) {
     if (cost > donOnField(state, source.owner)) return false;
   }
+  if (filter.costAtMostOpponentDonOnField && source) {
+    if (cost > donOnField(state, opponentOf(source.owner))) return false;
+  }
+  if (filter.costAtMostLife && source) {
+    if (cost > state.players[source.owner].life.length) return false;
+  }
   if (filter.type && !(def.types ?? []).includes(filter.type)) return false;
   if (filter.notType && (def.types ?? []).includes(filter.notType)) return false;
   if (
@@ -558,10 +592,13 @@ export function matchesFilter(
   if (filter.isThis && (!source || card.uid !== source.uid)) return false;
   if (filter.hasTrigger && !(def.effects ?? []).some((e) => e.timing === "trigger")) return false;
   if (filter.keyword && !hasKeywordNow(state, card, filter.keyword)) return false;
+  if (filter.lacksKeyword && hasKeywordNow(state, card, filter.lacksKeyword)) return false;
   if (filter.attribute && !(def.attribute ?? "").includes(filter.attribute)) return false;
   if (filter.anyOf && !filter.anyOf.some((f) => matchesFilter(state, card, f, source, usePower)))
     return false;
   if (filter.noBaseEffect && ((def.effects ?? []).length > 0 || (def.keywords ?? []).length > 0))
+    return false;
+  if (filter.lacksTiming && (def.effects ?? []).some((e) => e.timing === filter.lacksTiming))
     return false;
   return true;
 }
@@ -710,6 +747,10 @@ export function canPayCosts(
     if ("lifeFaceUp" in cost) {
       const ends = cost.from === "topOrBottom" ? [p.life[0], p.life.at(-1)] : [p.life[0]];
       if (!ends.some((c) => c && !c.faceUp)) return false;
+      // "Turn 2 cards from the top of your Life cards face-up".
+      const top = p.life.slice(0, cost.lifeFaceUp);
+      if (cost.from !== "topOrBottom" && top.filter((c) => !c.faceUp).length < cost.lifeFaceUp)
+        return false;
     }
     if ("lifeFaceDown" in cost) {
       const ends = cost.from === "topOrBottom" ? [p.life[0], p.life.at(-1)] : [p.life[0]];
