@@ -23,7 +23,7 @@ import {
 } from "./trophies.js";
 import { Medal } from "./TrophyToasts.js";
 
-export type Screen = "title" | "play" | "decks" | "trophies" | "settings";
+export type Screen = "title" | "play" | "friend" | "decks" | "trophies" | "settings";
 
 export const RANDOM = "random";
 
@@ -53,6 +53,12 @@ export function TitleMenu({
       screen: "play",
       label: "Play",
       hint: "Duel the computer with one of your decks or a Quick deck.",
+      disabled: !ready,
+    },
+    {
+      screen: "friend",
+      label: "Play a Friend",
+      hint: "Play a friend online. One of you makes a game and sends the other its code.",
       disabled: !ready,
     },
     {
@@ -147,6 +153,117 @@ export function SubScreen({
 
 type Source = "mine" | "quick";
 
+/** The player's own decks that are ready to play. */
+export function readyDecks(myDecks: SavedDeck[], data: CardData): PlayableDeck[] {
+  return myDecks.flatMap((d) => {
+    const deck = playable(d, data);
+    return deck ? [deck] : [];
+  });
+}
+
+/** Choose your deck: one of yours, or a Quick deck. */
+export function DeckChooser({
+  data,
+  myDecks,
+  deckId,
+  onDeck,
+  onBuild,
+}: {
+  data: CardData;
+  myDecks: SavedDeck[];
+  deckId: string | null;
+  onDeck: (id: string) => void;
+  onBuild: () => void;
+}) {
+  const mine = readyDecks(myDecks, data);
+  const unready = myDecks.length - mine.length;
+  const quick = data.decks;
+  const [source, setSource] = useState<Source>(() =>
+    mine.some((d) => d.id === deckId) || (mine.length > 0 && !quick.some((d) => d.id === deckId))
+      ? "mine"
+      : "quick",
+  );
+  const list = source === "mine" ? mine : quick;
+  const chosen = list.find((d) => d.id === deckId);
+
+  const pickSource = (next: Source) => {
+    setSource(next);
+    const first = next === "mine" ? mine[0] : (quick.find((d) => d.official) ?? quick[0]);
+    if (first) onDeck(first.id);
+  };
+
+  return (
+    <section className="panel" aria-labelledby="your-deck">
+      <h2 id="your-deck">Your deck</h2>
+      <div className="tabs" role="group" aria-label="Which decks">
+        <button
+          className={source === "mine" ? "on" : ""}
+          aria-pressed={source === "mine"}
+          onClick={() => pickSource("mine")}
+        >
+          My decks <span className="count">{mine.length}</span>
+        </button>
+        <button
+          className={source === "quick" ? "on" : ""}
+          aria-pressed={source === "quick"}
+          onClick={() => pickSource("quick")}
+        >
+          Quick decks <span className="count">{quick.length}</span>
+        </button>
+      </div>
+
+      {source === "mine" && mine.length === 0 ? (
+        <div className="empty-decks">
+          <p>
+            {unready > 0
+              ? `None of your ${unready} saved decks are ready to play yet. Open them in the Deck Builder to see what to fix.`
+              : "You haven't built a deck yet. Build one, or play a Quick deck while you get started."}
+          </p>
+          <div className="row">
+            <button className="primary" onClick={onBuild}>
+              Open the Deck Builder
+            </button>
+            <button onClick={() => pickSource("quick")}>Use a Quick deck</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <label className="field">
+            <span>
+              {source === "mine" ? "Choose one of your decks" : "Choose a ready-made deck"}
+            </span>
+            <select
+              value={chosen?.id ?? ""}
+              onChange={(e) => onDeck(e.target.value)}
+              aria-label="Your deck"
+            >
+              {!chosen && <option value="">Choose a deck…</option>}
+              {source === "mine" ? (
+                mine.map((deck) => <DeckOption key={deck.id} deck={deck} data={data} />)
+              ) : (
+                <QuickOptions decks={quick} data={data} />
+              )}
+            </select>
+          </label>
+          {chosen && <DeckPreview deck={chosen} data={data} />}
+          {source === "mine" && unready > 0 && (
+            <p className="note">
+              {unready} more {unready === 1 ? "deck needs" : "decks need"} fixing in the Deck
+              Builder before {unready === 1 ? "it" : "they"} can be played.
+            </p>
+          )}
+          {source === "quick" && (
+            <p className="note">
+              Quick decks are official starter decks, played as printed. A practice deck stands in
+              for sets whose official list isn't added yet.
+            </p>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 /** Choose your deck (one of yours, or a Quick deck) and the computer's, then start. */
 export function PlaySetup({
   data,
@@ -167,96 +284,19 @@ export function PlaySetup({
   onStart: () => void;
   onBuild: () => void;
 }) {
-  const mine = myDecks.flatMap((d) => {
-    const deck = playable(d, data);
-    return deck ? [deck] : [];
-  });
-  const unready = myDecks.length - mine.length;
+  const mine = readyDecks(myDecks, data);
   const quick = data.decks;
-  const [source, setSource] = useState<Source>(() =>
-    mine.some((d) => d.id === deckId) || (mine.length > 0 && !quick.some((d) => d.id === deckId))
-      ? "mine"
-      : "quick",
-  );
-  const list = source === "mine" ? mine : quick;
-  const chosen = list.find((d) => d.id === deckId);
-
-  const pickSource = (next: Source) => {
-    setSource(next);
-    const first = next === "mine" ? mine[0] : (quick.find((d) => d.official) ?? quick[0]);
-    if (first) onDeck(first.id);
-  };
+  const chosen = [...mine, ...quick].find((d) => d.id === deckId);
 
   return (
     <div className="home-grid">
-      <section className="panel" aria-labelledby="your-deck">
-        <h2 id="your-deck">Your deck</h2>
-        <div className="tabs" role="group" aria-label="Which decks">
-          <button
-            className={source === "mine" ? "on" : ""}
-            aria-pressed={source === "mine"}
-            onClick={() => pickSource("mine")}
-          >
-            My decks <span className="count">{mine.length}</span>
-          </button>
-          <button
-            className={source === "quick" ? "on" : ""}
-            aria-pressed={source === "quick"}
-            onClick={() => pickSource("quick")}
-          >
-            Quick decks <span className="count">{quick.length}</span>
-          </button>
-        </div>
-
-        {source === "mine" && mine.length === 0 ? (
-          <div className="empty-decks">
-            <p>
-              {unready > 0
-                ? `None of your ${unready} saved decks are ready to play yet. Open them in the Deck Builder to see what to fix.`
-                : "You haven't built a deck yet. Build one, or play a Quick deck while you get started."}
-            </p>
-            <div className="row">
-              <button className="primary" onClick={onBuild}>
-                Open the Deck Builder
-              </button>
-              <button onClick={() => pickSource("quick")}>Use a Quick deck</button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <label className="field">
-              <span>
-                {source === "mine" ? "Choose one of your decks" : "Choose a ready-made deck"}
-              </span>
-              <select
-                value={chosen?.id ?? ""}
-                onChange={(e) => onDeck(e.target.value)}
-                aria-label="Your deck"
-              >
-                {!chosen && <option value="">Choose a deck…</option>}
-                {source === "mine" ? (
-                  mine.map((deck) => <DeckOption key={deck.id} deck={deck} data={data} />)
-                ) : (
-                  <QuickOptions decks={quick} data={data} />
-                )}
-              </select>
-            </label>
-            {chosen && <DeckPreview deck={chosen} data={data} />}
-            {source === "mine" && unready > 0 && (
-              <p className="note">
-                {unready} more {unready === 1 ? "deck needs" : "decks need"} fixing in the Deck
-                Builder before {unready === 1 ? "it" : "they"} can be played.
-              </p>
-            )}
-            {source === "quick" && (
-              <p className="note">
-                Quick decks are official starter decks, played as printed. A practice deck stands in
-                for sets whose official list isn't added yet.
-              </p>
-            )}
-          </>
-        )}
-      </section>
+      <DeckChooser
+        data={data}
+        myDecks={myDecks}
+        deckId={deckId}
+        onDeck={onDeck}
+        onBuild={onBuild}
+      />
 
       <aside className="home-side">
         <section className="panel">

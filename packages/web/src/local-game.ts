@@ -14,12 +14,16 @@ import {
 import { newStats, trackAction, type GameStats } from "./trophies.js";
 
 /**
- * A game on one computer: you against the computer. It keeps the full game state the way
- * the server will in Phase 6; the board only ever draws what `viewFor` lets you see.
+ * A game as this computer sees it: you against the computer, or against a friend online. It
+ * keeps the full game state; the board only ever draws what `viewFor` lets you see.
  */
 export interface LocalGame {
   state: GameState;
   human: PlayerId;
+  /** Who sits across the table. A friend's moves arrive from online.ts, never from the bot. */
+  opponent: "computer" | "friend";
+  /** Every action so far, in order. Online, both players keep the same list. */
+  actions: Action[];
   log: LogEntry[];
   /** What you've done this game, for trophies. */
   stats: GameStats;
@@ -46,18 +50,44 @@ export function newLocalGame(
     // You win Rock-Paper-Scissors, so you choose who goes first (rule 5-2-1-4).
     chooser: HUMAN,
   });
+  return started(state, HUMAN, "computer");
+}
+
+/**
+ * A game against a friend online. Both computers build it from the same decks and seed, so
+ * each ends up with the same shuffles and only the moves have to travel. The host is p1.
+ */
+export function newOnlineGame(
+  catalog: CardCatalog,
+  decks: Record<PlayerId, DeckList>,
+  seed: number,
+  me: PlayerId,
+): LocalGame {
+  // Rock-Paper-Scissors is left to the seed, so neither player picks it.
+  return started(createGame({ catalog, decks, seed }), me, "friend");
+}
+
+function started(state: GameState, human: PlayerId, opponent: LocalGame["opponent"]): LocalGame {
   return {
     state,
-    human: HUMAN,
+    human,
+    opponent,
+    actions: [],
     log: [{ id: 0, player: null, text: "The game begins." }],
-    stats: newStats(state, HUMAN),
+    stats: newStats(state, human),
   };
 }
 
 /** Whether the computer has to act next. */
 export function botToAct(game: LocalGame): boolean {
   const prompt = game.state.prompt;
-  return prompt.kind !== "gameOver" && prompt.player !== game.human;
+  return game.opponent === "computer" && prompt.kind !== "gameOver" && prompt.player !== game.human;
+}
+
+/** Applies your friend's action. Throws IllegalActionError if it isn't allowed. */
+export function friendAct(game: LocalGame, action: Action): LocalGame {
+  if (action.player === game.human) throw new Error("A move for you came from your friend.");
+  return act(game, action);
 }
 
 /** Applies your action. Throws IllegalActionError if it isn't allowed. */
@@ -75,7 +105,10 @@ export function botStep(game: LocalGame): LocalGame {
 function act(game: LocalGame, action: Action): LocalGame {
   const before = game.state;
   const after = applyAction(before, action);
-  const lines = [describeAction(before, action), ...describeChanges(before, after)];
+  const lines = [
+    describeAction(before, action, game.human),
+    ...describeChanges(before, after, game.human),
+  ];
   let id = game.log.at(-1)?.id ?? 0;
   const entries = lines
     .filter((l): l is { player: PlayerId | null; text: string } => l !== null)
@@ -83,6 +116,7 @@ function act(game: LocalGame, action: Action): LocalGame {
   return {
     ...game,
     state: after,
+    actions: [...game.actions, action],
     log: [...game.log, ...entries].slice(-200),
     stats: trackAction(game.stats, game.human, before, action, after),
   };
@@ -116,8 +150,9 @@ const CHOICE_PURPOSE: Record<string, string> = {
 function describeAction(
   state: GameState,
   action: Action,
+  human: PlayerId,
 ): { player: PlayerId; text: string } | null {
-  const who = playerName(action.player);
+  const who = playerName(action.player, human);
   const say = (text: string) => ({ player: action.player, text: `${who} ${text}` });
   switch (action.type) {
     case "chooseTurnOrder":
@@ -152,7 +187,7 @@ function describeAction(
       const names = action.cards.map((uid) => {
         const card = findCard(state, uid);
         const owner =
-          card && card.owner !== action.player ? (card.owner === HUMAN ? "your " : "their ") : "";
+          card && card.owner !== action.player ? (card.owner === human ? "your " : "their ") : "";
         return `${owner}${name(state, uid)}`;
       });
       return say(`chose ${names.join(", ")}${purpose ? ` ${purpose}` : ""}.`);
@@ -181,12 +216,13 @@ function describeAction(
 function describeChanges(
   before: GameState,
   after: GameState,
+  human: PlayerId,
 ): { player: PlayerId | null; text: string }[] {
   const lines: { player: PlayerId | null; text: string }[] = [];
   for (const player of ["p1", "p2"] as const) {
     const was = before.players[player];
     const now = after.players[player];
-    const who = playerName(player);
+    const who = playerName(player, human);
     if (now.life.length < was.life.length) {
       lines.push({ player, text: `${who} took damage. Life: ${now.life.length}.` });
     }
@@ -208,7 +244,7 @@ function describeChanges(
   if (before.turn !== after.turn && after.turn > 0 && after.winner === null) {
     lines.push({
       player: after.turnPlayer,
-      text: `Turn ${after.turn}: ${after.turnPlayer === HUMAN ? "your" : "the opponent's"} turn.`,
+      text: `Turn ${after.turn}: ${after.turnPlayer === human ? "your" : "the opponent's"} turn.`,
     });
   }
   if (before.winner === null && after.winner !== null) {
@@ -217,9 +253,9 @@ function describeChanges(
       text:
         after.winner === "draw"
           ? "The game is a draw."
-          : after.winner === HUMAN
+          : after.winner === human
             ? "You win!"
-            : `${playerName(opponentOf(HUMAN))} wins.`,
+            : `${playerName(opponentOf(human), human)} wins.`,
     });
   }
   return lines;

@@ -25,8 +25,11 @@ interface Props {
   /** Trophies this game earned, once it is over. */
   trophies?: string[];
   onChange: (game: LocalGame) => void;
-  onRestart: () => void;
+  /** Starts another game; none for a game against a friend. */
+  onRestart?: () => void;
   onExit: () => void;
+  /** A line shown over the table, such as a friend who lost their connection. */
+  notice?: string | undefined;
 }
 
 type Mode =
@@ -77,6 +80,7 @@ export function Board({
   onChange,
   onRestart,
   onExit,
+  notice,
 }: Props) {
   const me = game.human;
   const them = opponentOf(me);
@@ -277,8 +281,14 @@ export function Board({
           me={me}
           def={def}
           mode={mode}
+          friend={game.opponent === "friend"}
           onCancel={() => setMode({ kind: "none" })}
         />
+        {notice && (
+          <p className="table-notice" role="status">
+            {notice}
+          </p>
+        )}
 
         <Mat
           view={view}
@@ -559,10 +569,14 @@ export function Board({
             </p>
           ) : null}
           <div className="row">
-            <button className="primary" onClick={onRestart}>
-              Play again
+            {onRestart && (
+              <button className="primary" onClick={onRestart}>
+                Play again
+              </button>
+            )}
+            <button className={onRestart ? "" : "primary"} onClick={onExit}>
+              Main menu
             </button>
-            <button onClick={onExit}>Main menu</button>
           </div>
         </Modal>
       )}
@@ -715,12 +729,14 @@ function StatusBar({
   me,
   def,
   mode,
+  friend,
   onCancel,
 }: {
   view: GameView;
   me: PlayerId;
   def: DefOf;
   mode: Mode;
+  friend: boolean;
   onCancel: () => void;
 }) {
   const yourTurn = view.turnPlayer === me;
@@ -730,7 +746,8 @@ function StatusBar({
   else if (prompt.kind === "gameOver") message = "Game over";
   else if (mode.kind === "attack") message = "Choose what to attack.";
   else if (mode.kind === "replace") message = "Choose a Character to trash to make room.";
-  else if (prompt.player !== me) message = "Opponent is thinking…";
+  else if (prompt.player !== me)
+    message = friend ? "Your friend is thinking…" : "Opponent is thinking…";
   else if (prompt.kind === "main") message = "Your Main Phase: play cards, give DON!!, and attack.";
   else if (prompt.kind === "block")
     message = "You're being attacked! Tap a glowing [Blocker], or don't block.";

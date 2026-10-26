@@ -5,6 +5,7 @@ import { Board } from "./Board.js";
 import { backImage, loadBack, saveBack, type BackChoice } from "./card-backs.js";
 import { loadCardData, type CardData } from "./card-data.js";
 import { DeckBuilder } from "./DeckBuilder.js";
+import { FriendLobby, FriendSetup } from "./Friend.js";
 import {
   deckTitle,
   MatPicker,
@@ -17,6 +18,17 @@ import {
   type Screen,
 } from "./Home.js";
 import { newLocalGame, type LocalGame } from "./local-game.js";
+import {
+  DuelLink,
+  loadDuel,
+  newGameCode,
+  newSave,
+  onlineRoom,
+  roomName,
+  storeDuel,
+  type DuelSave,
+  type DuelStatus,
+} from "./online.js";
 import {
   cardList,
   copyOf,
@@ -70,6 +82,14 @@ export function App() {
   const [gameTrophies, setGameTrophies] = useState<string[]>([]);
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const recorded = useRef(false);
+  /** Whether this page can play online: null until claude.ai answers. */
+  const [online, setOnline] = useState<boolean | null>(null);
+  /** The online game being set up or played. */
+  const [duel, setDuel] = useState<{ save: DuelSave; status: DuelStatus | null } | null>(null);
+  const [savedDuel, setSavedDuel] = useState<DuelSave | null>(loadDuel);
+  const link = useRef<DuelLink | null>(null);
+  /** The token of the online game in progress, so a cancelled one stops connecting. */
+  const duelToken = useRef<string | null>(null);
 
   // Every deck that can start a game: the starter decks, then the player's own legal decks.
   const decks = useMemo(
@@ -148,6 +168,77 @@ export function App() {
     setGame(newLocalGame(data.catalog as CardCatalog, { human: mine, bot: theirs }, seed));
   };
 
+  useEffect(() => {
+    let live = true;
+    onlineRoom().then((room) => live && setOnline(!!room));
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  /** Joins the online game `save` describes: a new one, or one this browser was in. */
+  const startDuel = async (save: DuelSave) => {
+    if (!data) return;
+    void link.current?.close();
+    link.current = null;
+    duelToken.current = save.token;
+    setSavedDuel(save);
+    storeDuel(save);
+    setDuel({ save, status: null });
+    const fail = (message: string) =>
+      setDuel((d) =>
+        d?.save.token === save.token ? { ...d, status: { kind: "error", message } } : d,
+      );
+    const room = await onlineRoom();
+    if (!room) return fail("Online play isn't available on this page.");
+    let joined;
+    try {
+      joined = await room.join(roomName(save.code));
+    } catch (e) {
+      const code = (e as { code?: string } | null)?.code;
+      return fail(
+        code === "not_permitted"
+          ? "This link doesn't allow online games for you. Ask the game's owner to share it with you."
+          : "Couldn't reach the game room. Check your connection and try again.",
+      );
+    }
+    // The player may have cancelled while the room was opening.
+    if (duelToken.current !== save.token) {
+      void joined.leave();
+      return;
+    }
+    link.current = new DuelLink(joined, save, data.catalog as CardCatalog, (status, next) => {
+      storeDuel(next);
+      setSavedDuel(next);
+      setDuel((d) => (d?.save.token === next.token ? { save: next, status } : d));
+    });
+  };
+
+  const hostDuel = () => {
+    const mine = decks.find((d) => d.id === deckId);
+    if (mine) void startDuel(newSave(newGameCode(), "host", mine));
+  };
+
+  const joinDuel = (code: string) => {
+    const mine = decks.find((d) => d.id === deckId);
+    if (mine) void startDuel(newSave(code, "guest", mine));
+  };
+
+  /** Leaves the online game. One that isn't over can still be rejoined from the Play a Friend screen. */
+  const leaveDuel = () => {
+    void link.current?.close();
+    link.current = null;
+    duelToken.current = null;
+    const over = duel?.status?.kind === "playing" && duel.status.game.state.winner !== null;
+    const unstarted = duel?.status?.kind !== "playing";
+    if (over || unstarted) {
+      storeDuel(null);
+      setSavedDuel(null);
+    }
+    setDuel(null);
+    setScreen("friend");
+  };
+
   const addDeck = (deck: SavedDeck) => {
     storeDecks([...myDecks, deck]);
     setEditing(deck.id);
@@ -158,13 +249,13 @@ export function App() {
 
   // Escape steps back from a menu screen to the title menu, like a game's "back" button.
   useEffect(() => {
-    if (screen === "title" || game || editing) return;
+    if (screen === "title" || game || duel || editing) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setScreen("title");
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [screen, game, editing]);
+  }, [screen, game, duel, editing]);
 
   const setMat = (seat: MatSeat, choice: string | null) => {
     setMats((m) => ({ ...m, [seat]: choice }));
@@ -212,6 +303,25 @@ export function App() {
         />
         {toastLayer}
       </>
+    );
+  }
+
+  if (duel?.status?.kind === "playing" && data) {
+    const playing = duel.status;
+    return (
+      <Board
+        data={data}
+        game={playing.game}
+        mats={mats}
+        backs={backs}
+        onChange={(next) => link.current?.play(next)}
+        onExit={leaveDuel}
+        notice={
+          playing.partnerHere || playing.game.state.winner !== null
+            ? undefined
+            : "Your friend lost their connection. The game carries on when they're back."
+        }
+      />
     );
   }
 
@@ -318,7 +428,41 @@ export function App() {
               {cardBacks}
             </div>
           </SubScreen>
-        ) : !data ? null : screen === "play" ? (
+        ) : !data ? null : screen === "friend" ? (
+          <SubScreen
+            title="Play a Friend"
+            onBack={() => {
+              if (duel) leaveDuel();
+              back();
+            }}
+          >
+            {duel ? (
+              <FriendLobby
+                code={duel.save.code}
+                host={duel.save.role === "host"}
+                status={duel.status}
+                onCancel={leaveDuel}
+              />
+            ) : (
+              <FriendSetup
+                data={data}
+                myDecks={myDecks}
+                deckId={deckId}
+                online={online}
+                saved={savedDuel}
+                onDeck={setDeckId}
+                onBuild={() => setScreen("decks")}
+                onHost={hostDuel}
+                onJoin={joinDuel}
+                onRejoin={() => savedDuel && void startDuel(savedDuel)}
+                onForget={() => {
+                  storeDuel(null);
+                  setSavedDuel(null);
+                }}
+              />
+            )}
+          </SubScreen>
+        ) : screen === "play" ? (
           <SubScreen title="Play" onBack={back}>
             <PlaySetup
               data={data}
