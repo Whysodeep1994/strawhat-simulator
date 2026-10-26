@@ -20,7 +20,7 @@ Each phase has a check the project owner can do without reading code.
 | 3. Core rules engine   | Open a coverage report listing rules sections with pass counts, all green. | Done        |
 | 4. Cards and effects   | See every card in one starter deck marked "tested".                        | In progress |
 | 5. Local prototype     | Play a full game in a browser, mulligan to winner, on one computer.        | In progress |
-| 6. Online multiplayer  | Play a friend on two devices; their hand never shows on your screen.       | Not started |
+| 6. Online multiplayer  | Play a friend on two devices; their hand never shows on your screen.       | In progress |
 | 7. Deck builder        | Build a deck, see an illegal card flagged, import and export a list.       | Started     |
 | 8. Polish              | A new player finishes the tutorial; the app opens in under 3 seconds.      | Not started |
 | 9. Release and updates | Visit a public link and see an update notice after a new version ships.    | Not started |
@@ -28,6 +28,11 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-26: Play a Friend (Phase 6, first version). One player creates a game and gets a short
+  code; the friend types it to join. It runs on claude.ai's live rooms in the published app, so
+  there is no server to host or pay for. Both computers build the game from the same decks and
+  seed, and only the moves travel; a reloaded page rejoins and catches up. Known limit: the
+  friend's hidden cards are in your browser's memory (never on screen), so it relies on trust.
 - 2026-10-24: Engine blocks for set OP-12: "when a card is trashed from your hand by your own
   effect", "when your opponent plays a Character" (also "using a Character's effect"), "cannot attack
   Characters with a base cost of 7 or less", "cannot be played by effects", activating an Event from

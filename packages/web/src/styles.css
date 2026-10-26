@@ -2241,3 +2241,50 @@ button.pile {
   color: var(--gold);
   font-weight: 700;
 }
+
+/* Play a Friend */
+.code-input {
+  font: inherit;
+  font-size: 1.2rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.5em 0.7em;
+  width: 100%;
+}
+.game-code {
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.big-code {
+  font-size: 2rem;
+  padding: 0.1em 0.4em;
+  border: 1px dashed var(--gold-soft);
+  border-radius: 10px;
+}
+.friend-lobby {
+  width: min(560px, 100%);
+}
+.friend-lobby p {
+  margin: 0;
+}
+.table-notice {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  margin: 0;
+  max-width: calc(100vw - 32px);
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--gold-soft);
+  background: var(--panel-solid);
+  color: var(--text);
+  font-size: 0.88rem;
+}
