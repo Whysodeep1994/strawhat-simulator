@@ -2,6 +2,7 @@ import type { Action } from "./actions.js";
 import {
   canPayCosts,
   conditionsMet,
+  costOf,
   counterOf,
   definitionOf,
   effectsOf,
@@ -92,6 +93,13 @@ export function isLegal(state: GameState, action: Action): boolean {
         return sum + (card ? powerOf(state, card) : 0);
       }, 0);
       if (total > prompt.maxTotalPower) return false;
+    }
+    if (prompt.maxTotalCost !== undefined) {
+      const total = action.cards.reduce((sum, uid) => {
+        const card = findOnField(state, uid)?.card;
+        return sum + (card ? costOf(state, card) : 0);
+      }, 0);
+      if (total > prompt.maxTotalCost) return false;
     }
     return (
       unique.size === action.cards.length &&
@@ -187,6 +195,17 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
   const leaderAttacksBanned = state.modifiers.some(
     (m) => m.target === p.leader.uid && m.noLeaderAttacks,
   );
+  // "Your opponent cannot attack any card other than the Character [Captain John]."
+  const onlyTargets = fieldCards(state, opponentOf(player))
+    .filter((card) =>
+      effectsOf(state, card).some(
+        (e) =>
+          e.timing === "permanent" &&
+          e.steps.some((s) => s.do === "attackOnlyThis") &&
+          conditionsMet(state, opponentOf(player), card, e.conditions),
+      ),
+    )
+    .map((c) => c.uid);
   for (const attacker of [p.leader, ...p.characters]) {
     if (
       attacker.rested ||
@@ -202,10 +221,10 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
     const banned = state.modifiers.filter((m) => m.target === attacker.uid && m.noAttackTargets);
     let targets = attackTargets(state, attacker, opponent.leader.uid, attackable).filter((t) => {
       // "You cannot attack a Leader during this turn."
-      if (t === opponent.leader.uid) return !leaderAttacksBanned;
-      const card = opponent.characters.find((c) => c.uid === t);
-      return !card || !banned.some((m) => matchesFilter(state, card, m.noAttackTargets, attacker));
-    });
+      (t) =>
+        (t !== opponent.leader.uid || !leaderAttacksBanned) &&
+        (onlyTargets.length === 0 || onlyTargets.includes(t)),
+    );
     // "Your opponent cannot attack any card other than [this Character]."
     const lures = [opponent.leader, ...opponent.characters].filter((c) =>
       hasStatus(state, c, "onlyAttackTarget"),

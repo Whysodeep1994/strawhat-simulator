@@ -151,6 +151,8 @@ export type Timing =
   | "restedByOpponentsCharacter"
   /** "When your {Impel Down} type Character card is removed from the field" (any way). See `cardFilter`. */
   | "yourCharacterRemoved"
+  /** "When your Leader attacks" (the card is on your field). Pair with `leaderAttacked` for "or is attacked". */
+  | "yourLeaderAttacks"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -273,7 +275,9 @@ export type Condition =
   /** "This Character with a cost of 20 or more". */
   | { thisCostAtLeast: number }
   /** "If your opponent's Character has been K.O.'d during this turn". */
-  | { opponentCharacterKOdThisTurn: true };
+  | { opponentCharacterKOdThisTurn: true }
+  /** Your Leader is the target of the current attack ("when your Leader ... is attacked"). */
+  | { leaderAttacked: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -386,6 +390,8 @@ export interface Target {
   upTo?: boolean;
   /** "Up to 2 ... with a total power of 4000 or less". */
   totalPowerAtMost?: number;
+  /** "K.O. your opponent's Characters with a total cost of 4 or less". */
+  totalCostAtMost?: number;
 }
 
 export interface Filter {
@@ -450,6 +456,8 @@ export interface Filter {
   lacksTiming?: Timing;
   /** The attacker or the attacked card of the current battle ("the Character you battled with"). */
   inBattle?: boolean;
+  /** The card has a Counter right now (printed or given). */
+  hasCounter?: boolean;
 }
 
 /**
@@ -755,6 +763,8 @@ export type Step =
       count?: number;
       differentNames?: boolean;
       played?: string[];
+      /** "With a total cost of 9 or less": what is left after each card is played. */
+      totalCostAtMost?: number;
     }
   /**
    * `count`: "play up to 5 ...", one at a time. `differentNames`: "with different card names".
@@ -954,4 +964,9 @@ export type Step =
    * Permanent, on a Leader: "When a {Land of Wano} type Character card is played from your trash,
    * that Character gains [Rush] during this turn" (`filter`).
    */
-  | { do: "rushFromTrash"; filter?: Filter };
+  | { do: "rushFromTrash"; filter?: Filter }
+  /**
+   * Permanent: "your opponent cannot attack any card other than the Character [Captain John]".
+   * While it holds, this card is the only legal attack target.
+   */
+  | { do: "attackOnlyThis" };
