@@ -11,3 +11,7 @@ card-assets/
 
 # Official card data copied in by scripts/card-data.mjs; it lives in strawhat-card-data.
 packages/web/public/card-data/
+
+# Card data downloaded by packages/server/scripts/build-site.mjs.
+packages/server/.card-data/
+.wrangler/

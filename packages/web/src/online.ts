@@ -6,6 +6,7 @@ import {
   type PlayerId,
 } from "@strawhat/engine";
 import { friendAct, humanAct, newOnlineGame, type LocalGame } from "./local-game.js";
+import { findRelay } from "./relay.js";
 
 /**
  * Playing a friend online, through the live room claude.ai gives the published app.
@@ -342,23 +343,28 @@ function concede(game: LocalGame, player: PlayerId): LocalGame {
   return { ...replay(game, { type: "concede", player }), actions: game.actions };
 }
 
-/** The live room claude.ai gives a published page, or null anywhere else (like `pnpm dev`). */
-interface ClaudeRoom {
+/** Somewhere to hold game rooms: claude.ai's live room, or the Strawhat relay (relay.ts). */
+interface Lobby {
   join(name: string): Promise<RoomLike>;
 }
 
-let lobby: Promise<ClaudeRoom | null> | null = null;
+let lobby: Promise<Lobby | null> | null = null;
 
-/** Whether this page can play online. Waits for claude.ai to answer (at most about 10 s). */
-export function onlineRoom(): Promise<ClaudeRoom | null> {
+/**
+ * Where this page can play online: the live room claude.ai gives a published page, else the
+ * relay on the site serving the game, else null (like `pnpm dev`). Waits at most about 10 s.
+ */
+export function onlineRoom(): Promise<Lobby | null> {
   lobby ??= (async () => {
     const claude = (window as { claude?: { use?: (name: string) => Promise<unknown> } }).claude;
-    if (typeof claude?.use !== "function") return null;
-    try {
-      return ((await claude.use("room")) as ClaudeRoom | null) ?? null;
-    } catch {
-      return null;
+    if (typeof claude?.use === "function") {
+      try {
+        return ((await claude.use("room")) as Lobby | null) ?? null;
+      } catch {
+        return null;
+      }
     }
+    return findRelay();
   })();
   return lobby;
 }

@@ -1,0 +1,14 @@
+// The public website on Cloudflare (see docs/HOSTING.md). Cloudflare builds it with
+// `pnpm site` and publishes it with `npx wrangler deploy`, which reads this file.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "strawhat-simulator",
+  "main": "packages/server/src/index.ts",
+  "compatibility_date": "2025-10-01",
+  // The built game, card data included; anything that isn't a file goes to the Worker.
+  "assets": { "directory": "packages/web/dist", "binding": "ASSETS" },
+  "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "DuelRoom" }] },
+  // SQLite-backed Durable Objects are the kind Cloudflare's free plan allows.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DuelRoom"] }],
+  "observability": { "enabled": true },
+}

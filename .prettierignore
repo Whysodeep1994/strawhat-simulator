@@ -4,3 +4,5 @@ dist
 coverage
 docs/RULES_COVERAGE.md
 packages/web/public
+.wrangler/
+packages/server/.card-data/

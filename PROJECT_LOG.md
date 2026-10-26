@@ -28,6 +28,9 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-26: Public website (owner chose Cloudflare). The whole game, card data included, can
+  be published free as one Cloudflare Worker that rebuilds on every merge, and Play a Friend works
+  there through a small relay instead of claude.ai's live rooms. Setup steps: docs/HOSTING.md.
 - 2026-10-26: Play a Friend (Phase 6, first version). One player creates a game and gets a short
   code; the friend types it to join. It runs on claude.ai's live rooms in the published app, so
   there is no server to host or pay for. Both computers build the game from the same decks and
