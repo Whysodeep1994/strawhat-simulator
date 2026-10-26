@@ -1,0 +1,26 @@
+{
+  "name": "\"If your opponent has 3 or more rested cards\" fails with 2",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-OPP-RESTED-ACT"]
+    },
+    "p2": {
+      "don": {
+        "rested": 2
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0,
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "p1.hand": 0
+  }
+}

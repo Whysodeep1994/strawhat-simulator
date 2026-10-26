@@ -53,6 +53,8 @@ export interface Replacement {
   byOpponent?: boolean;
   /** Also replaces a K.O. in battle ("If ... would be K.O.'d", without "by an effect"). */
   battle?: boolean;
+  /** Only replaces a K.O. in battle ("If this Character would be K.O.'d in battle"). */
+  battleOnly?: boolean;
 }
 
 export type Timing =
@@ -132,6 +134,19 @@ export type Timing =
   | "opponentLifeRemoved"
   /** Leader effects that read "at the start of the game" (rule 5-2-1-5-1). */
   | "startOfGame"
+  /** "When your opponent activates a [Trigger]". */
+  | "opponentActivatesTrigger"
+  /** "This effect can be activated at the start of your turn" (before the Refresh Phase ends). */
+  | "startOfYourTurn"
+  /** "When a card is removed from your or your opponent's Life cards" (any way). */
+  | "lifeCardRemoved"
+  /**
+   * "When a card is trashed from your hand by your {Navy} type card's effect": `cardFilter` is
+   * for the card whose effect trashed them; `perPrevious` counts the trashed cards.
+   */
+  | "handTrashedByOwnEffect"
+  /** "When your opponent plays a Character using a Character's effect". */
+  | "opponentPlaysCharacterByCharacterEffect"
   /** "When this Character becomes rested by your opponent's Character's effect". */
   | "restedByOpponentsCharacter"
   /** "When your {Impel Down} type Character card is removed from the field" (any way). See `cardFilter`. */
@@ -213,12 +228,26 @@ export type Condition =
   | { donOnFieldAtMostOpponents: true }
   /** "If you have 5 or less active DON!! cards". */
   | { donActiveAtMost: number }
+  /** "If the total cost of your Characters is 5 or more". */
+  | { charactersTotalCostAtLeast: number }
+  /** "If the number of your Characters is at least 2 less than the number of your opponent's Characters". */
+  | { charactersFewerThanOpponentBy: number }
   /** "If you have 2 or more active DON!! cards". */
   | { donActiveAtLeast: number }
   /** "If you have a total of 4 or less cards in your Life area and hand". */
   | { lifeAndHandAtMost: number }
   /** "If the number of DON!! cards on your field is at least 2 less than the number on your opponent's field". */
   | { donFewerThanOpponentBy: number }
+  /** "If you and your opponent have a total of 5 or more Life cards". */
+  | { totalLifeAtLeast: number }
+  /** "When this Leader attacks your opponent's Leader": the attack's target is a Leader. */
+  | { attackingLeader: true }
+  /** "If this Leader battles your opponent's Character during this turn". */
+  | { battledCharacterThisTurn: true }
+  /** "If your Leader's colors include blue". */
+  | { leaderColorIncludes: Color }
+  /** "If that (attacking) Character has the <Slash> attribute": the card attacking now. */
+  | { attackerMatches: Filter }
   /** "If you have less Life cards than your opponent". */
   | { lifeFewerThanOpponent: true }
   /** "If this Character is rested". */
@@ -300,6 +329,8 @@ export type Cost =
   | { handToDeckBottom: number }
   /** Place this card (a Character or Stage) at the bottom of your deck. */
   | { thisToDeckBottom: true }
+  /** Return this Character to the owner's hand. */
+  | { returnThis: true }
   /** "Return this Character to the owner's hand". */
   | { thisToHand: true }
   /** "Give this Character −2000 power during this turn". */
@@ -328,11 +359,10 @@ export type Cost =
   | { characterToLife: number; filter?: Filter; faceUp?: boolean }
 
   /** "Give 1 of your active DON!! cards to 1 of your Leader or Character cards". */
-  | { giveActiveDon: number }
+  /** `filter`: which card gets them ("to 1 of your [Silvers Rayleigh]"); later steps' "that" is it. */
+  | { giveActiveDon: number; filter?: Filter }
   /** "Trash 1 of your Characters with a type including ...". Not a K.O. `zone: "stage"` trashes your Stage. */
   | { trashOwnCharacter: number; filter?: Filter; zone?: "stage" }
-  /** "Return this Character to the owner's hand". */
-  | { returnThis: true }
   /** "Rest 1 of your opponent's Characters" (e.g. as a replacement cost). */
   | { restOpponentCharacter: number }
   /** "Rest 2 of your cards": active DON!! in the cost area, Leader, Characters, or Stage. */
@@ -469,14 +499,19 @@ export type Status =
   /** "Cannot be rested": it can't attack, block, or be rested by effects or costs. */
   | "cannotBeRested"
   /** Can't be K.O.'d, returned, or trashed by the opponent's effects. */
-  | "cannotBeRemovedByOpponentsEffects";
+  | "cannotBeRemovedByOpponentsEffects"
+  /** "Cannot be K.O.'d by effects of Characters without the <Special> attribute". */
+  | "cannotBeKOdByNonSpecialCharacters"
+  /** "Cannot be rested by your opponent's effects". Unlike `cannotBeRested`, it can still attack. */
+  | "cannotBeRestedByOpponentsEffects";
 
 export type Step =
   /**
    * `side: "opponent"`: "your opponent draws 1 card". With `perCount`, `count` is multiplied by
-   * the count ("draw a card for each of your {X} type Characters").
+   * the count ("draw a card for each of your {X} type Characters"). With `perPrevious`, it is
+   * multiplied by the `amount` that set the effect off.
    */
-  | { do: "draw"; count: number; side?: "opponent"; perCount?: CardCount }
+  | { do: "draw"; count: number; side?: "opponent"; perCount?: CardCount; perPrevious?: boolean }
   /**
    * With `perPrevious`, `amount` is multiplied by how many cards the previous step moved.
    * `perTrash`: "+amount for every N cards in your trash" (only cards matching `trashFilter`,
@@ -554,7 +589,8 @@ export type Step =
    */
   | { do: "giveRestedDon"; target: Target; count: number; fromCostArea?: boolean }
   /** Put DON!! from the DON!! deck into the cost area. */
-  | { do: "addDon"; count: number; rested?: boolean }
+  /** `side: "opponent"`: "your opponent adds 1 DON!! card from their DON!! deck". */
+  | { do: "addDon"; count: number; rested?: boolean; side?: "opponent" }
   | { do: "setDonActive"; count: number }
   /**
    * The effect's player trashes cards from their hand. `chooser: "opponent"`: "your opponent
@@ -704,6 +740,10 @@ export type Step =
       /** "Then, place the rest at the top or bottom of your deck." */
       restTopOrBottom?: boolean;
     }
+  /** "Reveal 1 card from the top of your Life cards. If that card is ..., you may play that card." */
+  | { do: "playFromLifeTop"; filter?: Filter }
+  /** "You cannot set DON!! cards as active using Character effects during this turn." */
+  | { do: "noCharacterDonActive" }
   /**
    * Play a card from hand for free. `rested`: "play ... rested". `orTrash`: "from your hand
    * or trash". `differentColor`: it must share no color with the cards the previous step moved
@@ -757,7 +797,7 @@ export type Step =
   /** "Play up to 1 ... from your deck", then shuffle it (start of the game effects). */
   | { do: "playFromDeck"; filter?: Filter }
   /** "Rest any number of your DON!! cards" (up to `count`); later steps can use `perPrevious`. */
-  | { do: "restOwnDon"; count?: number }
+  | { do: "restOwnDon"; count?: number; ifYouDo?: Step[] }
   /**
    * "You cannot play Character cards with a base cost of 5 or more during this turn".
    * `fromHand`: only plays from the hand ("you cannot play cards from your hand").
@@ -802,7 +842,21 @@ export type Step =
    * "Add up to 1 of your Characters ... to the top or bottom of the owner's Life cards face-up."
    * The player picks the Character, then top or bottom.
    */
-  | { do: "characterToLife"; target: Target; faceUp?: boolean }
+  /** `top`: always the top of the Life cards, instead of the player's choice of top or bottom. */
+  | { do: "characterToLife"; target: Target; faceUp?: boolean; top?: boolean }
+  /** "This Leader cannot attack your opponent's Characters with a base cost of 7 or less during this turn." */
+  | { do: "restrictAttackTargets"; filter: Filter }
+  /** Permanent, `zone: "hand"`: "This card in your hand cannot be played by effects." */
+  | { do: "notPlayableByEffects" }
+  /** "You cannot draw cards using your own effects during this turn." */
+  | { do: "noDrawByOwnEffects" }
+  /** "Look at 1 card from the top of your opponent's deck." */
+  | { do: "lookAtOpponentDeckTop" }
+  /**
+   * "Choose a cost and reveal 1 card from the top of your opponent's deck. If the revealed card
+   * has the chosen cost, ...": the nested steps happen only on a match.
+   */
+  | { do: "guessCost"; steps: Step[] }
   /** "Look at all your Life cards; place 1 at the top of your deck and the rest back in any order." */
   | { do: "lifeToDeckTop" }
   /** Trigger: add this card to your hand. [On K.O.]: "add this Character card from your trash to your hand". */

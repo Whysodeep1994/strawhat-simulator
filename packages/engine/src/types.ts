@@ -78,8 +78,14 @@ export interface Modifier {
   battleKOReplace?: { source: string; effect: number };
   /** On a Leader: its player can't play cards matching `filter` (`fromHand`: only from the hand). */
   cannotPlay?: { filter?: Filter; fromHand?: boolean };
+  /** On a Leader: its player can't set DON!! cards as active with Character effects. */
+  noCharacterDonActive?: boolean;
   /** On a Leader: its player can't attack Leaders ("you cannot attack a Leader during this turn"). */
   noLeaderAttacks?: boolean;
+  /** The target can't attack cards matching this ("cannot attack Characters with a base cost of 7 or less"). */
+  noAttackTargets?: Filter;
+  /** On a Leader: its player can't draw cards with their own effects. */
+  noDrawByOwnEffects?: boolean;
   until: "turn" | "battle";
   /** For "turn": the last turn it lasts. Defaults to the current turn. */
   endsTurn?: number;
@@ -90,6 +96,8 @@ export interface QueuedEffect {
   controller: PlayerId;
   source: string;
   effect: number;
+  /** How many cards set it off, e.g. cards trashed from the hand; later steps use `perPrevious`. */
+  amount?: number;
 }
 
 /** Steps of an effect that happen at the end of the turn. */
@@ -98,6 +106,8 @@ export interface DelayedEffect {
   source: string;
   effect: number;
   steps: Step[];
+  /** Cards the steps' "that" targets mean, e.g. the Character the effect played. */
+  targets?: string[];
 }
 
 /**
@@ -151,7 +161,9 @@ export type Frame =
   | { kind: "trigger-cleanup" }
   /** Rule 5-2-1-6: the opening draw, after any "at the start of the game" effects. */
   | { kind: "opening-draw" }
-  | { kind: "end-phase"; stage: number };
+  | { kind: "end-phase"; stage: number }
+  /** "At the start of your turn" effects resolve; then the Draw Phase begins. */
+  | { kind: "turn-start"; player: PlayerId };
 
 /** Who must act next, and what kind of decision it is. */
 export type Prompt =
@@ -209,6 +221,8 @@ export interface GameState {
   modifiers: Modifier[];
   /** "uid:effect" keys of [Once Per Turn] effects used this turn (rule 10-2-13). */
   usedThisTurn: string[];
+  /** Leaders and Characters that battled an opponent's Character this turn. */
+  battledCharacter?: string[];
   /** Steps waiting for the End Phase ("at the end of this turn"). */
   delayed: DelayedEffect[];
   /** The last turn in which each player's hand had a card trashed by an effect. */

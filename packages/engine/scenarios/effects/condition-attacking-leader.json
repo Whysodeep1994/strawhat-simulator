@@ -1,0 +1,20 @@
+{
+  "name": "\"When this card attacks your opponent's Leader\"",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-ATTACK-LEADER-DRAW"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

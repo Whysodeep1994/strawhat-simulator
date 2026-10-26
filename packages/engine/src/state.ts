@@ -499,6 +499,12 @@ export function conditionsMet(
       return me.donRested + rested >= c.restedCardsAtLeast;
     }
     if ("lifeAtMostOpponents" in c) return me.life.length <= them.life.length;
+    if ("charactersTotalCostAtLeast" in c)
+      return (
+        me.characters.reduce((n, x) => n + costOf(state, x), 0) >= c.charactersTotalCostAtLeast
+      );
+    if ("charactersFewerThanOpponentBy" in c)
+      return me.characters.length <= them.characters.length - c.charactersFewerThanOpponentBy;
     if ("lifeLessThanOpponents" in c) return me.life.length < them.life.length;
     if ("deckAtMost" in c) return me.deck.length <= c.deckAtMost;
     if ("thisIsAttackTarget" in c) return state.battle?.target === source.uid;
@@ -538,11 +544,21 @@ export function conditionsMet(
     if ("handFewerThanOpponentBy" in c)
       return me.hand.length <= them.hand.length - c.handFewerThanOpponentBy;
     if ("totalLifeAtMost" in c) return me.life.length + them.life.length <= c.totalLifeAtMost;
+    if ("totalLifeAtLeast" in c) return me.life.length + them.life.length >= c.totalLifeAtLeast;
+    if ("leaderColorIncludes" in c)
+      return definitionOf(state, me.leader).colors.includes(c.leaderColorIncludes);
+    if ("attackerMatches" in c) {
+      const attacker = state.battle && findCard(state, state.battle.attacker);
+      return !!attacker && matchesFilter(state, attacker, c.attackerMatches, source);
+    }
     if ("trashAtLeast" in c)
       return (
         me.trash.filter((t) => matchesFilter(state, t, c.trashFilter, null, false)).length >=
         c.trashAtLeast
       );
+    if ("attackingLeader" in c) return !!state.battle && state.battle.target === them.leader.uid;
+    if ("battledCharacterThisTurn" in c)
+      return state.battledCharacter?.includes(source.uid) ?? false;
     if ("thisCostAtLeast" in c) return costOf(state, source) >= c.thisCostAtLeast;
     if ("opponentCharacterKOdThisTurn" in c)
       return state.characterKOdTurn?.[opponentOf(controller)] === state.turn;

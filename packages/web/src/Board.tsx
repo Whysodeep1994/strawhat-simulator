@@ -61,6 +61,7 @@ const CHOOSE_TEXT: Record<string, string> = {
   trashCharacter: "Choose a Character to trash",
   playFromHand: "Choose a card to play",
   playFromTrash: "Choose a card to play from your trash",
+  lookAtOpponentDeck: "The top card of your opponent's deck",
 };
 
 type DefOf = (card: CardInstance | null | undefined) => Card | undefined;
@@ -393,9 +394,11 @@ export function Board({ data, game, mats, trophies = [], onChange, onRestart, on
       {myPrompt?.kind === "choose" && (
         <Modal title={CHOOSE_TEXT[myPrompt.reason] ?? "Choose cards"}>
           <p>
-            {myPrompt.min === myPrompt.max
-              ? `Choose ${myPrompt.max}.`
-              : `Choose ${myPrompt.min === 0 ? "up to" : `${myPrompt.min} to`} ${myPrompt.max}.`}{" "}
+            {myPrompt.max === 0
+              ? "Look, then continue."
+              : myPrompt.min === myPrompt.max
+                ? `Choose ${myPrompt.max}.`
+                : `Choose ${myPrompt.min === 0 ? "up to" : `${myPrompt.min} to`} ${myPrompt.max}.`}{" "}
             From {nameOf(def, view, myPrompt.source)}.
             {myPrompt.maxTotalPower !== undefined &&
               ` Their total power can be up to ${myPrompt.maxTotalPower} (now ${pickedPower}).`}
@@ -439,7 +442,11 @@ export function Board({ data, game, mats, trophies = [], onChange, onRestart, on
               }
               onClick={() => act({ type: "choose", player: me, cards: picked })}
             >
-              {picked.length === 0 ? "Choose none" : `Confirm (${picked.length})`}
+              {myPrompt.max === 0
+                ? "Continue"
+                : picked.length === 0
+                  ? "Choose none"
+                  : `Confirm (${picked.length})`}
             </button>
           </div>
         </Modal>

@@ -87,9 +87,9 @@ export function startTurn(state: GameState, player: PlayerId): void {
   state.turn += 1;
   state.turnPlayer = player;
   state.usedThisTurn = [];
+  state.battledCharacter = [];
   const p = state.players[player];
   p.turnsTaken += 1;
-  const isFirstPlayer = player === state.firstPlayer;
 
   // Refresh Phase, rules 6-2-3 and 6-2-4.
   state.phase = "refresh";
@@ -104,6 +104,25 @@ export function startTurn(state: GameState, player: PlayerId): void {
   p.donActive += p.donRested - stay;
   p.donRested = stay;
   delete p.donNoRefresh;
+
+  // "This effect can be activated at the start of your turn": it resolves before the Draw Phase.
+  const starting = fieldCards(state, player).filter((card) =>
+    effectsOf(state, card).some(
+      (e) => e.timing === "startOfYourTurn" && conditionsMet(state, player, card, e.conditions),
+    ),
+  );
+  if (starting.length > 0) {
+    state.stack.push({ kind: "turn-start", player });
+    for (const card of starting) queueEffects(state, player, card, "startOfYourTurn");
+    return;
+  }
+  continueTurn(state, player);
+}
+
+/** The rest of the turn's start after the Refresh Phase: rules 6-3 to 6-5. */
+export function continueTurn(state: GameState, player: PlayerId): void {
+  const p = state.players[player];
+  const isFirstPlayer = player === state.firstPlayer;
 
   // Draw Phase, rule 6-3-1.
   state.phase = "draw";
@@ -176,6 +195,7 @@ export function putOnField(
   card: CardInstance,
   trash?: string,
   fromHand = false,
+  byCharacter?: CardInstance,
 ): void {
   const p = state.players[player];
   card.rested = false;
@@ -191,9 +211,13 @@ export function putOnField(
     // "Your Character cards are played rested."
     if (playsRested(state, player)) card.rested = true;
     queueAbout(state, card, "youPlayCharacter", fromHand);
+    // "When your opponent plays a Character ..."
     const other = player === "p1" ? "p2" : "p1";
-    for (const holder of fieldCards(state, other))
+    for (const holder of fieldCards(state, other)) {
       queueEffects(state, other, holder, "opponentPlaysCharacter", card);
+      if (byCharacter && definitionOf(state, byCharacter).category === "character")
+        queueEffects(state, other, holder, "opponentPlaysCharacterByCharacterEffect", card);
+    }
   }
   queueEffects(state, player, card, "onPlay");
 }
@@ -237,6 +261,7 @@ export function pushEffect(
   controller: PlayerId,
   source: string,
   effect: number,
+  amount?: number,
 ): void {
   const card =
     findOnField(state, source)?.card ??
@@ -254,6 +279,7 @@ export function pushEffect(
     steps: structuredClone(effectOf(state, card, effect)?.steps ?? []),
     memo: [],
     answer: null,
+    ...(amount !== undefined ? { previous: amount } : {}),
   };
   state.stack.push(frame);
 }

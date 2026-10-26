@@ -1,0 +1,32 @@
+{
+  "name": "\"Cannot be K.O.'d in battle by <Slash> attribute cards\"",
+  "rules": ["7-1-4-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-SLASH"]
+    },
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-SLASH-GUARD",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.characters": 1
+  }
+}

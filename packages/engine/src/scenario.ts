@@ -173,7 +173,7 @@ function resolveCard(state: GameState, ref: string): string {
 }
 
 /**
- * Reads "p1.characters.0.rested", "winner", "prompt.kind",
+ * Reads "p1.characters.0.rested", "p1.leader.power" (current power), "winner", "prompt.kind",
  * "legal.p1.attack" (the number of legal actions of that type), or
  * "power.p1.leader" and "cost.p2.characters.0" (current power and cost).
  */
@@ -192,6 +192,11 @@ function readPath(state: GameState, path: string, countArrays = true): unknown {
   let value: unknown = parts[0] === "p1" || parts[0] === "p2" ? state.players[parts[0]] : state;
   for (const part of parts[0] === "p1" || parts[0] === "p2" ? parts.slice(1) : parts) {
     if (value === null || value === undefined) return undefined;
+    // "p1.characters.0.power" and ".cost": the current values, after DON!! and effects.
+    if (typeof value === "object" && "uid" in value && (part === "power" || part === "cost"))
+      return part === "power"
+        ? powerOf(state, value as CardInstance)
+        : costOf(state, value as CardInstance);
     value = (value as Record<string, unknown>)[part];
   }
   return countArrays && Array.isArray(value) ? value.length : value;

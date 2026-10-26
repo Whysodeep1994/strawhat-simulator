@@ -1,0 +1,25 @@
+{
+  "name": "\"If that Character has the <Slash> attribute\" checks the attacker",
+  "rules": ["8-3-2-1"],
+  "setup": {
+    "turn": 4,
+    "turnPlayer": "p2",
+    "p1": {
+      "characters": ["TEST-SLASH-WATCH"]
+    },
+    "p2": {
+      "characters": ["TEST-SLASH", "TEST-C4-5000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p2",
+      "attacker": "p2.characters.0",
+      "target": "p1.leader"
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

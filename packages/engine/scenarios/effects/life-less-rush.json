@@ -1,0 +1,19 @@
+{
+  "name": "\"If you have less Life cards than your opponent\" gives [Rush]",
+  "rules": ["8-3-2-1", "10-1-1-1"],
+  "setup": {
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-LIFE-FEWER-RUSH",
+          "playedThisTurn": true
+        }
+      ],
+      "life": 2
+    }
+  },
+  "actions": [],
+  "expect": {
+    "legal.p1.attack": 2
+  }
+}

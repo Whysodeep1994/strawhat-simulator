@@ -28,6 +28,23 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-24: Engine blocks for set OP-12: "when a card is trashed from your hand by your own
+  effect", "when your opponent plays a Character" (also "using a Character's effect"), "cannot attack
+  Characters with a base cost of 7 or less", "cannot be played by effects", activating an Event from
+  the hand, "the next time you play ...", "you cannot draw cards using your own effects", "cannot be
+  K.O.'d in battle by <Slash> cards", three new conditions, and small options on `trashAtLeast`,
+  `giveActiveDon`, `addDon`, `restOwnDon` and `draw`.
+- 2026-10-24: Engine blocks for set OP-11: "at the start of your turn" effects, "when a card is
+  removed from your or your opponent's Life cards", "when your opponent activates a [Trigger]",
+  "choose a cost and reveal" (`guessCost`), "look at 1 card from the top of your opponent's deck",
+  "cannot be K.O.'d by effects of Characters without <Special>", "cannot be rested by your
+  opponent's effects", four new conditions, and small options on `handToDeckTop`,
+  `trashToDeckBottom`, `characterToLife` and `atEndOfTurn`.
+- 2026-10-24: Engine blocks for set OP-10: "when you activate an Event", the total cost of your
+  Characters, "at least 2 fewer Characters", "less Life cards than your opponent", returning this
+  Character to hand as a cost, "would be K.O.'d in battle" replacements, playing the top Life card,
+  "you cannot set DON!! cards as active using Character effects", and "your opponent's rested
+  DON!! will not become active in their next Refresh Phase". 14 new effect scenarios.
 - 2026-10-25: Fixed main after the PR #30 merge. The merge commit dropped the EB-03 to PRB-02
   blocks (opponentHandToDeckBottom, activateEventFromTrash, setPowerToZero, draw perCount,
   faceUpLifeAtLeast, charactersFewerThanOpponent, trashAtLeast trashFilter) and typecheck failed.
@@ -43,7 +60,6 @@ Each phase has a check the project owner can do without reading code.
   Sets with several Leaders now get one practice deck per Leader with a unique id (they shared
   one before, which confused the home screen). Still slow: late-game moves with ST-30 take about
   0.1 to 0.4 s, from permanent effects re-checking each other (see Known bugs).
-
 - 2026-10-23: Engine blocks for set OP-09: "negate the effect of" (a `negated` status that also
   turns off printed keywords), "that Character" targets, "total power of 4000 or less", "your
   Character cards are played rested", "cannot be K.O.'d in battle by Leaders", trashing cards from

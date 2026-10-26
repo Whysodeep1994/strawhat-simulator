@@ -9,6 +9,9 @@ import { OP06_EFFECT_CARDS } from "./test-cards-op06.js";
 import { OP07_EFFECT_CARDS } from "./test-cards-op07.js";
 import { OP08_EFFECT_CARDS } from "./test-cards-op08.js";
 import { OP09_EFFECT_CARDS } from "./test-cards-op09.js";
+import { OP10_EFFECT_CARDS } from "./test-cards-op10.js";
+import { OP11_EFFECT_CARDS } from "./test-cards-op11.js";
+import { OP12_EFFECT_CARDS } from "./test-cards-op12.js";
 
 /** Made-up cards for engine tests. Real cards use their official card numbers instead. */
 const cards: CardDefinition[] = [
@@ -1237,6 +1240,9 @@ export const TEST_CATALOG: CardCatalog = Object.fromEntries(
     ...OP07_EFFECT_CARDS,
     ...OP08_EFFECT_CARDS,
     ...OP09_EFFECT_CARDS,
+    ...OP10_EFFECT_CARDS,
+    ...OP11_EFFECT_CARDS,
+    ...OP12_EFFECT_CARDS,
     ...EXTRA_BOOSTER_CARDS,
     ...OP01_EFFECT_CARDS,
     ...OP02_EFFECT_CARDS,

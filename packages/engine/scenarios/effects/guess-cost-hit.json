@@ -1,0 +1,29 @@
+{
+  "name": "Choose a cost: the opponent's top card has it, so the effect happens",
+  "rules": ["8-1-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-GUESS"]
+    },
+    "p2": {
+      "deck": ["TEST-C4-5000", "TEST-FILLER"]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "chooseOne",
+      "player": "p1",
+      "option": 4
+    }
+  ],
+  "expect": {
+    "p1.hand": 1,
+    "p2.deck.0.cardId": "TEST-C4-5000"
+  }
+}

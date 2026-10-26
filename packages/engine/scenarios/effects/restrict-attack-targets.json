@@ -1,0 +1,35 @@
+{
+  "name": "\"This card cannot attack Characters with a base cost of 3 or less during this turn\"",
+  "rules": ["7-1-1-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-NO-SMALL-TARGETS"]
+    },
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-FILLER",
+          "rested": true
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    },
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.characters.0",
+      "illegal": true
+    }
+  ],
+  "expect": {
+    "legal.p1.attack": 3
+  }
+}

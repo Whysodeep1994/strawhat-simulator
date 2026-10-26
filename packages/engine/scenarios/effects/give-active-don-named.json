@@ -1,0 +1,25 @@
+{
+  "name": "Give 1 active DON!! to a named card, then give that card +2000 power",
+  "rules": ["8-1-3-1"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-GIVE-DON-NAMED", "TEST-FILLER"],
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "activate",
+      "player": "p1",
+      "card": "p1.characters.0",
+      "effect": 0
+    }
+  ],
+  "expect": {
+    "p1.characters.1.givenDon": 1,
+    "p1.characters.1.power": 4000,
+    "p1.characters.0.givenDon": 0
+  }
+}
