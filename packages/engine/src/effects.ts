@@ -740,8 +740,11 @@ export type Step =
       /** "Then, place the rest at the top or bottom of your deck." */
       restTopOrBottom?: boolean;
     }
-  /** "Reveal 1 card from the top of your Life cards. If that card is ..., you may play that card." */
-  | { do: "playFromLifeTop"; filter?: Filter }
+  /**
+   * "Reveal 1 card from the top of your Life cards. If that card is ..., you may play that card."
+   * `ifYouDo`: steps that happen only if the card was played ("If you do, ...").
+   */
+  | { do: "playFromLifeTop"; filter?: Filter; ifYouDo?: Step[] }
   /** "You cannot set DON!! cards as active using Character effects during this turn." */
   | { do: "noCharacterDonActive" }
   /**

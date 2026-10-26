@@ -92,6 +92,26 @@ export const OP10_EFFECT_CARDS: CardDefinition[] = [
     ],
   },
   {
+    id: "TEST-LIFE-PLAY-DRAW",
+    name: "Test Life Play Draw",
+    category: "character",
+    colors: ["yellow"],
+    cost: 1,
+    power: 1000,
+    effects: [
+      {
+        timing: "activateMain",
+        steps: [
+          {
+            do: "playFromLifeTop",
+            filter: { category: "character", costAtMost: 5 },
+            ifYouDo: [{ do: "draw", count: 1 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "TEST-DON-LOCK",
     name: "Test DON!! Lock",
     category: "character",

@@ -385,7 +385,7 @@ Comprehensive Rules version 1.2.1.
 | 8-3-2-3 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-4 | 8-3 Activation Cost and Conditions | Tested | 2 |
 | 8-3-2-5 | 8-3 Activation Cost and Conditions | Tested | 1 |
-| 8-3-3 | 8-3 Activation Cost and Conditions | Tested | 23 |
+| 8-3-3 | 8-3 Activation Cost and Conditions | Tested | 25 |
 | 8-4 | 8-4 Activation and Resolution | Tested | 11 |
 | 8-4-1 | 8-4 Activation and Resolution | Tested | 2 |
 | 8-4-1-1 | 8-4 Activation and Resolution | Tested | 1 |
