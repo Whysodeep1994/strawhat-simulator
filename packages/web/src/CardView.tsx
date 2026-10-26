@@ -9,6 +9,8 @@ interface Props {
   /** Official card art. Cards without art are drawn from their data. */
   image?: string | undefined;
   faceDown?: boolean;
+  /** Picture on the back of a face-down card; the classic back when missing. */
+  back?: string | null | undefined;
   rested?: boolean;
   don?: number;
   power?: number | undefined;
@@ -26,6 +28,7 @@ export function CardView({
   def,
   image,
   faceDown,
+  back,
   rested,
   don = 0,
   power,
@@ -50,11 +53,18 @@ export function CardView({
 
   if (faceDown || !def) {
     return (
-      <div className={`${classes} back`} onClick={onClick} aria-label={label ?? "Face-down card"}>
-        <div className="back-mark" aria-hidden="true">
-          <span className="back-ring" />
-          <span className="back-text">STRAWHAT</span>
-        </div>
+      <div
+        className={`${classes} back ${back ? "custom" : ""}`}
+        style={back ? { backgroundImage: `url("${back}")` } : undefined}
+        onClick={onClick}
+        aria-label={label ?? "Face-down card"}
+      >
+        {!back && (
+          <div className="back-mark" aria-hidden="true">
+            <span className="back-ring" />
+            <span className="back-text">STRAWHAT</span>
+          </div>
+        )}
       </div>
     );
   }

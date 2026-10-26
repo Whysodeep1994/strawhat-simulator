@@ -8,7 +8,7 @@ import {
   type PlayerId,
 } from "@strawhat/engine";
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
-import type { Mats } from "./App.js";
+import type { Backs, Mats } from "./App.js";
 import { officialText, type Card, type CardData } from "./card-data.js";
 import { CardView, DonCard, type Glow } from "./CardView.js";
 import { cardText } from "./describe.js";
@@ -20,6 +20,8 @@ interface Props {
   data: CardData;
   game: LocalGame;
   mats: Mats;
+  /** Card back pictures for each side; null is the classic back. */
+  backs: Backs;
   /** Trophies this game earned, once it is over. */
   trophies?: string[];
   onChange: (game: LocalGame) => void;
@@ -73,6 +75,7 @@ export function Board({
   data,
   game,
   mats,
+  backs,
   trophies = [],
   onChange,
   onRestart,
@@ -253,6 +256,7 @@ export function Board({
           player={them}
           side="opponent"
           image={mats.opponent}
+          back={backs.opponent}
           renderCard={(card) => (
             <Clickable key={card.uid} onClick={(e) => openMenu(card.uid, e)}>
               {fieldCard(card, them)}
@@ -268,7 +272,7 @@ export function Board({
           aria-label={`Opponent's hand: ${view.players[them].handCount} cards`}
         >
           {Array.from({ length: view.players[them].handCount }, (_, i) => (
-            <CardView key={i} faceDown size="small" />
+            <CardView key={i} faceDown back={backs.opponent} size="small" />
           ))}
         </div>
 
@@ -291,6 +295,7 @@ export function Board({
           player={me}
           side="you"
           image={mats.you}
+          back={backs.you}
           renderCard={(card) => (
             <Clickable key={card.uid} onClick={(e) => openMenu(card.uid, e)}>
               {fieldCard(card, me)}
@@ -612,6 +617,7 @@ function Mat({
   player,
   side,
   image,
+  back,
   renderCard,
   def,
   art,
@@ -622,6 +628,7 @@ function Mat({
   player: PlayerId;
   side: MatSide;
   image: string | null;
+  back: string | null;
   renderCard: (card: CardInstance) => ReactNode;
   def: DefOf;
   art: (card: CardInstance | null | undefined) => string | undefined;
@@ -659,14 +666,14 @@ function Mat({
         >
           {Array.from({ length: p.lifeCount }, (_, i) => (
             <div key={i} className="life-card" style={{ ["--i" as string]: i }}>
-              <CardView faceDown size="small" />
+              <CardView faceDown back={back} size="small" />
             </div>
           ))}
         </div>
       </Zone>
       <Zone area="deck" label={`Deck ${p.deckCount}`}>
         <div className="pile" aria-label={`${owner} deck: ${p.deckCount} cards`}>
-          {p.deckCount > 0 ? <CardView faceDown /> : <div className="slot empty" />}
+          {p.deckCount > 0 ? <CardView faceDown back={back} /> : <div className="slot empty" />}
         </div>
       </Zone>
       <Zone area="trash" label={`Trash ${p.trash.length}`}>

@@ -36,6 +36,9 @@ Each phase has a check the project owner can do without reading code.
   there is no server to host or pay for. Both computers build the game from the same decks and
   seed, and only the moves travel; a reloaded page rejoins and catches up. Known limit: the
   friend's hidden cards are in your browser's memory (never on screen), so it relies on trust.
+- 2026-10-26: Card backs. Settings has a card back picker for each side: the classic back, six
+  designs drawn for this app (Grand Line, Straw Hat, Jolly Roger, Wanted Poster, Treasure Map,
+  Ship's Helm), or an uploaded picture. Saved in the browser, like playmats.
 - 2026-10-24: Engine blocks for set OP-12: "when a card is trashed from your hand by your own
   effect", "when your opponent plays a Character" (also "using a Character's effect"), "cannot attack
   Characters with a base cost of 7 or less", "cannot be played by effects", activating an Event from
