@@ -88,6 +88,7 @@ const TIMING_NAMES: Record<Timing, string> = {
   restedByOpponentsCharacter:
     "When this Character becomes rested by your opponent's Character's effect,",
   yourCharacterRemoved: "When your Character is removed from the field,",
+  yourLeaderAttacks: "When your Leader attacks,",
   permanent: "",
 };
 
@@ -247,6 +248,7 @@ function conditionText(condition: Condition): string {
   if ("opponentRestedCardsAtLeast" in condition)
     return `(If your opponent has ${condition.opponentRestedCardsAtLeast} or more rested cards)`;
   if ("thisActive" in condition) return "(If this Character is active)";
+  if ("leaderAttacked" in condition) return "(If your Leader is being attacked)";
   return `(If the top card of your deck is a${filterText(condition.deckTopMatches)} card)`;
 }
 
@@ -425,7 +427,7 @@ function stepText(step: Step): string {
     case "playFromHand":
       return step.side === "opponent"
         ? `Your opponent plays up to 1${filterText(step.filter)} card from their hand.`
-        : `Play up to 1${filterText(step.filter)} card from your hand${step.orTrash ? " or trash" : ""}${step.differentColor ? " that is a different color than the returned card" : ""}${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
+        : `Play up to ${step.count ?? 1}${filterText(step.filter)} card(s)${step.differentNames ? " with different names" : ""}${step.totalCostAtMost !== undefined ? ` with a total cost of ${step.totalCostAtMost} or less` : ""} from your hand${step.orTrash ? " or trash" : ""}${step.differentColor ? " that is a different color than the returned card" : ""}${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
     case "playFromTrash":
       return `Play up to ${step.count ?? 1}${filterText(step.filter)} card(s)${step.differentNames ? " with different names" : ""}${step.sameNameAsTrashed ? " with the same card name as the trashed card" : ""} from your trash${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
     case "playRested":
@@ -492,6 +494,8 @@ function stepText(step: Step): string {
       return `Your DON!! deck consists of ${step.count} cards.`;
     case "rushFromTrash":
       return `When a${filterText(step.filter)} Character card is played from your trash, it gains [Rush] during this turn.`;
+    case "attackOnlyThis":
+      return "Your opponent cannot attack any card other than this Character.";
     case "koImmunity":
       return `This Character cannot be K.O.'d by effects of your opponent's${filterText(step.from)} cards.`;
     case "moveGivenDon":
@@ -567,7 +571,9 @@ function targetText(target: Target): string {
   const total =
     target.totalPowerAtMost !== undefined
       ? ` with a total power of ${target.totalPowerAtMost} or less`
-      : "";
+      : target.totalCostAtMost !== undefined
+        ? ` with a total cost of ${target.totalCostAtMost} or less`
+        : "";
   return `${amount} of ${owner} ${noun}${withFilter(target.filter)}${total}`;
 }
 
@@ -605,6 +611,7 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.givenDonAtLeast !== undefined)
     parts.push(`${filter.givenDonAtLeast} or more DON!! cards given`);
   if (filter.costEqualsGivenDon) parts.push("a cost equal to the DON!! cards given to it");
+  if (filter.hasCounter) parts.push("a Counter");
   if (parts.length === 0) return "";
   const rested = filter.rested ? " that are rested" : "";
   const rest = parts.filter((p) => p !== "rested");

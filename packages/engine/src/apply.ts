@@ -209,6 +209,9 @@ function declareAttack(state: GameState, player: PlayerId, attacker: string, tar
     });
   queueEffects(state, player, location.card, "whenAttacking");
   queueEffects(state, player, location.card, "becomesRested");
+  if (location.zone === "leader")
+    for (const card of fieldCards(state, player))
+      if (card.uid !== attacker) queueEffects(state, player, card, "yourLeaderAttacks");
   for (const card of fieldCards(state, opponentOf(player))) {
     queueEffects(state, opponentOf(player), card, "onOpponentsAttack");
   }

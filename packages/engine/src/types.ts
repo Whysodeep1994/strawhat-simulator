@@ -176,6 +176,8 @@ export type Prompt =
       hidden?: boolean;
       /** "With a total power of 4000 or less": the picked cards' power must add up to at most this. */
       maxTotalPower?: number;
+      /** "With a total cost of 4 or less": the picked cards' cost must add up to at most this. */
+      maxTotalCost?: number;
     }
   | {
       kind: "confirm";
