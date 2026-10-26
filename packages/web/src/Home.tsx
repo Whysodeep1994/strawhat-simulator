@@ -4,8 +4,18 @@ import { setLabel, type CardData, type PlayableDeck } from "./card-data.js";
 import { moveHighlight } from "./menu.js";
 import { cardList, playable, problemsOf, type SavedDeck } from "./my-decks.js";
 import { readMatImage, type MatSeat } from "./playmat.js";
+import {
+  pointsOf,
+  progressOf,
+  TIER_POINTS,
+  TOTAL_POINTS,
+  TROPHIES,
+  MIN_TURNS,
+  type TrophyProgress,
+} from "./trophies.js";
+import { Medal } from "./TrophyToasts.js";
 
-export type Screen = "title" | "play" | "decks" | "settings";
+export type Screen = "title" | "play" | "decks" | "trophies" | "settings";
 
 export const RANDOM = "random";
 
@@ -15,18 +25,19 @@ interface MenuItem {
   label: string;
   hint: string;
   disabled?: boolean;
-  soon?: boolean;
 }
 
 /** The title screen: a game-style menu you can click or drive with the arrow keys and Enter. */
 export function TitleMenu({
   ready,
   deckCount,
+  progress,
   onPick,
 }: {
   /** False while the cards are loading: only Settings can be opened. */
   ready: boolean;
   deckCount: number;
+  progress: TrophyProgress;
   onPick: (screen: Exclude<Screen, "title">) => void;
 }) {
   const items: MenuItem[] = [
@@ -46,10 +57,9 @@ export function TitleMenu({
       disabled: !ready,
     },
     {
+      screen: "trophies",
       label: "Trophies",
-      hint: "Earn trophies and points for great wins. Coming soon.",
-      disabled: true,
-      soon: true,
+      hint: `${Object.keys(progress.earned).length} of ${TROPHIES.length} earned · ${pointsOf(progress)} / ${TOTAL_POINTS} points.`,
     },
     { screen: "settings", label: "Settings", hint: "Choose your playmats." },
   ];
@@ -93,7 +103,6 @@ export function TitleMenu({
               onFocus={() => setCurrent(i)}
             >
               <span className="menu-label">{item.label}</span>
-              {item.soon && <span className="menu-soon">Soon</span>}
             </button>
           </li>
         ))}
@@ -502,5 +511,60 @@ export function MatPicker({
         {message && <p className="note">{message}</p>}
       </div>
     </div>
+  );
+}
+
+const TIER_NAME = { bronze: "Bronze", silver: "Silver", gold: "Gold", platinum: "Platinum" };
+
+/** Every trophy: earned ones lit up with their date, locked ones greyed with any progress. */
+export function TrophiesScreen({ progress }: { progress: TrophyProgress }) {
+  const points = pointsOf(progress);
+  const earned = TROPHIES.filter((t) => progress.earned[t.id]).length;
+  return (
+    <section className="panel" aria-labelledby="trophy-heading">
+      <div className="trophy-summary">
+        <div>
+          <h2 id="trophy-heading">Your trophies</h2>
+          <p className="trophy-score">
+            <strong>{points}</strong> / {TOTAL_POINTS} points · {earned} of {TROPHIES.length} earned
+          </p>
+        </div>
+        <div className="meter" role="img" aria-label={`${points} of ${TOTAL_POINTS} points`}>
+          <span style={{ width: `${(points / TOTAL_POINTS) * 100}%` }} />
+        </div>
+      </div>
+      <p className="note">
+        A game counts once you've taken at least {MIN_TURNS} of your own turns and played it to the
+        end without conceding. Trophies are saved in this browser.
+      </p>
+      <ul className="trophy-list">
+        {TROPHIES.map((trophy) => {
+          const when = progress.earned[trophy.id];
+          const count = when ? null : progressOf(trophy, progress);
+          return (
+            <li key={trophy.id} className={`trophy ${when ? "earned" : "locked"}`}>
+              <Medal tier={trophy.tier} locked={!when} />
+              <div className="trophy-text">
+                <strong>{trophy.name}</strong>
+                <span>{trophy.text}</span>
+                {when ? (
+                  <span className="trophy-when">Earned {new Date(when).toLocaleDateString()}</span>
+                ) : count ? (
+                  <span className="trophy-count">
+                    <span className="meter small">
+                      <span style={{ width: `${(count[0] / count[1]) * 100}%` }} />
+                    </span>
+                    {count[0]} / {count[1]}
+                  </span>
+                ) : null}
+              </div>
+              <span className={`trophy-points ${trophy.tier}`}>
+                {TIER_NAME[trophy.tier]} · {TIER_POINTS[trophy.tier]}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }

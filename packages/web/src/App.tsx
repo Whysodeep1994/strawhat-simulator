@@ -1,5 +1,5 @@
 import type { CardCatalog } from "@strawhat/engine";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Board } from "./Board.js";
 import { loadCardData, type CardData } from "./card-data.js";
 import { DeckBuilder } from "./DeckBuilder.js";
@@ -11,6 +11,7 @@ import {
   RANDOM,
   SubScreen,
   TitleMenu,
+  TrophiesScreen,
   type Screen,
 } from "./Home.js";
 import { newLocalGame, type LocalGame } from "./local-game.js";
@@ -25,6 +26,16 @@ import {
 } from "./my-decks.js";
 import { loadMat, saveMat, type MatSeat } from "./playmat.js";
 import { Scenery } from "./Scenery.js";
+import { TrophyToasts } from "./TrophyToasts.js";
+import {
+  abandonGame,
+  award,
+  loadProgress,
+  recordGame,
+  saveProgress,
+  type GameInfo,
+  type TrophyProgress,
+} from "./trophies.js";
 
 export type Mats = Record<MatSeat, string | null>;
 
@@ -42,6 +53,13 @@ export function App() {
   const [editing, setEditing] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
   const [screen, setScreen] = useState<Screen>("title");
+  const [progress, setProgress] = useState<TrophyProgress>(loadProgress);
+  /** Trophies waiting to pop up on screen. */
+  const [toasts, setToasts] = useState<string[]>([]);
+  /** Trophies earned in the game just finished, for its result screen. */
+  const [gameTrophies, setGameTrophies] = useState<string[]>([]);
+  const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
+  const recorded = useRef(false);
 
   // Every deck that can start a game: the starter decks, then the player's own legal decks.
   const decks = useMemo(
@@ -57,6 +75,28 @@ export function App() {
         : [],
     [data, myDecks],
   );
+
+  const storeProgress = (next: { progress: TrophyProgress; newly: string[] }) => {
+    setProgress(next.progress);
+    saveProgress(next.progress);
+    if (next.newly.length > 0) setToasts((t) => [...t, ...next.newly]);
+  };
+
+  // A finished game is recorded once: its win counts and its trophies are awarded.
+  useEffect(() => {
+    if (!game || game.state.winner === null || recorded.current || !gameInfo) return;
+    recorded.current = true;
+    const result = recordGame(progress, game.stats, game.state, game.human, gameInfo);
+    setGameTrophies(result.newly);
+    storeProgress(result);
+  }, [game]);
+
+  /** Leaving a game before it ends breaks a winning streak. */
+  const leaveGame = () => {
+    if (game && game.state.winner === null && game.state.turn > 0) {
+      storeProgress({ progress: abandonGame(progress), newly: [] });
+    }
+  };
 
   const storeDecks = (next: SavedDeck[]) => {
     setMyDecks(next);
@@ -91,12 +131,19 @@ export function App() {
         ? (others[Math.floor(Math.random() * others.length)] ?? mine)
         : (decks.find((d) => d.id === opponentId) ?? mine);
     const seed = Math.floor(Math.random() * 2 ** 31);
+    leaveGame();
+    recorded.current = false;
+    setGameTrophies([]);
+    setGameInfo({ mine: !!mine.mine, leader: mine.leader, opponentLeader: theirs.leader });
     setGame(newLocalGame(data.catalog as CardCatalog, { human: mine, bot: theirs }, seed));
   };
 
   const addDeck = (deck: SavedDeck) => {
     storeDecks([...myDecks, deck]);
     setEditing(deck.id);
+    if (data && !progress.earned.shipwright && playable(deck, data)) {
+      storeProgress(award(progress, ["shipwright"]));
+    }
   };
 
   // Escape steps back from a menu screen to the title menu, like a game's "back" button.
@@ -114,41 +161,58 @@ export function App() {
     return saveMat(seat, image);
   };
 
+  const toastLayer = <TrophyToasts ids={toasts} onDone={() => setToasts((t) => t.slice(1))} />;
+
   const editingDeck = myDecks.find((d) => d.id === editing);
   if (editingDeck && data) {
     return (
-      <DeckBuilder
-        data={data}
-        deck={editingDeck}
-        saveFailed={saveFailed}
-        onChange={(deck) => storeDecks(myDecks.map((d) => (d.id === deck.id ? deck : d)))}
-        onDelete={() => {
-          storeDecks(myDecks.filter((d) => d.id !== editingDeck.id));
-          setEditing(null);
-        }}
-        onDone={() => {
-          // An untouched new deck isn't worth keeping.
-          if (!editingDeck.leader && cardList(editingDeck).length === 0) {
+      <>
+        <DeckBuilder
+          data={data}
+          deck={editingDeck}
+          saveFailed={saveFailed}
+          onChange={(deck) => {
+            storeDecks(myDecks.map((d) => (d.id === deck.id ? deck : d)));
+            if (!progress.earned.shipwright && playable(deck, data)) {
+              storeProgress(award(progress, ["shipwright"]));
+            }
+          }}
+          onDelete={() => {
             storeDecks(myDecks.filter((d) => d.id !== editingDeck.id));
-          } else if (playable(editingDeck, data)) {
-            setDeckId(editingDeck.id);
-          }
-          setEditing(null);
-        }}
-      />
+            setEditing(null);
+          }}
+          onDone={() => {
+            // An untouched new deck isn't worth keeping.
+            if (!editingDeck.leader && cardList(editingDeck).length === 0) {
+              storeDecks(myDecks.filter((d) => d.id !== editingDeck.id));
+            } else if (playable(editingDeck, data)) {
+              setDeckId(editingDeck.id);
+            }
+            setEditing(null);
+          }}
+        />
+        {toastLayer}
+      </>
     );
   }
 
   if (game && data) {
     return (
-      <Board
-        data={data}
-        game={game}
-        mats={mats}
-        onChange={setGame}
-        onRestart={start}
-        onExit={() => setGame(null)}
-      />
+      <>
+        <Board
+          data={data}
+          game={game}
+          mats={mats}
+          trophies={gameTrophies}
+          onChange={setGame}
+          onRestart={start}
+          onExit={() => {
+            leaveGame();
+            setGame(null);
+          }}
+        />
+        {toastLayer}
+      </>
     );
   }
 
@@ -192,7 +256,12 @@ export function App() {
                 <button onClick={() => window.location.reload()}>Try again</button>
               </section>
             ) : (
-              <TitleMenu ready={!!data} deckCount={myDecks.length} onPick={setScreen} />
+              <TitleMenu
+                ready={!!data}
+                deckCount={myDecks.length}
+                progress={progress}
+                onPick={setScreen}
+              />
             )}
             {!data && !loadError && (
               <p className="loading-line" aria-busy="true">
@@ -200,6 +269,10 @@ export function App() {
               </p>
             )}
           </>
+        ) : screen === "trophies" ? (
+          <SubScreen title="Trophies" onBack={back}>
+            <TrophiesScreen progress={progress} />
+          </SubScreen>
         ) : screen === "settings" ? (
           <SubScreen title="Settings" onBack={back}>
             <div className="settings-grid">{playmats}</div>
@@ -235,6 +308,7 @@ export function App() {
           © Eiichiro Oda/Shueisha, Toei Animation, Bandai.
         </footer>
       </main>
+      {toastLayer}
     </>
   );
 }

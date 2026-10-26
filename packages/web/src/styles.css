@@ -409,16 +409,6 @@ select {
 .menu-item.current:not(:disabled) .menu-label {
   color: var(--gold);
 }
-.menu-soon {
-  font-size: 0.65rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #d5def2;
-}
 .menu-hint {
   min-height: 2.6em;
   margin: 0;
@@ -2055,4 +2045,199 @@ button.pile {
     bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     z-index: 30;
   }
+}
+
+/* Trophies */
+
+.medal {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  --medal: #c98a4b;
+  --medal-dark: #7a4a1f;
+}
+.medal.silver {
+  --medal: #cfd6e2;
+  --medal-dark: #7d8798;
+}
+.medal.gold {
+  --medal: #f5c84c;
+  --medal-dark: #9a6c0d;
+}
+.medal.platinum {
+  --medal: #b9e6ff;
+  --medal-dark: #4c7aa3;
+}
+.medal-rim {
+  fill: var(--medal-dark);
+}
+.medal-face {
+  fill: var(--medal);
+}
+.medal-star {
+  fill: var(--medal-dark);
+}
+.medal.locked {
+  filter: grayscale(1) brightness(0.55);
+}
+.trophy-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: center;
+  justify-content: space-between;
+}
+.trophy-score {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+.trophy-score strong {
+  font-size: 1.6rem;
+  color: var(--gold);
+}
+.meter {
+  flex: 1 1 220px;
+  max-width: 420px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #e0a92a, #f8d56b);
+}
+.meter.small {
+  display: inline-block;
+  width: 90px;
+  flex: none;
+  height: 6px;
+}
+.trophy-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 10px;
+}
+.trophy {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+}
+.trophy.earned {
+  border-color: var(--gold-soft);
+  background: rgba(245, 200, 76, 0.07);
+}
+.trophy-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.85rem;
+  color: #d5def2;
+}
+.trophy-text strong {
+  font-size: 0.98rem;
+  color: var(--text);
+}
+.trophy.locked .trophy-text strong {
+  color: #c2cbe0;
+}
+.trophy-when {
+  color: var(--good);
+  font-size: 0.75rem;
+}
+.trophy-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.trophy-points {
+  flex: none;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.trophy.earned .trophy-points {
+  color: var(--gold);
+}
+.trophy-toast {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: min(420px, calc(100vw - 32px));
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--gold);
+  background: rgba(8, 16, 32, 0.95);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 0 24px var(--gold-soft);
+  cursor: pointer;
+  animation: toast-in 0.35s ease-out;
+}
+.trophy-toast div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 0.85rem;
+  color: #d5def2;
+}
+.trophy-toast strong {
+  font-size: 1.05rem;
+  color: var(--text);
+}
+.toast-kicker {
+  font-size: 0.7rem !important;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gold) !important;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -16px);
+  }
+}
+.result-trophies {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.result-trophies li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.result-trophies .medal {
+  width: 28px;
+  height: 28px;
+}
+.result-trophies span {
+  margin-left: auto;
+  color: var(--gold);
+  font-weight: 700;
 }
