@@ -1,6 +1,8 @@
 import type { CardCatalog } from "@strawhat/engine";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { BackPicker } from "./BackPicker.js";
 import { Board } from "./Board.js";
+import { backImage, loadBack, saveBack, type BackChoice } from "./card-backs.js";
 import { loadCardData, type CardData } from "./card-data.js";
 import { DeckBuilder } from "./DeckBuilder.js";
 import {
@@ -38,6 +40,8 @@ import {
 } from "./trophies.js";
 
 export type Mats = Record<MatSeat, string | null>;
+/** The card back picture for each side; null is the classic back. */
+export type Backs = Record<MatSeat, string | null>;
 
 export function App() {
   const [data, setData] = useState<CardData | null>(null);
@@ -47,6 +51,10 @@ export function App() {
   const [mats, setMats] = useState<Mats>(() => ({
     you: loadMat("you"),
     opponent: loadMat("opponent"),
+  }));
+  const [backChoices, setBackChoices] = useState<Record<MatSeat, BackChoice>>(() => ({
+    you: loadBack("you"),
+    opponent: loadBack("opponent"),
   }));
   const [game, setGame] = useState<LocalGame | null>(null);
   const [myDecks, setMyDecks] = useState<SavedDeck[]>(loadDecks);
@@ -161,6 +169,15 @@ export function App() {
     return saveMat(seat, image);
   };
 
+  const setBack = (seat: MatSeat, choice: BackChoice) => {
+    setBackChoices((b) => ({ ...b, [seat]: choice }));
+    return saveBack(seat, choice);
+  };
+  const backs: Backs = {
+    you: backImage(backChoices.you),
+    opponent: backImage(backChoices.opponent),
+  };
+
   const toastLayer = <TrophyToasts ids={toasts} onDone={() => setToasts((t) => t.slice(1))} />;
 
   const editingDeck = myDecks.find((d) => d.id === editing);
@@ -203,6 +220,7 @@ export function App() {
           data={data}
           game={game}
           mats={mats}
+          backs={backs}
           trophies={gameTrophies}
           onChange={setGame}
           onRestart={start}
@@ -234,6 +252,24 @@ export function App() {
           onChange={(image) => setMat("opponent", image)}
         />
       </div>
+    </section>
+  );
+  const cardBacks = (
+    <section className="panel">
+      <h2>Card backs</h2>
+      <p className="note">
+        The picture on the back of face-down cards: the Deck, Life and the hand your opponent sees.
+      </p>
+      <BackPicker
+        label="Your card backs"
+        choice={backChoices.you}
+        onChange={(choice) => setBack("you", choice)}
+      />
+      <BackPicker
+        label="Opponent's card backs"
+        choice={backChoices.opponent}
+        onChange={(choice) => setBack("opponent", choice)}
+      />
     </section>
   );
 
@@ -275,7 +311,10 @@ export function App() {
           </SubScreen>
         ) : screen === "settings" ? (
           <SubScreen title="Settings" onBack={back}>
-            <div className="settings-grid">{playmats}</div>
+            <div className="settings-grid">
+              {playmats}
+              {cardBacks}
+            </div>
           </SubScreen>
         ) : !data ? null : screen === "play" ? (
           <SubScreen title="Play" onBack={back}>
