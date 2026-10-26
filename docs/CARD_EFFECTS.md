@@ -65,6 +65,7 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `yourCharacterRemovedByEffect` | "When your Character [`cardFilter`] is removed from the field by an effect" (yours or your opponent's)                   | 8-1-3-1 |
 | `opponentLifeRemoved`          | "When a card is removed from your opponent's Life cards" (damage or an effect)                                           | 8-1-3-1 |
 | `opponentCharacterKOd`         | "When your opponent's Character is K.O.'d" (in battle or by an effect)                                                   | 8-1-3-1 |
+| `yourCharacterRemoved`         | "When your {Impel Down} type Character card is removed from the field" (any way; `cardFilter`)                           | 8-1-3-1 |
 
 Add `"oncePerTurn": true` for [Once Per Turn] and `"optional": true` for "you may".
 
@@ -148,6 +149,8 @@ played on this turn"), `handAtLeast`, `thisRested` ("if this Character is rested
 | `{ "yourTurnsAtLeast": 2 }`                      | "If it is your second turn or later"                                                                      |
 | `{ "opponentDonActiveAtLeast": 1 }`              | Your opponent has 1 or more active DON!! cards                                                            |
 | `{ "activatedEventThisTurn": {...} }`            | "If you have activated an Event with a base cost of 3 or more during this turn" (a filter)                |
+| `{ "thisCostAtLeast": 20 }`                      | "This Character with a cost of 20 or more"                                                                |
+| `{ "opponentCharacterKOdThisTurn": true }`       | "If your opponent's Character has been K.O.'d during this turn"                                           |
 | `{ "thisRested": true }`                         | "If this Character is rested"                                                                             |
 | `{ "not": { ... } }`                             | True when the nested condition doesn't hold                                                               |
 | `{ "opponentLeaderAttribute": "Slash" }`         | "If your opponent's Leader has the <Slash> attribute"                                                     |
@@ -160,7 +163,7 @@ played on this turn"), `handAtLeast`, `thisRested` ("if this Character is rested
 | `{ "donActiveAtLeast": 2 }`                      | "If you have 2 or more active DON!! cards"                                                                |
 | `{ "lifeAndHandAtMost": 4 }`                     | "If you have a total of 4 or less cards in your Life area and hand"                                       |
 
-`count` takes `side` (`"self"`, `"opponent"`, or `"any"` for both players), an optional `zone` (default `"characters"`;
+`count` takes `side` (`"self"`, `"opponent"`, or `"any"` for both players), `"distinctNames": true` to count card names instead of cards, an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
 and `filter`, and `atLeast` (default 1) and/or `atMost`. "If you do not have 5 Characters with a
 cost of 5 or more" is `{ "count": { "side": "self", "filter": { "costAtLeast": 5 } }, "atMost": 4 }`.
@@ -188,7 +191,7 @@ cards), `handToDeckBottom` ("place 1 card from your hand at the bottom of your d
 `restCharacters` ("rest 2 of your Characters", with an optional `filter`), `toDeckBottom` ("place 1 of your Characters at the bottom of your deck"; `"zone": "stage"` for
 Stages, optional `filter`, `"side": "any"` for "place 1 Character with a cost of 2 or less at the
 bottom of the owner's deck", either player's), `trashToDeck` ("return 20 cards from your trash to your deck and shuffle
-it"), `koOwnCharacter` ("K.O. 1 of your Characters", optional `filter`), `trashOwnCharacter` ("trash 1
+it"), `koOwnCharacter` ("K.O. 1 of your Characters", optional `filter`), `koThis` ("K.O. this Character"), `trashOwnCharacter` ("trash 1
 of your Characters", not a K.O.; `"zone": "stage"` trashes your Stage, e.g. "1 [The Ark Noah] from
 your field"), `playFromHand` ("play 1
 [Kotori] from your hand"; the value is a filter),
@@ -322,7 +325,7 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `atEndOfBattle`                  | The nested steps happen when this battle ends.                                                                                                                                                                                                                |
 | `nextPlayCostChange`             | "The next time you play a ... card during this turn, the cost will be reduced by 1" (`amount: -1`).                                                                                                                                                           |
 | `setCost`                        | "Set the cost of up to 1 of your opponent's Characters ... to 0": replaces the printed cost for the `duration`.                                                                                                                                               |
-| `grantCounter`                   | Permanent only: matching Character cards in your hand have +`amount` Counter.                                                                                                                                                                                 |
+| `grantCounter`                   | Permanent only: matching Character cards in your hand have +`amount` Counter (`"becomes": true`: their Counter becomes +`amount`).                                                                                                                            |
 | `moveGivenDon`                   | "Give up to 1 of your currently given DON!! cards to ...": the player picks where it comes from, then the target.                                                                                                                                             |
 | `replaceBattleKO`                | Sets up the card's own `battleKOReplacement` effect (`effect` is its index) for the rest of the turn.                                                                                                                                                         |
 | `deckTopToBottom`                | Place cards from the top of your deck at the bottom.                                                                                                                                                                                                          |
@@ -394,6 +397,8 @@ Step options:
 - `lifeToHand` takes `"from": "topOrBottom"` for "add 1 card from the top or bottom of your Life
   cards to your hand".
 - `playFromHand` and `playFromTrash` take `"rested": true` for "play ... rested".
+- `playFromHand` takes `count` and `differentNames` like `playFromTrash` ("play up to 3 {Admiral}
+  type Character cards with different card names").
 - `playFromTrash` takes `"sameNameAsTrashed": true` for "the same card name as the trashed card"
   (the card trashed from the hand to pay the effect's cost).
 - `playFromHand` takes `"orTrash": true` for "from your hand or trash", and
@@ -441,7 +446,8 @@ More step options:
 - `grantStatus` takes `by` (a filter) for "cannot be K.O.'d in battle by <Strike> attribute
   Characters".
 
-`searchDeck` takes `"to": "lifeFaceUp"` for "add ... to the top of your Life cards face-up".
+`searchDeck` takes `"to": "lifeFaceUp"` for "add ... to the top of your Life cards face-up", `"to":
+"life"` for face-down, and `"to": "play"` plays up to `take` of the picked cards.
 
 ### Game rules on a card
 
@@ -452,6 +458,8 @@ Some Leaders change the rules of the game. Write them as steps in a `permanent` 
 - `winOnDeckOut`: "when your deck is reduced to 0, you win the game instead of losing".
 - `deckOutAtEndOfTurn`: "you do not lose when your deck has 0 cards. You lose at the end of the
   turn in which your deck becomes 0 cards."
+- `rushFromTrash` (`filter`): "when a {Land of Wano} type Character card is played from your trash,
+  that Character gains [Rush] during this turn".
 - `donDeckSize` (`"count": 6`): "your DON!! deck consists of 6 cards" (read when the game is set up).
 - `deckOnlyType` (`"type": "East Blue"`): "you can only include {East Blue} type cards in your
   deck". `checkDeck` flags other cards.

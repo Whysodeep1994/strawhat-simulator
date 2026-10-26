@@ -134,6 +134,8 @@ export type Timing =
   | "startOfGame"
   /** "When this Character becomes rested by your opponent's Character's effect". */
   | "restedByOpponentsCharacter"
+  /** "When your {Impel Down} type Character card is removed from the field" (any way). See `cardFilter`. */
+  | "yourCharacterRemoved"
   /** Always on while its conditions hold (rule 8-1-3-3). */
   | "permanent";
 
@@ -238,7 +240,11 @@ export type Condition =
   /** "If you have a face-up Life card". */
   | { faceUpLifeAtLeast: number }
   /** "If you have less Characters than your opponent". */
-  | { charactersFewerThanOpponent: true };
+  | { charactersFewerThanOpponent: true }
+  /** "This Character with a cost of 20 or more". */
+  | { thisCostAtLeast: number }
+  /** "If your opponent's Character has been K.O.'d during this turn". */
+  | { opponentCharacterKOdThisTurn: true };
 
 /** Field cards to count for a `count` condition. Sides are relative to the effect's player. */
 export interface CardCount {
@@ -247,6 +253,8 @@ export interface CardCount {
   /** Defaults to "characters". "field" is the Leader, Characters, and Stage. */
   zone?: "leader" | "characters" | "leaderOrCharacters" | "stage" | "field";
   filter?: Filter;
+  /** Count card names, not cards ("for each of your Characters with a different card name"). */
+  distinctNames?: boolean;
 }
 
 export type Cost =
@@ -326,7 +334,9 @@ export type Cost =
   /** "Rest 2 of your cards": active DON!! in the cost area, Leader, Characters, or Stage. */
   | { restCards: number }
   /** "Give 1 of your opponent's rested DON!! cards to 1 of your opponent's Characters". */
-  | { giveOpponentDon: number };
+  | { giveOpponentDon: number }
+  /** "K.O. this Character" (Marco: "you may K.O. this Character instead"). */
+  | { koThis: true };
 
 /** Which cards a step can pick from. */
 export interface Target {
@@ -490,7 +500,7 @@ export type Step =
    * Permanent effects only: matching Character cards in your hand have +amount Counter
    * ("All of your {Land of Wano} type Character cards without a Counter have a +1000 Counter").
    */
-  | { do: "grantCounter"; target: Target; amount: number }
+  | { do: "grantCounter"; target: Target; amount: number; becomes?: boolean }
   | { do: "grantKeyword"; target: Target; keyword: Keyword; duration?: Duration }
   /**
    * `by`: only against these cards, for "cannot be K.O.'d in battle by <Strike> attribute
@@ -659,8 +669,11 @@ export type Step =
       /** "Play up to 1 ..." instead of adding to hand. */
       play?: boolean;
       rested?: boolean;
-      /** "Add ... to the top of your Life cards face-up" instead of to your hand. */
-      to?: "lifeFaceUp" | "trash" | "play";
+      /**
+       * "Add ... to the top of your Life cards" (face-down, or `lifeFaceUp`) instead of to your
+       * hand, `trash` them, or `play` them ("play up to 2 ...", as many as `take`).
+       */
+      to?: "life" | "lifeFaceUp" | "trash" | "play";
     }
   /** Place cards from the top of your deck at the bottom ("place the revealed card at the bottom"). */
   | { do: "deckTopToBottom"; count: number }
@@ -698,6 +711,10 @@ export type Step =
       differentColor?: boolean;
       side?: "opponent";
       ifYouDo?: Step[];
+      /** As for `playFromTrash`: "play up to 3 ... with different card names". */
+      count?: number;
+      differentNames?: boolean;
+      played?: string[];
     }
   /**
    * `count`: "play up to 5 ...", one at a time. `differentNames`: "with different card names".
@@ -878,4 +895,9 @@ export type Step =
   /** "Activate the [Main] effect of up to 1 Event card ... in your trash". */
   | { do: "activateEventFromTrash"; filter?: Filter }
   /** "Set the power of up to 1 of your opponent's Characters to 0": gives −(its current power). */
-  | { do: "setPowerToZero"; target: Target; duration?: Duration };
+  | { do: "setPowerToZero"; target: Target; duration?: Duration }
+  /**
+   * Permanent, on a Leader: "When a {Land of Wano} type Character card is played from your trash,
+   * that Character gains [Rush] during this turn" (`filter`).
+   */
+  | { do: "rushFromTrash"; filter?: Filter };
