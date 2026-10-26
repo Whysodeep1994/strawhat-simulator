@@ -1468,7 +1468,7 @@ button.pile {
 
 @media (min-width: 1000px) and (min-aspect-ratio: 7/5) {
   :root {
-    --cw: clamp(40px, min(calc((100vh - 30px) / 9.95), calc((100vw - 360px) / 11.4)), 150px);
+    --cw: clamp(40px, min(calc((100vh - 30px) / 9.95), calc((100vw - 360px) / 12.4)), 150px);
   }
   .board {
     display: grid;
@@ -1479,6 +1479,7 @@ button.pile {
       "them status"
       "you hand";
     justify-content: center;
+    align-content: center;
     align-items: start;
     gap: 6px calc(var(--cw) * 0.16);
   }
