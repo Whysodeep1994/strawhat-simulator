@@ -93,6 +93,7 @@ const TIMING_NAMES: Record<Timing, string> = {
     "When your opponent plays a Character using a Character's effect,",
   restedByOpponentsCharacter:
     "When this Character becomes rested by your opponent's Character's effect,",
+  yourCharacterRemoved: "When your Character is removed from the field,",
   permanent: "",
 };
 
@@ -210,6 +211,10 @@ function conditionText(condition: Condition): string {
     return `(If you have at least ${condition.donFewerThanOpponentBy} fewer DON!! cards on your field than your opponent)`;
   if ("donActiveAtMost" in condition)
     return `(If you have ${condition.donActiveAtMost} or less active DON!! cards)`;
+  if ("donActiveAtLeast" in condition)
+    return `(If you have ${condition.donActiveAtLeast} or more active DON!! cards)`;
+  if ("lifeAndHandAtMost" in condition)
+    return `(If you have a total of ${condition.lifeAndHandAtMost} or less cards in your Life area and hand)`;
   if ("donGivenAtLeast" in condition)
     return `(If you have ${condition.donGivenAtLeast} or more given DON!! cards)`;
   if ("trashAtLeast" in condition)
@@ -221,6 +226,10 @@ function conditionText(condition: Condition): string {
     return `(If it is your turn number ${condition.yourTurnsAtLeast} or later)`;
   if ("opponentDonActiveAtLeast" in condition)
     return `(If your opponent has ${condition.opponentDonActiveAtLeast} or more active DON!! cards)`;
+  if ("thisCostAtLeast" in condition)
+    return `(If this Character has a cost of ${condition.thisCostAtLeast} or more)`;
+  if ("opponentCharacterKOdThisTurn" in condition)
+    return "(If your opponent's Character has been K.O.'d during this turn)";
   if ("activatedEventThisTurn" in condition)
     return `(If you have activated a${filterText(condition.activatedEventThisTurn)} Event during this turn)`;
   if ("leaderAttribute" in condition)
@@ -333,6 +342,7 @@ function costText(cost: Cost): string {
   if ("restCards" in cost) return `rest ${cost.restCards} of your cards`;
   if ("giveOpponentDon" in cost)
     return `give ${cost.giveOpponentDon} of your opponent's rested DON!! cards to 1 of their Characters`;
+  if ("koThis" in cost) return "K.O. this Character";
   if ("trashOwnCharacter" in cost)
     return `trash ${cost.trashOwnCharacter} of your ${cost.zone === "stage" ? "Stages" : "Characters"}${withFilter(cost.filter)}`;
   if ("restOpponentCharacter" in cost)
@@ -385,7 +395,7 @@ function stepText(step: Step): string {
         ? `Your opponent places ${step.count} card(s) from their hand at the bottom of their deck.`
         : `Place ${step.count} card(s) from your hand at the bottom of your deck.`;
     case "handToDeckShuffle":
-      return `${step.side === "opponent" ? "Your opponent returns" : "Return"} all cards in hand to the deck and shuffles it, then draws ${step.draw} cards.`;
+      return `${step.side === "opponent" ? "Your opponent returns" : "Return"} all cards in hand to the deck and shuffles it, then draws ${step.draw === "returned" ? "the same number of" : step.draw} cards.`;
     case "cannotAttackLeader":
       return "You cannot attack a Leader during this turn.";
     case "dealDamage":
@@ -514,6 +524,8 @@ function stepText(step: Step): string {
       return "You do not lose when your deck has 0 cards. You lose at the end of the turn in which your deck becomes 0 cards.";
     case "donDeckSize":
       return `Your DON!! deck consists of ${step.count} cards.`;
+    case "rushFromTrash":
+      return `When a${filterText(step.filter)} Character card is played from your trash, it gains [Rush] during this turn.`;
     case "koImmunity":
       return `This Character cannot be K.O.'d by effects of your opponent's${filterText(step.from)} cards.`;
     case "moveGivenDon":
@@ -521,7 +533,9 @@ function stepText(step: Step): string {
     case "replaceBattleKO":
       return "If any of your Characters would be K.O.'d in battle during this turn, you may pay this card's other cost instead.";
     case "grantCounter":
-      return `All of ${targetText(step.target)} in your hand have a +${step.amount} Counter.`;
+      return step.becomes
+        ? `The counter of all of ${targetText(step.target)} in your hand becomes +${step.amount}.`
+        : `All of ${targetText(step.target)} in your hand have a +${step.amount} Counter.`;
     case "deckTopToBottom":
       return `Place ${step.count} card(s) from the top of your deck at the bottom.`;
     case "copyPower":
@@ -618,6 +632,7 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.costAtMostTotalLife) parts.push("a cost up to the total of both players' Life cards");
   if (filter.noBaseEffect) parts.push("no base effect");
   if (filter.lacksTiming) parts.push(`no ${filter.lacksTiming} effect`);
+  if (filter.inBattle) parts.push("in this battle");
   if (filter.powerAtMost !== undefined) parts.push(`${filter.powerAtMost} power or less`);
   if (filter.powerAtLeast !== undefined) parts.push(`${filter.powerAtLeast} power or more`);
   if (filter.type) parts.push(`the {${filter.type}} type`);
@@ -642,7 +657,9 @@ function perCountText(count: CardCount | undefined): string {
   if (!count) return "";
   const owner =
     count.side === "self" ? "your" : count.side === "any" ? "either" : "your opponent's";
-  return ` for every${filterText(count.filter)} card on ${owner} field`;
+  return count.distinctNames
+    ? ` for every different card name among${filterText(count.filter)} cards on ${owner} field`
+    : ` for every${filterText(count.filter)} card on ${owner} field`;
 }
 
 function durationText(duration: Duration | undefined): string {

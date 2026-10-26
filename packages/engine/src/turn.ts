@@ -73,6 +73,15 @@ export function removedByEffect(state: GameState, card: CardInstance, by: Player
   queueFieldEffects(state, by, "characterRemovedByYourEffect");
 }
 
+/**
+ * "When your {Impel Down} type Character card is removed from the field": any way it leaves.
+ * Call before the card leaves.
+ */
+export function characterLeaving(state: GameState, card: CardInstance): void {
+  if (findOnField(state, card.uid)?.zone === "characters")
+    queueAbout(state, card, "yourCharacterRemoved");
+}
+
 /** Rules 6-2 to 6-5. */
 export function startTurn(state: GameState, player: PlayerId): void {
   state.turn += 1;
@@ -154,6 +163,8 @@ export function knockOut(state: GameState, uid: string, byEffect = false, by?: P
     const card = p.characters.find((c) => c.uid === uid);
     if (!card) continue;
     queueAbout(state, card, "yourCharacterKOd");
+    characterLeaving(state, card);
+    (state.characterKOdTurn ??= {})[player] = state.turn;
     // "When your opponent's Character is K.O.'d".
     for (const holder of fieldCards(state, opponentOf(player)))
       queueEffects(state, opponentOf(player), holder, "opponentCharacterKOd", card);
@@ -225,6 +236,7 @@ function playsRested(state: GameState, player: PlayerId): boolean {
 /** Trashing by rule (3-7-6-1-1, 3-8-5-1) or by a "trash this Character" cost is not a K.O. */
 export function moveFieldCardToTrash(state: GameState, card: CardInstance): void {
   const p = state.players[card.owner];
+  characterLeaving(state, card);
   if (p.stage?.uid === card.uid) p.stage = null;
   p.characters = p.characters.filter((c) => c.uid !== card.uid);
   leaveField(state, card);

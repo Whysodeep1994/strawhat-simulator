@@ -11,6 +11,7 @@ import {
   type GameState,
   type PlayerId,
 } from "@strawhat/engine";
+import { newStats, trackAction, type GameStats } from "./trophies.js";
 
 /**
  * A game on one computer: you against the computer. It keeps the full game state the way
@@ -20,6 +21,8 @@ export interface LocalGame {
   state: GameState;
   human: PlayerId;
   log: LogEntry[];
+  /** What you've done this game, for trophies. */
+  stats: GameStats;
 }
 
 export interface LogEntry {
@@ -43,7 +46,12 @@ export function newLocalGame(
     // You win Rock-Paper-Scissors, so you choose who goes first (rule 5-2-1-4).
     chooser: HUMAN,
   });
-  return { state, human: HUMAN, log: [{ id: 0, player: null, text: "The game begins." }] };
+  return {
+    state,
+    human: HUMAN,
+    log: [{ id: 0, player: null, text: "The game begins." }],
+    stats: newStats(state, HUMAN),
+  };
 }
 
 /** Whether the computer has to act next. */
@@ -72,7 +80,12 @@ function act(game: LocalGame, action: Action): LocalGame {
   const entries = lines
     .filter((l): l is { player: PlayerId | null; text: string } => l !== null)
     .map((l) => ({ ...l, id: ++id }));
-  return { ...game, state: after, log: [...game.log, ...entries].slice(-200) };
+  return {
+    ...game,
+    state: after,
+    log: [...game.log, ...entries].slice(-200),
+    stats: trackAction(game.stats, game.human, before, action, after),
+  };
 }
 
 export function playerName(player: PlayerId, human: PlayerId = HUMAN): string {
