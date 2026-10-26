@@ -201,6 +201,10 @@ function conditionText(condition: Condition): string {
     return `(If you have at least ${condition.donFewerThanOpponentBy} fewer DON!! cards on your field than your opponent)`;
   if ("donActiveAtMost" in condition)
     return `(If you have ${condition.donActiveAtMost} or less active DON!! cards)`;
+  if ("donActiveAtLeast" in condition)
+    return `(If you have ${condition.donActiveAtLeast} or more active DON!! cards)`;
+  if ("lifeAndHandAtMost" in condition)
+    return `(If you have a total of ${condition.lifeAndHandAtMost} or less cards in your Life area and hand)`;
   if ("donGivenAtLeast" in condition)
     return `(If you have ${condition.donGivenAtLeast} or more given DON!! cards)`;
   if ("trashAtLeast" in condition)
@@ -359,7 +363,7 @@ function stepText(step: Step): string {
         ? `Your opponent places ${step.count} card(s) from their hand at the bottom of their deck.`
         : `Place ${step.count} card(s) from your hand at the bottom of your deck.`;
     case "handToDeckShuffle":
-      return `${step.side === "opponent" ? "Your opponent returns" : "Return"} all cards in hand to the deck and shuffles it, then draws ${step.draw} cards.`;
+      return `${step.side === "opponent" ? "Your opponent returns" : "Return"} all cards in hand to the deck and shuffles it, then draws ${step.draw === "returned" ? "the same number of" : step.draw} cards.`;
     case "cannotAttackLeader":
       return "You cannot attack a Leader during this turn.";
     case "dealDamage":
@@ -576,6 +580,7 @@ function withFilter(filter: Filter | undefined): string {
   if (filter.costAtMostTotalLife) parts.push("a cost up to the total of both players' Life cards");
   if (filter.noBaseEffect) parts.push("no base effect");
   if (filter.lacksTiming) parts.push(`no ${filter.lacksTiming} effect`);
+  if (filter.inBattle) parts.push("in this battle");
   if (filter.powerAtMost !== undefined) parts.push(`${filter.powerAtMost} power or less`);
   if (filter.powerAtLeast !== undefined) parts.push(`${filter.powerAtLeast} power or more`);
   if (filter.type) parts.push(`the {${filter.type}} type`);

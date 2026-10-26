@@ -943,10 +943,11 @@ function runStep(
     case "handToDeckShuffle": {
       const who = step.side === "opponent" ? opponentOf(controller) : controller;
       const player = state.players[who];
+      const returned = player.hand.length;
       player.deck.push(...player.hand);
       player.hand = [];
       state.rng = shuffleInPlace(player.deck, state.rng);
-      drawCards(state, who, step.draw);
+      drawCards(state, who, step.draw === "returned" ? returned : step.draw);
       return "continue";
     }
 

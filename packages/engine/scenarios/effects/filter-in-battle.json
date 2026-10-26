@@ -1,0 +1,35 @@
+{
+  "name": "At the end of the battle, the Character this card battled goes to the bottom of the deck",
+  "rules": ["7-1-5"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-IN-BATTLE-BOTTOM"]
+    },
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-C5-6000",
+          "rested": true
+        },
+        "TEST-FILLER"
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.characters": 1,
+    "p2.characters.0.cardId": "TEST-FILLER",
+    "p2.deck": 21
+  }
+}

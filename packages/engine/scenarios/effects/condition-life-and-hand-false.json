@@ -1,0 +1,23 @@
+{
+  "name": "With 4 Life and 1 card in hand, the Life and hand condition fails",
+  "rules": ["8-3-1"],
+  "setup": {
+    "p1": {
+      "hand": ["TEST-LIFE-AND-HAND", "TEST-FILLER"],
+      "life": 4,
+      "don": {
+        "active": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "playCard",
+      "player": "p1",
+      "card": "p1.hand.0"
+    }
+  ],
+  "expect": {
+    "p1.hand": 1
+  }
+}

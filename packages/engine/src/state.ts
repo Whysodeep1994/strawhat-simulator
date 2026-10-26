@@ -513,6 +513,8 @@ export function conditionsMet(
       );
     if ("leaderMulticolored" in c) return definitionOf(state, me.leader).colors.length > 1;
     if ("donActiveAtMost" in c) return me.donActive <= c.donActiveAtMost;
+    if ("donActiveAtLeast" in c) return me.donActive >= c.donActiveAtLeast;
+    if ("lifeAndHandAtMost" in c) return me.life.length + me.hand.length <= c.lifeAndHandAtMost;
     if ("opponentDonOnFieldAtLeast" in c)
       return donOnField(state, opponentOf(controller)) >= c.opponentDonOnFieldAtLeast;
     if ("thisPowerAtLeast" in c) return powerOf(state, source) >= c.thisPowerAtLeast;
@@ -649,6 +651,8 @@ export function matchesFilter(
   if (filter.noBaseEffect && ((def.effects ?? []).length > 0 || (def.keywords ?? []).length > 0))
     return false;
   if (filter.lacksTiming && (def.effects ?? []).some((e) => e.timing === filter.lacksTiming))
+    return false;
+  if (filter.inBattle && card.uid !== state.battle?.attacker && card.uid !== state.battle?.target)
     return false;
   return true;
 }

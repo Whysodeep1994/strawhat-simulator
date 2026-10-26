@@ -157,6 +157,8 @@ played on this turn"), `handAtLeast`, `thisRested` ("if this Character is rested
 | `{ "trashHas": { "name": "Chess" } }`            | "If you have [Chess] in your trash"                                                                       |
 | `{ "opponentRestedCardsAtLeast": 7 }`            | "If your opponent has 7 or more rested cards" (rested DON!!, Leader, Characters, Stage)                   |
 | `{ "thisActive": true }`                         | "If this Character is active"                                                                             |
+| `{ "donActiveAtLeast": 2 }`                      | "If you have 2 or more active DON!! cards"                                                                |
+| `{ "lifeAndHandAtMost": 4 }`                     | "If you have a total of 4 or less cards in your Life area and hand"                                       |
 
 `count` takes `side` (`"self"`, `"opponent"`, or `"any"` for both players), an optional `zone` (default `"characters"`;
 `"field"` is the Leader, Characters and Stage)
@@ -254,6 +256,9 @@ with `anyNumberInDeck: true` has no copy limit in deck building.
 - `costEqualsGivenDon`: "has a cost equal to the number of DON!! cards given to it".
 - `lacksKeyword`: "without [Blocker]" is `{ "lacksKeyword": "blocker" }`.
 - `lacksTiming`: "without a [When Attacking] effect" is `{ "lacksTiming": "whenAttacking" }`.
+- `inBattle`: the attacker or the attacked card of the current battle. With `atEndOfBattle`, "place
+  the opponent's Character you battled with at the bottom of the owner's deck"; with `copyPower`,
+  "the same as the power of your opponent's attacking Leader or Character".
 - `notType`: not of this type. "If the only Characters on your field are {X} type Characters" is
   `{ "count": { "side": "self", "filter": { "notType": "X" } }, "atMost": 0 }`.
 
@@ -341,7 +346,7 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `koImmunity`                     | Permanent: "This Character cannot be K.O.'d by effects of your opponent's Characters with 5000 base power or less" (`from` is the filter for those cards).                                                                                                    |
 | `restImmunity`                   | Permanent: "This Character cannot be rested by your opponent's Leader and Character effects" (`from` is the filter for those cards).                                                                                                                          |
 | `activateEvent`                  | "Activate up to 1 {Dressrosa} type Event ... from your hand" (`filter`): the Event is trashed and its [Main] effect happens without paying its cost.                                                                                                          |
-| `handToDeckShuffle`              | "Your opponent returns all cards in their hand to their deck and shuffles their deck. Then, your opponent draws 5 cards" (`side`, `draw`).                                                                                                                    |
+| `handToDeckShuffle`              | "Your opponent returns all cards in their hand to their deck and shuffles their deck. Then, your opponent draws 5 cards" (`side`, `draw`; `"draw": "returned"` draws as many as were returned).                                                               |
 | `cannotAttackLeader`             | "You cannot attack a Leader during this turn." Characters can still be attacked.                                                                                                                                                                              |
 | `dealDamage`                     | "Deal 1 damage to your opponent": Life to hand with a [Trigger] check, or the game is won at 0 Life. `"side": "self"` is "you take 1 damage".                                                                                                                 |
 | `setPower`                       | "Set the power of up to 1 of your opponent's Characters to 0 during this turn" (`target`, `power`, `duration`). Later changes still apply on top.                                                                                                             |
