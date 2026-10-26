@@ -69,7 +69,7 @@ export function TitleMenu({
       label: "Trophies",
       hint: `${Object.keys(progress.earned).length} of ${TROPHIES.length} earned · ${pointsOf(progress)} / ${TOTAL_POINTS} points.`,
     },
-    { screen: "settings", label: "Settings", hint: "Choose your playmats." },
+    { screen: "settings", label: "Settings", hint: "Choose your playmats and card backs." },
   ];
   const enabled = items.map((item) => !item.disabled);
   const [current, setCurrent] = useState(() => Math.max(0, enabled.indexOf(true)));

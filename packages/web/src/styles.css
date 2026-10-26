@@ -373,6 +373,46 @@ button.mat-preset.chosen {
   height: 1px;
   opacity: 0;
 }
+.back-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.back-picker strong {
+  font-size: 0.9rem;
+}
+.back-picker input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.back-options {
+  --cw: 72px;
+  --ch: calc(var(--cw) * 1.397);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.back-option {
+  flex-direction: column;
+  gap: 4px;
+  width: 60px;
+  padding: 4px;
+  border-color: transparent;
+  background: transparent;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  text-align: center;
+}
+.back-option.selected {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+}
+.back-option .card {
+  animation: none;
+}
 .legal {
   margin-top: auto;
   max-width: 640px;
@@ -477,6 +517,9 @@ button.mat-preset.chosen {
 }
 .settings-grid {
   width: min(520px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 .tabs {
   display: grid;
@@ -1063,6 +1106,10 @@ button.pile {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.card.back.custom {
+  background-size: cover;
+  background-position: center;
 }
 .back-mark {
   position: relative;
