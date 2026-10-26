@@ -221,7 +221,7 @@ export function App() {
         <Board
           data={data}
           game={game}
-          mats={mats}
+          mats={{ you: matImage(mats.you), opponent: matImage(mats.opponent) }}
           backs={backs}
           trophies={gameTrophies}
           onChange={setGame}
