@@ -26,6 +26,7 @@ import {
   saveDecks,
   type SavedDeck,
 } from "./my-decks.js";
+import { matImage } from "./mat-art.js";
 import { loadMat, saveMat, type MatSeat } from "./playmat.js";
 import { Scenery } from "./Scenery.js";
 import { TrophyToasts } from "./TrophyToasts.js";
@@ -39,6 +40,7 @@ import {
   type TrophyProgress,
 } from "./trophies.js";
 
+/** Each seat's saved playmat choice (see playmat.ts), or the picture to show for it on the board. */
 export type Mats = Record<MatSeat, string | null>;
 /** The card back picture for each side; null is the classic back. */
 export type Backs = Record<MatSeat, string | null>;
@@ -164,9 +166,9 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [screen, game, editing]);
 
-  const setMat = (seat: MatSeat, image: string | null) => {
-    setMats((m) => ({ ...m, [seat]: image }));
-    return saveMat(seat, image);
+  const setMat = (seat: MatSeat, choice: string | null) => {
+    setMats((m) => ({ ...m, [seat]: choice }));
+    return saveMat(seat, choice);
   };
 
   const setBack = (seat: MatSeat, choice: BackChoice) => {
@@ -242,14 +244,14 @@ export function App() {
         <MatPicker
           seat="you"
           label="Your playmat"
-          image={mats.you}
-          onChange={(image) => setMat("you", image)}
+          choice={mats.you}
+          onChange={(choice) => setMat("you", choice)}
         />
         <MatPicker
           seat="opponent"
           label="Opponent's playmat"
-          image={mats.opponent}
-          onChange={(image) => setMat("opponent", image)}
+          choice={mats.opponent}
+          onChange={(choice) => setMat("opponent", choice)}
         />
       </div>
     </section>
