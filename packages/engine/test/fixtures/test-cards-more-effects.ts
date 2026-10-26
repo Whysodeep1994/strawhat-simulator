@@ -795,4 +795,50 @@ export const MORE_EFFECT_CARDS: CardDefinition[] = [
       },
     ],
   },
+  {
+    id: "TEST-HAND-TO-BOTTOM-DRAW",
+    name: "Test Hand To Bottom Draw",
+    category: "event",
+    colors: ["purple"],
+    cost: 0,
+    effects: [
+      {
+        timing: "main",
+        steps: [
+          { do: "handToDeckBottom", count: 99 },
+          { do: "draw", count: 1, perPrevious: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-NOT-SPECIAL-GUARD",
+    name: "Test Not Special Guard",
+    category: "character",
+    colors: ["black"],
+    cost: 3,
+    power: 5000,
+    effects: [
+      {
+        timing: "permanent",
+        steps: [
+          {
+            do: "grantStatus",
+            target: { side: "this" },
+            status: "cannotBeKOdInBattle",
+            by: { category: "character", notAttribute: "Special" },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "TEST-SPECIAL-7000",
+    name: "Test Special 7000",
+    category: "character",
+    colors: ["red"],
+    cost: 5,
+    power: 7000,
+    attribute: "Special",
+  },
 ];

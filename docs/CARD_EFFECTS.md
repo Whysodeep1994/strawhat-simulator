@@ -263,6 +263,7 @@ number of your opponent's Life cards"), `notThis`, `hasTrigger`, `keyword` (for 
 - `typeIncludes`: a type containing some text, e.g. `"Baroque Works"`.
 - `notTypeIncludes`: no type containing that text, e.g. `"Roger Pirates"` for Characters without a type including "Roger Pirates".
 - `attribute`: the printed attribute includes this, e.g. `"Slash"` (cards set `attribute`).
+- `notAttribute`: the printed attribute doesn't include this, e.g. `"Special"` for "Characters without the <Special> attribute".
 - `anyOf`: a list of filters, any of which may match ("{Cross Guild} type or ...").
 
 Names match a card's `alsoNamed` too ("Also treat this card's name as [Kouzuki Oden]"). A card
@@ -436,6 +437,7 @@ Step options:
   previous removal step moved).
 - `searchDeck` takes `"play": true` for "look at 5 cards ... and play up to 1 ...": the picked
   Character or Stage is played (with `rested` if it says so) and the rest go to the bottom.
+- `handToDeckBottom` sets the count for `perPrevious`: "place all cards in your hand at the bottom of your deck. If you do, draw cards equal to the number you placed" is `handToDeckBottom` with a large `count`, then `draw` with `"perPrevious": true`.
 - `handToDeckBottom` takes `"side": "opponent"` for "your opponent must place 1 card from their
   hand at the bottom of their deck" (they pick).
 - `playThis` on a Stage's [Trigger] plays the Stage.

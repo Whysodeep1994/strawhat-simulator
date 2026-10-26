@@ -442,6 +442,8 @@ export interface Filter {
   lacksKeyword?: Keyword;
   /** The printed attribute includes this, e.g. "Slash". */
   attribute?: string;
+  /** The printed attribute doesn't include this ("Characters without the <Special> attribute"). */
+  notAttribute?: string;
   /** At least one of these filters matches ("{Cross Guild} type or ..."). */
   anyOf?: Filter[];
   /** "Character cards without a Counter". */
@@ -640,6 +642,7 @@ export type Step =
    * Place cards from your hand at the bottom of your deck. `side: "opponent"`: "your opponent
    * must place 1 card from their hand at the bottom of their deck" (they pick).
    */
+  /** It sets the count for `perPrevious` ("draw cards equal to the number you placed"). */
   | { do: "handToDeckBottom"; count: number; side?: "opponent" }
   /** "[Side] returns all cards in their hand to their deck and shuffles it. Then, draws 5 cards." */
   /** `draw: "returned"` draws as many cards as were returned to the deck. */

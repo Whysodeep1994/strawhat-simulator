@@ -977,6 +977,7 @@ function runStep(
       const chosen = choose(state, frame, who, hand, n, n, step.do);
       if (chosen === "wait") return "wait";
       moveFromHandToDeckBottom(state, who, chosen);
+      frame.previous = chosen.length;
       return "continue";
     }
 
