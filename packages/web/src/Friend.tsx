@@ -52,8 +52,8 @@ export function FriendSetup({
           <section className="panel">
             <h2>Online play isn't available here</h2>
             <p className="note">
-              Playing a friend works in the game's claude.ai link. Open the game from that link, and
-              make sure your friend can open it too.
+              Playing a friend works on the game's website or its claude.ai link. Open the game from
+              one of those, and make sure your friend uses the same one.
             </p>
           </section>
         )}

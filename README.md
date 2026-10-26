@@ -24,12 +24,13 @@ and [docs/RULES_COVERAGE.md](docs/RULES_COVERAGE.md) for which rules are tested.
 
 ## Project layout
 
-| Folder            | What it holds                                    |
-| ----------------- | ------------------------------------------------ |
-| `packages/engine` | The rules engine: pure game logic, no graphics.  |
-| `packages/web`    | The browser app: game board and computer player. |
-| `docs`            | Contributor docs, asset policy, rules questions. |
-| `.github`         | Automatic checks (CI) and issue/PR templates.    |
+| Folder            | What it holds                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| `packages/engine` | The rules engine: pure game logic, no graphics.                                       |
+| `packages/web`    | The browser app: game board and computer player.                                      |
+| `packages/server` | The public website on Cloudflare and the Play a Friend relay (see `docs/HOSTING.md`). |
+| `docs`            | Contributor docs, asset policy, rules questions.                                      |
+| `.github`         | Automatic checks (CI) and issue/PR templates.                                         |
 
 ## Developing
 

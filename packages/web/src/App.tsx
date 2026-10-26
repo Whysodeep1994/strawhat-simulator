@@ -72,7 +72,7 @@ export function App() {
   const [gameTrophies, setGameTrophies] = useState<string[]>([]);
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const recorded = useRef(false);
-  /** Whether this page can play online: null until claude.ai answers. */
+  /** Whether this page can play online: null until the room service answers. */
   const [online, setOnline] = useState<boolean | null>(null);
   /** The online game being set up or played. */
   const [duel, setDuel] = useState<{ save: DuelSave; status: DuelStatus | null } | null>(null);
