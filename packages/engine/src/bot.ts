@@ -1,4 +1,5 @@
 import type { Action } from "./actions.js";
+import { applyAction } from "./apply.js";
 import { legalActions } from "./legal.js";
 import { definitionOf, findCard, powerOf } from "./state.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
@@ -53,8 +54,9 @@ function mainAction(state: GameState, player: PlayerId, actions: Action[]): Acti
   const play = maxBy(plays, (a) => (a.type === "playCard" ? cost(a.card) : 0));
   if (play) return play;
 
-  // 2. Use [Activate: Main] effects.
-  const activate = actions.find((a) => a.type === "activate");
+  // 2. Use [Activate: Main] effects, skipping any that would change nothing. An effect
+  // without a cost or [Once Per Turn] (like OP10-030's) can be used again and again.
+  const activate = actions.find((a) => a.type === "activate" && changesSomething(state, a));
   if (activate) return activate;
 
   // 3. Give spare DON!! to the Leader, or to a Character, if it is about to attack.
@@ -159,6 +161,15 @@ function chooseCards(
 }
 
 // Small helpers.
+
+function changesSomething(state: GameState, action: Action): boolean {
+  const snapshot = (s: GameState) => JSON.stringify({ ...s, catalog: null, revealed: null });
+  try {
+    return snapshot(applyAction(state, action)) !== snapshot(state);
+  } catch {
+    return false;
+  }
+}
 
 function stat(state: GameState, uid: string, key: "cost" | "counter"): number {
   const found = findCard(state, uid);

@@ -45,6 +45,11 @@ Each phase has a check the project owner can do without reading code.
   Character to hand as a cost, "would be K.O.'d in battle" replacements, playing the top Life card,
   "you cannot set DON!! cards as active using Character effects", and "your opponent's rested
   DON!! will not become active in their next Refresh Phase". 14 new effect scenarios.
+- 2026-10-26: Fixed a computer loop found while testing the 1905-card data with 280
+  computer-vs-computer games across all 70 decks. OP10-030 Smoker's [Activate: Main] has no cost
+  and no [Once Per Turn], so the computer used it again and again in one turn, and each use added
+  another copy of its "cannot set DON!! as active" lock. The lock is now added once, and the
+  computer skips [Activate: Main] effects that would change nothing. New test in bot.test.ts.
 - 2026-10-25: Fixed main after the PR #30 merge. The merge commit dropped the EB-03 to PRB-02
   blocks (opponentHandToDeckBottom, activateEventFromTrash, setPowerToZero, draw perCount,
   faceUpLifeAtLeast, charactersFewerThanOpponent, trashAtLeast trashFilter) and typecheck failed.

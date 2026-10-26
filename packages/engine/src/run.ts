@@ -1209,7 +1209,10 @@ function runStep(
     }
 
     case "noCharacterDonActive":
-      state.modifiers.push({ target: p.leader.uid, noCharacterDonActive: true, until: "turn" });
+      // Using the effect again adds nothing; one lock per turn is enough.
+      if (!state.modifiers.some((m) => m.target === p.leader.uid && m.noCharacterDonActive)) {
+        state.modifiers.push({ target: p.leader.uid, noCharacterDonActive: true, until: "turn" });
+      }
       return "continue";
 
     case "playFromHand":

@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { applyAction, chooseBotAction, createGame, powerOf, type GameState } from "../src/index.js";
+import {
+  applyAction,
+  buildScenarioState,
+  chooseBotAction,
+  createGame,
+  powerOf,
+  type CardCatalog,
+  type GameState,
+} from "../src/index.js";
 import { isLegal } from "../src/legal.js";
 import { TEST_CATALOG } from "./fixtures/test-cards.js";
 
@@ -92,5 +100,35 @@ describe("computer opponent", () => {
     const action = chooseBotAction(state, "p2");
     expect(action.type).toBe("choose");
     expect(isLegal(state, action)).toBe(true);
+  });
+
+  it("doesn't keep using an [Activate: Main] effect that no longer does anything", () => {
+    // Like OP10-030: no cost and no [Once Per Turn], so it can be used again, but only the
+    // first use sets a DON!! card as active.
+    const catalog: CardCatalog = {
+      ...TEST_CATALOG,
+      "TEST-REPEATABLE": {
+        id: "TEST-REPEATABLE",
+        name: "Test Repeatable",
+        category: "character",
+        colors: ["green"],
+        cost: 5,
+        power: 7000,
+        effects: [
+          {
+            timing: "activateMain",
+            steps: [{ do: "setDonActive", count: 1 }, { do: "noCharacterDonActive" }],
+          },
+        ],
+      },
+    };
+    let state = buildScenarioState(
+      { p1: { characters: ["TEST-REPEATABLE"], don: { active: 0, rested: 2 } } },
+      catalog,
+    );
+    const first = chooseBotAction(state, "p1");
+    expect(first.type).toBe("activate");
+    state = applyAction(state, first);
+    expect(chooseBotAction(state, "p1").type).not.toBe("activate");
   });
 });
