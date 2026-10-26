@@ -221,10 +221,11 @@ function attackActions(state: GameState, player: PlayerId): Action[] {
     const banned = state.modifiers.filter((m) => m.target === attacker.uid && m.noAttackTargets);
     let targets = attackTargets(state, attacker, opponent.leader.uid, attackable).filter((t) => {
       // "You cannot attack a Leader during this turn."
-      (t) =>
-        (t !== opponent.leader.uid || !leaderAttacksBanned) &&
-        (onlyTargets.length === 0 || onlyTargets.includes(t)),
-    );
+      if (t === opponent.leader.uid && leaderAttacksBanned) return false;
+      if (onlyTargets.length > 0 && !onlyTargets.includes(t)) return false;
+      const card = opponent.characters.find((c) => c.uid === t);
+      return !card || !banned.some((m) => matchesFilter(state, card, m.noAttackTargets, attacker));
+    });
     // "Your opponent cannot attack any card other than [this Character]."
     const lures = [opponent.leader, ...opponent.characters].filter((c) =>
       hasStatus(state, c, "onlyAttackTarget"),
