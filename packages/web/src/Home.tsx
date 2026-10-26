@@ -3,7 +3,15 @@ import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "r
 import { setLabel, type CardData, type PlayableDeck } from "./card-data.js";
 import { moveHighlight } from "./menu.js";
 import { cardList, playable, problemsOf, type SavedDeck } from "./my-decks.js";
-import { readMatImage, type MatSeat } from "./playmat.js";
+import { matImage, presetImage } from "./mat-art.js";
+import {
+  isUpload,
+  MAT_PRESETS,
+  presetChoice,
+  presetOf,
+  readMatImage,
+  type MatSeat,
+} from "./playmat.js";
 import {
   pointsOf,
   progressOf,
@@ -67,7 +75,7 @@ export function TitleMenu({
       label: "Trophies",
       hint: `${Object.keys(progress.earned).length} of ${TROPHIES.length} earned · ${pointsOf(progress)} / ${TOTAL_POINTS} points.`,
     },
-    { screen: "settings", label: "Settings", hint: "Choose your playmats." },
+    { screen: "settings", label: "Settings", hint: "Choose your playmats and card backs." },
   ];
   const enabled = items.map((item) => !item.disabled);
   const [current, setCurrent] = useState(() => Math.max(0, enabled.indexOf(true)));
@@ -498,24 +506,36 @@ function MyDeckTile({
 export function MatPicker({
   seat,
   label,
-  image,
+  choice,
   onChange,
 }: {
   seat: MatSeat;
   label: string;
-  image: string | null;
-  /** Returns false when the picture can't be kept for next time. */
-  onChange: (image: string | null) => boolean;
+  /** The saved choice: a ready-made mat, an uploaded picture, or null for the default. */
+  choice: string | null;
+  /** Returns false when the choice can't be kept for next time. */
+  onChange: (choice: string | null) => boolean;
 }) {
   const [message, setMessage] = useState<string | null>(null);
+  const image = matImage(choice);
+  const preset = presetOf(choice);
+  const name = preset
+    ? MAT_PRESETS.find((p) => p.id === preset)?.name
+    : isUpload(choice)
+      ? "your picture"
+      : "the default mat";
+
+  function pick(next: string | null) {
+    const saved = onChange(next);
+    setMessage(saved ? null : "Using it for now, but this browser won't keep it for next time.");
+  }
 
   async function upload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
     try {
-      const saved = onChange(await readMatImage(file));
-      setMessage(saved ? null : "Using it for now, but this browser won't keep it for next time.");
+      pick(await readMatImage(file));
     } catch (err) {
       setMessage(err instanceof Error ? err.message : String(err));
     }
@@ -523,32 +543,46 @@ export function MatPicker({
 
   return (
     <div className="mat-picker">
-      <div
-        className={`mat-preview ${seat} ${image ? "custom" : ""}`}
-        style={image ? { backgroundImage: `url("${image}")` } : undefined}
-        aria-label={image ? `${label}: your picture` : `${label}: the default mat`}
-        role="img"
-      />
-      <div className="mat-picker-text">
-        <strong>{label}</strong>
-        <div className="row">
-          <label className="button small">
-            Upload image
-            <input type="file" accept="image/*" onChange={(e) => void upload(e)} />
-          </label>
-          {image && (
-            <button
-              className="ghost small"
-              onClick={() => {
-                onChange(null);
-                setMessage(null);
-              }}
-            >
-              Use default
-            </button>
-          )}
+      <div className="mat-picker-head">
+        <div
+          className={`mat-preview ${seat} ${image ? "custom" : ""}`}
+          style={image ? { backgroundImage: `url("${image}")` } : undefined}
+          aria-label={`${label}: ${name}`}
+          role="img"
+        />
+        <div className="mat-picker-text">
+          <strong>{label}</strong>
+          <span className="note">{name}</span>
+          <div className="row">
+            <label className="button small">
+              Upload image
+              <input type="file" accept="image/*" onChange={(e) => void upload(e)} />
+            </label>
+            {choice && (
+              <button className="ghost small" onClick={() => pick(null)}>
+                Use default
+              </button>
+            )}
+          </div>
+          {message && <p className="note">{message}</p>}
         </div>
-        {message && <p className="note">{message}</p>}
+      </div>
+      <div className="mat-presets" role="radiogroup" aria-label={`${label}: ready-made mats`}>
+        {MAT_PRESETS.map((p) => (
+          <button
+            key={p.id}
+            role="radio"
+            aria-checked={preset === p.id}
+            className={`mat-preset ${preset === p.id ? "chosen" : ""}`}
+            onClick={() => pick(presetChoice(p.id))}
+          >
+            <span
+              className="mat-preset-art"
+              style={{ backgroundImage: `url("${presetImage(p.id) ?? ""}")` }}
+            />
+            <span className="mat-preset-name">{p.name}</span>
+          </button>
+        ))}
       </div>
     </div>
   );

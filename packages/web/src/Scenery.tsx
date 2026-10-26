@@ -21,14 +21,14 @@ export function Scenery() {
       el.width = Math.round(el.clientWidth * ratio);
       el.height = Math.round(el.clientHeight * ratio);
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      draw(ctx, el.clientWidth, el.clientHeight, frame);
+      drawScene(ctx, el.clientWidth, el.clientHeight, frame);
     };
     const loop = (time: number) => {
       raf = requestAnimationFrame(loop);
       if (time - last < 33) return; // about 30 frames a second is plenty for waves
       last = time;
       frame++;
-      draw(ctx, el.clientWidth, el.clientHeight, frame);
+      drawScene(ctx, el.clientWidth, el.clientHeight, frame);
     };
 
     resize();
@@ -56,7 +56,7 @@ const CLOUDS = [
   { x: 0.3, y: 0.36, w: 0.2, speed: 0.00006 },
 ];
 
-function draw(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
+export function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
   const horizon = h * 0.6;
 
   // Sky: night blue at the top, sunset at the horizon.

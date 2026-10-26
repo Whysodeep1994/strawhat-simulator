@@ -312,8 +312,35 @@ select {
 }
 .mat-picker {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mat-picker-head {
+  display: flex;
   gap: 12px;
   align-items: center;
+}
+.mat-presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 8px;
+}
+button.mat-preset {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 4px;
+  font-size: 0.75rem;
+}
+button.mat-preset.chosen {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+.mat-preset-art {
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  background: center / cover no-repeat;
 }
 .mat-preview {
   flex: none;
@@ -345,6 +372,46 @@ select {
   width: 1px;
   height: 1px;
   opacity: 0;
+}
+.back-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.back-picker strong {
+  font-size: 0.9rem;
+}
+.back-picker input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.back-options {
+  --cw: 72px;
+  --ch: calc(var(--cw) * 1.397);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.back-option {
+  flex-direction: column;
+  gap: 4px;
+  width: 60px;
+  padding: 4px;
+  border-color: transparent;
+  background: transparent;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  text-align: center;
+}
+.back-option.selected {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+}
+.back-option .card {
+  animation: none;
 }
 .legal {
   margin-top: auto;
@@ -450,6 +517,9 @@ select {
 }
 .settings-grid {
   width: min(520px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 .tabs {
   display: grid;
@@ -1036,6 +1106,10 @@ button.pile {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.card.back.custom {
+  background-size: cover;
+  background-position: center;
 }
 .back-mark {
   position: relative;
