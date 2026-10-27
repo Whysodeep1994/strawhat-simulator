@@ -14,6 +14,7 @@ import { CATEGORY_NAMES, COLOR_NAMES, CardPrint } from "./CardPrint.js";
 import { SORT_NAMES, sortCards, type SortKey } from "./card-sort.js";
 import { CardView } from "./CardView.js";
 import { cardList, fromList, problemsOf, type SavedDeck } from "./my-decks.js";
+import { sound } from "./sound.js";
 
 interface Props {
   data: CardData;
@@ -122,6 +123,7 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
     setNotice(null);
     if (card.category === "leader") {
       onChange({ ...deck, leader: card.id, updated: new Date().toISOString() });
+      sound.cue(["play"]);
       setNotice(`${card.name} is your Leader. Now add 50 cards.`);
       return;
     }
@@ -132,11 +134,14 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
       return setNotice(`You already have ${have} ${card.name}; the limit is ${limit}.`);
     }
     setCount(card.id, have + 1);
+    sound.cue(["play"]);
   }
 
   function remove(cardId: string) {
     setNotice(null);
-    setCount(cardId, (deck.cards[cardId] ?? 0) - 1);
+    if (!deck.cards[cardId]) return;
+    setCount(cardId, deck.cards[cardId] - 1);
+    sound.cue(["discard"]);
   }
 
   function cancelPress() {
@@ -435,7 +440,10 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
                     </span>
                     <button
                       className="ghost small"
-                      onClick={() => onChange(fromList(deck, undefined, cardList(deck)))}
+                      onClick={() => {
+                        onChange(fromList(deck, undefined, cardList(deck)));
+                        sound.cue(["discard"]);
+                      }}
                     >
                       Change Leader
                     </button>
@@ -518,6 +526,7 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
           onClose={() => setDialog(null)}
           onImport={(leaderId, list) => {
             onChange({ ...fromList(deck, leaderId, list) });
+            sound.cue(["play"]);
             setDialog(null);
             setNotice("Deck list imported.");
           }}

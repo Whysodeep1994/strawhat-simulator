@@ -41,6 +41,10 @@ import {
 import { matImage } from "./mat-art.js";
 import { loadMat, saveMat, type MatSeat } from "./playmat.js";
 import { Scenery } from "./Scenery.js";
+import { cuesBetween } from "./game-sounds.js";
+import { sound } from "./sound.js";
+import { loadSound, saveSound, type SoundSettings } from "./sound-settings.js";
+import { SoundPanel } from "./SoundPanel.js";
 import { TrophyToasts } from "./TrophyToasts.js";
 import {
   abandonGame,
@@ -88,6 +92,7 @@ export function App() {
   const [duel, setDuel] = useState<{ save: DuelSave; status: DuelStatus | null } | null>(null);
   const [savedDuel, setSavedDuel] = useState<DuelSave | null>(loadDuel);
   const link = useRef<DuelLink | null>(null);
+  const [soundSettings, setSoundSettings] = useState<SoundSettings>(loadSound);
   /** The token of the online game in progress, so a cancelled one stops connecting. */
   const duelToken = useRef<string | null>(null);
 
@@ -257,6 +262,28 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [screen, game, duel, editing]);
 
+  // Music: the calm piece in the menus, the livelier one at the table.
+  const table = duel?.status?.kind === "playing" ? duel.status.game : game;
+  useEffect(() => sound.listen(), []);
+  useEffect(() => sound.configure(soundSettings), [soundSettings]);
+  useEffect(() => sound.setScene(table ? "game" : "menu"), [!!table]);
+
+  // Table sounds for every move, whoever made it: you, the computer, or a friend online.
+  const lastState = useRef(table?.state ?? null);
+  useEffect(() => {
+    const before = lastState.current;
+    lastState.current = table?.state ?? null;
+    if (before && table) sound.cue(cuesBetween(before, table.state, table.human));
+  }, [table?.state]);
+
+  const changeSound = (next: SoundSettings) => {
+    setSoundSettings(next);
+    saveSound(next);
+  };
+  const inGameSound = (
+    <SoundPanel settings={soundSettings} onChange={changeSound} heading={false} />
+  );
+
   const setMat = (seat: MatSeat, choice: string | null) => {
     setMats((m) => ({ ...m, [seat]: choice }));
     return saveMat(seat, choice);
@@ -314,6 +341,7 @@ export function App() {
         game={playing.game}
         mats={mats}
         backs={backs}
+        soundPanel={inGameSound}
         onChange={(next) => link.current?.play(next)}
         onTimeout={(player) => link.current?.timeOut(player)}
         onExit={leaveDuel}
@@ -334,6 +362,7 @@ export function App() {
           game={game}
           mats={{ you: matImage(mats.you), opponent: matImage(mats.opponent) }}
           backs={backs}
+          soundPanel={inGameSound}
           trophies={gameTrophies}
           onChange={setGame}
           onTimeout={(player) => setGame((g) => g && timeOut(g, player))}
@@ -426,6 +455,7 @@ export function App() {
         ) : screen === "settings" ? (
           <SubScreen title="Settings" onBack={back}>
             <div className="settings-grid">
+              <SoundPanel settings={soundSettings} onChange={changeSound} />
               {playmats}
               {cardBacks}
             </div>

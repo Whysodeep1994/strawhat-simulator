@@ -33,6 +33,8 @@ interface Props {
   onExit: () => void;
   /** A line shown over the table, such as a friend who lost their connection. */
   notice?: string | undefined;
+  /** Music and sound settings, opened from the Sound button. */
+  soundPanel?: ReactNode;
 }
 
 type Mode =
@@ -85,6 +87,7 @@ export function Board({
   onRestart,
   onExit,
   notice,
+  soundPanel,
 }: Props) {
   const me = game.human;
   const them = opponentOf(me);
@@ -100,6 +103,7 @@ export function Board({
   const [trashOf, setTrashOf] = useState<PlayerId | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmConcede, setConfirmConcede] = useState(false);
+  const [showSound, setShowSound] = useState(false);
 
   const def: DefOf = (card) => (card ? data.catalog[card.cardId] : undefined);
   const art = (card: CardInstance | null | undefined) => data.imageUrl(def(card));
@@ -345,6 +349,11 @@ export function Board({
               {hasCounters ? "Done countering" : "No counters…"}
             </button>
           )}
+          {soundPanel && (
+            <button className="ghost" onClick={() => setShowSound(true)}>
+              Sound
+            </button>
+          )}
           <button className="ghost" onClick={() => setConfirmConcede(true)}>
             Concede
           </button>
@@ -569,6 +578,12 @@ export function Board({
               />
             ))}
           </div>
+        </Modal>
+      )}
+
+      {showSound && (
+        <Modal title="Sound" onClose={() => setShowSound(false)}>
+          {soundPanel}
         </Modal>
       )}
 
