@@ -1513,6 +1513,83 @@ button.pile {
   }
 }
 
+/* Wide screens: your hand moves beside your mat, and the turn banner and the opponent's hand
+   sit beside theirs. The two mats then get the whole height of the window, so cards are much
+   bigger. Taller, squarer screens keep the hand under the mat, where it costs less room. */
+
+@media (min-width: 1000px) and (min-aspect-ratio: 7/5) {
+  :root {
+    --cw: clamp(40px, min(calc((100vh - 30px) / 9.95), calc((100vw - 360px) / 12.4)), 150px);
+  }
+  .board {
+    display: grid;
+    grid-template-columns: max-content minmax(calc(var(--cw) * 1.1), calc(var(--cw) * 4.6));
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "them opphand"
+      "them status"
+      "you hand";
+    justify-content: center;
+    align-content: center;
+    align-items: start;
+    gap: 6px calc(var(--cw) * 0.16);
+  }
+  .mat.opponent {
+    grid-area: them;
+  }
+  .mat.you {
+    grid-area: you;
+  }
+  .opponent-hand {
+    grid-area: opphand;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    padding: calc(var(--cw) * 0.1) 0 0 calc(var(--cw) * 0.35);
+  }
+  .opponent-hand .card.small {
+    margin: 0 0 calc(var(--ch) * -0.45) calc(var(--cw) * -0.35);
+  }
+  .status {
+    grid-area: status;
+    align-self: end;
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px 12px;
+  }
+  .status .phase strong {
+    font-size: 1.1rem;
+  }
+  .battle {
+    grid-column: auto;
+    grid-row: auto;
+    flex-wrap: wrap;
+  }
+  /* As many columns of cards as fit; each row overlaps the one above, so the cost and power
+     still show. Pointing at a card brings it to the front. */
+  .hand {
+    grid-area: hand;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, var(--cw));
+    grid-auto-rows: calc(var(--ch) * 0.56);
+    justify-content: start;
+    column-gap: calc(var(--cw) * 0.12);
+    padding: calc(var(--cw) * 0.1) 0 calc(var(--ch) * 0.44);
+    min-height: 0;
+    max-width: none;
+  }
+  .hand > .slot-click + .slot-click {
+    margin-left: 0;
+  }
+  .hand .slot-click:hover .card,
+  .hand .card.glow-selected {
+    transform: translateY(-6px) scale(1.06);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
