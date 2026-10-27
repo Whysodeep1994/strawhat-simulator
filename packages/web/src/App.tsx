@@ -17,7 +17,7 @@ import {
   TrophiesScreen,
   type Screen,
 } from "./Home.js";
-import { newLocalGame, type LocalGame } from "./local-game.js";
+import { newLocalGame, timeOut, type LocalGame } from "./local-game.js";
 import {
   DuelLink,
   loadDuel,
@@ -339,6 +339,7 @@ export function App() {
         mats={mats}
         backs={backs}
         onChange={(next) => link.current?.play(next)}
+        onTimeout={(player) => link.current?.timeOut(player)}
         onExit={leaveDuel}
         notice={
           playing.partnerHere || playing.game.state.winner !== null
@@ -359,6 +360,7 @@ export function App() {
           backs={backs}
           trophies={gameTrophies}
           onChange={setGame}
+          onTimeout={(player) => setGame((g) => g && timeOut(g, player))}
           onRestart={start}
           onExit={() => {
             leaveGame();
