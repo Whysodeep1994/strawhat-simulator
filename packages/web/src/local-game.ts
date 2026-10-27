@@ -11,6 +11,15 @@ import {
   type GameState,
   type PlayerId,
 } from "@strawhat/engine";
+import {
+  charge,
+  CLOCK_MS,
+  FRIEND_GRACE_MS,
+  newClock,
+  running,
+  timeLeft,
+  type Clock,
+} from "./clock.js";
 import { newStats, trackAction, type GameStats } from "./trophies.js";
 
 /**
@@ -27,6 +36,10 @@ export interface LocalGame {
   log: LogEntry[];
   /** What you've done this game, for trophies. */
   stats: GameStats;
+  /** Each player's 15-minute game clock (see clock.ts). */
+  clock: Clock;
+  /** The player who ran out of time, if that's how the game ended. */
+  timedOut?: PlayerId;
 }
 
 export interface LogEntry {
@@ -75,6 +88,7 @@ function started(state: GameState, human: PlayerId, opponent: LocalGame["opponen
     actions: [],
     log: [{ id: 0, player: null, text: "The game begins." }],
     stats: newStats(state, human),
+    clock: newClock(),
   };
 }
 
@@ -102,7 +116,35 @@ export function botStep(game: LocalGame): LocalGame {
   return act(game, chooseBotAction(game.state, prompt.player));
 }
 
-function act(game: LocalGame, action: Action): LocalGame {
+/**
+ * The player whose clock has run out, or null. A friend gets a few seconds' grace on your
+ * screen, since their own page ends the game for them at zero and moves take a moment to travel.
+ */
+export function outOfTime(game: LocalGame, now: number = Date.now()): PlayerId | null {
+  const player = running(game.state);
+  if (!player) return null;
+  const grace = game.opponent === "friend" && player !== game.human ? FRIEND_GRACE_MS : 0;
+  return timeLeft(game.clock, game.state, player, now) <= -grace ? player : null;
+}
+
+/** Ends the game with `player` losing on time. */
+export function timeOut(game: LocalGame, player: PlayerId, now: number = Date.now()): LocalGame {
+  if (game.state.winner !== null) return game;
+  const lastId = game.log.at(-1)?.id ?? 0;
+  const next = act(game, { type: "concede", player }, now);
+  return {
+    ...next,
+    timedOut: player,
+    clock: { ...next.clock, used: { ...next.clock.used, [player]: CLOCK_MS } },
+    log: next.log.map((entry) =>
+      entry.id > lastId && entry.text.endsWith(" conceded.")
+        ? { ...entry, text: `${playerName(player, game.human)} ran out of time.` }
+        : entry,
+    ),
+  };
+}
+
+function act(game: LocalGame, action: Action, now: number = Date.now()): LocalGame {
   const before = game.state;
   const after = applyAction(before, action);
   const lines = [
@@ -119,6 +161,7 @@ function act(game: LocalGame, action: Action): LocalGame {
     actions: [...game.actions, action],
     log: [...game.log, ...entries].slice(-200),
     stats: trackAction(game.stats, game.human, before, action, after),
+    clock: charge(game.clock, before, now),
   };
 }
 

@@ -1,5 +1,6 @@
 import { chooseBotAction } from "@strawhat/engine";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CLOCK_MS, timeLeft } from "../src/clock.js";
 import { DEMO_CATALOG, DEMO_DECKS } from "./fixtures/demo-cards.js";
 import { humanAct, type LocalGame } from "../src/local-game.js";
 import {
@@ -228,5 +229,65 @@ describe("playing a friend online", () => {
     const late = join(hub, newSave("abc234", "guest", DEMO_DECKS.red));
     hub.flush();
     expect(late.status.kind).toBe("full");
+  });
+});
+
+describe("game clocks online", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(1_000_000);
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it("take each player's own count of their time", () => {
+    const { hub, host, guest } = start(7);
+    for (let i = 0; i < 6; i++) {
+      vi.setSystemTime(Date.now() + 10_000);
+      step(hub, [host, guest]);
+    }
+    // The guest's page hears every move a second late.
+    vi.setSystemTime(Date.now() + 1000);
+    hub.flush();
+    expect(gameOf(guest).clock.used.p1).toBe(gameOf(host).clock.used.p1);
+    expect(gameOf(host).clock.used.p2).toBe(gameOf(guest).clock.used.p2);
+  });
+
+  it("end the game for both when a clock runs out", () => {
+    const { hub, host, guest } = start(8);
+    for (let i = 0; i < 6; i++) step(hub, [host, guest]);
+    hub.flush();
+    const prompt = gameOf(host).state.prompt;
+    if (prompt.kind === "gameOver") throw new Error("game ended early");
+    const slow = prompt.player;
+    // The slow player's page raises it; the other page agrees.
+    (slow === "p1" ? host : guest).link.timeOut(slow);
+    hub.flush();
+    const winner = slow === "p1" ? "p2" : "p1";
+    expect(gameOf(host).state.winner).toBe(winner);
+    expect(gameOf(guest).state.winner).toBe(winner);
+    expect(gameOf(host).timedOut).toBe(slow);
+    expect(gameOf(guest).timedOut).toBe(slow);
+  });
+
+  it("keep counting while a page is closed, and after Rejoin", () => {
+    const { hub, host, guest } = start(9);
+    for (let i = 0; i < 6; i++) {
+      vi.setSystemTime(Date.now() + 20_000);
+      step(hub, [host, guest]);
+    }
+    hub.flush();
+    const used = gameOf(guest).clock.used;
+    const saved = guest.save;
+    void guest.link.close();
+    hub.flush();
+    vi.setSystemTime(Date.now() + 60_000);
+    const back = join(hub, saved);
+    hub.flush();
+    const game = gameOf(back);
+    expect(game.clock.used).toEqual(used);
+    const prompt = game.state.prompt;
+    if (prompt.kind === "gameOver") throw new Error("game ended early");
+    const left = timeLeft(game.clock, game.state, prompt.player, Date.now());
+    expect(left).toBe(CLOCK_MS - used[prompt.player] - 60_000);
   });
 });
