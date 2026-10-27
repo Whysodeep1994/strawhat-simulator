@@ -1,0 +1,34 @@
+{
+  "name": "A Character without the <Special> attribute can't K.O. it in battle",
+  "rules": ["7-1-4-1"],
+  "setup": {
+    "turn": 4,
+    "turnPlayer": "p2",
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-NOT-SPECIAL-GUARD",
+          "rested": true
+        }
+      ]
+    },
+    "p2": {
+      "characters": ["TEST-C5-6000"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p2",
+      "attacker": "p2.characters.0",
+      "target": "p1.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p1.characters": 1
+  }
+}

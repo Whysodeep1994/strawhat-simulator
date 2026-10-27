@@ -977,6 +977,7 @@ function runStep(
       const chosen = choose(state, frame, who, hand, n, n, step.do);
       if (chosen === "wait") return "wait";
       moveFromHandToDeckBottom(state, who, chosen);
+      frame.previous = chosen.length;
       return "continue";
     }
 
@@ -1205,6 +1206,7 @@ function runStep(
       if (card) delete card.faceUp;
       const outcome = playChosen(state, frame, controller, p.life, frame.memo[0] as string);
       if (card && !p.life.includes(card)) lifeLost(state, controller);
+      if (outcome === "continue" && step.ifYouDo) frame.steps.splice(1, 0, ...step.ifYouDo);
       return outcome;
     }
 

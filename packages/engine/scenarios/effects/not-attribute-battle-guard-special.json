@@ -1,0 +1,39 @@
+{
+  "name": "A <Special> attribute Character can still K.O. it in battle",
+  "rules": ["7-1-4-1"],
+  "setup": {
+    "turn": 4,
+    "turnPlayer": "p2",
+    "p1": {
+      "characters": [
+        {
+          "card": "TEST-NOT-SPECIAL-GUARD",
+          "rested": true
+        }
+      ]
+    },
+    "p2": {
+      "characters": [
+        {
+          "card": "TEST-SPECIAL-7000",
+          "don": 1
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p2",
+      "attacker": "p2.characters.0",
+      "target": "p1.characters.0"
+    },
+    {
+      "type": "pass",
+      "player": "p1"
+    }
+  ],
+  "expect": {
+    "p1.characters": 0
+  }
+}
