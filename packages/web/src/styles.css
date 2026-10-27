@@ -2362,3 +2362,14 @@ button.pile {
   color: var(--text);
   font-size: 0.88rem;
 }
+.sound-row {
+  display: grid;
+  grid-template-columns: 9.5em 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-block: 8px;
+}
+.sound-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--gold);
+}
