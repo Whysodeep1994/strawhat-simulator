@@ -4,6 +4,7 @@ import {
   createGame,
   definitionOf,
   findCard,
+  legalActions,
   opponentOf,
   type Action,
   type CardCatalog,
@@ -95,11 +96,42 @@ export function humanAct(game: LocalGame, action: Action): LocalGame {
   return act(game, action);
 }
 
-/** Lets the computer take one action. */
+/** The most moves in a row the computer makes before it just passes or ends its turn. */
+const MAX_BOT_STREAK = 300;
+
+/**
+ * Lets the computer take one action. It never leaves the game stuck: if its choice fails, it
+ * passes or ends the turn, then tries every other legal move, and concedes only if none works.
+ */
 export function botStep(game: LocalGame): LocalGame {
   const prompt = game.state.prompt;
   if (prompt.kind === "gameOver" || prompt.player === game.human) return game;
-  return act(game, chooseBotAction(game.state, prompt.player));
+  const player = prompt.player;
+  // A run of moves this long means the computer is going round in circles.
+  const streak = game.actions.length - 1 - game.actions.findLastIndex((a) => a.player !== player);
+  if (streak < MAX_BOT_STREAK) {
+    try {
+      return act(game, chooseBotAction(game.state, player));
+    } catch (e) {
+      console.error("The computer's move failed, so it plays it safe", e);
+    }
+  }
+  let legal: Action[] = [];
+  try {
+    legal = legalActions(game.state, player).filter((a) => a.type !== "concede");
+  } catch {
+    // Conceding below still ends the game.
+  }
+  const safe = legal.filter((a) => a.type === "pass" || a.type === "endTurn");
+  const others = legal.filter((a) => a.type !== "pass" && a.type !== "endTurn");
+  for (const action of [...safe, ...others, { type: "concede", player } as Action]) {
+    try {
+      return act(game, action);
+    } catch {
+      // Try the next one.
+    }
+  }
+  return game;
 }
 
 function act(game: LocalGame, action: Action): LocalGame {

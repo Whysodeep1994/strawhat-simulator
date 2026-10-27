@@ -427,6 +427,28 @@ export function Board({
               ` Their total power can be up to ${myPrompt.maxTotalPower} (now ${pickedPower}).`}
           </p>
           <div className="card-row wrap">
+            {/* "Your opponent chooses 1 card from your hand": the options are face-down. */}
+            {myPrompt.hidden &&
+              myPrompt.options.map((uid) => {
+                const chosen = picked.includes(uid);
+                return (
+                  <CardView
+                    key={uid}
+                    faceDown
+                    back={backs.opponent}
+                    glow={chosen ? "selected" : "playable"}
+                    onClick={() =>
+                      setPicked((p) =>
+                        p.includes(uid)
+                          ? p.filter((u) => u !== uid)
+                          : p.length < myPrompt.max
+                            ? [...p, uid]
+                            : p,
+                      )
+                    }
+                  />
+                );
+              })}
             {view.promptCards.map((card) => {
               const option = myPrompt.options.includes(card.uid);
               const chosen = picked.includes(card.uid);
@@ -498,6 +520,28 @@ export function Board({
               Yes
             </button>
             <button onClick={() => act({ type: "confirm", player: me, accept: false })}>No</button>
+          </div>
+        </Modal>
+      )}
+
+      {myPrompt?.kind === "chooseOne" && (
+        <Modal title="Choose one">
+          <div className="card-row">
+            {view.promptCards.map((card) => (
+              <CardView key={card.uid} def={def(card)} image={art(card)} size="large" />
+            ))}
+          </div>
+          <p>From {nameOf(def, view, myPrompt.source)}.</p>
+          <div className="row">
+            {myPrompt.labels.map((label, option) => (
+              <button
+                key={option}
+                className={option === 0 ? "primary" : undefined}
+                onClick={() => act({ type: "chooseOne", player: me, option })}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </Modal>
       )}
@@ -748,11 +792,7 @@ function StatusBar({
   else if (mode.kind === "replace") message = "Choose a Character to trash to make room.";
   else if (prompt.player !== me)
     message = friend ? "Your friend is thinking…" : "Opponent is thinking…";
-  else if (prompt.kind === "main") message = "Your Main Phase: play cards, give DON!!, and attack.";
-  else if (prompt.kind === "block")
-    message = "You're being attacked! Tap a glowing [Blocker], or don't block.";
-  else if (prompt.kind === "counter")
-    message = "Counter Step: tap glowing cards in your hand to add power.";
+  else message = YOUR_PROMPT_TEXT[prompt.kind];
 
   const battle = view.battle;
   const attacker = battle ? findInView(view, battle.attacker) : null;
@@ -899,6 +939,21 @@ function findInView(view: GameView, uid: string): CardInstance | null {
     view.promptCards.find((c) => c.uid === uid) ?? (view.limbo?.uid === uid ? view.limbo : null)
   );
 }
+
+/**
+ * What to do for each of your decisions. Every kind of decision needs an entry, and a way to
+ * answer it on the board, or the game would wait for you with nothing to click.
+ */
+const YOUR_PROMPT_TEXT: Record<Exclude<GameView["prompt"]["kind"], "gameOver">, string> = {
+  chooseTurnOrder: "Choose who goes first.",
+  mulligan: "Keep your hand or redraw it.",
+  main: "Your Main Phase: play cards, give DON!!, and attack.",
+  block: "You're being attacked! Tap a glowing [Blocker], or don't block.",
+  counter: "Counter Step: tap glowing cards in your hand to add power.",
+  choose: "Choose cards.",
+  confirm: "Use this effect?",
+  chooseOne: "Choose one.",
+};
 
 function nameOf(def: DefOf, view: GameView, uid: string): string {
   return def(findInView(view, uid))?.name ?? "a card";
