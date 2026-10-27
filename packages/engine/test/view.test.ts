@@ -147,3 +147,41 @@ describe("decisions you answer from the board", () => {
     expect(legalActions(game, "p1").filter((a) => a.type === "chooseOne")).toHaveLength(3);
   });
 });
+
+describe("searching the top of your deck", () => {
+  const search = (deck: string[]) => {
+    let game = buildScenarioState(
+      { p1: { hand: ["TEST-SEARCH"], don: { active: 1 }, deck } },
+      TEST_CATALOG,
+    );
+    game = applyAction(game, {
+      type: "playCard",
+      player: "p1",
+      card: game.players.p1.hand[0]!.uid,
+    });
+    return game;
+  };
+
+  it("11-3-1: shows every looked-at card, but only matching ones can be picked", () => {
+    const game = search([
+      "TEST-FILLER",
+      "TEST-C2-3000",
+      "TEST-C4-5000",
+      "TEST-FILLER",
+      "TEST-FILLER",
+    ]);
+    const view = viewFor(game, "p1");
+    expect(view.promptCards).toHaveLength(5);
+    expect(game.prompt.kind === "choose" && game.prompt.options).toHaveLength(1);
+    expect(viewFor(game, "p2").promptCards).toEqual([]);
+  });
+
+  it("11-3-1: still shows the cards when none of them can be picked", () => {
+    const game = search(["TEST-FILLER", "TEST-FILLER", "TEST-FILLER"]);
+    expect(game.prompt).toMatchObject({ kind: "choose", player: "p1", options: [], max: 0 });
+    expect(viewFor(game, "p1").promptCards).toHaveLength(3);
+    const after = applyAction(game, { type: "choose", player: "p1", cards: [] });
+    expect(after.players.p1.hand).toHaveLength(0);
+    expect(after.players.p1.deck).toHaveLength(3);
+  });
+});
