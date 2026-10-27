@@ -2424,3 +2424,10 @@ button.pile {
   width: 100%;
   accent-color: var(--gold);
 }
+.sound-row select {
+  width: 100%;
+  min-width: 0;
+}
+.sound-panel {
+  text-align: left;
+}

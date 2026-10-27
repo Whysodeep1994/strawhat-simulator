@@ -4,6 +4,7 @@ import { DEMO_CATALOG, DEMO_DECKS } from "./fixtures/demo-cards.js";
 import { cuesBetween, type Cue } from "../src/game-sounds.js";
 import { botStep, botToAct, humanAct, newLocalGame } from "../src/local-game.js";
 import { parseSound, DEFAULT_SOUND } from "../src/sound-settings.js";
+import { SHUFFLE, SONGS, songsFor } from "../src/music.js";
 
 describe("table sounds", () => {
   it("sound for plays, attacks, trashing and turn changes over a whole game", () => {
@@ -51,6 +52,31 @@ describe("sound settings", () => {
       ...DEFAULT_SOUND,
       musicOn: false,
       musicVolume: 1,
+    });
+  });
+});
+
+describe("music", () => {
+  it("has well-formed pieces for both the menus and games", () => {
+    expect(new Set(SONGS.map((s) => s.id)).size).toBe(SONGS.length);
+    expect(songsFor("menu").length).toBeGreaterThanOrEqual(2);
+    expect(songsFor("game").length).toBeGreaterThanOrEqual(3);
+    for (const song of SONGS) {
+      expect(song.chords.length).toBeGreaterThan(0);
+      expect(song.scale.length).toBeGreaterThan(3);
+      for (const step of [...song.bass, ...(song.fifths ?? [])])
+        expect(step).toBeLessThan(song.bar);
+    }
+  });
+
+  it("keeps saved choices of music only when they still exist for that screen", () => {
+    expect(parseSound('{"menuSong":"calm-harbour","gameSong":"storm-front"}')).toMatchObject({
+      menuSong: "calm-harbour",
+      gameSong: "storm-front",
+    });
+    expect(parseSound('{"menuSong":"storm-front","gameSong":"gone"}')).toMatchObject({
+      menuSong: DEFAULT_SOUND.menuSong,
+      gameSong: SHUFFLE,
     });
   });
 });

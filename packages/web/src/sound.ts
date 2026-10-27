@@ -7,62 +7,8 @@
  * until then.
  */
 import type { Cue } from "./game-sounds.js";
+import { SHUFFLE, songById, songsFor, type Scene, type Song } from "./music.js";
 import { DEFAULT_SOUND, type SoundSettings } from "./sound-settings.js";
-
-/** Background music: the calm piece for the menus, or the livelier one for a game. */
-export type Track = "menu" | "game";
-
-interface Song {
-  bpm: number;
-  /** Each chord lasts two bars: the bass note, then the notes of the pad (MIDI numbers). */
-  chords: { bass: number; pad: number[] }[];
-  /** Notes the melody wanders over, low to high. */
-  scale: number[];
-  /** Chance of a melody note on the beat and off the beat. */
-  onBeat: number;
-  offBeat: number;
-  /** How long a melody note rings, in seconds. */
-  ring: number;
-  /** Eighth notes within a bar (0-7) where the bass plays. */
-  bass: number[];
-  /** A soft shaker on the off-beats. */
-  shaker: boolean;
-}
-
-const SONGS: Record<Track, Song> = {
-  // "Calm Harbour": D major, slow and warm.
-  menu: {
-    bpm: 68,
-    chords: [
-      { bass: 50, pad: [62, 66, 69, 73] },
-      { bass: 47, pad: [59, 62, 66, 69] },
-      { bass: 43, pad: [55, 59, 62, 66] },
-      { bass: 45, pad: [57, 62, 64, 66] },
-    ],
-    scale: [69, 71, 74, 76, 78, 81, 83, 86],
-    onBeat: 0.4,
-    offBeat: 0.12,
-    ring: 1.1,
-    bass: [0],
-    shaker: false,
-  },
-  // "Open Sea": A minor, a little more movement, still in the background.
-  game: {
-    bpm: 92,
-    chords: [
-      { bass: 45, pad: [57, 60, 64, 67] },
-      { bass: 41, pad: [53, 57, 60, 64] },
-      { bass: 48, pad: [55, 60, 64, 67] },
-      { bass: 43, pad: [55, 59, 62, 64] },
-    ],
-    scale: [64, 67, 69, 72, 74, 76, 79, 81],
-    onBeat: 0.35,
-    offBeat: 0.18,
-    ring: 0.6,
-    bass: [0, 3, 6],
-    shaker: true,
-  },
-};
 
 const hz = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
 
@@ -86,7 +32,7 @@ interface Bus {
 }
 
 interface Playing {
-  track: Track;
+  id: string;
   out: GainNode;
   timer: ReturnType<typeof setInterval>;
 }
@@ -100,7 +46,10 @@ class Mixer {
   private effects: Bus | null = null;
   private noise: AudioBuffer | null = null;
   private settings: SoundSettings = DEFAULT_SOUND;
-  private wanted: Track | null = null;
+  private scene: Scene | null = null;
+  private previewing: string | null = null;
+  /** Which game piece Shuffle is on. */
+  private shuffled = Math.floor(Math.random() * songsFor("game").length);
   private playing: Playing | null = null;
   private listening = false;
 
@@ -124,10 +73,32 @@ class Mixer {
     this.sync();
   }
 
-  /** The music to play; null for silence. */
-  setTrack(track: Track | null): void {
-    this.wanted = track;
+  /** Which screen the player is on, which picks the music; null for silence. */
+  setScene(scene: Scene | null): void {
+    // Each new game on Shuffle starts with the next piece.
+    if (scene === "game" && this.scene !== "game") this.shuffle();
+    this.scene = scene;
     this.sync();
+  }
+
+  /** Plays one piece in place of the screen's music, to try it out in Settings; null stops. */
+  preview(id: string | null): void {
+    this.previewing = id;
+    this.sync();
+  }
+
+  private shuffle(): void {
+    this.shuffled = (this.shuffled + 1) % songsFor("game").length;
+  }
+
+  /** The piece that should be playing now, if any. */
+  private wantedSong(): Song | null {
+    const s = this.settings;
+    if (this.previewing) return songById(this.previewing) ?? null;
+    if (this.scene === "menu") return songById(s.menuSong) ?? null;
+    if (this.scene !== "game") return null;
+    if (s.gameSong !== SHUFFLE) return songById(s.gameSong) ?? null;
+    return songsFor("game")[this.shuffled] ?? null;
   }
 
   /** Plays table sounds, one after another when a single move makes several. */
@@ -207,14 +178,13 @@ class Mixer {
       0.05,
     );
 
-    const track = s.musicOn && ctx.state === "running" ? this.wanted : null;
-    if (this.playing?.track === track) return;
+    const song = s.musicOn && ctx.state === "running" ? this.wantedSong() : null;
+    if (this.playing?.id === song?.id) return;
     if (this.playing) this.stopMusic(this.playing);
-    this.playing = track ? this.startMusic(ctx, track) : null;
+    this.playing = song ? this.startMusic(ctx, song) : null;
   }
 
-  private startMusic(ctx: AudioContext, track: Track): Playing {
-    const song = SONGS[track];
+  private startMusic(ctx: AudioContext, song: Song): Playing {
     const out = ctx.createGain();
     out.gain.setValueAtTime(0.0001, ctx.currentTime);
     out.gain.exponentialRampToValueAtTime(1, ctx.currentTime + 2.5);
@@ -222,41 +192,92 @@ class Mixer {
     out.connect(this.music!.wet);
 
     const eighth = 60 / song.bpm / 2;
+    const phrase = song.bar * 8;
+    const shuffling =
+      !this.previewing && this.scene === "game" && this.settings.gameSong === SHUFFLE;
     let step = 0;
     let next = ctx.currentTime + 0.1;
-    let rand = seeded(1);
+    let rand = seeded(song.seed);
     let note = 3;
+    const playing: Playing = { id: song.id, out, timer: setInterval(() => tick(), 150) };
     const tick = () => {
       // Plan a little ahead, so the music stays steady when the page is busy.
       while (next < ctx.currentTime + 0.6) {
-        const inBar = step % 8;
-        const bar = Math.floor(step / 8);
-        const chord = song.chords[Math.floor(bar / 2) % song.chords.length]!;
+        // On Shuffle, move on to the next piece after four phrases.
+        if (shuffling && step === phrase * 4) {
+          setTimeout(() => {
+            if (this.playing !== playing) return;
+            this.shuffle();
+            this.sync();
+          });
+          return;
+        }
+        const inBar = step % song.bar;
+        const bar = Math.floor(step / song.bar);
+        const chord = song.chords[Math.floor(bar / song.chordBars) % song.chords.length]!;
         // Four phrases of eight bars, each with its own seeded melody, then round again.
-        if (step % 64 === 0) {
-          rand = seeded(101 + (Math.floor(step / 64) % 4) * 37 + (track === "game" ? 500 : 0));
+        if (step % phrase === 0) {
+          rand = seeded(song.seed + (Math.floor(step / phrase) % 4) * 37);
           note = 3;
         }
-        if (step % 16 === 0) this.pad(out, chord.pad, next, eighth * 16);
-        if (song.bass.includes(inBar)) {
-          this.pluck(out, hz(chord.bass), next, inBar === 0 ? 1.6 : 0.7, 0.16, "sine");
+        if (step % (song.bar * song.chordBars) === 0) {
+          this.pad(out, chord.pad, next, eighth * song.bar * song.chordBars, song.pad);
         }
-        const chance = inBar % 2 === 0 ? song.onBeat : song.offBeat;
+        if (song.bass.includes(inBar)) {
+          const fifth = song.fifths?.includes(inBar) ? 7 : 0;
+          const ring = inBar === 0 ? Math.min(1.6, eighth * song.bar) : eighth * 2.5;
+          this.pluck(out, hz(chord.bass + fifth), next, ring, 0.16, "sine");
+        }
+        const beat = song.bar === 6 ? inBar % 3 === 0 : inBar % 2 === 0;
         const roll = rand();
         const move = rand();
-        if (roll < chance) {
+        if (roll < (beat ? song.onBeat : song.offBeat)) {
           note = Math.max(0, Math.min(song.scale.length - 1, note + Math.round(move * 4 - 2)));
-          this.pluck(out, hz(song.scale[note]!), next, song.ring, 0.07, "triangle");
+          this.lead(out, song, hz(song.scale[note]!), next);
         }
-        if (song.shaker && inBar % 2 === 1) {
-          this.noiseHit(out, next, "highpass", 7000, 0.7, 0.004, 0.05, inBar === 3 ? 0.03 : 0.018);
-        }
+        this.drums(out, song, inBar, next);
         next += eighth;
         step++;
       }
     };
     tick();
-    return { track, out, timer: setInterval(tick, 150) };
+    return playing;
+  }
+
+  private lead(dest: AudioNode, song: Song, freq: number, t: number): void {
+    if (song.lead === "pluck") {
+      this.pluck(dest, freq, t, song.ring, 0.07, "triangle");
+    } else if (song.lead === "bell") {
+      // A marimba: a round note with a quick, bright knock on top.
+      this.pluck(dest, freq, t, song.ring, 0.08, "sine");
+      this.pluck(dest, freq * 4, t, 0.06, 0.02, "sine");
+    } else {
+      this.reed(dest, freq, t, song.ring);
+    }
+  }
+
+  private drums(dest: AudioNode, song: Song, inBar: number, t: number): void {
+    switch (song.drums) {
+      case "shaker":
+        if (inBar % 2 === 1) this.shaker(dest, t, inBar === 3 ? 0.03 : 0.018);
+        break;
+      case "beat":
+        if (inBar === 0 || inBar === 4) this.thump(dest, t, 110, 50, 0.16, 0.22);
+        if (inBar === 2 || inBar === 6) {
+          this.noiseHit(dest, t, "bandpass", 1500, 0.8, 0.002, 0.09, 0.07);
+        }
+        if (inBar % 2 === 1) this.shaker(dest, t, 0.015);
+        break;
+      case "jig":
+        if (inBar === 0 || inBar === 3)
+          this.thump(dest, t, 100, 50, 0.14, inBar === 0 ? 0.2 : 0.12);
+        this.shaker(dest, t, inBar % 3 === 0 ? 0.02 : 0.012);
+        break;
+    }
+  }
+
+  private shaker(dest: AudioNode, t: number, peak: number): void {
+    this.noiseHit(dest, t, "highpass", 7000, 0.7, 0.004, 0.05, peak);
   }
 
   private stopMusic(playing: Playing): void {
@@ -270,15 +291,15 @@ class Mixer {
   // --- Instruments -------------------------------------------------------------------------
 
   /** A soft, slowly swelling chord. */
-  private pad(dest: AudioNode, notes: number[], t: number, length: number): void {
+  private pad(dest: AudioNode, notes: number[], t: number, length: number, level: number): void {
     const ctx = this.ctx!;
     const filter = ctx.createBiquadFilter();
     filter.type = "lowpass";
     filter.frequency.value = 1200;
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(0.05, t + 1.4);
-    gain.gain.setValueAtTime(0.05, t + length - 1.2);
+    gain.gain.exponentialRampToValueAtTime(level, t + Math.min(1.4, length / 3));
+    gain.gain.setValueAtTime(level, t + Math.max(length / 2, length - 1.2));
     gain.gain.exponentialRampToValueAtTime(0.0001, t + length + 0.6);
     filter.connect(gain);
     gain.connect(dest);
@@ -348,6 +369,33 @@ class Mixer {
     // Start somewhere different in the noise each time, so no two sounds are identical.
     src.start(t, Math.random() * 0.5);
     src.stop(t + attack + decay + 0.05);
+  }
+
+  /** A soft reed note, like a little accordion. */
+  private reed(dest: AudioNode, freq: number, t: number, ring: number): void {
+    const ctx = this.ctx!;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 1600;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.035, t + 0.03);
+    gain.gain.setValueAtTime(0.035, t + ring * 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + ring);
+    filter.connect(gain);
+    gain.connect(dest);
+    for (const [type, detune] of [
+      ["sawtooth", -5],
+      ["square", 5],
+    ] as const) {
+      const osc = ctx.createOscillator();
+      osc.type = type;
+      osc.frequency.value = freq;
+      osc.detune.value = detune;
+      osc.connect(filter);
+      osc.start(t);
+      osc.stop(t + ring + 0.05);
+    }
   }
 
   /** A short low knock, like a card landing on a wooden table. */

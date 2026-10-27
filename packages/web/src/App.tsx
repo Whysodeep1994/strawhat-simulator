@@ -266,7 +266,7 @@ export function App() {
   const table = duel?.status?.kind === "playing" ? duel.status.game : game;
   useEffect(() => sound.listen(), []);
   useEffect(() => sound.configure(soundSettings), [soundSettings]);
-  useEffect(() => sound.setTrack(table ? "game" : "menu"), [!!table]);
+  useEffect(() => sound.setScene(table ? "game" : "menu"), [!!table]);
 
   // Table sounds for every move, whoever made it: you, the computer, or a friend online.
   const lastState = useRef(table?.state ?? null);
@@ -280,6 +280,9 @@ export function App() {
     setSoundSettings(next);
     saveSound(next);
   };
+  const inGameSound = (
+    <SoundPanel settings={soundSettings} onChange={changeSound} heading={false} />
+  );
 
   const setMat = (seat: MatSeat, choice: string | null) => {
     setMats((m) => ({ ...m, [seat]: choice }));
@@ -338,6 +341,7 @@ export function App() {
         game={playing.game}
         mats={mats}
         backs={backs}
+        soundPanel={inGameSound}
         onChange={(next) => link.current?.play(next)}
         onTimeout={(player) => link.current?.timeOut(player)}
         onExit={leaveDuel}
@@ -358,6 +362,7 @@ export function App() {
           game={game}
           mats={{ you: matImage(mats.you), opponent: matImage(mats.opponent) }}
           backs={backs}
+          soundPanel={inGameSound}
           trophies={gameTrophies}
           onChange={setGame}
           onTimeout={(player) => setGame((g) => g && timeOut(g, player))}
