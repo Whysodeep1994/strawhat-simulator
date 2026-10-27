@@ -11,8 +11,9 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode }
 import type { Backs, Mats } from "./App.js";
 import { officialText, type Card, type CardData } from "./card-data.js";
 import { CardView, DonCard, type Glow } from "./CardView.js";
+import { formatClock, running, timeLeft } from "./clock.js";
 import { cardText } from "./describe.js";
-import { botStep, botToAct, humanAct, type LocalGame } from "./local-game.js";
+import { botStep, botToAct, humanAct, outOfTime, type LocalGame } from "./local-game.js";
 import { MIN_TURNS, qualifies, TIER_POINTS, trophyById } from "./trophies.js";
 import { Medal } from "./TrophyToasts.js";
 
@@ -25,6 +26,8 @@ interface Props {
   /** Trophies this game earned, once it is over. */
   trophies?: string[];
   onChange: (game: LocalGame) => void;
+  /** Ends the game because this player's clock ran out. */
+  onTimeout: (player: PlayerId) => void;
   /** Starts another game; none for a game against a friend. */
   onRestart?: () => void;
   onExit: () => void;
@@ -78,6 +81,7 @@ export function Board({
   backs,
   trophies = [],
   onChange,
+  onTimeout,
   onRestart,
   onExit,
   notice,
@@ -283,7 +287,9 @@ export function Board({
           mode={mode}
           friend={game.opponent === "friend"}
           onCancel={() => setMode({ kind: "none" })}
-        />
+        >
+          <Clocks game={game} onTimeout={onTimeout} />
+        </StatusBar>
         {notice && (
           <p className="table-notice" role="status">
             {notice}
@@ -542,11 +548,15 @@ export function Board({
       {view.winner !== null && (
         <Modal title={view.winner === me ? "Victory!" : view.winner === "draw" ? "Draw" : "Defeat"}>
           <p className={`result ${view.winner === me ? "win" : "lose"}`}>
-            {view.winner === me
-              ? "You knocked out the opponent's Leader."
-              : view.winner === "draw"
-                ? "Both players lost at the same time."
-                : "Better luck next time."}
+            {game.timedOut
+              ? game.timedOut === me
+                ? "You ran out of time."
+                : `${game.opponent === "friend" ? "Your friend" : "Your opponent"} ran out of time.`
+              : view.winner === me
+                ? "You knocked out the opponent's Leader."
+                : view.winner === "draw"
+                  ? "Both players lost at the same time."
+                  : "Better luck next time."}
           </p>
           {trophies.length > 0 ? (
             <ul className="result-trophies">
@@ -563,9 +573,11 @@ export function Board({
             </ul>
           ) : !qualifies(game.stats, game.state) ? (
             <p className="note">
-              {game.stats.conceded
-                ? "Conceded games don't count toward trophies."
-                : `Games count toward trophies after ${MIN_TURNS} of your own turns.`}
+              {game.timedOut === me
+                ? "Games lost on time don't count toward trophies."
+                : game.stats.conceded
+                  ? "Conceded games don't count toward trophies."
+                  : `Games count toward trophies after ${MIN_TURNS} of your own turns.`}
             </p>
           ) : null}
           <div className="row">
@@ -731,6 +743,7 @@ function StatusBar({
   mode,
   friend,
   onCancel,
+  children,
 }: {
   view: GameView;
   me: PlayerId;
@@ -738,6 +751,7 @@ function StatusBar({
   mode: Mode;
   friend: boolean;
   onCancel: () => void;
+  children?: ReactNode;
 }) {
   const yourTurn = view.turnPlayer === me;
   const prompt = view.prompt;
@@ -785,6 +799,49 @@ function StatusBar({
           </button>
         )}
       </div>
+      {children}
+    </div>
+  );
+}
+
+/** Under a minute left, a clock turns red. */
+const LOW_TIME_MS = 60 * 1000;
+
+/** Both players' game clocks. The one that's running glows; at zero, that player loses. */
+function Clocks({ game, onTimeout }: { game: LocalGame; onTimeout: (player: PlayerId) => void }) {
+  const [now, setNow] = useState(Date.now);
+  const live = running(game.state);
+  useEffect(() => {
+    if (!live) return;
+    const timer = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(timer);
+  }, [live]);
+
+  const out = outOfTime(game, now);
+  useEffect(() => {
+    if (out) onTimeout(out);
+  }, [out]);
+
+  const me = game.human;
+  const them = opponentOf(me);
+  const friend = game.opponent === "friend";
+  const clock = (player: PlayerId, label: string) => {
+    const left = timeLeft(game.clock, game.state, player, now);
+    const state = live === player ? "on" : "off";
+    return (
+      <div
+        className={`clock ${state} ${left < LOW_TIME_MS ? "low" : ""}`}
+        aria-label={`${label} time left: ${formatClock(left)}${live === player ? ", running" : ""}`}
+      >
+        <span>{label}</span>
+        <strong>{formatClock(left)}</strong>
+      </div>
+    );
+  };
+  return (
+    <div className="clocks" role="timer">
+      {clock(them, friend ? "Friend" : "Opponent")}
+      {clock(me, "You")}
     </div>
   );
 }
