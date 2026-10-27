@@ -28,6 +28,14 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-27: Fixed a freeze reported by the owner. With OP13-001 Monkey.D.Luffy as Leader, its
+  "[On Your Opponent's Attack] rest any number of DON!!" asks "how many?" as a choose-one
+  decision, and the board had no window for choose-one decisions, so the game waited for an
+  answer you couldn't give. The board now shows a "Choose one" window, face-down choices (picking
+  from the opponent's hand) can be clicked, and every kind of decision must have status text, so
+  TypeScript flags a new kind with no UI. The computer also can't stall the game any more: if its
+  move fails, or it makes 300 moves in a row, it passes or ends its turn, then tries any other
+  legal move. Checked with computer-vs-computer games over every deck.
 - 2026-10-26: Public website (owner chose Cloudflare). The whole game, card data included, can
   be published free as one Cloudflare Worker that rebuilds on every merge, and Play a Friend works
   there through a small relay instead of claude.ai's live rooms. Setup steps: docs/HOSTING.md.

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { applyAction, buildScenarioState, legalActions, viewFor } from "../src/index.js";
+import {
+  applyAction,
+  buildScenarioState,
+  legalActions,
+  viewFor,
+  type CardCatalog,
+} from "../src/index.js";
 import { TEST_CATALOG } from "./fixtures/test-cards.js";
 
 const state = buildScenarioState(
@@ -108,5 +114,36 @@ describe("legal actions", () => {
     expect(view.powers[p1.leader.uid]).toBe(7000);
     expect(view.powers[p1.characters[0]!.uid]).toBe(3000);
     expect(view.powers[withDon.players.p2.leader.uid]).toBe(5000);
+  });
+});
+
+describe("decisions you answer from the board", () => {
+  it("shows the card behind a 'choose one' decision on the opponent's turn", () => {
+    // Like OP13-001 Monkey.D.Luffy: "[On Your Opponent's Attack] rest any number of DON!!".
+    const catalog: CardCatalog = {
+      ...TEST_CATALOG,
+      "TEST-REST-DON-LEADER": {
+        ...TEST_CATALOG["TEST-LEADER"]!,
+        id: "TEST-REST-DON-LEADER",
+        effects: [{ timing: "onOpponentsAttack", steps: [{ do: "restOwnDon" }] }],
+      },
+    };
+    let game = buildScenarioState(
+      {
+        turn: 4,
+        turnPlayer: "p2",
+        p1: { leader: "TEST-REST-DON-LEADER", don: { active: 2 } },
+        p2: { characters: ["TEST-C4-5000"] },
+      },
+      catalog,
+    );
+    const attack = legalActions(game, "p2").find(
+      (a) => a.type === "attack" && a.target === game.players.p1.leader.uid,
+    )!;
+    game = applyAction(game, attack);
+    expect(game.prompt).toMatchObject({ kind: "chooseOne", player: "p1" });
+    const view = viewFor(game, "p1");
+    expect(view.promptCards.map((c) => c.cardId)).toEqual(["TEST-REST-DON-LEADER"]);
+    expect(legalActions(game, "p1").filter((a) => a.type === "chooseOne")).toHaveLength(3);
   });
 });

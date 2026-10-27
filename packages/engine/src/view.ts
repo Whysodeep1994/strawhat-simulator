@@ -102,7 +102,7 @@ function promptCardsFor(state: GameState, viewer: PlayerId): CardInstance[] {
     const uids = [...new Set([...(prompt.revealed ?? []), ...prompt.options])];
     return uids.map((uid) => findCard(state, uid)).filter((c): c is CardInstance => c !== null);
   }
-  if (prompt.kind === "confirm" && prompt.player === viewer) {
+  if ((prompt.kind === "confirm" || prompt.kind === "chooseOne") && prompt.player === viewer) {
     const card = findCard(state, prompt.source);
     return card ? [card] : [];
   }
