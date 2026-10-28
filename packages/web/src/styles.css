@@ -910,7 +910,7 @@ button.pile {
   font-weight: 700;
   white-space: nowrap;
 }
-@media (min-width: 1000px) and (min-aspect-ratio: 7/5) {
+@media (min-width: 901px) {
   .hand-count {
     display: block;
   }
@@ -2029,12 +2029,13 @@ button.pile {
   }
 }
 
-/* Wide screens: the mats get the whole board column. The opponent's hand peeks down from the top
+/* Computers (any window wide enough for the side bar, whatever its height): the mats get the
+   whole board column. The opponent's hand peeks down from the top
    edge, just enough to count, and the turn panel and clocks move into the side bar. The
    opponent's mat is drawn a little smaller, as if across the table, so yours and your cards are
    bigger. */
 
-@media (min-width: 1000px) and (min-aspect-ratio: 7/5) {
+@media (min-width: 901px) {
   :root {
     --opp-scale: 0.86;
     --peek: 0.34;
