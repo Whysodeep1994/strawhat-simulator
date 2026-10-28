@@ -10,8 +10,11 @@ import {
   newSave,
   shareDeck,
   unshareDeck,
+  PIECE,
+  safeLook,
   type DuelSave,
   type DuelStatus,
+  type Looks,
   type PeerLike,
   type RoomLike,
 } from "../src/online.js";
@@ -94,13 +97,19 @@ interface Player {
   save: DuelSave;
 }
 
-function join(hub: Hub, save: DuelSave): Player {
+function join(hub: Hub, save: DuelSave, looks?: Looks): Player {
   const room = new FakeRoom(hub);
   const player = { room, save, status: { kind: "waiting" } } as Player;
-  player.link = new DuelLink(room, save, DEMO_CATALOG, (status, next) => {
-    player.status = status;
-    player.save = next;
-  });
+  player.link = new DuelLink(
+    room,
+    save,
+    DEMO_CATALOG,
+    (status, next) => {
+      player.status = status;
+      player.save = next;
+    },
+    looks,
+  );
   return player;
 }
 
@@ -289,5 +298,96 @@ describe("game clocks online", () => {
     if (prompt.kind === "gameOver") throw new Error("game ended early");
     const left = timeLeft(game.clock, game.state, prompt.player, Date.now());
     expect(left).toBe(CLOCK_MS - used[prompt.player] - 60_000);
+  });
+});
+
+/** A made-up uploaded picture of about `chars` characters. */
+function picture(chars: number, seed = 1): string {
+  const random = mulberry(seed);
+  const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  let body = "";
+  while (body.length < chars) body += abc[Math.floor(random() * 64)];
+  return `data:image/jpeg;base64,${body}`;
+}
+
+describe("playmats and card backs online", () => {
+  it("show each player the other's ready-made choices", () => {
+    const hub = new Hub();
+    const host = join(hub, newSave("abc234", "host", DEMO_DECKS.red), {
+      mat: "preset:wano",
+      back: "preset:straw-hat",
+    });
+    const guest = join(hub, newSave("abc234", "guest", DEMO_DECKS.green), {
+      mat: null,
+      back: "preset:grand-line",
+    });
+    hub.flush();
+    expect(guest.save.theirs).toEqual({ mat: "preset:wano", back: "preset:straw-hat" });
+    expect(host.save.theirs).toEqual({ mat: null, back: "preset:grand-line" });
+  });
+
+  it("send uploaded pictures in pieces, whole, while the game goes on", () => {
+    const hub = new Hub();
+    const mat = picture(60_000, 2);
+    const back = picture(9_000, 3);
+    const random = mulberry(9);
+    const host = join(hub, newSave("abc234", "host", DEMO_DECKS.red, random), { mat, back });
+    const guest = join(hub, newSave("abc234", "guest", DEMO_DECKS.green, random), {
+      mat: "preset:sunset",
+      back: picture(12_000, 4),
+    });
+    let moves = 0;
+    while (step(hub, [host, guest]) && moves < 3000) moves++;
+    hub.flush();
+    expect(guest.save.theirs?.mat).toBe(mat);
+    expect(guest.save.theirs?.back).toBe(back);
+    expect(host.save.theirs?.back).toBe(picture(12_000, 4));
+    expect(host.save.theirs?.mat).toBe("preset:sunset");
+    expect(gameOf(guest).state).toEqual(gameOf(host).state);
+    expect(hub.biggest).toBeLessThan(4096);
+  });
+
+  it("arrive before the game starts when nobody has moved", () => {
+    const hub = new Hub();
+    const mat = picture(30_000, 5);
+    join(hub, newSave("abc234", "host", DEMO_DECKS.red), { mat, back: "preset:classic" });
+    const guest = join(hub, newSave("abc234", "guest", DEMO_DECKS.green));
+    hub.flush();
+    expect(guest.save.theirs?.mat).toBe(mat);
+    expect(Math.ceil(mat.length / PIECE)).toBeGreaterThan(10);
+  });
+
+  it("aren't fetched again after a reload", () => {
+    const hub = new Hub();
+    const mat = picture(20_000, 6);
+    const random = mulberry(11);
+    const host = join(hub, newSave("abc234", "host", DEMO_DECKS.red, random), {
+      mat,
+      back: "preset:classic",
+    });
+    const guest = join(hub, newSave("abc234", "guest", DEMO_DECKS.green, random));
+    hub.flush();
+    const saved = guest.save;
+    void guest.link.close();
+    hub.flush();
+    const back = join(hub, saved);
+    let pieces = 0;
+    const send = host.room.presence.bind(host.room);
+    host.room.presence = async (patch) => {
+      if (patch.pic) pieces++;
+      return send(patch);
+    };
+    hub.flush();
+    expect(back.save.theirs?.mat).toBe(mat);
+    expect(pieces).toBe(0);
+  });
+
+  it("refuse anything that isn't a preset name or a picture", () => {
+    expect(safeLook("preset:wano")).toBe(true);
+    expect(safeLook(picture(100))).toBe(true);
+    expect(safeLook('data:image/jpeg;base64,AAAA") ; background:url(x')).toBe(false);
+    expect(safeLook("javascript:alert(1)")).toBe(false);
+    expect(safeLook("https://example.com/a.png")).toBe(false);
+    expect(safeLook(42)).toBe(false);
   });
 });

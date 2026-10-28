@@ -29,6 +29,12 @@ import { findRelay } from "./relay.js";
  * Each page keeps both game clocks, but a player's own page is the one that counts: its note
  * says how much time that player has used, and the other page takes that figure over its own,
  * which would otherwise grow by however long each move took to arrive.
+ *
+ * The note also says how the player's side of the table looks: their playmat and card backs, so
+ * each player sees the other's choices. A ready-made one travels by name. An uploaded picture is
+ * too big for one note, so it goes a piece at a time: the note names the picture and how many
+ * pieces it has, carries the next piece the partner is missing, and the partner's note says how
+ * many pieces it has so far. Moves always go first; a piece rides along only when there's room.
  */
 
 /** The part of claude.ai's named room this file uses (see the `room` capability). */
@@ -47,6 +53,29 @@ export interface PeerLike {
 }
 
 export type Role = "host" | "guest";
+
+/**
+ * How a player's side looks: their playmat (a saved choice from playmat.ts, null for the default)
+ * and card back (a choice from card-backs.ts). Ready-made ones are "preset:<id>"; an upload is a
+ * picture (a data URL), which travels in pieces.
+ */
+export interface Looks {
+  mat: string | null;
+  back: string;
+}
+
+/** What the partner has shown so far; a field is missing until it has arrived. */
+export type TheirLooks = Partial<Looks>;
+
+/** How a look travels in the note: a preset by name, or "pic:<id>:<pieces>" for a picture. */
+type LookRef = string | null;
+
+/** One piece of a picture: piece `i` of the picture called `h`. */
+interface Piece {
+  h: string;
+  i: number;
+  d: string;
+}
 
 /** A deck as it travels: the Leader and how many of each card. */
 export interface SharedDeck {
@@ -74,6 +103,12 @@ interface Note {
   clock?: number;
   /** The player who ran out of time. */
   flagged?: PlayerId;
+  /** This player's playmat and card backs. */
+  look?: { mat: LookRef; back: LookRef };
+  /** The next piece of a picture the partner is missing. */
+  pic?: Piece;
+  /** How many pieces of each of the partner's pictures this player has. */
+  got?: Record<string, number>;
 }
 
 /** Everything needed to rejoin a game after the page reloads. */
@@ -89,6 +124,8 @@ export interface DuelSave {
   /** Both game clocks, so time away from the game still counts after a reload. */
   clock?: Clock;
   flagged?: PlayerId;
+  /** The partner's playmat and card backs, kept so a reload needn't fetch their pictures again. */
+  theirs?: TheirLooks;
 }
 
 export type DuelStatus =
@@ -101,6 +138,32 @@ export type DuelStatus =
 
 const NOTE_LIMIT = 3800;
 const ROOM_PREFIX = "duel-";
+/** Characters of a picture per piece. */
+export const PIECE = 2000;
+export const DEFAULT_LOOKS: Looks = { mat: null, back: "preset:classic" };
+
+const PRESET_LOOK = /^preset:[a-z0-9-]{1,40}$/;
+const PICTURE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/;
+const PIC_REF = /^pic:([a-z0-9]{1,20}):([1-9][0-9]{0,3})$/;
+
+/** A short name for a picture, so both sides can tell which one a piece belongs to. */
+export function pictureId(data: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < data.length; i++) h = Math.imul(h ^ data.charCodeAt(i), 0x01000193);
+  return (h >>> 0).toString(36) + data.length.toString(36);
+}
+
+/** Whether a look the partner sent is safe to show: a preset name or a picture, nothing else. */
+export function safeLook(look: unknown): look is string {
+  return typeof look === "string" && (PRESET_LOOK.test(look) || PICTURE.test(look));
+}
+
+/** How one of your looks is named in your note. */
+function lookRef(look: string | null): LookRef {
+  if (look === null || !safeLook(look)) return null;
+  if (PRESET_LOOK.test(look)) return look;
+  return `pic:${pictureId(look)}:${Math.ceil(look.length / PIECE)}`;
+}
 
 /** A short game code that is easy to read out: no 0/O or 1/I/L. */
 export function newGameCode(random: () => number = Math.random): string {
@@ -170,14 +233,23 @@ export class DuelLink {
   private theyConceded = false;
   private sent = "";
   private stop: () => void;
+  /** Your uploaded pictures by their id, to send in pieces. */
+  private pictures = new Map<string, string>();
+  /** Pieces of the partner's pictures that have arrived, by picture id. */
+  private incoming = new Map<string, string[]>();
 
   constructor(
     private readonly room: RoomLike,
     save: DuelSave,
     private readonly catalog: CardCatalog,
     private readonly onStatus: (status: DuelStatus, save: DuelSave) => void,
+    private readonly looks: Looks = DEFAULT_LOOKS,
   ) {
     this.save = save;
+    for (const look of [looks.mat, looks.back]) {
+      if (look && safeLook(look) && !PRESET_LOOK.test(look))
+        this.pictures.set(pictureId(look), look);
+    }
     this.stop = room.onPeers(({ peers }) => this.sync(peers));
     this.publish();
     this.sync(room.peers());
@@ -249,6 +321,7 @@ export class DuelLink {
     }
     this.partnerHere = !!partner;
 
+    if (partner) this.receiveLooks(partner);
     if (partner && !this.game && !this.error) this.begin(partner);
     if (partner && this.game) this.catchUp(partner);
     this.publish();
@@ -318,6 +391,79 @@ export class DuelLink {
     }
   }
 
+  /** Takes in the partner's playmat and card backs, and any piece of a picture they sent. */
+  private receiveLooks(partner: Note): void {
+    const look = partner.look;
+    if (!look || typeof look !== "object") return;
+    const theirs: TheirLooks = { ...this.save.theirs };
+    let changed = false;
+    for (const key of ["mat", "back"] as const) {
+      const ref = look[key];
+      let value: string | null | undefined;
+      if (ref === null && key === "mat") value = null;
+      else if (typeof ref === "string" && PRESET_LOOK.test(ref)) value = ref;
+      else if (typeof ref === "string" && PIC_REF.test(ref)) {
+        const [, id, count] = PIC_REF.exec(ref) as RegExpExecArray;
+        const n = Number(count);
+        // Already have it, from before a reload.
+        const have = theirs[key];
+        if (have && safeLook(have) && pictureId(have) === id) continue;
+        const pieces = this.incoming.get(id as string) ?? [];
+        this.incoming.set(id as string, pieces);
+        const pic = partner.pic;
+        if (pic && pic.h === id && pic.i === pieces.length && typeof pic.d === "string")
+          pieces.push(pic.d);
+        if (pieces.length < n) continue;
+        const data = pieces.join("");
+        this.incoming.delete(id as string);
+        // A picture that doesn't add up is fetched again from the start.
+        if (!PICTURE.test(data) || pictureId(data) !== id) continue;
+        value = data;
+      } else continue;
+      if (theirs[key] !== value) {
+        if (value === null) theirs.mat = null;
+        else theirs[key] = value;
+        changed = true;
+      }
+    }
+    if (changed) this.save = { ...this.save, theirs };
+  }
+
+  /** How many pieces of each of the partner's pictures this page has, for the partner's note. */
+  private gotPieces(partner: Note | null | undefined): Record<string, number> | null {
+    const look = partner?.look;
+    if (!look) return null;
+    const got: Record<string, number> = {};
+    for (const key of ["mat", "back"] as const) {
+      const match = typeof look[key] === "string" ? PIC_REF.exec(look[key] as string) : null;
+      if (!match) continue;
+      const [, id, count] = match as unknown as [string, string, string];
+      const have = this.save.theirs?.[key];
+      got[id] =
+        have && safeLook(have) && pictureId(have) === id
+          ? Number(count)
+          : (this.incoming.get(id)?.length ?? 0);
+    }
+    return Object.keys(got).length ? got : null;
+  }
+
+  /** The next piece of one of your pictures that the partner is missing, if any. */
+  private nextPiece(partner: Note | null | undefined): Piece | null {
+    if (!partner) return null;
+    const got = partner.got && typeof partner.got === "object" ? partner.got : {};
+    // The card back first: it's small, and on screen the whole game.
+    for (const look of [this.looks.back, this.looks.mat]) {
+      if (!look) continue;
+      const id = pictureId(look);
+      if (!this.pictures.has(id)) continue;
+      const have = typeof got[id] === "number" ? got[id] : 0;
+      const n = Math.ceil(look.length / PIECE);
+      if (have >= n || have < 0) continue;
+      return { h: id, i: have, d: look.slice(have * PIECE, (have + 1) * PIECE) };
+    }
+    return null;
+  }
+
   private publish(): void {
     const partner = this.room
       .peers()
@@ -326,7 +472,7 @@ export class DuelLink {
     const actions = this.save.actions;
     const from = Math.min(partner?.applied ?? actions.length, actions.length);
     const moves: Action[] = [];
-    let size = 400;
+    let size = 600;
     for (const action of actions.slice(from)) {
       size += JSON.stringify(action).length + 1;
       if (size > NOTE_LIMIT) break;
@@ -349,7 +495,14 @@ export class DuelLink {
       conceded: this.save.conceded ? true : null,
       clock: this.game ? Math.round(this.game.clock.used[this.me]) : null,
       flagged: this.save.flagged ?? null,
+      look: { mat: lookRef(this.looks.mat), back: lookRef(this.looks.back) },
+      got: this.gotPieces(partner),
+      pic: null,
     };
+    // A piece of a picture only when it fits beside the moves.
+    const piece = this.nextPiece(partner);
+    if (piece && JSON.stringify(patch).length + piece.d.length + 60 <= NOTE_LIMIT)
+      patch.pic = piece;
     // Only send changes: every note wakes the other page, which would answer with its own.
     const text = JSON.stringify(patch);
     if (text === this.sent) return;
