@@ -117,6 +117,11 @@ const STATUS_TEXT: Record<Status, string> = {
   cannotBeRestedByOpponentsEffects: "cannot be rested by your opponent's effects",
 };
 
+/** The tag that starts an effect in the card text, e.g. "[On Play]"; empty for some timings. */
+export function timingTag(timing: Timing): string {
+  return TIMING_NAMES[timing];
+}
+
 export function cardText(card: CardDefinition): string[] {
   const lines = (card.keywords ?? []).map((k) => `[${KEYWORD_NAMES[k]}] ${KEYWORD_HELP[k]}`);
   for (const effect of card.effects ?? []) lines.push(effectText(effect));

@@ -237,6 +237,12 @@ const CHOICE_PURPOSE: Record<string, string> = {
   trashCharacter: "to trash",
   playFromHand: "to play",
   playFromTrash: "to play from the trash",
+  deckBottom: "to put at the bottom of the deck",
+  deckTopOrder: "to put back on top of the deck, in that order",
+  lifeOrder: "to put back in Life, in that order",
+  handToDeckTop: "to put on top of the deck",
+  handToDeckBottom: "to put at the bottom of the deck",
+  revealFromHand: "to reveal",
 };
 
 function describeAction(

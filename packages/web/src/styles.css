@@ -1748,6 +1748,60 @@ button.pile {
   max-width: 480px;
   margin: 0 auto;
 }
+/* The effect a pop-up is for, across its top: the card, its name, and its text with the effect
+   that is running lit up. */
+.effect-banner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: -6px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  text-align: left;
+}
+.effect-banner .card.small {
+  --cw: 64px;
+  --ch: calc(var(--cw) * 1.397);
+  width: var(--cw);
+  height: var(--ch);
+  flex: none;
+}
+.effect-banner-text {
+  min-width: 0;
+  flex: 1;
+}
+.modal .effect-source {
+  margin: 0 0 4px;
+  color: var(--text);
+}
+.modal .effect-banner .effect-text {
+  max-width: none;
+  margin: 0;
+  max-height: 9.5em;
+  overflow-y: auto;
+}
+.effect-banner .effect-text li.running {
+  font-weight: 700;
+  color: var(--text);
+  background: var(--gold-soft);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+@media (max-width: 560px) {
+  .effect-banner {
+    gap: 8px;
+    padding: 8px;
+  }
+  .effect-banner .card.small {
+    --cw: 44px;
+  }
+  .modal .effect-banner .effect-text {
+    font-size: 0.8rem;
+    max-height: 8em;
+  }
+}
 .modal .close {
   position: absolute;
   top: 8px;
@@ -1834,6 +1888,25 @@ button.pile {
    mats get the room. Pointing at the tray lifts it; pointing at a card lifts and enlarges it. */
 
 @media (min-width: 901px) {
+  /* Pop-ups in a game cover only the table, so the side panel stays in view and in use: point
+     at a card in a pop-up and read it there. */
+  .game .overlay {
+    right: calc(320px + max(12px, env(safe-area-inset-right, 0px)));
+  }
+  /* The card you point at is shown as big as the side panel allows; its text scrolls below. */
+  .detail {
+    flex: 0 1 auto;
+  }
+  .log {
+    min-height: 80px;
+  }
+  .detail .card.large {
+    --dw: clamp(168px, calc((100vh - 440px) / 1.397), 280px);
+    --cw: calc(var(--dw) * 0.72);
+    width: var(--dw);
+    height: calc(var(--dw) * 1.397);
+    flex: none;
+  }
   :root {
     --cw: clamp(36px, min(calc((100vh - 128px) / 10.6), calc((100vw - 380px) / 9.4)), 96px);
     /* How much of each hand card shows while the tray is down. */
