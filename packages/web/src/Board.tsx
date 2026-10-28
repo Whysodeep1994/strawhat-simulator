@@ -82,7 +82,22 @@ const CHOOSE_TEXT: Record<string, string> = {
   playFromHand: "Choose a card to play",
   playFromTrash: "Choose a card to play from your trash",
   lookAtOpponentDeck: "The top card of your opponent's deck",
+  deckBottom: "The cards from the top of your deck: which go to the bottom?",
+  deckTopOrder: "Put these back on top of your deck",
+  lifeOrder: "Put your Life cards back in order",
+  handToDeckTop: "Choose cards from your hand to put on top of your deck",
+  handToDeckBottom: "Choose cards from your hand to put at the bottom of your deck",
+  revealFromHand: "Choose cards to reveal from your hand",
+  returnGivenDon: "Choose whose DON!! goes back",
+  trashToDeckBottom: "Choose cards from your trash to put at the bottom of your deck",
+  trashToHand: "Choose a card to add from your trash to your hand",
+  characterToLife: "Choose a Character to add to your Life",
+  lifeToDeckTop: "Choose a Life card to put on top of your deck",
+  arrangeLife: "Whose Life card do you want to look at?",
 };
+
+/** Choices where every card is picked and only the order matters: the first one tapped goes on top. */
+const ORDER_REASONS = new Set(["deckTopOrder", "lifeOrder"]);
 
 type DefOf = (card: CardInstance | null | undefined) => Card | undefined;
 
@@ -578,9 +593,13 @@ export function Board({
               ? myPrompt.reason === "searchDeck"
                 ? "None of these can be chosen. Look, then continue."
                 : "Look, then continue."
-              : myPrompt.min === myPrompt.max
-                ? `Choose ${myPrompt.max}.`
-                : `Choose ${myPrompt.min === 0 ? "up to" : `${myPrompt.min} to`} ${myPrompt.max}.`}{" "}
+              : ORDER_REASONS.has(myPrompt.reason)
+                ? "Tap them in order: the first one you tap goes on top."
+                : myPrompt.reason === "deckBottom"
+                  ? "Tap the ones to put at the bottom of your deck, or none. The rest go back on top."
+                  : myPrompt.min === myPrompt.max
+                    ? `Choose ${myPrompt.max}.`
+                    : `Choose ${myPrompt.min === 0 ? "up to" : `${myPrompt.min} to`} ${myPrompt.max}.`}{" "}
             From {nameOf(def, view, myPrompt.source)}.
             {myPrompt.max > 0 &&
               (myPrompt.revealed ?? []).some((uid) => !myPrompt.options.includes(uid)) &&
@@ -668,7 +687,9 @@ export function Board({
               {myPrompt.max === 0
                 ? "Continue"
                 : picked.length === 0
-                  ? "Choose none"
+                  ? myPrompt.reason === "deckBottom"
+                    ? "Keep them all on top"
+                    : "Choose none"
                   : `Yes, ${chooseVerb(myPrompt.reason, data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""]).button.toLowerCase()}`}
             </button>
             {picked.length > 0 && myPrompt.max > 0 && (
@@ -1584,6 +1605,16 @@ const CHOOSE_VERBS: Record<string, Verb> = {
   playFromHand: verb("Play", (n) => `Play ${n}?`),
   playFromTrash: verb("Play", (n) => `Play ${n} from your trash?`),
   lifeToHand: verb("Add to hand", (n) => `Add ${n} to your hand?`),
+  deckBottom: verb("Place at bottom", (n) => `Place ${n} at the bottom of your deck?`),
+  deckTopOrder: verb("Use this order", (n) => `Put ${n} on top of your deck, in that order?`),
+  lifeOrder: verb("Use this order", (n) => `Put ${n} back in your Life, top first?`),
+  handToDeckTop: verb("Put on top", (n) => `Put ${n} on top of your deck?`),
+  handToDeckBottom: verb("Place at bottom", (n) => `Place ${n} at the bottom of your deck?`),
+  revealFromHand: verb("Reveal", (n) => `Reveal ${n}?`),
+  trashToDeckBottom: verb("Place at bottom", (n) => `Place ${n} at the bottom of your deck?`),
+  trashToHand: verb("Add to hand", (n) => `Add ${n} to your hand?`),
+  characterToLife: verb("Add to Life", (n) => `Add ${n} to your Life?`),
+  lifeToDeckTop: verb("Put on top", (n) => `Put ${n} on top of your deck?`),
 };
 
 const SEARCH_VERBS: Record<string, Verb> = {
