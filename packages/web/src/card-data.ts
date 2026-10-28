@@ -26,6 +26,13 @@ export interface OfficialDeck {
   source?: string;
 }
 
+/** How to play a Leader: a short tip in our own words, and the official page it's based on. */
+export interface LeaderTip {
+  tip: string;
+  source: string;
+  sourceName: string;
+}
+
 export interface PlayableDeck extends DeckList {
   id: string;
   name: string;
@@ -42,6 +49,8 @@ export interface CardData {
   format: DeckFormat;
   /** False until the card data has the official Standard rules; only the base rules apply. */
   formatLoaded: boolean;
+  /** A "how to play" tip for each Leader, by card number, when the card data has them. */
+  tips: Record<string, LeaderTip>;
   imageUrl: (card: Card | undefined) => string | undefined;
 }
 
@@ -49,12 +58,13 @@ export interface CardData {
 export const CARD_DATA_URL = "./card-data/";
 
 export async function loadCardData(base = CARD_DATA_URL): Promise<CardData> {
-  const [cards, decks, formats] = await Promise.all([
+  const [cards, decks, formats, tips] = await Promise.all([
     fetchJson<Card[]>(`${base}cards.json`),
     fetchJson<OfficialDeck[]>(`${base}decks.json`).catch(() => []),
     fetchJson<DeckFormat[]>(`${base}formats.json`).catch(() => []),
+    fetchJson<Record<string, LeaderTip>>(`${base}tips.json`).catch(() => ({})),
   ]);
-  return buildCardData(cards, decks, base, formats);
+  return buildCardData(cards, decks, base, formats, tips);
 }
 
 export function buildCardData(
@@ -62,6 +72,7 @@ export function buildCardData(
   officialDecks: OfficialDeck[],
   base: string,
   formats: DeckFormat[] = [],
+  tips: Record<string, LeaderTip> = {},
 ): CardData {
   const standard = formats.find((f) => f.id === "standard");
   const catalog: Record<string, Card> = Object.fromEntries(cards.map((c) => [c.id, c]));
@@ -86,6 +97,7 @@ export function buildCardData(
     decks,
     format: standard ?? { ...BASE_RULES, id: "standard", name: "Standard" },
     formatLoaded: standard !== undefined,
+    tips,
     // Paths are relative to the card data; a full or root-relative URL (an image hosted
     // elsewhere) is used as it is.
     imageUrl: (card) =>

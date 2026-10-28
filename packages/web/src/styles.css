@@ -3297,3 +3297,247 @@ button.pile {
 .modal .coach {
   text-align: left;
 }
+
+/* Picking a deck: a dropdown of Leader cards, with the Leader's ability and a tip. */
+.leader-pick {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px 8px 8px;
+  border-radius: 10px;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.leader-pick-arrow {
+  margin-left: auto;
+  font-size: 1.1rem;
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+.leader-pick.open .leader-pick-arrow {
+  transform: rotate(180deg);
+}
+.leader-thumb {
+  flex: 0 0 auto;
+  width: 54px;
+  aspect-ratio: 600 / 838;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(40, 25, 10, 0.25);
+  box-shadow: 0 1px 4px rgba(40, 20, 5, 0.45);
+}
+.leader-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.leader-thumb.mystery {
+  display: grid;
+  place-items: center;
+  font:
+    700 1.6rem "Pirata One",
+    Georgia,
+    serif;
+  color: #fff4dc;
+  background: linear-gradient(160deg, #8c2a14, #3b2614);
+}
+.leader-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.leader-row-text strong {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+.leader-row-text span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.leader-colors {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.color-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+.color-dot:last-of-type {
+  margin-right: 4px;
+}
+
+.leader-pop {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow:
+    var(--sheet-shadow),
+    0 18px 40px rgba(0, 0, 0, 0.55);
+  background: var(--paper-grain), var(--paper-stains), var(--parchment);
+}
+.leader-pop-list {
+  flex: 0 0 330px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border-right: 1px solid var(--line);
+}
+.leader-search {
+  margin: 10px;
+  padding: 0.55em 0.7em;
+  border-radius: 8px;
+  font: inherit;
+  color: var(--text);
+  background: linear-gradient(180deg, #fbf3df, #ecdcb6);
+  border: 1px solid rgba(74, 45, 18, 0.45);
+}
+.leader-options {
+  position: relative;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 6px 10px;
+}
+.leader-group {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 8px;
+  font:
+    400 1.05rem "Pirata One",
+    Georgia,
+    serif;
+  color: var(--gold);
+  background: #efdcb2;
+  border-bottom: 1px solid var(--line);
+}
+.leader-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.leader-option .leader-thumb {
+  width: 46px;
+}
+.leader-option.active {
+  background: rgba(156, 52, 24, 0.14);
+}
+.leader-option.chosen {
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+.leader-none {
+  padding: 12px 8px;
+}
+.leader-pop-preview {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.leader-pop-card {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.leader-pop-card img {
+  width: 170px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(40, 20, 5, 0.5);
+}
+.leader-pop-card div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.leader-pop-card strong {
+  font:
+    400 1.6rem/1.1 "Pirata One",
+    Georgia,
+    serif;
+  color: var(--gold);
+}
+.leader-pop-card span {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.leader-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.leader-info h3 {
+  margin: 0 0 4px;
+  font:
+    400 1.1rem "Pirata One",
+    Georgia,
+    serif;
+  color: var(--gold);
+}
+.leader-info p {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+.leader-ability,
+.leader-tip {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 250, 235, 0.55);
+}
+.leader-tip {
+  border-left: 4px solid var(--good);
+}
+.leader-info .kw {
+  font-weight: 700;
+  color: var(--gold);
+}
+.leader-tip-source,
+.leader-info .leader-tip-source {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.leader-tip-source a {
+  color: inherit;
+}
+.opponent-ability summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.opponent-ability[open] summary {
+  margin-bottom: 8px;
+}
+.copy-pick {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .leader-pop-list {
+    flex: 1 1 auto;
+    border-right: none;
+  }
+  .leader-pop-preview {
+    display: none;
+  }
+}
