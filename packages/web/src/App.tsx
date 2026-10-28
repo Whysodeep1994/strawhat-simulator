@@ -389,6 +389,7 @@ export function App() {
         onChange={(next) => link.current?.play(next)}
         onTimeout={(player) => link.current?.timeOut(player)}
         onExit={leaveDuel}
+        chat={{ lines: duel.save.chat ?? [], onSay: (text) => link.current?.say(text) }}
         notice={
           playing.partnerHere || playing.game.state.winner !== null
             ? undefined

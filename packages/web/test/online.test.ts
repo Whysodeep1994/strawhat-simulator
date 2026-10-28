@@ -4,6 +4,8 @@ import { CLOCK_MS, timeLeft } from "../src/clock.js";
 import { DEMO_CATALOG, DEMO_DECKS } from "./fixtures/demo-cards.js";
 import { humanAct, type LocalGame } from "../src/local-game.js";
 import {
+  CHAT_LENGTH,
+  cleanChat,
   cleanGameCode,
   DuelLink,
   newGameCode,
@@ -389,5 +391,55 @@ describe("playmats and card backs online", () => {
     expect(safeLook("javascript:alert(1)")).toBe(false);
     expect(safeLook("https://example.com/a.png")).toBe(false);
     expect(safeLook(42)).toBe(false);
+  });
+});
+
+describe("chat online", () => {
+  it("delivers each line once, in order, while the game goes on", () => {
+    const { hub, host, guest } = start(12);
+    host.link.say("Ahoy!");
+    hub.flush();
+    guest.link.say("  hello\nthere  ");
+    hub.flush();
+    host.link.say("Good luck");
+    for (let i = 0; i < 20; i++) step(hub, [host, guest]);
+    hub.flush();
+    expect(host.save.chat).toEqual([
+      { mine: true, text: "Ahoy!" },
+      { mine: false, text: "hello there" },
+      { mine: true, text: "Good luck" },
+    ]);
+    expect(guest.save.chat?.map((l) => [l.mine, l.text])).toEqual([
+      [false, "Ahoy!"],
+      [true, "hello there"],
+      [false, "Good luck"],
+    ]);
+  });
+
+  it("catches up on many lines in small notes, and after a reload", () => {
+    const { hub, host, guest } = start(13);
+    guest.room.deaf = true;
+    for (let i = 0; i < 60; i++) host.link.say(`${i} ${"x".repeat(250)}`);
+    guest.room.deaf = false;
+    hub.queued.add(guest.room);
+    hub.flush();
+    expect(guest.save.chat?.length).toBe(60);
+    expect(guest.save.chat?.[59]?.text).toBe(`59 ${"x".repeat(CHAT_LENGTH - 3)}`);
+    expect(hub.biggest).toBeLessThan(4096);
+    const saved = guest.save;
+    void guest.link.close();
+    hub.flush();
+    const back = join(hub, saved);
+    host.link.say("still there?");
+    hub.flush();
+    expect(back.save.chat?.length).toBe(61);
+    expect(back.save.chat?.at(-1)?.text).toBe("still there?");
+  });
+
+  it("keeps lines to plain, short text", () => {
+    expect(cleanChat("  hi\u0000‮ there\n")).toBe("hi ‮ there");
+    expect(cleanChat("   ")).toBeNull();
+    expect(cleanChat(42)).toBeNull();
+    expect([...(cleanChat("é".repeat(500)) ?? "")].length).toBe(CHAT_LENGTH);
   });
 });

@@ -1664,6 +1664,62 @@ button.pile {
   height: 0;
 }
 
+/* Chat with a friend online. */
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  flex: none;
+}
+.chat-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0 2px;
+  height: 96px;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.chat-lines li + li {
+  margin-top: 3px;
+}
+.chat-who {
+  font-weight: 700;
+}
+.chat-lines li.mine .chat-who {
+  color: #ffe7a3;
+}
+.chat-lines li.theirs .chat-who {
+  color: #ffb3bb;
+}
+.chat-empty {
+  color: var(--muted);
+  font-style: italic;
+}
+.chat-send {
+  display: flex;
+  gap: 6px;
+}
+.chat-send input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.4em 0.6em;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--text);
+}
+.chat-send button {
+  padding: 0.4em 0.8em;
+}
+
 /* Pop-ups */
 
 .menu-pop {
@@ -1906,6 +1962,10 @@ button.pile {
     width: var(--dw);
     height: calc(var(--dw) * 1.397);
     flex: none;
+  }
+  /* Online the chat takes room in the side panel too, so the card shrinks to keep it whole. */
+  .side:has(.chat) .detail .card.large {
+    --dw: clamp(120px, calc((100vh - 600px) / 1.397), 280px);
   }
   :root {
     --cw: clamp(36px, min(calc((100vh - 128px) / 10.6), calc((100vw - 380px) / 9.4)), 96px);
