@@ -20,7 +20,7 @@ import type { Backs, Mats } from "./App.js";
 import { officialText, type Card, type CardData } from "./card-data.js";
 import { CardView, DonCard, type Glow } from "./CardView.js";
 import { formatClock, running, timeLeft } from "./clock.js";
-import { cardText } from "./describe.js";
+import { cardText, timingTag } from "./describe.js";
 import { botStep, botToAct, humanAct, outOfTime, type LocalGame } from "./local-game.js";
 import { MIN_TURNS, qualifies, TIER_POINTS, trophyById } from "./trophies.js";
 import { Medal } from "./TrophyToasts.js";
@@ -82,7 +82,22 @@ const CHOOSE_TEXT: Record<string, string> = {
   playFromHand: "Choose a card to play",
   playFromTrash: "Choose a card to play from your trash",
   lookAtOpponentDeck: "The top card of your opponent's deck",
+  deckBottom: "The cards from the top of your deck: which go to the bottom?",
+  deckTopOrder: "Put these back on top of your deck",
+  lifeOrder: "Put your Life cards back in order",
+  handToDeckTop: "Choose cards from your hand to put on top of your deck",
+  handToDeckBottom: "Choose cards from your hand to put at the bottom of your deck",
+  revealFromHand: "Choose cards to reveal from your hand",
+  returnGivenDon: "Choose whose DON!! goes back",
+  trashToDeckBottom: "Choose cards from your trash to put at the bottom of your deck",
+  trashToHand: "Choose a card to add from your trash to your hand",
+  characterToLife: "Choose a Character to add to your Life",
+  lifeToDeckTop: "Choose a Life card to put on top of your deck",
+  arrangeLife: "Whose Life card do you want to look at?",
 };
+
+/** Choices where every card is picked and only the order matters: the first one tapped goes on top. */
+const ORDER_REASONS = new Set(["deckTopOrder", "lifeOrder"]);
 
 type DefOf = (card: CardInstance | null | undefined) => Card | undefined;
 
@@ -132,6 +147,30 @@ export function Board({
   const yourTurn = view.turnPlayer === me;
   const theyAreThinking = prompt.kind !== "gameOver" && prompt.player !== me;
   const safe = view.battle ? powerNeeded(view, view.battle) === 0 : false;
+
+  // The card whose effect is asking you to choose, and which of its effects is running.
+  const running = useMemo(() => {
+    if (!myPrompt || !("source" in myPrompt)) return null;
+    const frame = [...game.state.stack]
+      .reverse()
+      .find((f) => f.kind === "effect" && f.source === myPrompt.source);
+    const card =
+      frame?.kind === "effect"
+        ? data.catalog[frame.cardId]
+        : def(findInView(view, myPrompt.source));
+    if (!card) return null;
+    const effect =
+      frame?.kind === "effect" && !frame.rule ? card.effects?.[frame.effect] : undefined;
+    return { card, tag: effect ? timingTag(effect.timing) : "" };
+  }, [myPrompt, game.state.stack, view]);
+  const effectBanner = running && (
+    <EffectBanner
+      card={running.card}
+      image={data.imageUrl(running.card)}
+      tag={running.tag}
+      onHover={() => setDetail(running.card)}
+    />
+  );
 
   // A new decision resets anything half-done.
   useEffect(() => {
@@ -548,15 +587,19 @@ export function Board({
       )}
 
       {myPrompt?.kind === "choose" && (
-        <Modal title={CHOOSE_TEXT[myPrompt.reason] ?? "Choose cards"}>
+        <Modal title={CHOOSE_TEXT[myPrompt.reason] ?? "Choose cards"} banner={effectBanner}>
           <p>
             {myPrompt.max === 0
               ? myPrompt.reason === "searchDeck"
                 ? "None of these can be chosen. Look, then continue."
                 : "Look, then continue."
-              : myPrompt.min === myPrompt.max
-                ? `Choose ${myPrompt.max}.`
-                : `Choose ${myPrompt.min === 0 ? "up to" : `${myPrompt.min} to`} ${myPrompt.max}.`}{" "}
+              : ORDER_REASONS.has(myPrompt.reason)
+                ? "Tap them in order: the first one you tap goes on top."
+                : myPrompt.reason === "deckBottom"
+                  ? "Tap the ones to put at the bottom of your deck, or none. The rest go back on top."
+                  : myPrompt.min === myPrompt.max
+                    ? `Choose ${myPrompt.max}.`
+                    : `Choose ${myPrompt.min === 0 ? "up to" : `${myPrompt.min} to`} ${myPrompt.max}.`}{" "}
             From {nameOf(def, view, myPrompt.source)}.
             {myPrompt.max > 0 &&
               (myPrompt.revealed ?? []).some((uid) => !myPrompt.options.includes(uid)) &&
@@ -644,7 +687,9 @@ export function Board({
               {myPrompt.max === 0
                 ? "Continue"
                 : picked.length === 0
-                  ? "Choose none"
+                  ? myPrompt.reason === "deckBottom"
+                    ? "Keep them all on top"
+                    : "Choose none"
                   : `Yes, ${chooseVerb(myPrompt.reason, data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""]).button.toLowerCase()}`}
             </button>
             {picked.length > 0 && myPrompt.max > 0 && (
@@ -660,7 +705,13 @@ export function Board({
         >
           <div className="card-row">
             {view.promptCards.map((card) => (
-              <CardView key={card.uid} def={def(card)} image={art(card)} size="large" />
+              <CardView
+                key={card.uid}
+                def={def(card)}
+                image={art(card)}
+                size="large"
+                onHover={() => setDetail(def(card) ?? null)}
+              />
             ))}
           </div>
           <ul className="effect-text">
@@ -682,10 +733,16 @@ export function Board({
       )}
 
       {myPrompt?.kind === "chooseOne" && (
-        <Modal title="Choose one">
+        <Modal title="Choose one" banner={effectBanner}>
           <div className="card-row">
             {view.promptCards.map((card) => (
-              <CardView key={card.uid} def={def(card)} image={art(card)} size="large" />
+              <CardView
+                key={card.uid}
+                def={def(card)}
+                image={art(card)}
+                size="large"
+                onHover={() => setDetail(def(card) ?? null)}
+              />
             ))}
           </div>
           <p>From {nameOf(def, view, myPrompt.source)}.</p>
@@ -1381,6 +1438,48 @@ function Detail({ card, image }: { card: Card | null; image: string | undefined 
   );
 }
 
+/**
+ * The card whose effect is running, across the top of a pop-up, so you can read what you're
+ * choosing for. The effect that is running right now is lit up.
+ */
+function EffectBanner({
+  card,
+  image,
+  tag,
+  onHover,
+}: {
+  card: Card;
+  image: string | undefined;
+  /** The running effect's tag, e.g. "[On Play]"; empty when it can't be told apart. */
+  tag: string;
+  onHover: () => void;
+}) {
+  // Official text sometimes runs two effects together ("...power.[On Play] ..."); split them.
+  const lines = textOf(card).flatMap((line) => line.split(/(?<=[.)])(?=\[)/));
+  const lit = tag ? lines.findIndex((line) => line.includes(tag)) : -1;
+  return (
+    <div className="effect-banner" aria-label={`Effect of ${card.name}`}>
+      <CardView def={card} image={image} size="small" showName={false} onHover={onHover} />
+      <div className="effect-banner-text">
+        <p className="effect-source">
+          <strong>{card.name}</strong> <span className="card-id">{card.id}</span>
+        </p>
+        {lines.length ? (
+          <ul className="effect-text">
+            {lines.map((line, i) => (
+              <li key={i} className={i === lit ? "running" : undefined}>
+                {line}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="meta">No effect text.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const CATEGORY_NAMES: Record<Card["category"], string> = {
   leader: "Leader",
   character: "Character",
@@ -1421,16 +1520,20 @@ function Log({ game, open, onToggle }: { game: LocalGame; open: boolean; onToggl
 
 function Modal({
   title,
+  banner,
   children,
   onClose,
 }: {
   title: string;
+  /** Shown across the top, above the title: the effect the pop-up is for. */
+  banner?: ReactNode;
   children: ReactNode;
   onClose?: () => void;
 }) {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()}>
+        {banner}
         <h2>{title}</h2>
         {children}
         {onClose && (
@@ -1502,6 +1605,16 @@ const CHOOSE_VERBS: Record<string, Verb> = {
   playFromHand: verb("Play", (n) => `Play ${n}?`),
   playFromTrash: verb("Play", (n) => `Play ${n} from your trash?`),
   lifeToHand: verb("Add to hand", (n) => `Add ${n} to your hand?`),
+  deckBottom: verb("Place at bottom", (n) => `Place ${n} at the bottom of your deck?`),
+  deckTopOrder: verb("Use this order", (n) => `Put ${n} on top of your deck, in that order?`),
+  lifeOrder: verb("Use this order", (n) => `Put ${n} back in your Life, top first?`),
+  handToDeckTop: verb("Put on top", (n) => `Put ${n} on top of your deck?`),
+  handToDeckBottom: verb("Place at bottom", (n) => `Place ${n} at the bottom of your deck?`),
+  revealFromHand: verb("Reveal", (n) => `Reveal ${n}?`),
+  trashToDeckBottom: verb("Place at bottom", (n) => `Place ${n} at the bottom of your deck?`),
+  trashToHand: verb("Add to hand", (n) => `Add ${n} to your hand?`),
+  characterToLife: verb("Add to Life", (n) => `Add ${n} to your Life?`),
+  lifeToDeckTop: verb("Put on top", (n) => `Put ${n} on top of your deck?`),
 };
 
 const SEARCH_VERBS: Record<string, Verb> = {
