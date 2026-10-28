@@ -26,6 +26,7 @@ import type { Suggestion } from "./coach.js";
 import { cardText, timingTag } from "./describe.js";
 import { CoachTips, ReportView, TutorBox } from "./Develop.js";
 import { botStep, botToAct, humanAct, outOfTime, type LocalGame } from "./local-game.js";
+import { CHAT_LENGTH, type ChatLine } from "./online.js";
 import { MIN_TURNS, qualifies, TIER_POINTS, trophyById } from "./trophies.js";
 import { Medal } from "./TrophyToasts.js";
 import { guide, LESSONS, newRules, type RuleNote } from "./tutor.js";
@@ -48,6 +49,8 @@ interface Props {
   notice?: string | undefined;
   /** Music and sound settings, opened from the Sound button. */
   soundPanel?: ReactNode;
+  /** The chat with a friend online; none against the computer. */
+  chat?: { lines: ChatLine[]; onSay: (text: string) => void } | undefined;
 }
 
 type Mode =
@@ -118,6 +121,7 @@ export function Board({
   onExit,
   notice,
   soundPanel,
+  chat,
 }: Props) {
   const me = game.human;
   const them = opponentOf(me);
@@ -619,6 +623,7 @@ export function Board({
         {wide && statusBar}
         {wide && coachPanel}
         <Detail card={detail} image={data.imageUrl(detail ?? undefined)} />
+        {chat && <Chat lines={chat.lines} onSay={chat.onSay} />}
         <Log game={game} open={showLog} onToggle={toggleLog} />
       </aside>
 
@@ -1683,6 +1688,55 @@ function Log({ game, open, onToggle }: { game: LocalGame; open: boolean; onToggl
         <li ref={end} className="end" />
       </ol>
     </>
+  );
+}
+
+/** A simple chat with the friend you're playing online. */
+function Chat({ lines, onSay }: { lines: ChatLine[]; onSay: (text: string) => void }) {
+  const [typed, setTyped] = useState("");
+  const list = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    const el = list.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [lines]);
+  const send = () => {
+    if (!typed.trim()) return;
+    onSay(typed);
+    setTyped("");
+  };
+  return (
+    <section className="chat" aria-label="Chat with your friend">
+      <ol className="chat-lines" ref={list} aria-live="polite">
+        {lines.length === 0 && <li className="chat-empty">Say hello to your friend!</li>}
+        {lines.slice(-100).map((line, i) => (
+          <li
+            key={lines.length - Math.min(lines.length, 100) + i}
+            className={line.mine ? "mine" : "theirs"}
+          >
+            <span className="chat-who">{line.mine ? "You" : "Friend"}:</span> {line.text}
+          </li>
+        ))}
+      </ol>
+      <form
+        className="chat-send"
+        onSubmit={(e) => {
+          e.preventDefault();
+          send();
+        }}
+      >
+        <input
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          maxLength={CHAT_LENGTH}
+          placeholder="Type a message…"
+          aria-label="Message"
+          autoComplete="off"
+        />
+        <button type="submit" disabled={!typed.trim()}>
+          Send
+        </button>
+      </form>
+    </section>
   );
 }
 

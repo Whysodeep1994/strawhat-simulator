@@ -82,6 +82,7 @@
 .status,
 .detail,
 .log,
+.chat,
 .coach {
   background: var(--paper-grain), var(--paper-stains), var(--map-grid), var(--parchment);
   backdrop-filter: none;
@@ -423,6 +424,16 @@ button.mat-preset,
 }
 .log li.theirs {
   color: #9b2a1f;
+}
+.chat-lines li.mine .chat-who {
+  color: #7a4a0c;
+}
+.chat-lines li.theirs .chat-who {
+  color: #9b2a1f;
+}
+.chat-send input {
+  background: #fbf3df;
+  border-color: rgba(74, 45, 18, 0.45);
 }
 .detail .card-id {
   color: #9c3418;

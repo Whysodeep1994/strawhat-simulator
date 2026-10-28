@@ -35,6 +35,9 @@ import { findRelay } from "./relay.js";
  * too big for one note, so it goes a piece at a time: the note names the picture and how many
  * pieces it has, carries the next piece the partner is missing, and the partner's note says how
  * many pieces it has so far. Moves always go first; a piece rides along only when there's room.
+ *
+ * Chat travels the same way as moves: the note carries the lines the partner hasn't got yet, and
+ * the partner's note says how many of them it has. Lines come after moves and before pictures.
  */
 
 /** The part of claude.ai's named room this file uses (see the `room` capability). */
@@ -77,6 +80,18 @@ interface Piece {
   d: string;
 }
 
+/** One line of chat, kept in the save so a reload still shows the conversation. */
+export interface ChatLine {
+  mine: boolean;
+  text: string;
+}
+
+/** Your lines `from`, `from + 1`, … of the chat, for a partner who hasn't got them. */
+interface Said {
+  from: number;
+  lines: string[];
+}
+
 /** A deck as it travels: the Leader and how many of each card. */
 export interface SharedDeck {
   l: string;
@@ -109,6 +124,10 @@ interface Note {
   pic?: Piece;
   /** How many pieces of each of the partner's pictures this player has. */
   got?: Record<string, number>;
+  /** Chat lines the partner hasn't got yet. */
+  said?: Said;
+  /** How many of the partner's chat lines this player has. */
+  heard?: number;
 }
 
 /** Everything needed to rejoin a game after the page reloads. */
@@ -126,6 +145,11 @@ export interface DuelSave {
   flagged?: PlayerId;
   /** The partner's playmat and card backs, kept so a reload needn't fetch their pictures again. */
   theirs?: TheirLooks;
+  /** The chat between the two players, oldest first. */
+  chat?: ChatLine[];
+  /** How many chat lines each player has said this game; the chat itself may have dropped old ones. */
+  said?: number;
+  heard?: number;
 }
 
 export type DuelStatus =
@@ -140,6 +164,10 @@ const NOTE_LIMIT = 3800;
 const ROOM_PREFIX = "duel-";
 /** Characters of a picture per piece. */
 export const PIECE = 2000;
+/** The longest chat line, in characters. */
+export const CHAT_LENGTH = 200;
+/** How many lines a game's chat keeps; older ones scroll away. */
+const CHAT_KEEP = 300;
 export const DEFAULT_LOOKS: Looks = { mat: null, back: "preset:classic" };
 
 const PRESET_LOOK = /^preset:[a-z0-9-]{1,40}$/;
@@ -163,6 +191,17 @@ function lookRef(look: string | null): LookRef {
   if (look === null || !safeLook(look)) return null;
   if (PRESET_LOOK.test(look)) return look;
   return `pic:${pictureId(look)}:${Math.ceil(look.length / PIECE)}`;
+}
+
+/** Tidies a chat line: one line of plain text, at most CHAT_LENGTH characters, or null if empty. */
+export function cleanChat(text: unknown): string | null {
+  if (typeof text !== "string") return null;
+  const line = text
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return line ? [...line].slice(0, CHAT_LENGTH).join("") : null;
 }
 
 /** A short game code that is easy to read out: no 0/O or 1/I/L. */
@@ -292,6 +331,19 @@ export class DuelLink {
     this.report();
   }
 
+  /** Sends a line of chat to your friend. */
+  say(text: string): void {
+    const line = cleanChat(text);
+    if (!line || this.error) return;
+    this.save = {
+      ...this.save,
+      chat: keep([...(this.save.chat ?? []), { mine: true, text: line }]),
+      said: (this.save.said ?? 0) + 1,
+    };
+    this.publish();
+    this.report();
+  }
+
   async close(): Promise<void> {
     this.stop();
     await this.room.leave().catch(() => undefined);
@@ -322,6 +374,7 @@ export class DuelLink {
     this.partnerHere = !!partner;
 
     if (partner) this.receiveLooks(partner);
+    if (partner) this.hear(partner);
     if (partner && !this.game && !this.error) this.begin(partner);
     if (partner && this.game) this.catchUp(partner);
     this.publish();
@@ -389,6 +442,45 @@ export class DuelLink {
       this.game = game;
       this.save = { ...this.save, actions: game.actions, clock: game.clock };
     }
+  }
+
+  /** Takes in the partner's chat lines that come next. */
+  private hear(partner: Note): void {
+    const said = partner.said;
+    if (!said || typeof said !== "object" || typeof said.from !== "number") return;
+    if (!Array.isArray(said.lines)) return;
+    let count = this.save.heard ?? 0;
+    // Lines from before what the partner still keeps are gone; carry on from the first one sent.
+    if (said.from > count) count = said.from;
+    const heard: ChatLine[] = [];
+    for (let i = 0; i < said.lines.length; i++) {
+      if (said.from + i < count) continue;
+      // A line that isn't plain text still counts, so the two sides stay in step.
+      const text = cleanChat(said.lines[i]);
+      if (text) heard.push({ mine: false, text });
+      count++;
+    }
+    if (count !== (this.save.heard ?? 0))
+      this.save = { ...this.save, chat: keep([...(this.save.chat ?? []), ...heard]), heard: count };
+  }
+
+  /** Your chat lines the partner hasn't got, as many as fit in `room` characters. */
+  private toSay(partner: Note | null | undefined, room: number): Said | null {
+    if (!partner) return null;
+    const said = this.save.said ?? 0;
+    const mine = (this.save.chat ?? []).filter((l) => l.mine).map((l) => l.text);
+    // Lines the chat no longer keeps are skipped.
+    const first = said - mine.length;
+    const from = Math.max(typeof partner.heard === "number" ? partner.heard : 0, first);
+    if (from >= said) return null;
+    const lines: string[] = [];
+    let size = 40;
+    for (const text of mine.slice(from - first)) {
+      size += JSON.stringify(text).length + 1;
+      if (size > room) break;
+      lines.push(text);
+    }
+    return lines.length ? { from, lines } : null;
   }
 
   /** Takes in the partner's playmat and card backs, and any piece of a picture they sent. */
@@ -497,8 +589,13 @@ export class DuelLink {
       flagged: this.save.flagged ?? null,
       look: { mat: lookRef(this.looks.mat), back: lookRef(this.looks.back) },
       got: this.gotPieces(partner),
+      heard: this.save.heard ?? 0,
+      said: null,
       pic: null,
     };
+    // Chat after the moves, then a piece of a picture, each only when it fits.
+    const said = this.toSay(partner, NOTE_LIMIT - JSON.stringify(patch).length);
+    if (said) patch.said = said;
     // A piece of a picture only when it fits beside the moves.
     const piece = this.nextPiece(partner);
     if (piece && JSON.stringify(patch).length + piece.d.length + 60 <= NOTE_LIMIT)
@@ -522,6 +619,11 @@ export class DuelLink {
           : { kind: "waiting" };
     this.onStatus(status, this.save);
   }
+}
+
+/** The last CHAT_KEEP lines of a chat. */
+function keep(chat: ChatLine[]): ChatLine[] {
+  return chat.length > CHAT_KEEP ? chat.slice(-CHAT_KEEP) : chat;
 }
 
 /** Re-applies a saved move. Either player's moves, since both are in the saved list. */
