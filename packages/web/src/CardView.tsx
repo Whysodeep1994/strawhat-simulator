@@ -2,7 +2,15 @@ import type { CardDefinition } from "@strawhat/engine";
 import type { KeyboardEvent } from "react";
 import { KEYWORD_NAMES } from "./describe.js";
 
-export type Glow = "playable" | "target" | "selected" | "attacker" | "defender" | null;
+export type Glow =
+  | "playable"
+  | "target"
+  | "selected"
+  | "attacker"
+  | "defender"
+  /** The New Player coach's suggested card. */
+  | "suggested"
+  | null;
 
 interface Props {
   def?: CardDefinition | undefined;

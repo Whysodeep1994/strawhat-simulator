@@ -2971,3 +2971,196 @@ button.pile {
   font-weight: 700;
   line-height: 1.3;
 }
+
+/* Player Development: New Player lessons, the coach's box, Pro Drills tips and the report. */
+
+.develop-tabs {
+  max-width: 420px;
+  margin: 0 auto 14px;
+}
+.lesson-decks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.lesson-deck {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.lesson-deck.chosen {
+  outline: 3px solid var(--gold);
+}
+.lesson-deck.static {
+  cursor: default;
+}
+.lesson-deck-art {
+  display: block;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 6px;
+}
+.lesson-deck-art img {
+  width: 100%;
+  height: 140%;
+  object-fit: cover;
+  object-position: top;
+}
+.lesson-deck-text {
+  display: grid;
+  gap: 3px;
+  font-size: 0.88rem;
+}
+.lesson-deck-text strong {
+  font-size: 1.05rem;
+}
+.switch {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 10px 0;
+  cursor: pointer;
+}
+.switch input {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  flex: none;
+}
+.switch span {
+  display: grid;
+  gap: 2px;
+  font-size: 0.9rem;
+}
+.coach {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  width: 100%;
+  max-width: 560px;
+  overflow-y: auto;
+  max-height: 46vh;
+  flex: none;
+}
+.modal .coach {
+  max-height: none;
+  margin-bottom: 8px;
+}
+.coach p {
+  margin: 0;
+}
+.coach-why {
+  color: var(--muted);
+}
+.coach-note,
+.coach-suggest {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 8px;
+}
+.coach-note button,
+.coach-suggest button {
+  justify-self: start;
+}
+.coach-fold {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+.coach-tips {
+  margin: 0;
+  padding-left: 1.1em;
+  display: grid;
+  gap: 5px;
+}
+.coach-tips .tip-danger {
+  color: var(--danger);
+}
+.lesson p {
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+.glow-suggested {
+  box-shadow:
+    0 0 0 3px #4ade80,
+    0 0 20px rgba(74, 222, 128, 0.8);
+  animation: suggest-pulse 1.2s ease-in-out infinite;
+}
+@keyframes suggest-pulse {
+  50% {
+    box-shadow:
+      0 0 0 3px #4ade80,
+      0 0 32px rgba(74, 222, 128, 1);
+  }
+}
+.report-teaser {
+  font-weight: 600;
+}
+.report {
+  max-height: 62vh;
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+}
+.report-score {
+  margin: 0;
+}
+.report-list,
+.report-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+.report-list h3 {
+  margin: 4px 0;
+  font-size: 1rem;
+}
+.mistake {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--muted);
+}
+.mistake.major {
+  border-left-color: var(--danger);
+}
+.mistake p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+.mistake-tag {
+  justify-self: start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--muted);
+  color: #fff;
+}
+.mistake.major .mistake-tag {
+  background: var(--danger);
+}
+.report,
+.modal .coach {
+  text-align: left;
+}

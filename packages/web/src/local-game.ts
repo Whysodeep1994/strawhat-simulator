@@ -41,7 +41,16 @@ export interface LocalGame {
   clock: Clock;
   /** The player who ran out of time, if that's how the game ended. */
   timedOut?: PlayerId;
+  /** The game as it began, so Pro Drills can replay it move by move for its report. */
+  initial: GameState;
+  /** A Player Development game: the guided New Player game, or a Pro Drill. */
+  training?: Training;
+  /** Pro Drills: the game before each action, then as it is now, for the end-of-game report. */
+  states?: GameState[];
 }
+
+/** Player Development modes. Training games have no game clock, so there's time to learn. */
+export type Training = { mode: "newPlayer" } | { mode: "drills"; liveCoaching: boolean };
 
 export interface LogEntry {
   id: number;
@@ -56,6 +65,7 @@ export function newLocalGame(
   catalog: CardCatalog,
   decks: { human: DeckList; bot: DeckList },
   seed: number,
+  training?: Training,
 ): LocalGame {
   const state = createGame({
     catalog,
@@ -64,7 +74,11 @@ export function newLocalGame(
     // You win Rock-Paper-Scissors, so you choose who goes first (rule 5-2-1-4).
     chooser: HUMAN,
   });
-  return started(state, HUMAN, "computer");
+  const game = started(state, HUMAN, "computer");
+  if (!training) return game;
+  return training.mode === "drills"
+    ? { ...game, training, states: [state] }
+    : { ...game, training };
 }
 
 /**
@@ -84,6 +98,7 @@ export function newOnlineGame(
 function started(state: GameState, human: PlayerId, opponent: LocalGame["opponent"]): LocalGame {
   return {
     state,
+    initial: state,
     human,
     opponent,
     actions: [],
@@ -153,6 +168,7 @@ export function botStep(game: LocalGame): LocalGame {
  * screen, since their own page ends the game for them at zero and moves take a moment to travel.
  */
 export function outOfTime(game: LocalGame, now: number = Date.now()): PlayerId | null {
+  if (game.training) return null;
   const player = running(game.state);
   if (!player) return null;
   const grace = game.opponent === "friend" && player !== game.human ? FRIEND_GRACE_MS : 0;
@@ -191,6 +207,7 @@ function act(game: LocalGame, action: Action, now: number = Date.now()): LocalGa
     ...game,
     state: after,
     actions: [...game.actions, action],
+    ...(game.states && { states: [...game.states, after] }),
     log: [...game.log, ...entries].slice(-200),
     stats: trackAction(game.stats, game.human, before, action, after),
     clock: charge(game.clock, before, now),

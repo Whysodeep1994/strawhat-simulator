@@ -28,6 +28,15 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-28: Player Development, a new title menu mode with two tracks. New Player: seven short
+  lessons, then a guided game with a Luffy starter deck (ST-01, ST-18 or ST-21) against
+  Edward.Newgate's all-red ST-15. A coach explains each decision, suggests a move (glowing green,
+  with a Do it for me button) and why, and explains each rule the first time it happens. Pro
+  Drills: your own deck against any deck, with live coaching on (matchup and board tips before
+  each of your turns, advice when attacked) or off; either way the game ends with a report of each
+  error, its turn and why. All rule-based, in packages/web/src/coach\*.ts and tutor.ts, using only
+  what the player can see. Training games have no clock. Pro Drills keep each state as they go,
+  since replaying a 120-move game takes about 6 seconds.
 - 2026-10-28: A clearer, bigger game board (Master Duel style), from the owner's notes while
   playing a friend. Your hand is now a fanned tray along the bottom of the screen, partly hidden
   until you point at it; the card you point at lifts and grows, and the mouse wheel scrolls a long

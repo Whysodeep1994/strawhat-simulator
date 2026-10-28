@@ -3,8 +3,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BackPicker } from "./BackPicker.js";
 import { Board } from "./Board.js";
 import { backImage, loadBack, saveBack, type BackChoice } from "./card-backs.js";
-import { loadCardData, type CardData } from "./card-data.js";
+import { loadCardData, type CardData, type PlayableDeck } from "./card-data.js";
 import { DeckBuilder } from "./DeckBuilder.js";
+import { DevelopScreen, type TrainingSetup } from "./Develop.js";
 import { FriendLobby, FriendSetup } from "./Friend.js";
 import {
   deckTitle,
@@ -87,6 +88,8 @@ export function App() {
   const [gameTrophies, setGameTrophies] = useState<string[]>([]);
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const recorded = useRef(false);
+  /** The Player Development game being played, so Play again starts the same kind. */
+  const lastTraining = useRef<TrainingSetup | null>(null);
   /** Whether this page can play online: null until the room service answers. */
   const [online, setOnline] = useState<boolean | null>(null);
   /** The online game being set up or played. */
@@ -166,12 +169,30 @@ export function App() {
       opponentId === RANDOM
         ? (others[Math.floor(Math.random() * others.length)] ?? mine)
         : (decks.find((d) => d.id === opponentId) ?? mine);
+    lastTraining.current = null;
+    begin(mine, theirs);
+  };
+
+  const begin = (
+    mine: PlayableDeck,
+    theirs: PlayableDeck,
+    training?: TrainingSetup["training"],
+  ) => {
+    if (!data) return;
     const seed = Math.floor(Math.random() * 2 ** 31);
     leaveGame();
     recorded.current = false;
     setGameTrophies([]);
     setGameInfo({ mine: !!mine.mine, leader: mine.leader, opponentLeader: theirs.leader });
-    setGame(newLocalGame(data.catalog as CardCatalog, { human: mine, bot: theirs }, seed));
+    setGame(
+      newLocalGame(data.catalog as CardCatalog, { human: mine, bot: theirs }, seed, training),
+    );
+  };
+
+  /** Starts a Player Development game: the New Player lesson or a Pro Drill. */
+  const train = (setup: TrainingSetup) => {
+    lastTraining.current = setup;
+    begin(setup.mine, setup.theirs, setup.training);
   };
 
   useEffect(() => {
@@ -389,7 +410,7 @@ export function App() {
           trophies={gameTrophies}
           onChange={setGame}
           onTimeout={(player) => setGame((g) => g && timeOut(g, player))}
-          onRestart={start}
+          onRestart={() => (lastTraining.current ? train(lastTraining.current) : start())}
           onExit={() => {
             leaveGame();
             setGame(null);
@@ -519,6 +540,17 @@ export function App() {
                 }}
               />
             )}
+          </SubScreen>
+        ) : screen === "develop" ? (
+          <SubScreen title="Player Development" onBack={back}>
+            <DevelopScreen
+              data={data}
+              myDecks={myDecks}
+              deckId={deckId}
+              onDeck={setDeckId}
+              onBuild={() => setScreen("decks")}
+              onStart={train}
+            />
           </SubScreen>
         ) : screen === "play" ? (
           <SubScreen title="Play" onBack={back}>
