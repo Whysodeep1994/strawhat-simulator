@@ -7,7 +7,15 @@ import {
   type GameView,
   type PlayerId,
 } from "@strawhat/engine";
-import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import type { Backs, Mats } from "./App.js";
 import { officialText, type Card, type CardData } from "./card-data.js";
 import { CardView, DonCard, type Glow } from "./CardView.js";
@@ -51,6 +59,8 @@ interface Menu {
   uid: string;
   x: number;
   y: number;
+  /** A question the menu answers, such as "Attack Nami with Luffy?". */
+  title?: string;
   items: MenuItem[];
 }
 
@@ -104,12 +114,17 @@ export function Board({
   const [error, setError] = useState<string | null>(null);
   const [confirmConcede, setConfirmConcede] = useState(false);
   const [showSound, setShowSound] = useState(false);
+  const [banner, setBanner] = useState<number | null>(null);
 
   const def: DefOf = (card) => (card ? data.catalog[card.cardId] : undefined);
   const art = (card: CardInstance | null | undefined) => data.imageUrl(def(card));
   const prompt = view.prompt;
   const myPrompt = prompt.kind !== "gameOver" && prompt.player === me ? prompt : null;
   const pickedPower = picked.reduce((sum, uid) => sum + (view.powers[uid] ?? 0), 0);
+  const hand = view.players[me].hand ?? [];
+  const yourTurn = view.turnPlayer === me;
+  const theyAreThinking = prompt.kind !== "gameOver" && prompt.player !== me;
+  const safe = view.battle ? powerNeeded(view, view.battle) === 0 : false;
 
   // A new decision resets anything half-done.
   useEffect(() => {
@@ -132,6 +147,14 @@ export function Board({
     const timer = setTimeout(() => act({ type: "pass", player: me }), 1100);
     return () => clearTimeout(timer);
   }, [myPrompt?.kind, hasCounters, game.state]);
+
+  // A banner sweeps across the table when the turn changes, so you can't miss whose it is.
+  useEffect(() => {
+    if (view.phase === "setup" || view.winner !== null) return;
+    setBanner(view.turn);
+    const timer = setTimeout(() => setBanner(null), 1500);
+    return () => clearTimeout(timer);
+  }, [view.turn]);
 
   function act(action: Action) {
     try {
@@ -178,18 +201,24 @@ export function Board({
     const d = def(card);
     if (d) setDetail(d);
 
-    // Finishing an attack or a replacement takes priority over opening a menu.
+    // Finishing an attack or a replacement takes priority over opening a menu, and asks first.
+    const cancel = { label: "Cancel", run: () => setMode({ kind: "none" }) };
     if (mode.kind === "attack") {
-      if (attackTargets.has(uid))
-        act({ type: "attack", player: me, attacker: mode.attacker, target: uid });
-      else setMode({ kind: "none" });
-      return;
+      if (!attackTargets.has(uid)) return setMode({ kind: "none" });
+      const attacker = findInView(view, mode.attacker);
+      const action: Action = { type: "attack", player: me, attacker: mode.attacker, target: uid };
+      return showMenu(uid, event, [{ label: "Attack", run: () => act(action) }, cancel], {
+        title: `Attack ${d?.name ?? "this card"} (${view.powers[uid] ?? 0}) with ${
+          def(attacker)?.name ?? "your card"
+        } (${view.powers[mode.attacker] ?? 0})?`,
+      });
     }
     if (mode.kind === "replace") {
-      if (replaceTargets.has(uid))
-        act({ type: "playCard", player: me, card: mode.card, trash: uid });
-      else setMode({ kind: "none" });
-      return;
+      if (!replaceTargets.has(uid)) return setMode({ kind: "none" });
+      const action: Action = { type: "playCard", player: me, card: mode.card, trash: uid };
+      return showMenu(uid, event, [{ label: "Trash and play", run: () => act(action) }, cancel], {
+        title: `Trash ${d?.name ?? "this card"} to make room for ${nameOf(def, view, mode.card)}?`,
+      });
     }
 
     const items: MenuItem[] = [];
@@ -218,16 +247,28 @@ export function Board({
     const counterEvent = actions.find((a) => a.type === "counterEvent");
     if (counterEvent) items.push({ label: "Play Counter Event", run: () => act(counterEvent) });
 
+    showMenu(uid, event, items);
+  }
+
+  function showMenu(uid: string, event: MouseEvent, items: MenuItem[], extra?: { title: string }) {
     if (items.length === 0) {
       setMenu(null);
       return;
     }
-    // Open the menu just above the card, so it doesn't cover what you tapped.
-    const height = 44 * items.length + 12;
-    const x = Math.max(8, Math.min(event.clientX - 90, window.innerWidth - 200));
+    const height = 44 * items.length + 12 + (extra ? 60 : 0);
+    let x = Math.max(8, Math.min(event.clientX - 90, window.innerWidth - 200));
     const above = event.clientY - height - 16;
-    const y = above > 8 ? above : Math.min(event.clientY + 16, window.innerHeight - height - 8);
-    setMenu({ uid, x, y, items });
+    let y = above > 8 ? above : Math.min(event.clientY + 16, window.innerHeight - height - 8);
+    // A question about a card sits beside it, so the card and the attack arrow stay in view.
+    const card = extra && document.querySelector(`[data-uid="${CSS.escape(uid)}"] .card`);
+    if (card) {
+      const r = card.getBoundingClientRect();
+      const width = 290;
+      x =
+        r.right + 12 + width < window.innerWidth ? r.right + 12 : Math.max(8, r.left - 12 - width);
+      y = Math.max(8, Math.min(r.top, window.innerHeight - height - 8));
+    }
+    setMenu({ uid, x, y, items, ...extra });
   }
 
   function glowFor(uid: string): Glow {
@@ -263,10 +304,11 @@ export function Board({
           view={view}
           player={them}
           side="opponent"
+          turn={view.turnPlayer === them && view.phase !== "setup" && view.winner === null}
           image={mats.opponent}
           back={backs.opponent}
           renderCard={(card) => (
-            <Clickable key={card.uid} onClick={(e) => openMenu(card.uid, e)}>
+            <Clickable key={card.uid} uid={card.uid} onClick={(e) => openMenu(card.uid, e)}>
               {fieldCard(card, them)}
             </Clickable>
           )}
@@ -275,13 +317,20 @@ export function Board({
           onTrash={() => setTrashOf(them)}
           onDetail={setDetail}
         />
-        <div
-          className="opponent-hand"
-          aria-label={`Opponent's hand: ${view.players[them].handCount} cards`}
-        >
-          {Array.from({ length: view.players[them].handCount }, (_, i) => (
-            <CardView key={i} faceDown back={backs.opponent} size="small" />
-          ))}
+        <div className="opponent-info">
+          <div
+            className="opponent-hand"
+            aria-label={`Opponent's hand: ${view.players[them].handCount} cards`}
+          >
+            {Array.from({ length: view.players[them].handCount }, (_, i) => (
+              <CardView key={i} faceDown back={backs.opponent} size="small" />
+            ))}
+          </div>
+          {theyAreThinking && (
+            <Thinking className="pill">
+              {game.opponent === "friend" ? "Your friend is thinking" : "Opponent is thinking"}
+            </Thinking>
+          )}
         </div>
 
         <StatusBar
@@ -291,6 +340,18 @@ export function Board({
           mode={mode}
           friend={game.opponent === "friend"}
           onCancel={() => setMode({ kind: "none" })}
+          defense={
+            myPrompt?.kind === "counter" || myPrompt?.kind === "block" ? (
+              <Defense
+                view={view}
+                me={me}
+                def={def}
+                step={myPrompt.kind}
+                hasCounters={hasCounters}
+                onPass={() => act({ type: "pass", player: me })}
+              />
+            ) : null
+          }
         >
           <Clocks game={game} onTimeout={onTimeout} />
         </StatusBar>
@@ -304,10 +365,11 @@ export function Board({
           view={view}
           player={me}
           side="you"
+          turn={view.turnPlayer === me && view.phase !== "setup" && view.winner === null}
           image={mats.you}
           back={backs.you}
           renderCard={(card) => (
-            <Clickable key={card.uid} onClick={(e) => openMenu(card.uid, e)}>
+            <Clickable key={card.uid} uid={card.uid} onClick={(e) => openMenu(card.uid, e)}>
               {fieldCard(card, me)}
             </Clickable>
           )}
@@ -317,20 +379,59 @@ export function Board({
           onDetail={setDetail}
         />
 
-        <div className="hand" aria-label="Your hand">
-          {(view.players[me].hand ?? []).map((card) => (
-            <Clickable key={card.uid} onClick={(e) => openMenu(card.uid, e)}>
-              <CardView
-                def={def(card)}
-                image={art(card)}
-                glow={glowFor(card.uid)}
-                dim={!byCard.has(card.uid) && myPrompt?.kind === "counter"}
-                onHover={() => setDetail(def(card) ?? null)}
-              />
-            </Clickable>
-          ))}
-        </div>
+        <HandTray
+          raised={myPrompt?.kind === "counter" || hand.some((card) => card.uid === menu?.uid)}
+        >
+          {hand.map((card, i) => {
+            const counter = myPrompt?.kind === "counter" ? byCard.get(card.uid) : undefined;
+            return (
+              <Clickable
+                key={card.uid}
+                uid={card.uid}
+                style={fan(i, hand.length)}
+                onClick={(e) => openMenu(card.uid, e)}
+              >
+                <CardView
+                  def={def(card)}
+                  image={art(card)}
+                  glow={glowFor(card.uid)}
+                  dim={!byCard.has(card.uid) && myPrompt?.kind === "counter"}
+                  onHover={() => setDetail(def(card) ?? null)}
+                />
+                {counter && (
+                  <span className="counter-tag">
+                    {counter.some((a) => a.type === "counter")
+                      ? `+${def(card)?.counter ?? 0}`
+                      : "Event"}
+                  </span>
+                )}
+              </Clickable>
+            );
+          })}
+        </HandTray>
       </div>
+
+      {mode.kind === "attack" ? (
+        <AttackArrow from={mode.attacker} to={menu?.uid} targets={attackTargets} />
+      ) : view.battle ? (
+        <AttackArrow from={view.battle.attacker} to={view.battle.target} />
+      ) : null}
+
+      {myPrompt?.kind === "counter" || myPrompt?.kind === "block" ? (
+        <div className="danger-edge" aria-hidden="true" />
+      ) : null}
+
+      {banner !== null && (
+        <div key={banner} className={`turn-banner ${yourTurn ? "yours" : "theirs"}`} role="status">
+          <span>
+            {yourTurn
+              ? "Your turn"
+              : game.opponent === "friend"
+                ? "Friend's turn"
+                : "Opponent's turn"}
+          </span>
+        </div>
+      )}
 
       <aside className="side">
         <div className="side-actions">
@@ -346,7 +447,7 @@ export function Board({
           )}
           {myPrompt?.kind === "counter" && (
             <button className="primary" onClick={() => act({ type: "pass", player: me })}>
-              {hasCounters ? "Done countering" : "No counters…"}
+              {!hasCounters ? "No counters…" : safe ? "Done countering" : "Take the hit"}
             </button>
           )}
           {soundPanel && (
@@ -368,7 +469,9 @@ export function Board({
           style={{ left: menu.x, top: menu.y }}
           onClick={(e) => e.stopPropagation()}
           role="menu"
+          aria-label={menu.title}
         >
+          {menu.title && <p className="menu-title">{menu.title}</p>}
           {menu.items.map((item) => (
             <button
               key={item.label}
@@ -497,6 +600,22 @@ export function Board({
               );
             })}
           </div>
+          {myPrompt.max > 0 && (
+            <p className={`choose-question ${picked.length ? "" : "empty"}`} role="status">
+              {picked.length === 0
+                ? myPrompt.min === 0
+                  ? "Nothing selected. Tap a glowing card to select it, or choose none."
+                  : "Tap a glowing card to select it."
+                : chooseVerb(
+                    myPrompt.reason,
+                    data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""],
+                  ).ask(
+                    myPrompt.hidden
+                      ? `${picked.length} face-down card${picked.length > 1 ? "s" : ""}`
+                      : listNames(picked.map((uid) => nameOf(def, view, uid))),
+                  )}
+            </p>
+          )}
           <div className="row">
             <button
               className="primary"
@@ -511,8 +630,11 @@ export function Board({
                 ? "Continue"
                 : picked.length === 0
                   ? "Choose none"
-                  : `Confirm (${picked.length})`}
+                  : `Yes, ${chooseVerb(myPrompt.reason, data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""]).button.toLowerCase()}`}
             </button>
+            {picked.length > 0 && myPrompt.max > 0 && (
+              <button onClick={() => setPicked([])}>Clear selection</button>
+            )}
           </div>
         </Modal>
       )}
@@ -662,14 +784,21 @@ export function Board({
 
 function Clickable({
   children,
+  uid,
+  style,
   onClick,
 }: {
   children: ReactNode;
+  /** The card's id, so an attack arrow can find it on the screen. */
+  uid?: string;
+  style?: CSSProperties;
   onClick: (e: MouseEvent) => void;
 }) {
   return (
     <div
       className="slot-click"
+      data-uid={uid}
+      style={style}
       onClick={(e) => {
         e.stopPropagation();
         onClick(e);
@@ -692,6 +821,7 @@ function Mat({
   view,
   player,
   side,
+  turn,
   image,
   back,
   renderCard,
@@ -703,6 +833,8 @@ function Mat({
   view: GameView;
   player: PlayerId;
   side: MatSide;
+  /** Whether it's this player's turn: their mat lights up. */
+  turn: boolean;
   image: string | null;
   back: string | null;
   renderCard: (card: CardInstance) => ReactNode;
@@ -716,10 +848,16 @@ function Mat({
   const owner = side === "you" ? "Your" : "Opponent's";
   return (
     <section
-      className={`mat ${side} ${image ? "custom" : ""}`}
+      className={`mat ${side} ${image ? "custom" : ""} ${turn ? "turn" : ""}`}
       style={image ? { ["--mat-image" as string]: `url("${image}")` } : undefined}
       aria-label={side === "you" ? "Your side" : "Opponent's side"}
     >
+      {turn && (
+        <div className="turn-tag" aria-hidden="true">
+          <strong>{side === "you" ? "Your turn" : "Their turn"}</strong>
+          <span>{phaseName(view.phase)}</span>
+        </div>
+      )}
       <Zone area="chars" label="Character Area">
         <div className="characters">
           {p.characters.map(renderCard)}
@@ -807,6 +945,7 @@ function StatusBar({
   mode,
   friend,
   onCancel,
+  defense,
   children,
 }: {
   view: GameView;
@@ -815,6 +954,8 @@ function StatusBar({
   mode: Mode;
   friend: boolean;
   onCancel: () => void;
+  /** Takes the message's place while you're being attacked. */
+  defense?: ReactNode;
   children?: ReactNode;
 }) {
   const yourTurn = view.turnPlayer === me;
@@ -825,42 +966,285 @@ function StatusBar({
   else if (mode.kind === "attack") message = "Choose what to attack.";
   else if (mode.kind === "replace") message = "Choose a Character to trash to make room.";
   else if (prompt.player !== me)
-    message = friend ? "Your friend is thinking…" : "Opponent is thinking…";
+    message = friend ? "Your friend is thinking" : "Opponent is thinking";
   else message = YOUR_PROMPT_TEXT[prompt.kind];
+  const thinking = prompt.kind !== "gameOver" && prompt.player !== me && mode.kind === "none";
 
   const battle = view.battle;
   const attacker = battle ? findInView(view, battle.attacker) : null;
   const target = battle ? findInView(view, battle.target) : null;
 
   return (
-    <div className={`status ${yourTurn ? "yours" : "theirs"}`}>
+    <div className={`status ${yourTurn ? "yours" : "theirs"} ${defense ? "under-attack" : ""}`}>
       <div className="phase">
         <strong>{yourTurn ? "Your turn" : "Opponent's turn"}</strong>
         <span>
           Turn {view.turn} · {phaseName(view.phase)}
         </span>
       </div>
-      {battle && attacker && target ? (
-        <div className="battle">
-          <span className="atk">
-            {def(attacker)?.name} {view.powers[attacker.uid]}
-          </span>
-          <span className="vs">⚔</span>
-          <span className="def">
-            {def(target)?.name} {view.powers[target.uid]}
-          </span>
+      {defense ??
+        (battle && attacker && target ? (
+          <div className="battle">
+            <span className="atk">
+              {def(attacker)?.name} {view.powers[attacker.uid]}
+            </span>
+            <span className="vs">⚔</span>
+            <span className="def">
+              {def(target)?.name} {view.powers[target.uid]}
+            </span>
+          </div>
+        ) : null)}
+      {!defense && (
+        <div className="message">
+          {thinking ? <Thinking>{message}</Thinking> : message}
+          {mode.kind !== "none" && (
+            <button className="ghost small" onClick={onCancel}>
+              Cancel
+            </button>
+          )}
         </div>
-      ) : null}
-      <div className="message">
-        {message}
-        {mode.kind !== "none" && (
-          <button className="ghost small" onClick={onCancel}>
-            Cancel
-          </button>
-        )}
-      </div>
+      )}
       {children}
     </div>
+  );
+}
+
+/**
+ * The power your card still needs to survive the attack, in whole thousands: the attack wins on
+ * equal power (rule 7-1-4-1), so the defender must end up higher. 0 means it's safe already.
+ */
+function powerNeeded(view: GameView, battle: NonNullable<GameView["battle"]>): number {
+  const attack = view.powers[battle.attacker] ?? 0;
+  const defense = view.powers[battle.target] ?? 0;
+  return attack < defense ? 0 : Math.ceil((attack - defense + 1) / 1000) * 1000;
+}
+
+/**
+ * The decision when you're attacked, spelled out: who hits what, how much power you're short,
+ * what happens if the attack lands, and the one button that lets it through.
+ */
+function Defense({
+  view,
+  me,
+  def,
+  step,
+  hasCounters,
+  onPass,
+}: {
+  view: GameView;
+  me: PlayerId;
+  def: DefOf;
+  step: "counter" | "block";
+  hasCounters: boolean;
+  onPass: () => void;
+}) {
+  const battle = view.battle;
+  const attacker = battle ? findInView(view, battle.attacker) : null;
+  const target = battle ? findInView(view, battle.target) : null;
+  if (!battle || !attacker || !target) return null;
+  const need = powerNeeded(view, battle);
+  const leader = target.uid === view.players[me].leader.uid;
+  const life = view.players[me].lifeCount;
+  const targetName = def(target)?.name ?? "card";
+  const hit = leader
+    ? life === 0
+      ? "If it hits, you lose the game!"
+      : def(attacker)?.keywords?.includes("doubleAttack")
+        ? "If it hits, you take 2 damage ([Double Attack])."
+        : "If it hits, you take 1 damage (lose 1 Life)."
+    : `If it hits, your ${targetName} is K.O.'d.`;
+  return (
+    <div className="defense" role="alert">
+      <strong className="defense-title">You're being attacked!</strong>
+      <div className="defense-fight">
+        <span className="atk">
+          {def(attacker)?.name ?? "Attacker"} <b>{view.powers[attacker.uid]}</b>
+        </span>
+        <span className="defense-arrow" aria-label="attacks">
+          ➜
+        </span>
+        <span className="def">
+          {leader ? "Your Leader" : "Your"} {targetName} <b>{view.powers[target.uid]}</b>
+        </span>
+      </div>
+      <p className={need ? "defense-need" : "defense-safe"}>
+        {need ? `You need +${need} power to survive.` : "Safe! Your card has more power."}
+      </p>
+      {need > 0 && <p className="defense-hit">{hit}</p>}
+      <p className="defense-how">
+        {step === "block"
+          ? "Tap a glowing [Blocker] to take the hit in its place, or don't block."
+          : hasCounters
+            ? "Tap a glowing card in your hand to add its counter power."
+            : "You have no counter cards, so the attack goes through…"}
+      </p>
+      {(step === "block" || hasCounters) && (
+        <button className={need ? "danger" : "primary"} onClick={onPass}>
+          {step === "block" ? "Don't block" : need ? "Take the hit" : "Done countering"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** "Thinking" with three dots that bounce, while the other player decides. */
+function Thinking({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <span className={`thinking ${className}`} role="status">
+      {children}
+      <span className="dots" aria-hidden="true">
+        <i>.</i>
+        <i>.</i>
+        <i>.</i>
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Your hand, held along the bottom of the screen like real cards: fanned and partly hidden until
+ * you point at it. The card you point at lifts and grows, and the mouse wheel scrolls a long hand.
+ */
+function HandTray({ raised, children }: { raised: boolean; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const wheel = (e: WheelEvent) => {
+      if (el.scrollWidth <= el.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener("wheel", wheel, { passive: false });
+    return () => el.removeEventListener("wheel", wheel);
+  }, []);
+  return (
+    <div className={`hand-tray ${raised ? "raised" : ""}`}>
+      <div ref={ref} className="hand" aria-label="Your hand">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Each card's tilt and drop in the fan: the middle card stands straight, the ends lean out. */
+function fan(index: number, count: number): CSSProperties {
+  const offset = index - (count - 1) / 2;
+  const step = Math.min(4, 30 / Math.max(count, 1));
+  return {
+    ["--tilt" as string]: `${(offset * step).toFixed(2)}deg`,
+    ["--drop" as string]: (offset * offset * Math.min(1, 6 / Math.max(count, 1))).toFixed(2),
+  };
+}
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+function cardCenter(uid: string): Point | null {
+  const slot = document.querySelector(`[data-uid="${CSS.escape(uid)}"]`);
+  const el = slot?.querySelector(".card") ?? slot;
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+/**
+ * An arrow over the table from the attacking card to its target. While you choose a target it
+ * follows the pointer, and snaps to a card you can attack when you point at one.
+ */
+function AttackArrow({
+  from,
+  to,
+  targets,
+}: {
+  from: string;
+  to?: string | undefined;
+  targets?: Set<string>;
+}) {
+  const [line, setLine] = useState<{ a: Point; b: Point } | null>(null);
+  useEffect(() => {
+    let pointer: Point | null = null;
+    let hovered: string | null = null;
+    const move = (e: PointerEvent) => {
+      pointer = { x: e.clientX, y: e.clientY };
+      const uid = (e.target as Element | null)?.closest?.("[data-uid]")?.getAttribute("data-uid");
+      hovered = uid && targets?.has(uid) ? uid : null;
+    };
+    window.addEventListener("pointermove", move);
+    let frame = 0;
+    // Cards move (resting, resizing), so the ends are measured again every frame.
+    const tick = () => {
+      const a = cardCenter(from);
+      const end = to ?? hovered;
+      const b = end ? cardCenter(end) : pointer;
+      setLine((prev) => {
+        if (!a || !b) return null;
+        const same =
+          prev &&
+          Math.abs(prev.a.x - a.x) < 0.5 &&
+          Math.abs(prev.a.y - a.y) < 0.5 &&
+          Math.abs(prev.b.x - b.x) < 0.5 &&
+          Math.abs(prev.b.y - b.y) < 0.5;
+        return same ? prev : { a, b };
+      });
+      frame = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", move);
+    };
+  }, [from, to, targets]);
+
+  if (!line) return null;
+  const { a, b } = line;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const length = Math.hypot(dx, dy);
+  if (length < 20) return null;
+  // Bend the arrow a little to one side, so it reads as a throw rather than a ruler line.
+  const bend = Math.min(80, length * 0.18);
+  const cx = (a.x + b.x) / 2 + (-dy / length) * bend;
+  const cy = (a.y + b.y) / 2 + (dx / length) * bend;
+  const path = `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
+  return (
+    <svg className={`attack-arrow ${to ? "locked" : "aiming"}`} aria-hidden="true">
+      <defs>
+        <marker
+          id="arrow-head"
+          viewBox="0 0 10 10"
+          refX="6"
+          refY="5"
+          markerWidth="4"
+          markerHeight="4"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff4d6d" />
+        </marker>
+        <linearGradient
+          id="arrow-fade"
+          gradientUnits="userSpaceOnUse"
+          x1={a.x}
+          y1={a.y}
+          x2={b.x}
+          y2={b.y}
+        >
+          <stop offset="0" stopColor="#ffb347" />
+          <stop offset="1" stopColor="#ff4d6d" />
+        </linearGradient>
+      </defs>
+      <path className="arrow-glow" d={path} />
+      <path
+        className="arrow-line"
+        d={path}
+        stroke="url(#arrow-fade)"
+        markerEnd="url(#arrow-head)"
+      />
+      <path className="arrow-flow" d={path} />
+      <circle className="arrow-start" cx={a.x} cy={a.y} r="7" />
+    </svg>
   );
 }
 
@@ -1031,6 +1415,59 @@ const YOUR_PROMPT_TEXT: Record<Exclude<GameView["prompt"]["kind"], "gameOver">, 
   confirm: "Use this effect?",
   chooseOne: "Choose one.",
 };
+
+interface Verb {
+  /** The question asked once cards are selected, e.g. "Add Nami to your hand?". */
+  ask: (names: string) => string;
+  /** The button that answers yes, e.g. "Add to hand". */
+  button: string;
+}
+
+const verb = (button: string, ask: (names: string) => string): Verb => ({ button, ask });
+
+/** What a choice does, in words, so the confirmation can say it. */
+const CHOOSE_VERBS: Record<string, Verb> = {
+  ko: verb("K.O.", (n) => `K.O. ${n}?`),
+  rest: verb("Rest", (n) => `Rest ${n}?`),
+  setActive: verb("Set active", (n) => `Set ${n} as active?`),
+  returnToHand: verb("Return to hand", (n) => `Return ${n} to the owner's hand?`),
+  returnToDeckBottom: verb("Place at bottom", (n) => `Place ${n} at the bottom of the deck?`),
+  powerUp: verb("Give power", (n) => `Give the power to ${n}?`),
+  grantKeyword: verb("Give ability", (n) => `Give the ability to ${n}?`),
+  noBlockers: verb("Choose", (n) => `Make ${n} unable to be blocked?`),
+  giveRestedDon: verb("Give DON!!", (n) => `Give the DON!! to ${n}?`),
+  giveDon: verb("Give DON!!", (n) => `Give the DON!! to ${n}?`),
+  trashFromHand: verb("Trash", (n) => `Trash ${n} from your hand?`),
+  trashCharacter: verb("Trash", (n) => `Trash ${n}?`),
+  playFromHand: verb("Play", (n) => `Play ${n}?`),
+  playFromTrash: verb("Play", (n) => `Play ${n} from your trash?`),
+  lifeToHand: verb("Add to hand", (n) => `Add ${n} to your hand?`),
+};
+
+const SEARCH_VERBS: Record<string, Verb> = {
+  hand: verb("Add to hand", (n) => `Add ${n} to your hand?`),
+  play: verb("Play", (n) => `Play ${n}?`),
+  life: verb("Add to Life", (n) => `Add ${n} to the top of your Life?`),
+  lifeFaceUp: verb("Add to Life", (n) => `Add ${n} face-up to the top of your Life?`),
+  trash: verb("Trash", (n) => `Trash ${n}?`),
+};
+
+/** The verb for a choice. A deck search says where its card goes, read from the source card. */
+function chooseVerb(reason: string, source: Card | undefined): Verb {
+  if (reason === "searchDeck") {
+    const step = (source?.effects ?? []).flatMap((e) => e.steps).find((s) => s.do === "searchDeck");
+    const to = step?.do === "searchDeck" ? (step.play ? "play" : (step.to ?? "hand")) : "hand";
+    return SEARCH_VERBS[to] ?? SEARCH_VERBS.hand!;
+  }
+  return CHOOSE_VERBS[reason] ?? verb("Choose", (n) => `Choose ${n}?`);
+}
+
+/** "Nami", "Nami and Zoro", "Nami, Zoro and Usopp". */
+function listNames(names: string[]): string {
+  return names.length < 2
+    ? (names[0] ?? "")
+    : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
 
 function nameOf(def: DefOf, view: GameView, uid: string): string {
   return def(findInView(view, uid))?.name ?? "a card";
