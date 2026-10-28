@@ -20,7 +20,7 @@ import type { Backs, Mats } from "./App.js";
 import { officialText, type Card, type CardData } from "./card-data.js";
 import { CardView, DonCard, type Glow } from "./CardView.js";
 import { formatClock, running, timeLeft } from "./clock.js";
-import { cardText } from "./describe.js";
+import { cardText, timingTag } from "./describe.js";
 import { botStep, botToAct, humanAct, outOfTime, type LocalGame } from "./local-game.js";
 import { MIN_TURNS, qualifies, TIER_POINTS, trophyById } from "./trophies.js";
 import { Medal } from "./TrophyToasts.js";
@@ -132,6 +132,30 @@ export function Board({
   const yourTurn = view.turnPlayer === me;
   const theyAreThinking = prompt.kind !== "gameOver" && prompt.player !== me;
   const safe = view.battle ? powerNeeded(view, view.battle) === 0 : false;
+
+  // The card whose effect is asking you to choose, and which of its effects is running.
+  const running = useMemo(() => {
+    if (!myPrompt || !("source" in myPrompt)) return null;
+    const frame = [...game.state.stack]
+      .reverse()
+      .find((f) => f.kind === "effect" && f.source === myPrompt.source);
+    const card =
+      frame?.kind === "effect"
+        ? data.catalog[frame.cardId]
+        : def(findInView(view, myPrompt.source));
+    if (!card) return null;
+    const effect =
+      frame?.kind === "effect" && !frame.rule ? card.effects?.[frame.effect] : undefined;
+    return { card, tag: effect ? timingTag(effect.timing) : "" };
+  }, [myPrompt, game.state.stack, view]);
+  const effectBanner = running && (
+    <EffectBanner
+      card={running.card}
+      image={data.imageUrl(running.card)}
+      tag={running.tag}
+      onHover={() => setDetail(running.card)}
+    />
+  );
 
   // A new decision resets anything half-done.
   useEffect(() => {
@@ -548,7 +572,7 @@ export function Board({
       )}
 
       {myPrompt?.kind === "choose" && (
-        <Modal title={CHOOSE_TEXT[myPrompt.reason] ?? "Choose cards"}>
+        <Modal title={CHOOSE_TEXT[myPrompt.reason] ?? "Choose cards"} banner={effectBanner}>
           <p>
             {myPrompt.max === 0
               ? myPrompt.reason === "searchDeck"
@@ -660,7 +684,13 @@ export function Board({
         >
           <div className="card-row">
             {view.promptCards.map((card) => (
-              <CardView key={card.uid} def={def(card)} image={art(card)} size="large" />
+              <CardView
+                key={card.uid}
+                def={def(card)}
+                image={art(card)}
+                size="large"
+                onHover={() => setDetail(def(card) ?? null)}
+              />
             ))}
           </div>
           <ul className="effect-text">
@@ -682,10 +712,16 @@ export function Board({
       )}
 
       {myPrompt?.kind === "chooseOne" && (
-        <Modal title="Choose one">
+        <Modal title="Choose one" banner={effectBanner}>
           <div className="card-row">
             {view.promptCards.map((card) => (
-              <CardView key={card.uid} def={def(card)} image={art(card)} size="large" />
+              <CardView
+                key={card.uid}
+                def={def(card)}
+                image={art(card)}
+                size="large"
+                onHover={() => setDetail(def(card) ?? null)}
+              />
             ))}
           </div>
           <p>From {nameOf(def, view, myPrompt.source)}.</p>
@@ -1381,6 +1417,48 @@ function Detail({ card, image }: { card: Card | null; image: string | undefined 
   );
 }
 
+/**
+ * The card whose effect is running, across the top of a pop-up, so you can read what you're
+ * choosing for. The effect that is running right now is lit up.
+ */
+function EffectBanner({
+  card,
+  image,
+  tag,
+  onHover,
+}: {
+  card: Card;
+  image: string | undefined;
+  /** The running effect's tag, e.g. "[On Play]"; empty when it can't be told apart. */
+  tag: string;
+  onHover: () => void;
+}) {
+  // Official text sometimes runs two effects together ("...power.[On Play] ..."); split them.
+  const lines = textOf(card).flatMap((line) => line.split(/(?<=[.)])(?=\[)/));
+  const lit = tag ? lines.findIndex((line) => line.includes(tag)) : -1;
+  return (
+    <div className="effect-banner" aria-label={`Effect of ${card.name}`}>
+      <CardView def={card} image={image} size="small" showName={false} onHover={onHover} />
+      <div className="effect-banner-text">
+        <p className="effect-source">
+          <strong>{card.name}</strong> <span className="card-id">{card.id}</span>
+        </p>
+        {lines.length ? (
+          <ul className="effect-text">
+            {lines.map((line, i) => (
+              <li key={i} className={i === lit ? "running" : undefined}>
+                {line}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="meta">No effect text.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const CATEGORY_NAMES: Record<Card["category"], string> = {
   leader: "Leader",
   character: "Character",
@@ -1421,16 +1499,20 @@ function Log({ game, open, onToggle }: { game: LocalGame; open: boolean; onToggl
 
 function Modal({
   title,
+  banner,
   children,
   onClose,
 }: {
   title: string;
+  /** Shown across the top, above the title: the effect the pop-up is for. */
+  banner?: ReactNode;
   children: ReactNode;
   onClose?: () => void;
 }) {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()}>
+        {banner}
         <h2>{title}</h2>
         {children}
         {onClose && (
