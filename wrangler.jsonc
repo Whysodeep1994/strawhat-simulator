@@ -10,5 +10,10 @@
   "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "DuelRoom" }] },
   // SQLite-backed Durable Objects are the kind Cloudflare's free plan allows.
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DuelRoom"] }],
+  // Pull requests get a Preview (`npx wrangler preview`), which needs this block. Each Preview
+  // gets its own empty rooms, so testing a pull request never touches games on the real site.
+  "previews": {
+    "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "DuelRoom" }] },
+  },
   "observability": { "enabled": true },
 }
