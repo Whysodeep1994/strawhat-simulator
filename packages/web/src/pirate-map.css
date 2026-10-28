@@ -1,0 +1,427 @@
+/* Pirate-map look for the menus: parchment sheets inked in brown, rope-framed pop-ups and a
+   wooden table under the deck builder. Everything is drawn here in CSS and SVG. The game board
+   (mats, cards, the side panel) keeps its own look from styles.css. */
+
+:root {
+  /* Paper grain and old stains, made from SVG noise. */
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .2 0 0 0 0 .07 0 0 0 .28 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --paper-stains: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='4' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .28 0 0 0 0 .1 0 0 0 .8 -.42'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  --ink-compass: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%233b2614' stroke-opacity='.16'%3E%3Ccircle cx='100' cy='100' r='92'/%3E%3Ccircle cx='100' cy='100' r='70' stroke-dasharray='3 4'/%3E%3Ccircle cx='100' cy='100' r='30'/%3E%3Cpath d='M100 2v196M2 100h196M31 31l138 138M169 31L31 169'/%3E%3C/g%3E%3Cpath d='M100 10l11 90-11 90-11-90z M10 100l90-11 90 11-90 11z' fill='%233b2614' fill-opacity='.12'/%3E%3C/svg%3E");
+  --map-grid:
+    repeating-linear-gradient(0deg, rgba(70, 40, 15, 0.06) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(70, 40, 15, 0.06) 0 1px, transparent 1px 44px);
+  --parchment: radial-gradient(ellipse at 50% 35%, #f6e9c8 0%, #ecd6a6 55%, #d9b77f 100%);
+  --rope: repeating-linear-gradient(
+    -50deg,
+    #5a3b1a 0 2px,
+    #c79a5d 2px 5px,
+    #a77a43 5px 7px,
+    #6e4a24 7px 9px
+  );
+  --wood:
+    repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0 2px, transparent 2px 132px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.003 .09' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .05 0 0 0 0 .01 0 0 0 1.4 -.35'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #4a2e17 0%, #3a2312 50%, #2b190c 100%);
+  --sheet-shadow:
+    inset 0 0 0 1px rgba(90, 55, 20, 0.35), inset 0 0 34px rgba(120, 66, 22, 0.5),
+    inset 0 0 6px rgba(80, 40, 10, 0.45), 0 10px 26px rgba(0, 0, 0, 0.45);
+}
+
+/* Inside a sheet of parchment the app's colours turn to ink. */
+.panel,
+.modal,
+.menu-pop,
+.menu-item,
+.side,
+.status,
+.filters,
+.builder-deck,
+.trophy-toast,
+.sub-head button,
+.builder-bar,
+.library,
+.show-more,
+.step,
+.builder-notice {
+  --text: #2e1d0e;
+  --muted: #6b4f30;
+  --line: rgba(74, 45, 18, 0.38);
+  --bg-2: #f7ecd3;
+  --panel: rgba(255, 246, 222, 0.5);
+  --panel-solid: #f1e2bf;
+  --gold: #9c3418;
+  --gold-soft: rgba(156, 52, 24, 0.3);
+  --danger: #a82418;
+  --good: #2c7a3c;
+  color-scheme: light;
+  accent-color: #9c3418;
+  color: var(--text);
+}
+
+/* Pictures and cards sitting on the paper keep their light text. */
+.deck-tile,
+.deck-preview,
+.deck-row,
+.card,
+.limit-tag {
+  --text: #eef3ff;
+  --muted: #c9b48f;
+  --gold: #f5c84c;
+  --gold-soft: rgba(245, 200, 76, 0.35);
+  --danger: #ff5d6c;
+  --good: #4ade80;
+  --line: rgba(160, 190, 255, 0.18);
+  color-scheme: dark;
+  color: var(--text);
+}
+
+.panel,
+.filters,
+.builder-deck,
+.status,
+.detail,
+.log {
+  background: var(--paper-grain), var(--paper-stains), var(--map-grid), var(--parchment);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  border-radius: 6px;
+  box-shadow: var(--sheet-shadow);
+}
+.panel h2,
+.modal h2 {
+  font-family: "Pirata One", Georgia, serif;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: var(--gold);
+}
+.panel h2 {
+  font-size: 1.45rem;
+  line-height: 1.1;
+}
+.modal h2 {
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+/* Buttons, lists and boxes on the paper. :where() keeps these as weak as the base rules, so
+   every button with its own class (deck tiles, chips, tabs) keeps its own shape. */
+:where(.home, .builder, .modal, .menu-pop, .trophy-toast, .side) button,
+:where(.home, .builder, .modal, .menu-pop) select,
+:where(.home, .builder, .modal) input:not([type]),
+:where(.home, .builder, .modal) input[type="search"],
+:where(.home, .builder, .modal) textarea,
+.code-input {
+  background: linear-gradient(180deg, #fbf3df, #ecdcb6);
+  border: 1px solid rgba(74, 45, 18, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 1px 2px rgba(60, 30, 5, 0.25);
+}
+:where(.home, .builder, .modal, .menu-pop, .side) button:hover:not(:disabled) {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, #fff8e8, #f0e2c0);
+}
+:where(.home, .builder, .modal) input::placeholder,
+:where(.home, .builder, .modal) textarea::placeholder {
+  color: rgba(80, 55, 30, 0.6);
+}
+:where(.home, .builder, .modal, .menu-pop, .side) button.primary {
+  background: linear-gradient(180deg, #c2452a, #8c2a14);
+  border-color: #6b1e0d;
+  color: #fff4dc;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 210, 170, 0.45),
+    0 2px 6px rgba(60, 20, 5, 0.45);
+}
+:where(.home, .builder, .modal, .menu-pop, .side) button.primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #d1543a, #9c3218);
+  border-color: #4f1608;
+}
+:where(.home, .builder, .modal, .menu-pop, .side) button.danger {
+  background: linear-gradient(180deg, #b8322a, #861c16);
+  border-color: #5e110c;
+  color: #fff;
+}
+:where(.home, .builder, .modal, .menu-pop, .side) button.ghost {
+  background: transparent;
+  box-shadow: none;
+}
+:where(.home, .builder, .modal, .menu-pop, .side) button:focus-visible {
+  outline-color: var(--gold);
+}
+
+/* Title menu: torn strips of chart paper; the one you point at gets an X that marks the spot. */
+.menu-item {
+  position: relative;
+  border: none;
+  border-radius: 4px;
+  background: var(--paper-grain), var(--paper-stains), var(--parchment);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: var(--sheet-shadow);
+  clip-path: polygon(
+    0 6%,
+    3% 0,
+    22% 4%,
+    41% 0,
+    63% 3%,
+    84% 0,
+    100% 5%,
+    99% 52%,
+    100% 95%,
+    78% 100%,
+    55% 96%,
+    33% 100%,
+    12% 97%,
+    0 100%,
+    1% 48%
+  );
+}
+.menu-label {
+  color: #3b2614;
+}
+.menu-item::after {
+  content: "";
+  width: 1.6em;
+  height: 1.6em;
+  flex: none;
+  opacity: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 4l16 16M20 4L4 20' stroke='%23a82418' stroke-width='4.5' stroke-linecap='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  transition: opacity 0.15s;
+}
+.menu-item.current:not(:disabled),
+.menu-item:focus-visible {
+  border-color: transparent;
+  background:
+    repeating-linear-gradient(90deg, rgba(168, 36, 24, 0.55) 0 8px, transparent 8px 15px) 0 82% /
+      100% 2px no-repeat,
+    var(--paper-grain),
+    var(--paper-stains),
+    var(--parchment);
+  box-shadow: var(--sheet-shadow);
+  transform: translateX(6px);
+}
+.menu-item.current:not(:disabled) .menu-label {
+  color: #a82418;
+}
+.menu-item.current:not(:disabled)::after,
+.menu-item:focus-visible::after {
+  opacity: 1;
+}
+.menu-item:disabled .menu-label {
+  color: #7d6447;
+}
+
+/* Back button and the parchment tabs. */
+.sub-head button {
+  background: var(--paper-grain), var(--parchment);
+}
+.tabs {
+  background: rgba(90, 55, 20, 0.14);
+  box-shadow: inset 0 1px 3px rgba(60, 30, 5, 0.3);
+}
+.tabs button {
+  box-shadow: none;
+  background: transparent;
+}
+.tabs button.on {
+  background: linear-gradient(180deg, #fff8e8, #f0e2c0);
+  box-shadow: 0 1px 3px rgba(60, 30, 5, 0.3);
+}
+
+/* Settings pickers */
+button.mat-preset,
+.back-option {
+  background: rgba(255, 248, 230, 0.55);
+}
+.back-option {
+  border-color: transparent;
+  box-shadow: none;
+}
+.back-option.selected {
+  background: rgba(156, 52, 24, 0.14);
+}
+.mat-preview {
+  box-shadow: 0 0 0 1px rgba(74, 45, 18, 0.45);
+}
+.new-deck {
+  background: rgba(255, 248, 230, 0.35);
+  border-color: rgba(74, 45, 18, 0.45);
+}
+.new-deck .plus {
+  color: #9c3418;
+}
+.new-deck .deck-info {
+  color: #2e1d0e;
+}
+.new-deck .deck-info span {
+  color: #6b4f30;
+}
+
+/* Pop-ups: a sheet of chart tied with rope. */
+.modal {
+  background:
+    var(--ink-compass) calc(100% + 60px) calc(100% + 60px) / 220px no-repeat,
+    var(--paper-grain),
+    var(--paper-stains),
+    var(--map-grid),
+    var(--parchment);
+  border: 8px solid transparent;
+  border-image: var(--rope) 8;
+  border-radius: 0;
+  box-shadow:
+    inset 0 0 34px rgba(120, 66, 22, 0.5),
+    0 20px 60px rgba(0, 0, 0, 0.7);
+}
+.menu-pop {
+  background: var(--paper-grain), var(--parchment);
+  border: 1px solid rgba(74, 45, 18, 0.6);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 0 18px rgba(120, 66, 22, 0.45),
+    0 10px 30px rgba(0, 0, 0, 0.6);
+}
+.menu-pop button {
+  background: linear-gradient(180deg, #fbf3df, #ecdcb6);
+}
+.result.win {
+  color: #2c7a3c !important;
+}
+.choose-question {
+  background: rgba(44, 122, 60, 0.12);
+}
+
+/* Deck builder: parchment on a wooden table. */
+.builder {
+  background: var(--wood);
+}
+.builder-bar button.ghost {
+  background: var(--paper-grain), var(--parchment);
+  box-shadow: var(--sheet-shadow);
+}
+.builder-bar .saved-note {
+  color: #e9d6ae;
+}
+.builder-bar .legal-chip.good {
+  background: #2c7a3c;
+  color: #f4fbe9;
+}
+.builder-bar .legal-chip.bad {
+  background: #a82418;
+  color: #fff1e6;
+}
+.chip {
+  background: rgba(255, 248, 230, 0.55);
+}
+.chip.on {
+  color: #fff4dc;
+}
+.chip .dot {
+  box-shadow: 0 0 0 1px rgba(60, 30, 5, 0.5);
+}
+.step,
+.builder-notice {
+  background: var(--paper-grain), var(--parchment);
+  box-shadow: var(--sheet-shadow);
+  color: var(--text);
+}
+.builder-notice {
+  border-left: 4px solid #2f5d7c;
+}
+.step {
+  border-left: 4px solid #a82418;
+}
+.library .library-actions button {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+.meter {
+  background: rgba(90, 55, 20, 0.18);
+}
+.curve-bar {
+  background: linear-gradient(180deg, #4f7f9e, #2a4f6a);
+}
+.deck-check.good {
+  background: rgba(44, 122, 60, 0.12);
+}
+.deck-check.bad {
+  background: rgba(168, 36, 24, 0.1);
+  color: #9b2a1f;
+}
+.danger-text {
+  color: #a82418 !important;
+}
+
+/* Trophies */
+.trophy {
+  background: rgba(255, 248, 230, 0.35);
+}
+.trophy.earned {
+  background: rgba(156, 52, 24, 0.08);
+}
+.trophy-text,
+.trophy-toast div {
+  color: var(--muted);
+}
+.trophy.locked .trophy-text strong {
+  color: #7d6447;
+}
+.trophy-summary .meter,
+.meter.small {
+  background: rgba(90, 55, 20, 0.18);
+}
+.trophy-toast {
+  background: var(--paper-grain), var(--parchment);
+  border: 1px solid rgba(74, 45, 18, 0.6);
+  box-shadow: var(--sheet-shadow);
+}
+
+/* The side of the table: buttons, turn status, card reader and the game log. The mats and cards
+   themselves keep their own look. */
+.side-actions button:not(.primary),
+.side .log-toggle {
+  background: linear-gradient(180deg, #fbf3df, #ecdcb6);
+}
+.status {
+  border: none;
+}
+.status.yours {
+  box-shadow:
+    var(--sheet-shadow),
+    0 0 0 2px rgba(245, 200, 76, 0.75);
+}
+.clock {
+  background: rgba(90, 55, 20, 0.12);
+}
+.status.under-attack {
+  border: none;
+  background: var(--paper-grain), var(--parchment);
+  box-shadow:
+    inset 0 0 30px rgba(168, 36, 24, 0.45),
+    0 0 0 3px #c0392b,
+    0 0 24px rgba(255, 93, 108, 0.5);
+}
+.defense-fight .atk {
+  color: #a8450c;
+}
+.defense-fight .def {
+  color: #1f5a85;
+}
+.defense-need {
+  color: #8a5a06;
+}
+.defense-hit {
+  color: #9b2a1f;
+}
+.log li.mine {
+  color: #7a4a0c;
+}
+.log li.theirs {
+  color: #9b2a1f;
+}
+.detail .card-id {
+  color: #9c3418;
+}
