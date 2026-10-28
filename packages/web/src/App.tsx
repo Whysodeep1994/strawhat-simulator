@@ -39,6 +39,7 @@ import {
   type SavedDeck,
 } from "./my-decks.js";
 import { matImage } from "./mat-art.js";
+import { looksToShare } from "./share-looks.js";
 import { loadMat, saveMat, type MatSeat } from "./playmat.js";
 import { Scenery } from "./Scenery.js";
 import { cuesBetween } from "./game-sounds.js";
@@ -194,6 +195,8 @@ export function App() {
       setDuel((d) =>
         d?.save.token === save.token ? { ...d, status: { kind: "error", message } } : d,
       );
+    // Your playmat and card backs go to your friend, so they see your side as you do.
+    const looks = looksToShare(mats.you, backChoices.you);
     const room = await onlineRoom();
     if (!room) return fail("Online play isn't available on this page.");
     let joined;
@@ -212,11 +215,22 @@ export function App() {
       void joined.leave();
       return;
     }
-    link.current = new DuelLink(joined, save, data.catalog as CardCatalog, (status, next) => {
-      storeDuel(next);
-      setSavedDuel(next);
-      setDuel((d) => (d?.save.token === next.token ? { save: next, status } : d));
-    });
+    const mine = await looks;
+    if (duelToken.current !== save.token) {
+      void joined.leave();
+      return;
+    }
+    link.current = new DuelLink(
+      joined,
+      save,
+      data.catalog as CardCatalog,
+      (status, next) => {
+        storeDuel(next);
+        setSavedDuel(next);
+        setDuel((d) => (d?.save.token === next.token ? { save: next, status } : d));
+      },
+      mine,
+    );
   };
 
   const hostDuel = () => {
@@ -335,12 +349,21 @@ export function App() {
 
   if (duel?.status?.kind === "playing" && data) {
     const playing = duel.status;
+    // The friend's own playmat and card backs once they've arrived; until then, the ones you set
+    // for opponents.
+    const theirs = duel.save.theirs ?? {};
     return (
       <Board
         data={data}
         game={playing.game}
-        mats={mats}
-        backs={backs}
+        mats={{
+          you: matImage(mats.you),
+          opponent: matImage(theirs.mat !== undefined ? theirs.mat : mats.opponent),
+        }}
+        backs={{
+          you: backs.you,
+          opponent: theirs.back !== undefined ? backImage(theirs.back) : backs.opponent,
+        }}
         soundPanel={inGameSound}
         onChange={(next) => link.current?.play(next)}
         onTimeout={(player) => link.current?.timeOut(player)}
@@ -381,6 +404,9 @@ export function App() {
   const playmats = (
     <section className="panel">
       <h2>Playmats</h2>
+      <p className="note">
+        When you play a friend online, they see your playmat and card backs, and you see theirs.
+      </p>
       <div className="mat-pickers">
         <MatPicker
           seat="you"

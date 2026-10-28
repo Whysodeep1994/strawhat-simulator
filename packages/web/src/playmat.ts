@@ -1,7 +1,7 @@
 /**
  * Each seat's playmat: one of the ready-made mats, or a picture the player uploaded. The choice
- * stays in this browser only (localStorage); in online play each player's mat will travel with
- * their seat.
+ * stays in this browser only (localStorage); in online play each player's mat goes to their friend
+ * (see Looks in online.ts).
  */
 export type MatSeat = "you" | "opponent";
 
