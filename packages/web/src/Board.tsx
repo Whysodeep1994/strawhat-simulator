@@ -115,6 +115,13 @@ export function Board({
   const [confirmConcede, setConfirmConcede] = useState(false);
   const [showSound, setShowSound] = useState(false);
   const [banner, setBanner] = useState<number | null>(null);
+  const wide = useMediaQuery(WIDE);
+  const [showLog, setShowLog] = useState(() => readFlag(LOG_KEY, true));
+  const toggleLog = () =>
+    setShowLog((open) => {
+      writeFlag(LOG_KEY, !open);
+      return !open;
+    });
 
   const def: DefOf = (card) => (card ? data.catalog[card.cardId] : undefined);
   const art = (card: CardInstance | null | undefined) => data.imageUrl(def(card));
@@ -297,6 +304,31 @@ export function Board({
     />
   );
 
+  const statusBar = (
+    <StatusBar
+      view={view}
+      me={me}
+      def={def}
+      mode={mode}
+      friend={game.opponent === "friend"}
+      onCancel={() => setMode({ kind: "none" })}
+      defense={
+        myPrompt?.kind === "counter" || myPrompt?.kind === "block" ? (
+          <Defense
+            view={view}
+            me={me}
+            def={def}
+            step={myPrompt.kind}
+            hasCounters={hasCounters}
+            onPass={() => act({ type: "pass", player: me })}
+          />
+        ) : null
+      }
+    >
+      <Clocks game={game} onTimeout={onTimeout} />
+    </StatusBar>
+  );
+
   return (
     <div className="game" onClick={() => setMenu(null)}>
       <div className="board">
@@ -326,6 +358,9 @@ export function Board({
               <CardView key={i} faceDown back={backs.opponent} size="small" />
             ))}
           </div>
+          <span className="hand-count" aria-hidden="true">
+            {view.players[them].handCount} in hand
+          </span>
           {theyAreThinking && (
             <Thinking className="pill">
               {game.opponent === "friend" ? "Your friend is thinking" : "Opponent is thinking"}
@@ -333,28 +368,7 @@ export function Board({
           )}
         </div>
 
-        <StatusBar
-          view={view}
-          me={me}
-          def={def}
-          mode={mode}
-          friend={game.opponent === "friend"}
-          onCancel={() => setMode({ kind: "none" })}
-          defense={
-            myPrompt?.kind === "counter" || myPrompt?.kind === "block" ? (
-              <Defense
-                view={view}
-                me={me}
-                def={def}
-                step={myPrompt.kind}
-                hasCounters={hasCounters}
-                onPass={() => act({ type: "pass", player: me })}
-              />
-            ) : null
-          }
-        >
-          <Clocks game={game} onTimeout={onTimeout} />
-        </StatusBar>
+        {!wide && statusBar}
         {notice && (
           <p className="table-notice" role="status">
             {notice}
@@ -459,8 +473,9 @@ export function Board({
             Concede
           </button>
         </div>
+        {wide && statusBar}
         <Detail card={detail} image={data.imageUrl(detail ?? undefined)} />
-        <Log game={game} />
+        <Log game={game} open={showLog} onToggle={toggleLog} />
       </aside>
 
       {menu && (
@@ -780,6 +795,41 @@ export function Board({
       )}
     </div>
   );
+}
+
+/** The wide-screen layout in styles.css, where the turn panel sits in the side bar. */
+const WIDE = "(min-width: 1000px) and (min-aspect-ratio: 7/5)";
+
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const list = window.matchMedia(query);
+    const change = () => setMatches(list.matches);
+    change();
+    list.addEventListener("change", change);
+    return () => list.removeEventListener("change", change);
+  }, [query]);
+  return matches;
+}
+
+const LOG_KEY = "strawhat.showMoves";
+
+/** A remembered on/off choice in this browser. Private windows may block storage; then it resets. */
+function readFlag(key: string, fallback: boolean): boolean {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : value === "1";
+  } catch {
+    return fallback;
+  }
+}
+
+function writeFlag(key: string, value: boolean) {
+  try {
+    localStorage.setItem(key, value ? "1" : "0");
+  } catch {
+    // Not remembered, which is fine.
+  }
 }
 
 function Clickable({
@@ -1338,24 +1388,34 @@ const CATEGORY_NAMES: Record<Card["category"], string> = {
   stage: "Stage",
 };
 
-function Log({ game }: { game: LocalGame }) {
+/** The list of moves so far, which folds away to a single button to give the table more room. */
+function Log({ game, open, onToggle }: { game: LocalGame; open: boolean; onToggle: () => void }) {
   const end = useRef<HTMLLIElement>(null);
   useEffect(() => {
     // Newer browsers return a promise here, so it must not be the effect's return value.
     void end.current?.scrollIntoView({ block: "nearest" });
-  }, [game.log]);
+  }, [game.log, open]);
+  const toggle = (
+    <button className="ghost small log-toggle" onClick={onToggle} aria-expanded={open}>
+      {open ? "Hide moves ▾" : `Show moves (${game.log.length}) ▸`}
+    </button>
+  );
+  if (!open) return toggle;
   return (
-    <ol className="log" aria-label="Game log">
-      {game.log.slice(-60).map((entry) => (
-        <li
-          key={entry.id}
-          className={entry.player === game.human ? "mine" : entry.player ? "theirs" : "system"}
-        >
-          {entry.text}
-        </li>
-      ))}
-      <li ref={end} className="end" />
-    </ol>
+    <>
+      {toggle}
+      <ol className="log" aria-label="Game log">
+        {game.log.slice(-60).map((entry) => (
+          <li
+            key={entry.id}
+            className={entry.player === game.human ? "mine" : entry.player ? "theirs" : "system"}
+          >
+            {entry.text}
+          </li>
+        ))}
+        <li ref={end} className="end" />
+      </ol>
+    </>
   );
 }
 

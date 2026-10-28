@@ -901,6 +901,23 @@ button.pile {
   z-index: 2;
 }
 /* In the Counter Step, each card you can use shows the power it adds. */
+.hand-count {
+  display: none;
+  border-radius: 999px;
+  background: rgba(4, 10, 20, 0.78);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 700;
+  white-space: nowrap;
+}
+@media (min-width: 1000px) and (min-aspect-ratio: 7/5) {
+  .hand-count {
+    display: block;
+  }
+}
+.log-toggle {
+  align-self: flex-start;
+}
 .counter-tag {
   position: absolute;
   top: calc(var(--ch) * -0.12);
@@ -1879,27 +1896,36 @@ button.pile {
   }
 }
 
-/* Wide screens: the turn banner and the opponent's hand sit beside the mats, which get the whole
-   height of the window. The opponent's mat is drawn a little smaller, as if across the table,
-   so yours and your cards are bigger. */
+/* Wide screens: the mats get the whole board column. The opponent's hand peeks down from the top
+   edge, just enough to count, and the turn panel and clocks move into the side bar. The
+   opponent's mat is drawn a little smaller, as if across the table, so yours and your cards are
+   bigger. */
 
 @media (min-width: 1000px) and (min-aspect-ratio: 7/5) {
   :root {
-    --opp-scale: 0.84;
-    --cw-you: clamp(40px, min(calc((100vh - 34px) / 9.05), calc((100vw - 360px) / 12.6)), 150px);
+    --opp-scale: 0.86;
+    --peek: 0.34;
+    --cw-you: clamp(40px, min(calc((100vh - 30px) / 8.74), calc((100vw - 370px) / 10)), 150px);
     --cw: var(--cw-you);
-    --zone-pad: calc(var(--cw) * 0.07);
+    --zone-pad: calc(var(--cw) * 0.05);
     --don-w: calc(var(--cw) * 0.56);
+  }
+  .game {
+    padding-block: 0 8px;
+  }
+  .side {
+    padding-top: 8px;
   }
   .mat.opponent {
     --cw: calc(var(--cw-you) * var(--opp-scale));
     --ch: calc(var(--cw) * 1.397);
     --don-w: calc(var(--cw) * 0.56);
     --don-h: calc(var(--don-w) * 1.397);
-    --zone-pad: calc(var(--cw) * 0.07);
+    --zone-pad: calc(var(--cw) * 0.05);
   }
   .mat {
-    padding: calc(var(--cw) * 0.11) calc(var(--cw) * 0.1) calc(var(--cw) * 0.08);
+    gap: calc(var(--cw) * 0.08) calc(var(--cw) * 0.08);
+    padding: calc(var(--cw) * 0.08) calc(var(--cw) * 0.1) calc(var(--cw) * 0.06);
   }
   /* The Trash and DON!! deck piles are smaller, so their row takes less height. */
   .zone-trash .card.small,
@@ -1909,51 +1935,56 @@ button.pile {
     width: calc(var(--cw) * 0.56);
     height: calc(var(--ch) * 0.56);
   }
-  /* The tray sits under your mat, not under the status column beside it. */
-  .hand-tray {
-    right: calc(320px + 24px + var(--cw) * 3.16);
-  }
   .board {
     display: grid;
-    grid-template-columns: max-content minmax(calc(var(--cw) * 1.1), calc(var(--cw) * 3));
-    grid-template-rows: auto auto;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "them opphand"
-      "you status";
-    justify-content: center;
-    align-content: center;
-    align-items: start;
-    gap: 6px calc(var(--cw) * 0.16);
+      "opphand"
+      "them"
+      "you";
+    justify-items: center;
+    align-content: start;
+    gap: 6px;
+  }
+  /* The mats spread across the board column, so the cards have room between them. */
+  .mat.you {
+    grid-area: you;
+    width: min(100%, calc(var(--cw) * 13));
   }
   .mat.opponent {
     grid-area: them;
-    justify-self: center;
-  }
-  .mat.you {
-    grid-area: you;
+    width: min(92%, calc(var(--cw-you) * 12));
   }
   .opponent-info {
     grid-area: opphand;
+    flex-direction: row;
     align-items: flex-start;
+    justify-content: center;
     gap: 12px;
+    height: calc(var(--cw) * 0.34);
   }
+  /* Only the bottom of each face-down card shows, like a hand held across the table. */
   .opponent-hand {
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    flex-wrap: nowrap;
+    justify-content: center;
     min-height: 0;
     max-height: none;
-    overflow: visible;
-    padding: calc(var(--cw) * 0.1) 0 0 calc(var(--cw) * 0.35);
+    height: 100%;
+    overflow: hidden;
+    padding: 0 0 0 calc(var(--cw) * 0.12);
   }
   .opponent-hand .card.small {
-    margin: 0 0 calc(var(--ch) * -0.45) calc(var(--cw) * -0.35);
+    margin: calc(var(--ch) * 0.7 * -1 + var(--cw) * 0.34) 0 0 calc(var(--cw) * -0.12);
+    animation: none;
   }
+  .hand-count,
   .opponent-info .thinking.pill {
-    margin-top: calc(var(--ch) * 0.45);
+    align-self: center;
+    margin: 0;
+    padding: 2px 12px;
+    font-size: 0.85rem;
   }
   .status {
-    grid-area: status;
-    align-self: start;
     width: 100%;
     grid-template-columns: 1fr;
     gap: 6px;
