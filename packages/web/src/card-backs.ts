@@ -1,9 +1,10 @@
 /**
  * Card backs: the picture on the back of each player's cards (their Deck, Life and the opponent's
- * hand). A player picks one of the built-in designs, all drawn for this app, or uploads their own
+ * hand). A player picks one of the built-in designs (drawn for this app, plus one photo), or uploads their own
  * picture. The choice stays in this browser only (localStorage), like playmats, and in online play
  * goes to the friend (see Looks in online.ts).
  */
+import cheesesteak from "./backs/cheesesteak.webp";
 import type { MatSeat } from "./playmat.js";
 
 export interface BackPreset {
@@ -133,6 +134,8 @@ export const BACK_PRESETS: BackPreset[] = [
         `<circle r="28" stroke-width="5" stroke="#8a5a2b"/><circle r="28" stroke-width="1.5"/><circle r="7" fill="#8a5a2b"/></g>`,
     ),
   },
+  // A photo Deep added for everyone (already cropped to card shape, small enough to be built into the page).
+  { id: "cheesesteak", name: "Cheesesteak", image: cheesesteak },
 ];
 
 const key = (seat: MatSeat) => `strawhat.cardback.${seat}`;
