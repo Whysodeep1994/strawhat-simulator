@@ -66,7 +66,7 @@ const CHOOSE_TEXT: Record<string, string> = {
   grantKeyword: "Choose who gains the ability",
   noBlockers: "Choose the attacker that can't be blocked",
   giveRestedDon: "Choose who gets the DON!!",
-  searchDeck: "Choose a card to add to your hand",
+  searchDeck: "The cards from the top of your deck",
   trashFromHand: "Choose cards to trash from your hand",
   trashCharacter: "Choose a Character to trash",
   playFromHand: "Choose a card to play",
@@ -433,11 +433,16 @@ export function Board({
         <Modal title={CHOOSE_TEXT[myPrompt.reason] ?? "Choose cards"}>
           <p>
             {myPrompt.max === 0
-              ? "Look, then continue."
+              ? myPrompt.reason === "searchDeck"
+                ? "None of these can be chosen. Look, then continue."
+                : "Look, then continue."
               : myPrompt.min === myPrompt.max
                 ? `Choose ${myPrompt.max}.`
                 : `Choose ${myPrompt.min === 0 ? "up to" : `${myPrompt.min} to`} ${myPrompt.max}.`}{" "}
             From {nameOf(def, view, myPrompt.source)}.
+            {myPrompt.max > 0 &&
+              (myPrompt.revealed ?? []).some((uid) => !myPrompt.options.includes(uid)) &&
+              " Darkened cards can't be chosen."}
             {myPrompt.maxTotalPower !== undefined &&
               ` Their total power can be up to ${myPrompt.maxTotalPower} (now ${pickedPower}).`}
           </p>

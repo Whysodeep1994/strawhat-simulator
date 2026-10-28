@@ -634,6 +634,8 @@ function choose(
   max: number,
   reason: string,
   hidden = false,
+  /** Every card looked at, shown to the chooser even when it can't be picked (rule 11-3-1). */
+  looked?: CardInstance[],
 ): string[] | "wait" {
   const upper = Math.min(max, candidates.length);
   const lower = Math.min(min, upper);
@@ -642,7 +644,9 @@ function choose(
     frame.answer = null;
     return answer;
   }
-  if (lower === upper && upper === candidates.length) return candidates.map((c) => c.uid);
+  // Nothing to decide, unless the player still needs to see the cards they looked at.
+  if (lower === upper && upper === candidates.length && !looked?.length)
+    return candidates.map((c) => c.uid);
   state.prompt = {
     kind: "choose",
     player,
@@ -652,6 +656,7 @@ function choose(
     reason,
     source: frame.source,
     ...(hidden ? { hidden: true } : {}),
+    ...(looked?.length ? { revealed: looked.map((c) => c.uid) } : {}),
   };
   return "wait";
 }
@@ -1135,10 +1140,18 @@ function runStep(
       if (step.play) return searchAndPlay(state, frame, source, step);
       const looked = p.deck.slice(0, step.look);
       const matching = looked.filter((c) => matchesFilter(state, c, step.filter, source, false));
-      const chosen =
-        matching.length === 0
-          ? []
-          : choose(state, frame, controller, matching, 0, step.take, "searchDeck");
+      // All the looked-at cards are shown, the ones that can't be picked dimmed.
+      const chosen = choose(
+        state,
+        frame,
+        controller,
+        matching,
+        0,
+        step.take,
+        "searchDeck",
+        false,
+        looked,
+      );
       if (chosen === "wait") return "wait";
       // Rule 11-2-1: cards moved from the deck to the hand are revealed.
       const rest = looked.filter((c) => !chosen.includes(c.uid));
@@ -1790,10 +1803,17 @@ function searchAndPlay(
         matchesFilter(state, c, step.filter, source, false)
       );
     });
-    const chosen =
-      matching.length === 0
-        ? []
-        : choose(state, frame, frame.controller, matching, 0, 1, "searchDeck");
+    const chosen = choose(
+      state,
+      frame,
+      frame.controller,
+      matching,
+      0,
+      1,
+      "searchDeck",
+      false,
+      looked,
+    );
     if (chosen === "wait") return "wait";
     const picked = looked.filter((c) => chosen.includes(c.uid));
     const rest = looked.filter((c) => !chosen.includes(c.uid));

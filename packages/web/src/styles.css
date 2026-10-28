@@ -1047,8 +1047,10 @@ button.pile {
 .card.rested {
   transform: rotate(90deg);
 }
+/* A card that can't be picked: darkened, but still easy to read. */
 .card.dim {
-  opacity: 0.4;
+  filter: brightness(0.4) grayscale(0.6);
+  cursor: not-allowed;
 }
 .card-name-strip {
   position: absolute;

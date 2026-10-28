@@ -28,6 +28,12 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-27: "Look at the top N cards" searches now show all N cards. The owner saw OP01-016
+  Nami (look at 5) show only 3: the effect did look at 5, but the window listed only the cards you
+  could take. Now every looked-at card is shown, cards you can't take are darkened and can't be
+  clicked, and a search with no matches still shows the cards ("Look, then continue") instead of
+  skipping the window. Covers all 212 search cards (they share one `searchDeck` step) and online
+  play. Card-data scenarios ST11-001-other-on-top and OP08-115-counter now answer that window.
 - 2026-10-27: Fixed a freeze reported by the owner. With OP13-001 Monkey.D.Luffy as Leader, its
   "[On Your Opponent's Attack] rest any number of DON!!" asks "how many?" as a choose-one
   decision, and the board had no window for choose-one decisions, so the game waited for an

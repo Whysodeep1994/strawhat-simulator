@@ -491,6 +491,6 @@ Comprehensive Rules version 1.2.1.
 | 11-2-1 | 11-2 Revealing Cards | Tested | 10 |
 | 11-2-2 | 11-2 Revealing Cards | Phase 4 (effects) | 0 |
 | 11-3 | 11-3 Viewing Secret Areas | Tested | 4 |
-| 11-3-1 | 11-3 Viewing Secret Areas | Tested | 6 |
+| 11-3-1 | 11-3 Viewing Secret Areas | Tested | 8 |
 | 11-3-2 | 11-3 Viewing Secret Areas | Tested | 1 |
 | 11-3-3 | 11-3 Viewing Secret Areas | Phase 4 (effects) | 0 |
