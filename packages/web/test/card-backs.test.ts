@@ -6,6 +6,8 @@ describe("card backs", () => {
     expect(new Set(BACK_PRESETS.map((p) => p.id)).size).toBe(BACK_PRESETS.length);
     for (const preset of BACK_PRESETS) {
       if (preset.id === CLASSIC) expect(preset.image).toBeNull();
+      else if (preset.id === "cheesesteak")
+        expect(preset.image).toMatch(/cheesesteak\.webp$|^data:image\/webp;/);
       else expect(preset.image).toMatch(/^data:image\/svg\+xml,/);
     }
   });
