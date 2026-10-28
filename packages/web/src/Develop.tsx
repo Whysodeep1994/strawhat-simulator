@@ -3,7 +3,7 @@ import type { CardData, PlayableDeck } from "./card-data.js";
 import type { Mistake, Review } from "./coach-review.js";
 import type { Tip } from "./coach-tips.js";
 import type { Suggestion } from "./coach.js";
-import { DeckChooser, RANDOM, readyDecks } from "./Home.js";
+import { DeckChooser, OpponentPicker, RANDOM, readyDecks } from "./Home.js";
 import type { Training } from "./local-game.js";
 import type { SavedDeck } from "./my-decks.js";
 import { LEARNING_DECKS, LEARNING_OPPONENT, type Guide, type RuleNote } from "./tutor.js";
@@ -141,28 +141,7 @@ export function DevelopScreen({
           <aside className="home-side">
             <section className="panel">
               <h2>Pro Drills</h2>
-              <label className="field">
-                <span>The computer plays</span>
-                <select value={opponentId} onChange={(e) => setOpponentId(e.target.value)}>
-                  <option value={RANDOM}>A random Quick deck</option>
-                  {mine.length > 0 && (
-                    <optgroup label="My decks">
-                      {mine.map((deck) => (
-                        <option key={deck.id} value={deck.id}>
-                          {deck.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                  <optgroup label="Quick decks">
-                    {data.decks.map((deck) => (
-                      <option key={deck.id} value={deck.id}>
-                        {data.catalog[deck.leader]?.name ?? deck.name} · {deck.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
-              </label>
+              <OpponentPicker data={data} mine={mine} value={opponentId} onChange={setOpponentId} />
               <label className="switch">
                 <input
                   type="checkbox"

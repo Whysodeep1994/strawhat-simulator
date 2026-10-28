@@ -1,6 +1,6 @@
-import { setOf } from "@strawhat/engine";
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
-import { setLabel, type CardData, type PlayableDeck } from "./card-data.js";
+import type { CardData, PlayableDeck } from "./card-data.js";
+import { deckGroups, deckSubtitle, LeaderInfo, LeaderPicker } from "./LeaderPicker.js";
 import { moveHighlight } from "./menu.js";
 import { cardList, playable, problemsOf, type SavedDeck } from "./my-decks.js";
 import { matImage, presetImage } from "./mat-art.js";
@@ -234,23 +234,20 @@ export function DeckChooser({
         </div>
       ) : (
         <>
-          <label className="field">
+          <div className="field">
             <span>
-              {source === "mine" ? "Choose one of your decks" : "Choose a ready-made deck"}
+              {source === "mine"
+                ? "Choose one of your decks"
+                : "Choose a ready-made deck: open the list to see every Leader"}
             </span>
-            <select
+            <LeaderPicker
+              data={data}
+              groups={source === "mine" ? deckGroups(mine, []) : deckGroups([], quick)}
               value={chosen?.id ?? ""}
-              onChange={(e) => onDeck(e.target.value)}
-              aria-label="Your deck"
-            >
-              {!chosen && <option value="">Choose a deck…</option>}
-              {source === "mine" ? (
-                mine.map((deck) => <DeckOption key={deck.id} deck={deck} data={data} />)
-              ) : (
-                <QuickOptions decks={quick} data={data} />
-              )}
-            </select>
-          </label>
+              onChange={onDeck}
+              label="Your deck"
+            />
+          </div>
           {chosen && <DeckPreview deck={chosen} data={data} />}
           {source === "mine" && unready > 0 && (
             <p className="note">
@@ -267,6 +264,44 @@ export function DeckChooser({
         </>
       )}
     </section>
+  );
+}
+
+/** The computer's deck: a random Quick deck, one of yours or any Quick deck. */
+export function OpponentPicker({
+  data,
+  mine,
+  value,
+  onChange,
+}: {
+  data: CardData;
+  mine: PlayableDeck[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const chosen = [...mine, ...data.decks].find((d) => d.id === value);
+  return (
+    <div className="field">
+      <span>The computer plays</span>
+      <LeaderPicker
+        data={data}
+        groups={deckGroups(mine, data.decks)}
+        value={value}
+        onChange={onChange}
+        label="The computer's deck"
+        extra={{
+          id: RANDOM,
+          title: "A random Quick deck",
+          hint: "A surprise Leader each game.",
+        }}
+      />
+      {chosen && (
+        <details className="opponent-ability">
+          <summary>Their Leader's ability</summary>
+          <LeaderInfo leader={data.catalog[chosen.leader]} />
+        </details>
+      )}
+    </div>
   );
 }
 
@@ -307,20 +342,7 @@ export function PlaySetup({
       <aside className="home-side">
         <section className="panel">
           <h2>Opponent</h2>
-          <label className="field">
-            <span>The computer plays</span>
-            <select value={opponentId} onChange={(e) => onOpponent(e.target.value)}>
-              <option value={RANDOM}>A random Quick deck</option>
-              {mine.length > 0 && (
-                <optgroup label="My decks">
-                  {mine.map((deck) => (
-                    <DeckOption key={deck.id} deck={deck} data={data} />
-                  ))}
-                </optgroup>
-              )}
-              <QuickOptions decks={quick} data={data} />
-            </select>
-          </label>
+          <OpponentPicker data={data} mine={mine} value={opponentId} onChange={onOpponent} />
         </section>
         <button className="primary big" onClick={onStart} disabled={!chosen}>
           Set sail!
@@ -330,64 +352,37 @@ export function PlaySetup({
   );
 }
 
-function DeckOption({ deck, data }: { deck: PlayableDeck; data: CardData }) {
-  return (
-    <option value={deck.id}>
-      {deckTitle(deck, data)} · {deckSubtitle(deck)}
-    </option>
-  );
-}
-
-/** Quick decks in a dropdown: the official starters first, then the practice decks. */
-function QuickOptions({ decks, data }: { decks: PlayableDeck[]; data: CardData }) {
-  const official = decks.filter((d) => d.official);
-  const practice = decks.filter((d) => !d.official);
-  return (
-    <>
-      <optgroup label="Official starter decks">
-        {official.map((deck) => (
-          <DeckOption key={deck.id} deck={deck} data={data} />
-        ))}
-      </optgroup>
-      {practice.length > 0 && (
-        <optgroup label="Practice decks">
-          {practice.map((deck) => (
-            <DeckOption key={deck.id} deck={deck} data={data} />
-          ))}
-        </optgroup>
-      )}
-    </>
-  );
-}
-
-/** The chosen deck, shown big: its Leader's art, name and colours. */
+/** The chosen deck, shown big: its Leader's art, name and colours, its ability and a tip. */
 function DeckPreview({ deck, data }: { deck: PlayableDeck; data: CardData }) {
   const leader = data.catalog[deck.leader];
   const art = data.imageUrl(leader);
   const colors = leader?.colors ?? [];
   return (
-    <div
-      className="deck-preview"
-      style={{
-        ["--deck-color" as string]: `var(--c-${colors[0] ?? "black"})`,
-        ["--deck-color-2" as string]: `var(--c-${colors[1] ?? colors[0] ?? "black"})`,
-      }}
-    >
-      <span className="deck-preview-art">
-        {art ? <img src={art} alt="" draggable={false} /> : null}
-      </span>
-      <span className="deck-preview-info">
-        <span className={`badge static ${deck.mine || deck.official ? "official" : "practice"}`}>
-          {deck.mine ? "Mine" : deck.official ? "Official" : "Practice"}
+    <>
+      <div
+        className="deck-preview"
+        style={{
+          ["--deck-color" as string]: `var(--c-${colors[0] ?? "black"})`,
+          ["--deck-color-2" as string]: `var(--c-${colors[1] ?? colors[0] ?? "black"})`,
+        }}
+      >
+        <span className="deck-preview-art">
+          {art ? <img src={art} alt="" draggable={false} /> : null}
         </span>
-        <strong>{deckTitle(deck, data)}</strong>
-        <span>{deckSubtitle(deck)}</span>
-        <span>
-          {colors.map((c) => c[0]!.toUpperCase() + c.slice(1)).join(" / ")} · Life{" "}
-          {leader?.life ?? "?"} · {deck.deck.length} cards
+        <span className="deck-preview-info">
+          <span className={`badge static ${deck.mine || deck.official ? "official" : "practice"}`}>
+            {deck.mine ? "Mine" : deck.official ? "Official" : "Practice"}
+          </span>
+          <strong>{deckTitle(deck, data)}</strong>
+          <span>{deckSubtitle(deck)}</span>
+          <span>
+            {colors.map((c) => c[0]!.toUpperCase() + c.slice(1)).join(" / ")} · Life{" "}
+            {leader?.life ?? "?"} · {deck.deck.length} cards
+          </span>
         </span>
-      </span>
-    </div>
+      </div>
+      <LeaderInfo leader={leader} tip={data.tips[deck.leader]} />
+    </>
   );
 }
 
@@ -443,10 +438,15 @@ export function MyDecksScreen({
         <h2>Start from a Quick deck</h2>
       </div>
       <div className="copy-row">
-        <select value={copyId} onChange={(e) => setCopyId(e.target.value)} aria-label="Quick deck">
-          <option value="">Choose a Quick deck to copy…</option>
-          <QuickOptions decks={data.decks} data={data} />
-        </select>
+        <div className="copy-pick">
+          <LeaderPicker
+            data={data}
+            groups={deckGroups([], data.decks)}
+            value={copyId}
+            onChange={setCopyId}
+            label="Quick deck to copy"
+          />
+        </div>
         <button disabled={!toCopy} onClick={() => toCopy && onCopy(toCopy)}>
           Copy and edit
         </button>
@@ -461,11 +461,6 @@ export function MyDecksScreen({
 
 export function deckTitle(deck: PlayableDeck, data: CardData): string {
   return data.catalog[deck.leader]?.name ?? deck.name;
-}
-
-function deckSubtitle(deck: PlayableDeck): string {
-  if (deck.mine) return deck.name;
-  return deck.official ? deck.name : `${setLabel(setOf(deck.leader))} practice`;
 }
 
 function MyDeckTile({
