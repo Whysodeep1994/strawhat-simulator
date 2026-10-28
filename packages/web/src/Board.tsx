@@ -20,10 +20,15 @@ import type { Backs, Mats } from "./App.js";
 import { officialText, type Card, type CardData } from "./card-data.js";
 import { CardView, DonCard, type Glow } from "./CardView.js";
 import { formatClock, running, timeLeft } from "./clock.js";
+import { replay, reviewGame } from "./coach-review.js";
+import { defenseTip, matchupTips, turnTips, type Tip } from "./coach-tips.js";
+import type { Suggestion } from "./coach.js";
 import { cardText, timingTag } from "./describe.js";
+import { CoachTips, ReportView, TutorBox } from "./Develop.js";
 import { botStep, botToAct, humanAct, outOfTime, type LocalGame } from "./local-game.js";
 import { MIN_TURNS, qualifies, TIER_POINTS, trophyById } from "./trophies.js";
 import { Medal } from "./TrophyToasts.js";
+import { guide, LESSONS, newRules, type RuleNote } from "./tutor.js";
 
 interface Props {
   data: CardData;
@@ -130,6 +135,20 @@ export function Board({
   const [confirmConcede, setConfirmConcede] = useState(false);
   const [showSound, setShowSound] = useState(false);
   const [banner, setBanner] = useState<number | null>(null);
+  const training = game.training;
+  const tutoring = training?.mode === "newPlayer";
+  const coaching = training?.mode === "drills" && training.liveCoaching;
+  /** New Player: the lesson shown before the game starts, or null once they're read. */
+  const [lesson, setLesson] = useState<number | null>(() =>
+    tutoring && game.actions.length === 0 ? 0 : null,
+  );
+  /** New Player: rules explained the first time they happen, waiting to be read. */
+  const [notes, setNotes] = useState<RuleNote[]>([]);
+  const seenRules = useRef(new Set<string>());
+  const lastState = useRef(game.state);
+  /** Pro Drills: the tips for the turn you're playing. */
+  const [tips, setTips] = useState<{ turn: number; tips: Tip[] } | null>(null);
+  const [showReport, setShowReport] = useState(false);
   const wide = useMediaQuery(WIDE);
   const [showLog, setShowLog] = useState(() => readFlag(LOG_KEY, true));
   const toggleLog = () =>
@@ -178,6 +197,57 @@ export function Board({
     setMenu(null);
     setPicked([]);
   }, [game.state]);
+
+  // New Player: explain each rule the first time it happens.
+  useEffect(() => {
+    const before = lastState.current;
+    lastState.current = game.state;
+    if (!tutoring || before === game.state) return;
+    const fresh = newRules(before, game.state, me).filter((n) => !seenRules.current.has(n.id));
+    fresh.forEach((n) => seenRules.current.add(n.id));
+    if (fresh.length) setNotes((list) => [...list, ...fresh]);
+  }, [game.state]);
+
+  // Pro Drills live coaching: fresh tips at the start of each of your turns.
+  useEffect(() => {
+    if (!coaching || view.turnPlayer !== me || prompt.kind !== "main" || prompt.player !== me) {
+      return;
+    }
+    if (tips?.turn === view.turn) return;
+    const first = game.state.players[me].turnsTaken <= 1;
+    setTips({
+      turn: view.turn,
+      tips: [...(first ? matchupTips(game.state, me) : []), ...turnTips(game.state, me)],
+    });
+  }, [game.state]);
+
+  const tutor = useMemo(() => (tutoring ? guide(game.state, me) : null), [game.state, tutoring]);
+  const suggested = tutor?.suggestion?.action;
+  const suggestedCards = new Set<string>(
+    !suggested
+      ? []
+      : suggested.type === "playCard" ||
+          suggested.type === "activate" ||
+          suggested.type === "counter" ||
+          suggested.type === "counterEvent"
+        ? [suggested.card]
+        : suggested.type === "giveDon"
+          ? [suggested.target]
+          : suggested.type === "attack"
+            ? [suggested.attacker, suggested.target]
+            : suggested.type === "block"
+              ? [suggested.blocker]
+              : suggested.type === "choose"
+                ? suggested.cards
+                : [],
+  );
+  const review = useMemo(
+    () =>
+      training?.mode === "drills" && game.state.winner !== null
+        ? reviewGame(game.states ?? replay(game.initial, game.actions), game.actions, me)
+        : null,
+    [game.state.winner, training],
+  );
 
   // The computer acts on its own, a little slowly so you can follow along.
   useEffect(() => {
@@ -326,6 +396,9 @@ export function Board({
     }
     if (mode.kind === "replace") return replaceTargets.has(uid) ? "target" : null;
     if (menu?.uid === uid) return "selected";
+    if (suggestedCards.has(uid) && suggested?.type !== "choose") {
+      return suggested?.type === "attack" && suggested.target === uid ? "target" : "suggested";
+    }
     return byCard.has(uid) ? "playable" : null;
   }
 
@@ -364,9 +437,39 @@ export function Board({
         ) : null
       }
     >
-      <Clocks game={game} onTimeout={onTimeout} />
+      {!training && <Clocks game={game} onTimeout={onTimeout} />}
     </StatusBar>
   );
+
+  const doSuggestion = (s: Suggestion) => act(s.action);
+  const tutorBox = tutor ? (
+    <TutorBox
+      guide={tutor}
+      note={notes[0] ?? null}
+      onNote={() => setNotes((list) => list.slice(1))}
+      onDo={doSuggestion}
+    />
+  ) : null;
+  /** Tutor prompts that open a window carry the tutor's words inside the window. */
+  const inModal =
+    myPrompt?.kind === "chooseTurnOrder" ||
+    myPrompt?.kind === "mulligan" ||
+    myPrompt?.kind === "choose" ||
+    myPrompt?.kind === "confirm" ||
+    myPrompt?.kind === "chooseOne";
+  const defending = myPrompt?.kind === "block" || myPrompt?.kind === "counter";
+  const liveTip = coaching && defending ? defenseTip(game.state, me) : null;
+  const coachPanel = tutoring ? (
+    inModal ? null : (
+      tutorBox
+    )
+  ) : coaching ? (
+    liveTip ? (
+      <CoachTips key="defense" title="Coach: you're attacked" tips={[liveTip]} />
+    ) : tips && view.turnPlayer === me ? (
+      <CoachTips key={tips.turn} title={`Before this turn (turn ${tips.turn})`} tips={tips.tips} />
+    ) : null
+  ) : null;
 
   return (
     <div className="game" onClick={() => setMenu(null)}>
@@ -408,6 +511,7 @@ export function Board({
         </div>
 
         {!wide && statusBar}
+        {!wide && coachPanel}
         {notice && (
           <p className="table-notice" role="status">
             {notice}
@@ -513,6 +617,7 @@ export function Board({
           </button>
         </div>
         {wide && statusBar}
+        {wide && coachPanel}
         <Detail card={detail} image={data.imageUrl(detail ?? undefined)} />
         <Log game={game} open={showLog} onToggle={toggleLog} />
       </aside>
@@ -547,8 +652,36 @@ export function Board({
         </div>
       )}
 
-      {myPrompt?.kind === "chooseTurnOrder" && (
+      {lesson !== null && LESSONS[lesson] && (
+        <Modal title={LESSONS[lesson].title}>
+          <div className="lesson">
+            {LESSONS[lesson].lines.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+          <p className="note">
+            Lesson {lesson + 1} of {LESSONS.length}
+          </p>
+          <div className="row">
+            <button
+              className="primary"
+              onClick={() => setLesson(lesson + 1 < LESSONS.length ? lesson + 1 : null)}
+            >
+              {lesson + 1 < LESSONS.length ? "Next" : "Start the game"}
+            </button>
+            {lesson > 0 && <button onClick={() => setLesson(lesson - 1)}>Back</button>}
+            {lesson + 1 < LESSONS.length && (
+              <button className="ghost" onClick={() => setLesson(null)}>
+                Skip the lessons
+              </button>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {lesson === null && myPrompt?.kind === "chooseTurnOrder" && (
         <Modal title="You won Rock-Paper-Scissors!">
+          {tutorBox}
           <p>Do you want to go first or second? The first player doesn't draw on turn 1.</p>
           <div className="row">
             <button
@@ -566,6 +699,7 @@ export function Board({
 
       {myPrompt?.kind === "mulligan" && (
         <Modal title="Your opening hand">
+          {tutorBox}
           <div className="card-row">
             {(view.players[me].hand ?? []).map((card) => (
               <CardView
@@ -588,6 +722,7 @@ export function Board({
 
       {myPrompt?.kind === "choose" && (
         <Modal title={CHOOSE_TEXT[myPrompt.reason] ?? "Choose cards"} banner={effectBanner}>
+          {tutorBox}
           <p>
             {myPrompt.max === 0
               ? myPrompt.reason === "searchDeck"
@@ -640,7 +775,15 @@ export function Board({
                   image={art(card)}
                   power={view.powers[card.uid]}
                   dim={!option}
-                  glow={chosen ? "selected" : option ? "playable" : null}
+                  glow={
+                    chosen
+                      ? "selected"
+                      : suggestedCards.has(card.uid)
+                        ? "suggested"
+                        : option
+                          ? "playable"
+                          : null
+                  }
                   onHover={() => setDetail(def(card) ?? null)}
                   onClick={
                     option
@@ -703,6 +846,7 @@ export function Board({
         <Modal
           title={myPrompt.reason === "trigger" ? "Activate this [Trigger]?" : "Use this effect?"}
         >
+          {tutorBox}
           <div className="card-row">
             {view.promptCards.map((card) => (
               <CardView
@@ -734,6 +878,7 @@ export function Board({
 
       {myPrompt?.kind === "chooseOne" && (
         <Modal title="Choose one" banner={effectBanner}>
+          {tutorBox}
           <div className="card-row">
             {view.promptCards.map((card) => (
               <CardView
@@ -803,7 +948,18 @@ export function Board({
         </Modal>
       )}
 
-      {view.winner !== null && (
+      {showReport && review && (
+        <Modal title="Coaching report" onClose={() => setShowReport(false)}>
+          <ReportView review={review} />
+          <div className="row">
+            <button className="primary" onClick={() => setShowReport(false)}>
+              Back
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {view.winner !== null && !showReport && (
         <Modal title={view.winner === me ? "Victory!" : view.winner === "draw" ? "Draw" : "Defeat"}>
           <p className={`result ${view.winner === me ? "win" : "lose"}`}>
             {game.timedOut
@@ -838,9 +994,21 @@ export function Board({
                   : `Games count toward trophies after ${MIN_TURNS} of your own turns.`}
             </p>
           ) : null}
+          {review && (
+            <p className="report-teaser">
+              {review.mistakes.length === 0
+                ? "Your coaching report: no errors found!"
+                : `Your coaching report found ${review.mistakes.length} ${review.mistakes.length === 1 ? "error" : "errors"} to learn from.`}
+            </p>
+          )}
           <div className="row">
+            {review && (
+              <button className="primary" onClick={() => setShowReport(true)}>
+                See your report
+              </button>
+            )}
             {onRestart && (
-              <button className="primary" onClick={onRestart}>
+              <button className={review ? "" : "primary"} onClick={onRestart}>
                 Play again
               </button>
             )}

@@ -23,7 +23,7 @@ import {
 } from "./trophies.js";
 import { Medal } from "./TrophyToasts.js";
 
-export type Screen = "title" | "play" | "friend" | "decks" | "trophies" | "settings";
+export type Screen = "title" | "play" | "develop" | "friend" | "decks" | "trophies" | "settings";
 
 export const RANDOM = "random";
 
@@ -53,6 +53,12 @@ export function TitleMenu({
       screen: "play",
       label: "Play",
       hint: "Duel the computer with one of your decks or a Quick deck.",
+      disabled: !ready,
+    },
+    {
+      screen: "develop",
+      label: "Player Development",
+      hint: "New to the game? Learn it in a guided match. Getting good? Sharpen up in Pro Drills.",
       disabled: !ready,
     },
     {
