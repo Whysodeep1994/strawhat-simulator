@@ -28,6 +28,24 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-28: A clearer, bigger game board (Master Duel style), from the owner's notes while
+  playing a friend. Your hand is now a fanned tray along the bottom of the screen, partly hidden
+  until you point at it; the card you point at lifts and grows, and the mouse wheel scrolls a long
+  hand (phones keep the hand under the mat). With the hand gone from beside the mat, your mat and
+  cards are about 10% bigger on wide screens, and the opponent's mat is drawn a little smaller, as
+  if across the table. Attacks draw an arrow from the attacker to its target (and follow the
+  pointer while you choose). Being attacked shows "You're being attacked!" with both powers, how
+  much power you still need, what happens if it hits, counter values on your hand cards, a
+  "Take the hit" button and a red glow around the screen. The player whose turn it is has their
+  mat lit up with a "Your turn"/"Their turn" tag, and a banner sweeps across at each new turn.
+  "Opponent is thinking..." with bouncing dots shows whenever the computer or your friend is
+  deciding. Choosing cards in a window now marks selected cards with a green tick and asks what
+  will happen ("Trash Nefeltari Vivi?", "Add Nami to your hand?") before the "Yes" button, and
+  attacking or replacing a Character asks first ("Attack Kuzan (6000) with Zoro (5000)?").
+  Then, on wide screens: the opponent's hand peeks down from the top edge (with an "N in hand"
+  count), the turn panel and clocks moved into the side bar, the move history folds away with a
+  "Hide moves" button (remembered in this browser), and the mats spread across the freed middle,
+  so cards are bigger again (your Leader 87 to 100 pixels wide at 1600x900).
 - 2026-10-27: "Look at the top N cards" searches now show all N cards. The owner saw OP01-016
   Nami (look at 5) show only 3: the effect did look at 5, but the window listed only the cards you
   could take. Now every looked-at card is shown, cards you can't take are darkened and can't be
