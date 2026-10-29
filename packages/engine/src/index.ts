@@ -24,6 +24,8 @@ export { BASE_RULES, checkDeck, copyLimit } from "./format.js";
 export type { DeckFormat, DeckProblem } from "./format.js";
 export type { ParsedDeckList } from "./deck-list.js";
 export { legalActions } from "./legal.js";
+export { OVERTIME_TURNS, overtimeResult, overtimeTurn, startOvertime } from "./rules.js";
+export type { OvertimeDecider } from "./rules.js";
 export { PHASES, cardsToDraw, donToPlace, nextPhase } from "./phases.js";
 export type { Phase } from "./phases.js";
 export { buildScenarioState, runScenario, DEFAULT_LEADER, FILLER_CARD } from "./scenario.js";

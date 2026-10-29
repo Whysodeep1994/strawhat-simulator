@@ -6,6 +6,9 @@ import {
   findCard,
   legalActions,
   opponentOf,
+  overtimeResult,
+  overtimeTurn,
+  startOvertime,
   type Action,
   type CardCatalog,
   type DeckList,
@@ -39,8 +42,11 @@ export interface LocalGame {
   stats: GameStats;
   /** Each player's 15-minute game clock (see clock.ts). */
   clock: Clock;
-  /** The player who ran out of time, if that's how the game ended. */
-  timedOut?: PlayerId;
+  /**
+   * Overtime: `by` ran out of time during turn `from`, which became overtime turn 0. The game
+   * ends after three more turns (see startOvertime in the engine's rules.ts).
+   */
+  overtime?: Overtime;
   /** The game as it began, so Pro Drills can replay it move by move for its report. */
   initial: GameState;
   /** A Player Development game: the guided New Player game, or a Pro Drill. */
@@ -51,6 +57,11 @@ export interface LocalGame {
 
 /** Player Development modes. Training games have no game clock, so there's time to learn. */
 export type Training = { mode: "newPlayer" } | { mode: "drills"; liveCoaching: boolean };
+
+export interface Overtime {
+  by: PlayerId;
+  from: number;
+}
 
 export interface LogEntry {
   id: number;
@@ -168,27 +179,34 @@ export function botStep(game: LocalGame): LocalGame {
  * screen, since their own page ends the game for them at zero and moves take a moment to travel.
  */
 export function outOfTime(game: LocalGame, now: number = Date.now()): PlayerId | null {
-  if (game.training) return null;
+  if (game.training || game.overtime) return null;
   const player = running(game.state);
   if (!player) return null;
   const grace = game.opponent === "friend" && player !== game.human ? FRIEND_GRACE_MS : 0;
   return timeLeft(game.clock, game.state, player, now) <= -grace ? player : null;
 }
 
-/** Ends the game with `player` losing on time. */
-export function timeOut(game: LocalGame, player: PlayerId, now: number = Date.now()): LocalGame {
-  if (game.state.winner !== null) return game;
-  const lastId = game.log.at(-1)?.id ?? 0;
-  const next = act(game, { type: "concede", player }, now);
+/**
+ * `player`'s clock ran out: rather than losing, the game goes to overtime (tournament Floor
+ * Rules). Turn `from` (the turn being played, by default) is overtime turn 0, then three more
+ * turns are played, and at the end of turn 3 the player with more Life wins. Their clock stays
+ * at 0:00 and no longer counts.
+ */
+export function timeOut(
+  game: LocalGame,
+  player: PlayerId,
+  from: number = game.state.turn,
+): LocalGame {
+  // Already in overtime: only an earlier start (a friend's page saw it first) replaces it.
+  if (game.state.winner !== null || (game.overtime && game.overtime.from <= from)) return game;
+  const id = (game.log.at(-1)?.id ?? 0) + 1;
+  const text = `${playerName(player, game.human)} ran out of time. Overtime: this is turn 0, and the game ends after turn 3.`;
   return {
-    ...next,
-    timedOut: player,
-    clock: { ...next.clock, used: { ...next.clock.used, [player]: CLOCK_MS } },
-    log: next.log.map((entry) =>
-      entry.id > lastId && entry.text.endsWith(" conceded.")
-        ? { ...entry, text: `${playerName(player, game.human)} ran out of time.` }
-        : entry,
-    ),
+    ...game,
+    state: startOvertime(game.state, from),
+    overtime: { by: player, from },
+    clock: { ...game.clock, used: { ...game.clock.used, [player]: CLOCK_MS } },
+    log: [...game.log, { id, player: null, text }].slice(-200),
   };
 }
 
@@ -342,9 +360,11 @@ function describeChanges(
   if (before.turn !== after.turn && after.turn > 0 && after.winner === null) {
     lines.push({
       player: after.turnPlayer,
-      text: `Turn ${after.turn}: ${after.turnPlayer === human ? "your" : "the opponent's"} turn.`,
+      text: `Turn ${after.turn}${overtimeTurn(after) === null ? "" : ` (overtime turn ${overtimeTurn(after)} of 3)`}: ${after.turnPlayer === human ? "your" : "the opponent's"} turn.`,
     });
   }
+  const decided = before.winner === null ? overtimeDecided(after, human) : null;
+  if (decided) lines.push({ player: null, text: decided });
   if (before.winner === null && after.winner !== null) {
     lines.push({
       player: null,
@@ -357,4 +377,22 @@ function describeChanges(
     });
   }
   return lines;
+}
+
+/**
+ * Why overtime ended the game, such as "Overtime is over: you have more Life cards." Null
+ * unless the game ended with overtime turn 3 (in overtime, a game can still end the usual way).
+ */
+export function overtimeDecided(state: GameState, human: PlayerId): string | null {
+  if (!state.overtimeOver) return null;
+  const { winner, by } = overtimeResult(state);
+  const who = winner === human ? "you have" : "the opponent has";
+  const why: Record<typeof by, string> = {
+    life: `${who} more Life cards`,
+    deck: `Life is tied, and ${who} more cards left in the deck`,
+    characters: `Life and decks are tied, and ${who} more Characters`,
+    lastLifeLost: `Life, decks and Characters are tied, and ${winner === human ? "you" : "the opponent"} took a Life card last`,
+    tie: "Life, decks and Characters are all tied",
+  };
+  return `Overtime is over: ${why[by]}.`;
 }

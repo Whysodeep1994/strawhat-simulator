@@ -1,6 +1,7 @@
 import {
   legalActions,
   opponentOf,
+  overtimeTurn,
   viewFor,
   type Action,
   type CardInstance,
@@ -25,7 +26,14 @@ import { defenseTip, matchupTips, turnTips, type Tip } from "./coach-tips.js";
 import type { Suggestion } from "./coach.js";
 import { cardText, timingTag } from "./describe.js";
 import { CoachTips, ReportView, TutorBox } from "./Develop.js";
-import { botStep, botToAct, humanAct, outOfTime, type LocalGame } from "./local-game.js";
+import {
+  botStep,
+  botToAct,
+  humanAct,
+  outOfTime,
+  overtimeDecided,
+  type LocalGame,
+} from "./local-game.js";
 import { CHAT_LENGTH, type ChatLine } from "./online.js";
 import { counterFor } from "./menu.js";
 import { MIN_TURNS, qualifies, TIER_POINTS, trophyById } from "./trophies.js";
@@ -287,6 +295,16 @@ export function Board({
     return () => clearTimeout(timer);
   }, [view.turn]);
 
+  // Overtime: which of its turns this is (0 to 3), and a banner when it begins.
+  const overtime = overtimeTurn(game.state);
+  const [timeCall, setTimeCall] = useState(false);
+  useEffect(() => {
+    if (!game.overtime || view.winner !== null) return;
+    setTimeCall(true);
+    const timer = setTimeout(() => setTimeCall(false), 2500);
+    return () => clearTimeout(timer);
+  }, [game.overtime?.from]);
+
   function act(action: Action) {
     try {
       setError(null);
@@ -438,6 +456,7 @@ export function Board({
       def={def}
       mode={mode}
       friend={game.opponent === "friend"}
+      overtime={overtime}
       onCancel={() => setMode({ kind: "none" })}
       defense={
         myPrompt?.kind === "counter" || myPrompt?.kind === "block" ? (
@@ -593,16 +612,42 @@ export function Board({
         <div className="danger-edge" aria-hidden="true" />
       ) : null}
 
-      {banner !== null && (
-        <div key={banner} className={`turn-banner ${yourTurn ? "yours" : "theirs"}`} role="status">
+      {timeCall ? (
+        <div className="turn-banner overtime" role="status">
           <span>
-            {yourTurn
-              ? "Your turn"
-              : game.opponent === "friend"
-                ? "Friend's turn"
-                : "Opponent's turn"}
+            Time! Overtime
+            <small>
+              {game.overtime?.by === me
+                ? "You"
+                : game.opponent === "friend"
+                  ? "Your friend"
+                  : "Your opponent"}{" "}
+              ran out of time
+              <br />3 more turns, then most Life wins
+            </small>
           </span>
         </div>
+      ) : (
+        banner !== null && (
+          <div
+            key={banner}
+            className={`turn-banner ${yourTurn ? "yours" : "theirs"}`}
+            role="status"
+          >
+            <span>
+              {yourTurn
+                ? "Your turn"
+                : game.opponent === "friend"
+                  ? "Friend's turn"
+                  : "Opponent's turn"}
+              {overtime !== null && (
+                <small>
+                  Overtime turn {overtime} of 3{overtime === 3 ? " (last turn)" : ""}
+                </small>
+              )}
+            </span>
+          </div>
+        )
       )}
 
       <aside className="side">
@@ -978,15 +1023,12 @@ export function Board({
       {view.winner !== null && !showReport && (
         <Modal title={view.winner === me ? "Victory!" : view.winner === "draw" ? "Draw" : "Defeat"}>
           <p className={`result ${view.winner === me ? "win" : "lose"}`}>
-            {game.timedOut
-              ? game.timedOut === me
-                ? "You ran out of time."
-                : `${game.opponent === "friend" ? "Your friend" : "Your opponent"} ran out of time.`
-              : view.winner === me
+            {overtimeDecided(game.state, me) ??
+              (view.winner === me
                 ? "You knocked out the opponent's Leader."
                 : view.winner === "draw"
                   ? "Both players lost at the same time."
-                  : "Better luck next time."}
+                  : "Better luck next time.")}
           </p>
           {trophies.length > 0 ? (
             <ul className="result-trophies">
@@ -1003,11 +1045,9 @@ export function Board({
             </ul>
           ) : !qualifies(game.stats, game.state) ? (
             <p className="note">
-              {game.timedOut === me
-                ? "Games lost on time don't count toward trophies."
-                : game.stats.conceded
-                  ? "Conceded games don't count toward trophies."
-                  : `Games count toward trophies after ${MIN_TURNS} of your own turns.`}
+              {game.stats.conceded
+                ? "Conceded games don't count toward trophies."
+                : `Games count toward trophies after ${MIN_TURNS} of your own turns.`}
             </p>
           ) : null}
           {review && (
@@ -1236,6 +1276,7 @@ function StatusBar({
   def,
   mode,
   friend,
+  overtime,
   onCancel,
   defense,
   children,
@@ -1245,6 +1286,8 @@ function StatusBar({
   def: DefOf;
   mode: Mode;
   friend: boolean;
+  /** Which overtime turn this is (0 to 3), or null before anyone's clock runs out. */
+  overtime: number | null;
   onCancel: () => void;
   /** Takes the message's place while you're being attacked. */
   defense?: ReactNode;
@@ -1273,6 +1316,11 @@ function StatusBar({
         <span>
           Turn {view.turn} · {phaseName(view.phase)}
         </span>
+        {overtime !== null && (
+          <em className={`overtime-tag ${overtime === 3 ? "last" : ""}`}>
+            Overtime turn {overtime} of 3
+          </em>
+        )}
       </div>
       {defense ??
         (battle && attacker && target ? (
@@ -1547,7 +1595,10 @@ function AttackArrow({
 /** Under a minute left, a clock turns red. */
 const LOW_TIME_MS = 60 * 1000;
 
-/** Both players' game clocks. The one that's running glows; at zero, that player loses. */
+/**
+ * Both players' game clocks. The one that's running glows; at zero, the game goes to overtime
+ * (three more turns, then the player with more Life wins).
+ */
 function Clocks({ game, onTimeout }: { game: LocalGame; onTimeout: (player: PlayerId) => void }) {
   const [now, setNow] = useState(Date.now);
   const live = running(game.state);
@@ -1567,11 +1618,19 @@ function Clocks({ game, onTimeout }: { game: LocalGame; onTimeout: (player: Play
   const friend = game.opponent === "friend";
   const clock = (player: PlayerId, label: string) => {
     const left = timeLeft(game.clock, game.state, player, now);
-    const state = live === player ? "on" : "off";
+    // In overtime the clocks no longer decide anything, so they stop glowing.
+    const state = game.overtime ? "off" : live === player ? "on" : "off";
+    if (game.overtime?.by === player)
+      return (
+        <div className="clock out" aria-label={`${label} ran out of time`}>
+          <span>{label}</span>
+          <strong>Time!</strong>
+        </div>
+      );
     return (
       <div
-        className={`clock ${state} ${left < LOW_TIME_MS ? "low" : ""}`}
-        aria-label={`${label} time left: ${formatClock(left)}${live === player ? ", running" : ""}`}
+        className={`clock ${state} ${left < LOW_TIME_MS && !game.overtime ? "low" : ""}`}
+        aria-label={`${label} time left: ${formatClock(left)}${state === "on" ? ", running" : ""}`}
       >
         <span>{label}</span>
         <strong>{formatClock(left)}</strong>
