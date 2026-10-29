@@ -28,6 +28,11 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-29: Searched cards are revealed (rule 11-2-1). When an effect picks a card from the
+  deck for a condition ("reveal up to 1 {Straw Hat Crew} type card and add it to your hand"),
+  the card is held up in the middle of the table for 3 seconds for both players, then goes to
+  the hand. The computer waits while it shows, and online the friend sees it too. Plain draws and
+  searches with no condition stay hidden.
 - 2026-10-28: Player Development, a new title menu mode with two tracks. New Player: seven short
   lessons, then a guided game with a Luffy starter deck (ST-01, ST-18 or ST-21) against
   Edward.Newgate's all-red ST-15. A coach explains each decision, suggests a move (glowing green,

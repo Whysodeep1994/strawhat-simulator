@@ -488,7 +488,7 @@ Comprehensive Rules version 1.2.1.
 | 11-1-1-2 | 11-1 Infinite Loops | Phase 4 (effects) | 0 |
 | 11-1-1-3 | 11-1 Infinite Loops | Phase 4 (effects) | 0 |
 | 11-2 | 11-2 Revealing Cards | Section heading | 0 |
-| 11-2-1 | 11-2 Revealing Cards | Tested | 10 |
+| 11-2-1 | 11-2 Revealing Cards | Tested | 12 |
 | 11-2-2 | 11-2 Revealing Cards | Phase 4 (effects) | 0 |
 | 11-3 | 11-3 Viewing Secret Areas | Tested | 4 |
 | 11-3-1 | 11-3 Viewing Secret Areas | Tested | 8 |

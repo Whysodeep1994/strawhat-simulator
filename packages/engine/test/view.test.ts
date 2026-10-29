@@ -184,4 +184,46 @@ describe("searching the top of your deck", () => {
     expect(after.players.p1.hand).toHaveLength(0);
     expect(after.players.p1.deck).toHaveLength(3);
   });
+
+  it("11-2-1: a card picked for a condition is shown to both players as it goes to the hand", () => {
+    const game = search(["TEST-FILLER", "TEST-C2-3000", "TEST-FILLER"]);
+    const picked = game.players.p1.deck[1]!.uid;
+    const after = applyAction(game, { type: "choose", player: "p1", cards: [picked] });
+    expect(after.players.p1.hand.map((c) => c.uid)).toEqual([picked]);
+    expect(viewFor(after, "p2").revealed.map((c) => c.cardId)).toEqual(["TEST-C2-3000"]);
+    expect(viewFor(after, "p1").revealed.map((c) => c.cardId)).toEqual(["TEST-C2-3000"]);
+    // The next move ends the reveal.
+    const next = applyAction(after, legalActions(after, "p1").find((a) => a.type === "endTurn")!);
+    expect(viewFor(next, "p2").revealed).toEqual([]);
+  });
+
+  it("11-2-1: a card taken with no condition, or no card at all, stays hidden", () => {
+    const catalog: CardCatalog = {
+      ...TEST_CATALOG,
+      "TEST-SEARCH-ANY": {
+        ...TEST_CATALOG["TEST-SEARCH"]!,
+        id: "TEST-SEARCH-ANY",
+        effects: [{ timing: "onPlay", steps: [{ do: "searchDeck", look: 3, take: 1 }] }],
+      },
+    };
+    let game = buildScenarioState(
+      { p1: { hand: ["TEST-SEARCH-ANY"], don: { active: 1 }, deck: ["TEST-C2-3000"] } },
+      catalog,
+    );
+    game = applyAction(game, {
+      type: "playCard",
+      player: "p1",
+      card: game.players.p1.hand[0]!.uid,
+    });
+    const card = game.players.p1.deck[0]!.uid;
+    const after = applyAction(game, { type: "choose", player: "p1", cards: [card] });
+    expect(after.players.p1.hand.map((c) => c.uid)).toEqual([card]);
+    expect(viewFor(after, "p2").revealed).toEqual([]);
+    const none = applyAction(search(["TEST-FILLER", "TEST-C2-3000"]), {
+      type: "choose",
+      player: "p1",
+      cards: [],
+    });
+    expect(viewFor(none, "p2").revealed).toEqual([]);
+  });
 });
