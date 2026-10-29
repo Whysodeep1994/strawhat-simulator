@@ -12,6 +12,7 @@ import {
   startOvertime,
   type Action,
   type CardCatalog,
+  type CardInstance,
   type DeckList,
   type GameState,
   type PlayerId,
@@ -54,6 +55,15 @@ export interface LocalGame {
   training?: Training;
   /** Pro Drills: the game before each action, then as it is now, for the end-of-game report. */
   states?: GameState[];
+  /** Cards an effect showed to both players, newest last, for the board to hold up. */
+  reveals?: Reveal[];
+}
+
+/** Cards shown to both players, such as a searched card on its way to the hand (rule 11-2-1). */
+export interface Reveal {
+  /** The number of moves made when it happened, so each reveal is shown once. */
+  id: number;
+  cards: CardInstance[];
 }
 
 /** Player Development modes. Training games have no game clock, so there's time to learn. */
@@ -222,10 +232,18 @@ function act(game: LocalGame, action: Action, now: number = Date.now()): LocalGa
   const entries = lines
     .filter((l): l is { player: PlayerId | null; text: string } => l !== null)
     .map((l) => ({ ...l, id: ++id }));
+  // Online, several moves can arrive at once, so each reveal is kept until the board shows it.
+  const shown = (after.revealed ?? [])
+    .map((uid) => findCard(after, uid))
+    .filter((c): c is CardInstance => c !== null);
+  const reveals = shown.length
+    ? [...(game.reveals ?? []), { id: game.actions.length + 1, cards: structuredClone(shown) }]
+    : game.reveals;
   return {
     ...game,
     state: after,
     actions: [...game.actions, action],
+    ...(reveals && { reveals: reveals.slice(-10) }),
     ...(game.states && { states: [...game.states, after] }),
     log: [...game.log, ...entries].slice(-200),
     stats: trackAction(game.stats, game.human, before, action, after),

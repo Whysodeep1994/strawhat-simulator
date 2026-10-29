@@ -1069,6 +1069,94 @@ button.pile {
     0 3px 0 #000,
     0 0 24px rgba(255, 93, 108, 0.6);
 }
+/* A revealed card held up in the middle of the table for a few seconds (rule 11-2-1). */
+.reveal-show {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(4, 10, 20, 0.55), transparent 70%);
+  animation: reveal-fade var(--reveal-ms, 3000ms) ease forwards;
+}
+.reveal-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 22px 20px;
+  border: 2px solid var(--gold);
+  border-radius: 14px;
+  background: rgba(4, 10, 20, 0.88);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba(245, 200, 76, 0.35);
+  overflow: hidden;
+  max-width: calc(100vw - 32px);
+}
+.reveal-show.theirs .reveal-box {
+  border-color: var(--danger);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba(255, 93, 108, 0.35);
+}
+.reveal-box strong {
+  font-family: Bangers, Impact, sans-serif;
+  font-size: clamp(24px, 4vw, 40px);
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  text-shadow: 0 2px 0 #000;
+}
+.reveal-show.theirs .reveal-box strong {
+  color: var(--danger);
+}
+.reveal-box span {
+  font-size: 15px;
+  opacity: 0.9;
+}
+.reveal-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+/* Shrinks along the bottom edge to show how long the card stays up. */
+.reveal-timer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  width: 100%;
+  background: var(--gold);
+  transform-origin: left;
+  animation: reveal-timer var(--reveal-ms, 3000ms) linear forwards;
+}
+.reveal-show.theirs .reveal-timer {
+  background: var(--danger);
+}
+@keyframes reveal-timer {
+  to {
+    transform: scaleX(0);
+  }
+}
+@keyframes reveal-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  10%,
+  88% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9);
+  }
+}
 @keyframes banner-sweep {
   0% {
     opacity: 0;

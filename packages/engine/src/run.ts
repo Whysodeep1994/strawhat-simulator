@@ -1153,10 +1153,12 @@ function runStep(
         looked,
       );
       if (chosen === "wait") return "wait";
-      // Rule 11-2-1: cards moved from the deck to the hand are revealed.
       const rest = looked.filter((c) => !chosen.includes(c.uid));
       p.deck = p.deck.slice(looked.length);
       const taken = looked.filter((c) => chosen.includes(c.uid));
+      // Rule 11-2-1: a card picked for a condition ("up to 1 {Straw Hat Crew} card") is
+      // shown to both players on its way from the deck to the hand.
+      if (!step.to && step.filter && taken.length > 0) state.revealed = taken.map((c) => c.uid);
       if (step.to === "lifeFaceUp" || step.to === "life") {
         if (step.to === "lifeFaceUp") for (const card of taken) card.faceUp = true;
         p.life.unshift(...taken);

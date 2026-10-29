@@ -33,6 +33,7 @@ import {
   outOfTime,
   overtimeDecided,
   type LocalGame,
+  type Reveal,
 } from "./local-game.js";
 import { CHAT_LENGTH, type ChatLine } from "./online.js";
 import { counterFor } from "./menu.js";
@@ -82,6 +83,8 @@ interface Menu {
 }
 
 const BOT_DELAY_MS = 650;
+/** How long a revealed card is held up for both players to see. */
+const REVEAL_MS = 3000;
 
 const CHOOSE_TEXT: Record<string, string> = {
   ko: "Choose cards to K.O.",
@@ -151,6 +154,11 @@ export function Board({
   const [confirmConcede, setConfirmConcede] = useState(false);
   const [showSound, setShowSound] = useState(false);
   const [banner, setBanner] = useState<number | null>(null);
+  /** The revealed cards being held up now, and the last reveal shown (from earlier moves too). */
+  const [reveal, setReveal] = useState<Reveal | null>(null);
+  const seenReveal = useRef({ game: game.initial, id: game.reveals?.at(-1)?.id ?? 0 });
+  if (seenReveal.current.game !== game.initial) seenReveal.current = { game: game.initial, id: 0 };
+  const revealWaiting = !!game.reveals?.some((r) => r.id > seenReveal.current.id);
   const training = game.training;
   const tutoring = training?.mode === "newPlayer";
   const coaching = training?.mode === "drills" && training.liveCoaching;
@@ -277,12 +285,28 @@ export function Board({
     [game.state.winner, training],
   );
 
-  // The computer acts on its own, a little slowly so you can follow along.
+  // A card an effect reveals, such as a searched card going to the hand, is held up for a
+  // few seconds so the other player sees it (rule 11-2-1). Each reveal is shown in turn.
   useEffect(() => {
-    if (!botToAct(game)) return;
+    if (reveal) return;
+    const next = game.reveals?.find((r) => r.id > seenReveal.current.id);
+    if (!next) return;
+    seenReveal.current = { game: game.initial, id: next.id };
+    setReveal(next);
+  }, [game.reveals, reveal]);
+  useEffect(() => {
+    if (!reveal) return;
+    const timer = setTimeout(() => setReveal(null), REVEAL_MS);
+    return () => clearTimeout(timer);
+  }, [reveal]);
+
+  // The computer acts on its own, a little slowly so you can follow along. It waits while a
+  // revealed card is being shown.
+  useEffect(() => {
+    if (!botToAct(game) || reveal || revealWaiting) return;
     const timer = setTimeout(() => onChange(botStep(game)), BOT_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [game, onChange]);
+  }, [game, onChange, reveal, revealWaiting]);
 
   // Even with no Counter cards, the Counter Step waits for you to take the hit yourself.
   const hasCounters = legal.some((a) => a.type === "counter" || a.type === "counterEvent");
@@ -650,6 +674,20 @@ export function Board({
             </span>
           </div>
         )
+      )}
+
+      {reveal && (
+        <RevealShow
+          key={reveal.id}
+          cards={reveal.cards}
+          mine={reveal.cards[0]?.owner === me}
+          who={game.opponent === "friend" ? "Your friend" : "Your opponent"}
+          toHand={reveal.cards.every((c) =>
+            game.state.players[c.owner].hand.some((h) => h.uid === c.uid),
+          )}
+          def={def}
+          art={art}
+        />
       )}
 
       <aside className="side">
@@ -1835,6 +1873,52 @@ function Chat({ lines, onSay }: { lines: ChatLine[]; onSay: (text: string) => vo
         </button>
       </form>
     </section>
+  );
+}
+
+/** Revealed cards held up in the middle of the table for both players to see. */
+function RevealShow({
+  cards,
+  mine,
+  who,
+  toHand,
+  def,
+  art,
+}: {
+  cards: CardInstance[];
+  /** Your own cards, shown to your opponent. */
+  mine: boolean;
+  who: string;
+  toHand: boolean;
+  def: DefOf;
+  art: (card: CardInstance) => string | undefined;
+}) {
+  const names = cards.map((c) => def(c)?.name ?? "a card").join(", ");
+  const title = mine ? "You reveal" : `${who} reveals`;
+  const note = toHand
+    ? mine
+      ? "Shown to your opponent, then added to your hand"
+      : "Added to their hand"
+    : mine
+      ? "Shown to your opponent"
+      : "";
+  return (
+    <div
+      className={`reveal-show ${mine ? "mine" : "theirs"}`}
+      role="status"
+      aria-label={`${title} ${names}`}
+    >
+      <div className="reveal-box" style={{ "--reveal-ms": `${REVEAL_MS}ms` } as CSSProperties}>
+        <strong>{title}</strong>
+        <div className="reveal-cards">
+          {cards.map((c) => (
+            <CardView key={c.uid} def={def(c)} image={art(c)} size="large" />
+          ))}
+        </div>
+        {note && <span>{note}</span>}
+        <i className="reveal-timer" aria-hidden="true" />
+      </div>
+    </div>
   );
 }
 
