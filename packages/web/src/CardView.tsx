@@ -22,6 +22,8 @@ interface Props {
   rested?: boolean;
   don?: number;
   power?: number | undefined;
+  /** Current cost on the field; shown in a chip when effects have changed it. */
+  cost?: number | undefined;
   /** Keywords the card has right now; any it doesn't print, such as a gained [Double Attack], get a tag. */
   keywords?: Keyword[] | undefined;
   glow?: Glow;
@@ -42,6 +44,7 @@ export function CardView({
   rested,
   don = 0,
   power,
+  cost,
   keywords,
   glow = null,
   dim,
@@ -83,6 +86,7 @@ export function CardView({
   const gained = (keywords ?? []).filter((k) => GAINED_TAGS.has(k) && !def.keywords?.includes(k));
   const shownPower = power ?? def.power;
   const changed = power !== undefined && def.power !== undefined && power !== def.power;
+  const costChanged = cost !== undefined && def.cost !== undefined && cost !== def.cost;
   const interactive = onClick
     ? {
         role: "button",
@@ -111,6 +115,14 @@ export function CardView({
       )}
       {changed && (
         <div className={`card-power-chip ${power! > def.power! ? "up" : "down"}`}>{shownPower}</div>
+      )}
+      {costChanged && (
+        <div
+          className={`card-cost-chip ${cost > def.cost! ? "up" : "down"}`}
+          title={`Cost ${cost} (printed ${def.cost})`}
+        >
+          {cost}
+        </div>
       )}
       {don > 0 && <div className="card-don">+{don} DON!!</div>}
       {gained.length > 0 && (

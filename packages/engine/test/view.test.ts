@@ -186,6 +186,32 @@ describe("searching the top of your deck", () => {
   });
 });
 
+describe("current costs on the board", () => {
+  it("2-7-1: shows each Character's cost after effects such as +5 cost", () => {
+    const catalog: CardCatalog = {
+      ...TEST_CATALOG,
+      "TEST-C4-UP": {
+        ...TEST_CATALOG["TEST-C4-5000"]!,
+        id: "TEST-C4-UP",
+        effects: [
+          {
+            timing: "permanent",
+            steps: [{ do: "costChange", target: { side: "this" }, amount: 5 }],
+          },
+        ],
+      },
+    };
+    const board = buildScenarioState(
+      { p1: { characters: ["TEST-C4-UP", "TEST-C2-3000"] } },
+      catalog,
+    );
+    const [up, plain] = board.players.p1.characters;
+    const view = viewFor(board, "p2");
+    expect(view.costs[up!.uid]).toBe(9);
+    expect(view.costs[plain!.uid]).toBe(2);
+  });
+});
+
 describe("keywords on the field", () => {
   it("10-1-2: shows a gained [Double Attack], so the defender knows a hit takes 2 Life", () => {
     const game = buildScenarioState(

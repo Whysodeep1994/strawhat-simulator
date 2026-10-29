@@ -425,6 +425,7 @@ export function Board({
       rested={card.rested}
       don={card.givenDon}
       power={view.powers[card.uid]}
+      cost={view.costs[card.uid]}
       keywords={view.keywords[card.uid]}
       glow={glowFor(card.uid)}
       onHover={() => setDetail(def(card) ?? null)}
@@ -791,6 +792,7 @@ export function Board({
                   def={def(card)}
                   image={art(card)}
                   power={view.powers[card.uid]}
+                  cost={view.costs[card.uid]}
                   dim={!option}
                   glow={
                     chosen

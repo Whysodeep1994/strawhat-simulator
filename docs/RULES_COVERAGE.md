@@ -92,7 +92,7 @@ Comprehensive Rules version 1.2.1.
 | 2-6-2 | 2-6 Power | Phase 4 (card data) | 0 |
 | 2-6-3 | 2-6 Power | Tested | 1 |
 | 2-7 | 2-7 Cost | Tested | 1 |
-| 2-7-1 | 2-7 Cost | Tested | 4 |
+| 2-7-1 | 2-7 Cost | Tested | 5 |
 | 2-7-2 | 2-7 Cost | Tested | 2 |
 | 2-7-3 | 2-7 Cost | Tested | 1 |
 | 2-7-4 | 2-7 Cost | Tested | 1 |

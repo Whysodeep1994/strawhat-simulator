@@ -1,5 +1,5 @@
 import type { Keyword } from "./cards.js";
-import { findCard, keywordsOf, powerOf } from "./state.js";
+import { costOf, findCard, keywordsOf, powerOf } from "./state.js";
 import type { Battle, CardInstance, GameState, Modifier, PlayerId, Prompt } from "./types.js";
 
 /** A face-up card, or just a count for a face-down pile. */
@@ -35,6 +35,8 @@ export interface GameView {
   modifiers: Modifier[];
   /** Current power of every Leader and Character on the field, after DON!! and effects. */
   powers: Record<string, number>;
+  /** Current cost of every Character and Stage on the field, after effects such as "+5 cost" (rule 2-7-1). */
+  costs: Record<string, number>;
   /**
    * Keywords every Leader and Character has right now, printed or gained from an effect,
    * e.g. a Character that gained [Double Attack] this turn.
@@ -92,6 +94,15 @@ export function viewFor(state: GameState, viewer: PlayerId): GameView {
           powerOf(state, c),
         ]),
       ),
+    ),
+    costs: Object.fromEntries(
+      (["p1", "p2"] as const).flatMap((id) => {
+        const p = state.players[id];
+        return [...p.characters, ...(p.stage ? [p.stage] : [])].map((c) => [
+          c.uid,
+          costOf(state, c),
+        ]);
+      }),
     ),
     keywords: Object.fromEntries(
       (["p1", "p2"] as const).flatMap((id) =>
