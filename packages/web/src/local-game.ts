@@ -4,6 +4,7 @@ import {
   createGame,
   definitionOf,
   findCard,
+  keywordsOf,
   legalActions,
   opponentOf,
   type Action,
@@ -311,6 +312,30 @@ function describeAction(
   }
 }
 
+/**
+ * "You lost 2 Life cards ([Double Attack]). Life: 3." Says how many cards moved, so a
+ * Double Attack or a heal is never a silent jump in the count.
+ */
+function lifeChange(
+  before: GameState,
+  player: PlayerId,
+  who: string,
+  was: number,
+  now: number,
+): string {
+  const n = Math.abs(now - was);
+  const cards = `${n} Life card${n === 1 ? "" : "s"}`;
+  if (now > was) return `${who} added ${cards}. Life: ${now}.`;
+  const battle = before.battle;
+  const attacker = battle ? findCard(before, battle.attacker) : null;
+  const double =
+    n >= 2 &&
+    battle?.target === before.players[player].leader.uid &&
+    attacker !== null &&
+    keywordsOf(before, attacker).includes("doubleAttack");
+  return `${who} lost ${cards}${double ? " ([Double Attack] deals 2 damage)" : ""}. Life: ${now}.`;
+}
+
 function describeChanges(
   before: GameState,
   after: GameState,
@@ -321,8 +346,11 @@ function describeChanges(
     const was = before.players[player];
     const now = after.players[player];
     const who = playerName(player, human);
-    if (now.life.length < was.life.length) {
-      lines.push({ player, text: `${who} took damage. Life: ${now.life.length}.` });
+    if (now.life.length !== was.life.length) {
+      lines.push({
+        player,
+        text: lifeChange(before, player, who, was.life.length, now.life.length),
+      });
     }
     const onField = new Set(now.characters.map((c) => c.uid));
     for (const card of was.characters) {

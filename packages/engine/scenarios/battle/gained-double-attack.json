@@ -1,0 +1,25 @@
+{
+  "name": "A Character that gained [Double Attack] from a [DON!! x1] effect deals 2 damage",
+  "rules": ["10-1-2", "10-1-2-1", "7-1-4-1-1-3"],
+  "setup": {
+    "p1": {
+      "characters": [{ "card": "TEST-DON-DOUBLE", "don": 1 }]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    }
+  ],
+  "expect": {
+    "p2.life": 2,
+    "p2.hand": 2
+  }
+}

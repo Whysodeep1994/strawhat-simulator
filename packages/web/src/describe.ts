@@ -28,7 +28,7 @@ export const KEYWORD_NAMES: Record<Keyword, string> = {
   canAttackActive: "Can attack active Characters",
 };
 
-const KEYWORD_HELP: Record<Keyword, string> = {
+export const KEYWORD_HELP: Record<Keyword, string> = {
   rush: "This card can attack on the turn it is played.",
   rushCharacter: "This card can attack Characters on the turn it is played.",
   doubleAttack: "This card deals 2 damage.",

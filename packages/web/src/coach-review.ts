@@ -2,6 +2,7 @@ import {
   applyAction,
   definitionOf,
   hasKeyword,
+  keywordsOf,
   legalActions,
   opponentOf,
   type Action,
@@ -346,7 +347,7 @@ export function reviewGame(states: GameState[], actions: Action[], me: PlayerId)
             "Add just enough power to get above the attacker, using the smallest counters that do it.",
         });
       }
-      const double = hasKeyword(definitionOf(s, findAny(s, battle.attacker)!), "doubleAttack");
+      const double = keywordsOf(s, findAny(s, battle.attacker)!).includes("doubleAttack");
       if (leader && d.lifeBefore >= 4 && d.counters.length >= 2 && !double) {
         add(s, {
           severity: "minor",

@@ -425,6 +425,7 @@ export function Board({
       rested={card.rested}
       don={card.givenDon}
       power={view.powers[card.uid]}
+      keywords={view.keywords[card.uid]}
       glow={glowFor(card.uid)}
       onHover={() => setDetail(def(card) ?? null)}
       label={`${owner === me ? "Your" : "Opponent's"} ${def(card)?.name ?? "card"}`}
@@ -1341,7 +1342,7 @@ function Defense({
   const hit = leader
     ? life === 0
       ? "If it hits, you lose the game!"
-      : def(attacker)?.keywords?.includes("doubleAttack")
+      : view.keywords[attacker.uid]?.includes("doubleAttack")
         ? "If it hits, you take 2 damage ([Double Attack])."
         : "If it hits, you take 1 damage (lose 1 Life)."
     : `If it hits, your ${targetName} is K.O.'d.`;
