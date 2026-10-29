@@ -67,17 +67,40 @@ describe("game clocks", () => {
     );
   });
 
-  it("make the player who runs out lose, against the computer too", () => {
+  it("start overtime when a clock runs out, against the computer too", () => {
     // Say the computer froze while deciding.
     const game = until(newGame(), "p2");
     expect(outOfTime(game)).toBeNull();
     vi.setSystemTime(game.clock.since + CLOCK_MS - game.clock.used.p2);
     expect(outOfTime(game)).toBe("p2");
     const over = timeOut(game, "p2");
-    expect(over.state.winner).toBe("p1");
-    expect(over.timedOut).toBe("p2");
-    expect(over.log.map((l) => l.text)).toContain("Opponent ran out of time.");
-    expect(over.log.map((l) => l.text).join(" ")).not.toContain("conceded");
+    expect(over.state.winner).toBeNull();
+    expect(over.overtime).toEqual({ by: "p2", from: game.state.turn });
+    expect(over.state.lastTurn).toBe(game.state.turn + 3);
+    expect(over.log.at(-1)?.text).toBe(
+      "Opponent ran out of time. Overtime: this is turn 0, and the game ends after turn 3.",
+    );
+    // The clocks no longer decide anything.
+    vi.setSystemTime(Date.now() + 20 * MINUTE);
+    expect(outOfTime(over)).toBeNull();
+  });
+
+  it("end the game after overtime turn 3 and say who won and why", () => {
+    let game = timeOut(until(newGame(), "p2"), "p2");
+    const last = game.state.turn + 3;
+    for (let i = 0; i < 2000 && game.state.winner === null; i++) {
+      const prompt = game.state.prompt;
+      if (prompt.kind === "gameOver") break;
+      game =
+        prompt.player === game.human
+          ? humanAct(game, chooseBotAction(game.state, prompt.player))
+          : friendAct(game, chooseBotAction(game.state, prompt.player));
+    }
+    expect(game.state.winner).not.toBeNull();
+    expect(game.state.turn).toBeLessThanOrEqual(last);
+    const text = game.log.map((l) => l.text).join("\n");
+    expect(text).toContain("(overtime turn 1 of 3)");
+    if (game.state.overtimeOver) expect(text).toMatch(/Overtime is over: /);
   });
 
   it("give a friend a few seconds' grace before your page ends their game", () => {

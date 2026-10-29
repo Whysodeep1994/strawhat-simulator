@@ -6,7 +6,14 @@ import {
   type PlayerId,
 } from "@strawhat/engine";
 import type { Clock } from "./clock.js";
-import { friendAct, humanAct, newOnlineGame, timeOut, type LocalGame } from "./local-game.js";
+import {
+  friendAct,
+  humanAct,
+  newOnlineGame,
+  timeOut,
+  type LocalGame,
+  type Overtime,
+} from "./local-game.js";
 import { findRelay } from "./relay.js";
 
 /**
@@ -24,7 +31,9 @@ import { findRelay } from "./relay.js";
  *
  * The host is p1 and the guest p2; who goes first is left to the seed. A concession is a flag
  * on the note rather than a move, because it can happen while the other player is acting.
- * Running out of time is a flag too, and either page may raise it.
+ * Running out of time is a flag too, and either page may raise it. It starts overtime rather than
+ * ending the game, so the flag says which turn became overtime turn 0; both pages then end the
+ * game at the end of the same turn. If both pages raised it, the earlier turn counts.
  *
  * Each page keeps both game clocks, but a player's own page is the one that counts: its note
  * says how much time that player has used, and the other page takes that figure over its own,
@@ -118,6 +127,8 @@ interface Note {
   clock?: number;
   /** The player who ran out of time. */
   flagged?: PlayerId;
+  /** The turn in which they did: overtime turn 0. */
+  flaggedTurn?: number;
   /** This player's playmat and card backs. */
   look?: { mat: LookRef; back: LookRef };
   /** The next piece of a picture the partner is missing. */
@@ -126,6 +137,8 @@ interface Note {
   got?: Record<string, number>;
   /** Chat lines the partner hasn't got yet. */
   said?: Said;
+  /** Which version of the game this page runs (see BUILD); older pages send none. */
+  build?: string;
   /** How many of the partner's chat lines this player has. */
   heard?: number;
 }
@@ -142,7 +155,8 @@ export interface DuelSave {
   conceded?: boolean;
   /** Both game clocks, so time away from the game still counts after a reload. */
   clock?: Clock;
-  flagged?: PlayerId;
+  /** Who ran out of time, and when: the game's overtime. */
+  overtime?: Overtime;
   /** The partner's playmat and card backs, kept so a reload needn't fetch their pictures again. */
   theirs?: TheirLooks;
   /** The chat between the two players, oldest first. */
@@ -159,6 +173,18 @@ export type DuelStatus =
   | { kind: "full" }
   | { kind: "playing"; game: LocalGame; partnerHere: boolean }
   | { kind: "error"; message: string };
+
+/**
+ * The version of the game and card data this page runs, set when the site is built. Both pages
+ * replay the same moves, so they must run the same rules and cards: a page left open from before
+ * an update would play its own moves the old way (a Counter going to the Leader, say) and its
+ * game would drift from its partner's.
+ */
+export const BUILD: string = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
+
+/** What a page shows when its partner runs a different version of the game. */
+export const OTHER_VERSION =
+  "You and your friend have different versions of the game. Both of you: refresh the page, then start a new game.";
 
 const NOTE_LIMIT = 3800;
 const ROOM_PREFIX = "duel-";
@@ -283,6 +309,7 @@ export class DuelLink {
     private readonly catalog: CardCatalog,
     private readonly onStatus: (status: DuelStatus, save: DuelSave) => void,
     private readonly looks: Looks = DEFAULT_LOOKS,
+    private readonly build: string = BUILD,
   ) {
     this.save = save;
     for (const look of [looks.mat, looks.back]) {
@@ -321,12 +348,13 @@ export class DuelLink {
     this.report();
   }
 
-  /** Ends the game because `player`'s clock ran out (see outOfTime in local-game.ts). */
+  /** Starts overtime because `player`'s clock ran out (see outOfTime in local-game.ts). */
   timeOut(player: PlayerId): void {
     const game = this.game;
-    if (!game || this.error || game.state.winner !== null) return;
-    this.game = flag(game, player);
-    this.save = { ...this.save, flagged: player, clock: this.game.clock };
+    if (!game || this.error || game.state.winner !== null || game.overtime) return;
+    const overtime = { by: player, from: game.state.turn };
+    this.game = timeOut(game, overtime.by, overtime.from);
+    this.save = { ...this.save, overtime, clock: this.game.clock };
     this.publish();
     this.report();
   }
@@ -372,6 +400,7 @@ export class DuelLink {
       }
     }
     this.partnerHere = !!partner;
+    if (partner && (partner.build ?? "") !== this.build) this.error = OTHER_VERSION;
 
     if (partner) this.receiveLooks(partner);
     if (partner) this.hear(partner);
@@ -392,11 +421,13 @@ export class DuelLink {
         this.save.seed,
         this.me,
       );
+      // Overtime first, so the replay ends the game at the end of its last turn.
+      const overtime = this.save.overtime;
+      if (overtime) game = timeOut(game, overtime.by, overtime.from);
       // After a reload, replay the moves this page saved.
       for (const action of this.save.actions) game = replay(game, action);
       // The replay took no time, so the saved clocks still say how the game stood.
       if (this.save.clock) game = { ...game, clock: this.save.clock };
-      if (this.save.flagged) game = flag(game, this.save.flagged);
       if (this.save.conceded) game = concede(game, this.me);
       this.game = game;
     } catch (e) {
@@ -408,6 +439,8 @@ export class DuelLink {
   private catchUp(partner: Note): void {
     let game = this.game;
     if (!game) return;
+    // Overtime before the moves, since they may end its last turn.
+    game = this.overtimeFrom(game, partner);
     for (let i = 0; i < partner.moves.length; i++) {
       const index = partner.from + i;
       if (index < game.actions.length) continue;
@@ -430,10 +463,6 @@ export class DuelLink {
         clock: { ...game.clock, used: { ...game.clock.used, [them]: partner.clock } },
       };
     }
-    if ((partner.flagged === "p1" || partner.flagged === "p2") && game.state.winner === null) {
-      game = flag(game, partner.flagged);
-      this.save = { ...this.save, flagged: partner.flagged };
-    }
     if (partner.conceded && !this.theyConceded && game.state.winner === null) {
       this.theyConceded = true;
       game = concede(game, them);
@@ -442,6 +471,21 @@ export class DuelLink {
       this.game = game;
       this.save = { ...this.save, actions: game.actions, clock: game.clock };
     }
+  }
+
+  /**
+   * The game with the overtime your friend's page started, if any. When both pages started it,
+   * the earlier turn wins, so both end the game at the same point.
+   */
+  private overtimeFrom(game: LocalGame, partner: Note): LocalGame {
+    const by = partner.flagged;
+    if ((by !== "p1" && by !== "p2") || game.state.winner !== null) return game;
+    const from = typeof partner.flaggedTurn === "number" ? partner.flaggedTurn : game.state.turn;
+    if (game.overtime && game.overtime.from <= from) return game;
+    // Theirs started earlier than ours (or ours hasn't started): take theirs.
+    const next = timeOut(game, by, from);
+    this.save = { ...this.save, overtime: { by, from }, clock: next.clock };
+    return next;
   }
 
   /** Takes in the partner's chat lines that come next. */
@@ -586,8 +630,10 @@ export class DuelLink {
       partner: this.save.partner ?? null,
       conceded: this.save.conceded ? true : null,
       clock: this.game ? Math.round(this.game.clock.used[this.me]) : null,
-      flagged: this.save.flagged ?? null,
+      flagged: this.save.overtime?.by ?? null,
+      flaggedTurn: this.save.overtime?.from ?? null,
       look: { mat: lookRef(this.looks.mat), back: lookRef(this.looks.back) },
+      build: this.build,
       got: this.gotPieces(partner),
       heard: this.save.heard ?? 0,
       said: null,
@@ -635,12 +681,6 @@ function replay(game: LocalGame, action: Action): LocalGame {
 function concede(game: LocalGame, player: PlayerId): LocalGame {
   if (game.state.winner !== null) return game;
   return { ...replay(game, { type: "concede", player }), actions: game.actions };
-}
-
-/** Ends the game on time for `player` without adding a move to the shared list. */
-function flag(game: LocalGame, player: PlayerId): LocalGame {
-  if (game.state.winner !== null) return game;
-  return { ...timeOut(game, player), actions: game.actions };
 }
 
 /** Somewhere to hold game rooms: claude.ai's live room, or the Strawhat relay (relay.ts). */

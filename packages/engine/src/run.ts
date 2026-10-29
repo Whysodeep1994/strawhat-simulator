@@ -1,7 +1,7 @@
 import type { Cost, Duration, EffectDefinition, Step, Target } from "./effects.js";
 import { eligibleBlockers } from "./legal.js";
 import { shuffleInPlace } from "./rng.js";
-import { endGame, processRules } from "./rules.js";
+import { endGame, overtimeResult, processRules } from "./rules.js";
 import {
   basePowerOf,
   canPayCosts,
@@ -2277,6 +2277,7 @@ function lifeCardToHand(
   const card = takeLife(p.life, index);
   if (!card) return undefined;
   p.hand.push(card);
+  state.lastLifeLost = player;
   queueFieldEffects(state, player, "lifeAddedToHand");
   lifeLost(state, player);
   return card;
@@ -2612,6 +2613,7 @@ function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
     // See docs/RULES_QUESTIONS.md #1: running out of Life mid-damage does not end the game.
     const top = p.life[0];
     if (!top) return "done";
+    state.lastLifeLost = frame.defender;
     const hasTrigger = (definitionOf(state, top).effects ?? []).some((e) => e.timing === "trigger");
     // "When you take damage", once for each Life card (rule 7-1-4-1-1-2).
     if (frame.answer === null)
@@ -2711,6 +2713,12 @@ function runEndPhase(state: GameState, frame: FrameOf<"end-phase">): Outcome {
     (m) => m.until !== "turn" || (m.endsTurn ?? 0) > state.turn,
   );
   state.stack.splice(state.stack.lastIndexOf(frame), 1);
+  // Overtime ends with this turn: the Floor Rules decide who wins.
+  if (state.lastTurn !== undefined && state.turn >= state.lastTurn) {
+    state.overtimeOver = true;
+    endGame(state, overtimeResult(state).winner);
+    return "done";
+  }
   // "Take an extra turn after this one."
   const next = state.extraTurn === turnPlayer ? turnPlayer : other;
   delete state.extraTurn;
