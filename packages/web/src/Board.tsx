@@ -1,6 +1,7 @@
 import {
   legalActions,
   opponentOf,
+  overtimeTurn,
   viewFor,
   type Action,
   type CardInstance,
@@ -30,10 +31,12 @@ import {
   botToAct,
   humanAct,
   outOfTime,
+  overtimeDecided,
   type LocalGame,
   type Reveal,
 } from "./local-game.js";
 import { CHAT_LENGTH, type ChatLine } from "./online.js";
+import { counterFor } from "./menu.js";
 import { MIN_TURNS, qualifies, TIER_POINTS, trophyById } from "./trophies.js";
 import { Medal } from "./TrophyToasts.js";
 import { guide, LESSONS, newRules, type RuleNote } from "./tutor.js";
@@ -112,6 +115,9 @@ const CHOOSE_TEXT: Record<string, string> = {
   lifeToDeckTop: "Choose a Life card to put on top of your deck",
   arrangeLife: "Whose Life card do you want to look at?",
 };
+
+/** Choices that help one of your cards: while you defend, the attacked card is picked first. */
+const DEFEND_REASONS = new Set(["powerUp", "grantKeyword", "giveRestedDon"]);
 
 /** Choices where every card is picked and only the order matters: the first one tapped goes on top. */
 const ORDER_REASONS = new Set(["deckTopOrder", "lifeOrder"]);
@@ -209,11 +215,23 @@ export function Board({
     />
   );
 
-  // A new decision resets anything half-done.
+  // A new decision resets anything half-done. While you defend, an effect that powers up or
+  // helps one of your cards starts with the card being attacked already picked.
   useEffect(() => {
     setMode({ kind: "none" });
     setMenu(null);
-    setPicked([]);
+    const target = view.battle?.target;
+    setPicked(
+      myPrompt?.kind === "choose" &&
+        !myPrompt.hidden &&
+        myPrompt.max > 0 &&
+        DEFEND_REASONS.has(myPrompt.reason) &&
+        view.turnPlayer !== me &&
+        target &&
+        myPrompt.options.includes(target)
+        ? [target]
+        : [],
+    );
   }, [game.state]);
 
   // New Player: explain each rule the first time it happens.
@@ -290,13 +308,8 @@ export function Board({
     return () => clearTimeout(timer);
   }, [game, onChange, reveal, revealWaiting]);
 
-  // With no Counter cards to use, skip the Counter Step after a moment (Master Duel style).
+  // Even with no Counter cards, the Counter Step waits for you to take the hit yourself.
   const hasCounters = legal.some((a) => a.type === "counter" || a.type === "counterEvent");
-  useEffect(() => {
-    if (myPrompt?.kind !== "counter" || hasCounters) return;
-    const timer = setTimeout(() => act({ type: "pass", player: me }), 1100);
-    return () => clearTimeout(timer);
-  }, [myPrompt?.kind, hasCounters, game.state]);
 
   // A banner sweeps across the table when the turn changes, so you can't miss whose it is.
   useEffect(() => {
@@ -305,6 +318,16 @@ export function Board({
     const timer = setTimeout(() => setBanner(null), 1500);
     return () => clearTimeout(timer);
   }, [view.turn]);
+
+  // Overtime: which of its turns this is (0 to 3), and a banner when it begins.
+  const overtime = overtimeTurn(game.state);
+  const [timeCall, setTimeCall] = useState(false);
+  useEffect(() => {
+    if (!game.overtime || view.winner !== null) return;
+    setTimeCall(true);
+    const timer = setTimeout(() => setTimeCall(false), 2500);
+    return () => clearTimeout(timer);
+  }, [game.overtime?.from]);
 
   function act(action: Action) {
     try {
@@ -392,7 +415,7 @@ export function Board({
     }
     const block = actions.find((a) => a.type === "block");
     if (block) items.push({ label: "Block with this", run: () => act(block) });
-    const counter = actions.find((a) => a.type === "counter");
+    const counter = counterFor(actions, view.battle?.target);
     if (counter) items.push({ label: `Counter +${d?.counter ?? 0}`, run: () => act(counter) });
     const counterEvent = actions.find((a) => a.type === "counterEvent");
     if (counterEvent) items.push({ label: "Play Counter Event", run: () => act(counterEvent) });
@@ -444,6 +467,8 @@ export function Board({
       rested={card.rested}
       don={card.givenDon}
       power={view.powers[card.uid]}
+      cost={view.costs[card.uid]}
+      keywords={view.keywords[card.uid]}
       glow={glowFor(card.uid)}
       onHover={() => setDetail(def(card) ?? null)}
       label={`${owner === me ? "Your" : "Opponent's"} ${def(card)?.name ?? "card"}`}
@@ -457,6 +482,7 @@ export function Board({
       def={def}
       mode={mode}
       friend={game.opponent === "friend"}
+      overtime={overtime}
       onCancel={() => setMode({ kind: "none" })}
       defense={
         myPrompt?.kind === "counter" || myPrompt?.kind === "block" ? (
@@ -612,16 +638,42 @@ export function Board({
         <div className="danger-edge" aria-hidden="true" />
       ) : null}
 
-      {banner !== null && (
-        <div key={banner} className={`turn-banner ${yourTurn ? "yours" : "theirs"}`} role="status">
+      {timeCall ? (
+        <div className="turn-banner overtime" role="status">
           <span>
-            {yourTurn
-              ? "Your turn"
-              : game.opponent === "friend"
-                ? "Friend's turn"
-                : "Opponent's turn"}
+            Time! Overtime
+            <small>
+              {game.overtime?.by === me
+                ? "You"
+                : game.opponent === "friend"
+                  ? "Your friend"
+                  : "Your opponent"}{" "}
+              ran out of time
+              <br />3 more turns, then most Life wins
+            </small>
           </span>
         </div>
+      ) : (
+        banner !== null && (
+          <div
+            key={banner}
+            className={`turn-banner ${yourTurn ? "yours" : "theirs"}`}
+            role="status"
+          >
+            <span>
+              {yourTurn
+                ? "Your turn"
+                : game.opponent === "friend"
+                  ? "Friend's turn"
+                  : "Opponent's turn"}
+              {overtime !== null && (
+                <small>
+                  Overtime turn {overtime} of 3{overtime === 3 ? " (last turn)" : ""}
+                </small>
+              )}
+            </span>
+          </div>
+        )
       )}
 
       {reveal && (
@@ -652,7 +704,7 @@ export function Board({
           )}
           {myPrompt?.kind === "counter" && (
             <button className="primary" onClick={() => act({ type: "pass", player: me })}>
-              {!hasCounters ? "No counters…" : safe ? "Done countering" : "Take the hit"}
+              {!safe ? "Take the hit" : hasCounters ? "Done countering" : "Continue"}
             </button>
           )}
           {soundPanel && (
@@ -823,6 +875,7 @@ export function Board({
                   def={def(card)}
                   image={art(card)}
                   power={view.powers[card.uid]}
+                  cost={view.costs[card.uid]}
                   dim={!option}
                   glow={
                     chosen
@@ -1011,15 +1064,12 @@ export function Board({
       {view.winner !== null && !showReport && (
         <Modal title={view.winner === me ? "Victory!" : view.winner === "draw" ? "Draw" : "Defeat"}>
           <p className={`result ${view.winner === me ? "win" : "lose"}`}>
-            {game.timedOut
-              ? game.timedOut === me
-                ? "You ran out of time."
-                : `${game.opponent === "friend" ? "Your friend" : "Your opponent"} ran out of time.`
-              : view.winner === me
+            {overtimeDecided(game.state, me) ??
+              (view.winner === me
                 ? "You knocked out the opponent's Leader."
                 : view.winner === "draw"
                   ? "Both players lost at the same time."
-                  : "Better luck next time."}
+                  : "Better luck next time.")}
           </p>
           {trophies.length > 0 ? (
             <ul className="result-trophies">
@@ -1036,11 +1086,9 @@ export function Board({
             </ul>
           ) : !qualifies(game.stats, game.state) ? (
             <p className="note">
-              {game.timedOut === me
-                ? "Games lost on time don't count toward trophies."
-                : game.stats.conceded
-                  ? "Conceded games don't count toward trophies."
-                  : `Games count toward trophies after ${MIN_TURNS} of your own turns.`}
+              {game.stats.conceded
+                ? "Conceded games don't count toward trophies."
+                : `Games count toward trophies after ${MIN_TURNS} of your own turns.`}
             </p>
           ) : null}
           {review && (
@@ -1269,6 +1317,7 @@ function StatusBar({
   def,
   mode,
   friend,
+  overtime,
   onCancel,
   defense,
   children,
@@ -1278,6 +1327,8 @@ function StatusBar({
   def: DefOf;
   mode: Mode;
   friend: boolean;
+  /** Which overtime turn this is (0 to 3), or null before anyone's clock runs out. */
+  overtime: number | null;
   onCancel: () => void;
   /** Takes the message's place while you're being attacked. */
   defense?: ReactNode;
@@ -1306,6 +1357,11 @@ function StatusBar({
         <span>
           Turn {view.turn} · {phaseName(view.phase)}
         </span>
+        {overtime !== null && (
+          <em className={`overtime-tag ${overtime === 3 ? "last" : ""}`}>
+            Overtime turn {overtime} of 3
+          </em>
+        )}
       </div>
       {defense ??
         (battle && attacker && target ? (
@@ -1374,7 +1430,7 @@ function Defense({
   const hit = leader
     ? life === 0
       ? "If it hits, you lose the game!"
-      : def(attacker)?.keywords?.includes("doubleAttack")
+      : view.keywords[attacker.uid]?.includes("doubleAttack")
         ? "If it hits, you take 2 damage ([Double Attack])."
         : "If it hits, you take 1 damage (lose 1 Life)."
     : `If it hits, your ${targetName} is K.O.'d.`;
@@ -1401,13 +1457,17 @@ function Defense({
           ? "Tap a glowing [Blocker] to take the hit in its place, or don't block."
           : hasCounters
             ? "Tap a glowing card in your hand to add its counter power."
-            : "You have no counter cards, so the attack goes through…"}
+            : "You have no counter cards in hand."}
       </p>
-      {(step === "block" || hasCounters) && (
-        <button className={need ? "danger" : "primary"} onClick={onPass}>
-          {step === "block" ? "Don't block" : need ? "Take the hit" : "Done countering"}
-        </button>
-      )}
+      <button className={need ? "danger" : "primary"} onClick={onPass}>
+        {step === "block"
+          ? "Don't block"
+          : need
+            ? "Take the hit"
+            : hasCounters
+              ? "Done countering"
+              : "Continue"}
+      </button>
     </div>
   );
 }
@@ -1576,7 +1636,10 @@ function AttackArrow({
 /** Under a minute left, a clock turns red. */
 const LOW_TIME_MS = 60 * 1000;
 
-/** Both players' game clocks. The one that's running glows; at zero, that player loses. */
+/**
+ * Both players' game clocks. The one that's running glows; at zero, the game goes to overtime
+ * (three more turns, then the player with more Life wins).
+ */
 function Clocks({ game, onTimeout }: { game: LocalGame; onTimeout: (player: PlayerId) => void }) {
   const [now, setNow] = useState(Date.now);
   const live = running(game.state);
@@ -1596,11 +1659,19 @@ function Clocks({ game, onTimeout }: { game: LocalGame; onTimeout: (player: Play
   const friend = game.opponent === "friend";
   const clock = (player: PlayerId, label: string) => {
     const left = timeLeft(game.clock, game.state, player, now);
-    const state = live === player ? "on" : "off";
+    // In overtime the clocks no longer decide anything, so they stop glowing.
+    const state = game.overtime ? "off" : live === player ? "on" : "off";
+    if (game.overtime?.by === player)
+      return (
+        <div className="clock out" aria-label={`${label} ran out of time`}>
+          <span>{label}</span>
+          <strong>Time!</strong>
+        </div>
+      );
     return (
       <div
-        className={`clock ${state} ${left < LOW_TIME_MS ? "low" : ""}`}
-        aria-label={`${label} time left: ${formatClock(left)}${live === player ? ", running" : ""}`}
+        className={`clock ${state} ${left < LOW_TIME_MS && !game.overtime ? "low" : ""}`}
+        aria-label={`${label} time left: ${formatClock(left)}${state === "on" ? ", running" : ""}`}
       >
         <span>{label}</span>
         <strong>{formatClock(left)}</strong>

@@ -1,4 +1,4 @@
-import { chooseBotAction, validateDeck, viewFor } from "@strawhat/engine";
+import { buildScenarioState, chooseBotAction, validateDeck, viewFor } from "@strawhat/engine";
 import { describe, expect, it } from "vitest";
 import { DEMO_CATALOG, DEMO_DECKS } from "./fixtures/demo-cards.js";
 import { cardText } from "../src/describe.js";
@@ -54,6 +54,25 @@ describe("local game against the computer", () => {
     game = humanAct(game, { type: "keepHand", player: "p1" });
     expect(game.log.map((l) => l.text)).toContain("You chose to go first.");
     expect(game.log.map((l) => l.text)).toContain("You kept the opening hand.");
+  });
+
+  it("says how many Life cards a hit took, and why when it was [Double Attack]", () => {
+    const deck = Array<string>(10).fill("DEMO-R09");
+    const state = buildScenarioState(
+      {
+        p1: { leader: "DEMO-R00", characters: ["DEMO-R08"], deck, life: deck.slice(0, 3) },
+        p2: { leader: "DEMO-G00", life: ["DEMO-R09", "DEMO-R09", "DEMO-R09"], deck },
+      },
+      DEMO_CATALOG,
+    );
+    let game: LocalGame = { ...newGame(1), state };
+    const attacker = state.players.p1.characters[0]!.uid;
+    const target = state.players.p2.leader.uid;
+    game = humanAct(game, { type: "attack", player: "p1", attacker, target });
+    game = humanAct(game, { type: "pass", player: "p2" });
+    expect(game.log.map((l) => l.text)).toContain(
+      "Opponent lost 2 Life cards ([Double Attack] deals 2 damage). Life: 1.",
+    );
   });
 
   it("never shows the computer's hand in your view", () => {

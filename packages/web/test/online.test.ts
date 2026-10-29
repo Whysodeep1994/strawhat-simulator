@@ -2,12 +2,13 @@ import { chooseBotAction } from "@strawhat/engine";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CLOCK_MS, timeLeft } from "../src/clock.js";
 import { DEMO_CATALOG, DEMO_DECKS } from "./fixtures/demo-cards.js";
-import { humanAct, type LocalGame } from "../src/local-game.js";
+import { humanAct, timeOut, type LocalGame } from "../src/local-game.js";
 import {
   CHAT_LENGTH,
   cleanChat,
   cleanGameCode,
   DuelLink,
+  OTHER_VERSION,
   newGameCode,
   newSave,
   shareDeck,
@@ -99,7 +100,7 @@ interface Player {
   save: DuelSave;
 }
 
-function join(hub: Hub, save: DuelSave, looks?: Looks): Player {
+function join(hub: Hub, save: DuelSave, looks?: Looks, build?: string): Player {
   const room = new FakeRoom(hub);
   const player = { room, save, status: { kind: "waiting" } } as Player;
   player.link = new DuelLink(
@@ -111,6 +112,7 @@ function join(hub: Hub, save: DuelSave, looks?: Looks): Player {
       player.save = next;
     },
     looks,
+    build,
   );
   return player;
 }
@@ -235,6 +237,16 @@ describe("playing a friend online", () => {
     expect(gameOf(host).state.winner).toBe("p1");
   });
 
+  it("won't play a friend whose page runs another version of the game", () => {
+    const hub = new Hub();
+    const random = mulberry(5);
+    const host = join(hub, newSave("abc234", "host", DEMO_DECKS.red, random), undefined, "new");
+    const guest = join(hub, newSave("abc234", "guest", DEMO_DECKS.green, random), undefined, "old");
+    hub.flush();
+    expect(host.status).toEqual({ kind: "error", message: OTHER_VERSION });
+    expect(guest.status).toEqual({ kind: "error", message: OTHER_VERSION });
+  });
+
   it("tells a third player the game is full", () => {
     const { hub } = start(6);
     const late = join(hub, newSave("abc234", "guest", DEMO_DECKS.red));
@@ -263,21 +275,50 @@ describe("game clocks online", () => {
     expect(gameOf(host).clock.used.p2).toBe(gameOf(guest).clock.used.p2);
   });
 
-  it("end the game for both when a clock runs out", () => {
+  it("start overtime for both when a clock runs out, and end it at the same point", () => {
     const { hub, host, guest } = start(8);
     for (let i = 0; i < 6; i++) step(hub, [host, guest]);
     hub.flush();
     const prompt = gameOf(host).state.prompt;
     if (prompt.kind === "gameOver") throw new Error("game ended early");
     const slow = prompt.player;
+    const from = gameOf(host).state.turn;
     // The slow player's page raises it; the other page agrees.
     (slow === "p1" ? host : guest).link.timeOut(slow);
     hub.flush();
-    const winner = slow === "p1" ? "p2" : "p1";
-    expect(gameOf(host).state.winner).toBe(winner);
-    expect(gameOf(guest).state.winner).toBe(winner);
-    expect(gameOf(host).timedOut).toBe(slow);
-    expect(gameOf(guest).timedOut).toBe(slow);
+    for (const p of [host, guest]) {
+      expect(gameOf(p).state.winner).toBeNull();
+      expect(gameOf(p).overtime).toEqual({ by: slow, from });
+      expect(gameOf(p).state.lastTurn).toBe(from + 3);
+    }
+    // A page that reloads mid-overtime keeps it.
+    step(hub, [host, guest]);
+    hub.flush();
+    const saved = guest.save;
+    expect(saved.overtime).toEqual({ by: slow, from });
+    void guest.link.close();
+    hub.flush();
+    const back = join(hub, saved);
+    hub.flush();
+    expect(gameOf(back).overtime).toEqual({ by: slow, from });
+    while (step(hub, [host, back]));
+    hub.flush();
+    expect(gameOf(host).state.winner).not.toBeNull();
+    expect(gameOf(back).state.winner).toBe(gameOf(host).state.winner);
+    expect(gameOf(back).state.turn).toBe(gameOf(host).state.turn);
+    expect(gameOf(host).state.turn).toBeLessThanOrEqual(from + 3);
+  });
+
+  it("use the earlier turn when both pages start overtime", () => {
+    const { hub, host, guest } = start(8);
+    for (let i = 0; i < 6; i++) step(hub, [host, guest]);
+    hub.flush();
+    const turn = gameOf(host).state.turn;
+    // Each page saw it at a different point (say the guest's page was a turn behind).
+    host.link.timeOut("p2");
+    (guest.link as unknown as { game: LocalGame }).game = timeOut(gameOf(guest), "p2", turn + 1);
+    hub.flush();
+    for (const p of [host, guest]) expect(gameOf(p).overtime?.from).toBe(turn);
   });
 
   it("keep counting while a page is closed, and after Rejoin", () => {
