@@ -22,6 +22,8 @@ interface Props {
   rested?: boolean;
   don?: number;
   power?: number | undefined;
+  /** Current cost on the field; shown in a chip when effects have changed it. */
+  cost?: number | undefined;
   glow?: Glow;
   dim?: boolean;
   size?: "small" | "normal" | "large";
@@ -40,6 +42,7 @@ export function CardView({
   rested,
   don = 0,
   power,
+  cost,
   glow = null,
   dim,
   size = "normal",
@@ -79,6 +82,7 @@ export function CardView({
 
   const shownPower = power ?? def.power;
   const changed = power !== undefined && def.power !== undefined && power !== def.power;
+  const costChanged = cost !== undefined && def.cost !== undefined && cost !== def.cost;
   const interactive = onClick
     ? {
         role: "button",
@@ -107,6 +111,14 @@ export function CardView({
       )}
       {changed && (
         <div className={`card-power-chip ${power! > def.power! ? "up" : "down"}`}>{shownPower}</div>
+      )}
+      {costChanged && (
+        <div
+          className={`card-cost-chip ${cost > def.cost! ? "up" : "down"}`}
+          title={`Cost ${cost} (printed ${def.cost})`}
+        >
+          {cost}
+        </div>
       )}
       {don > 0 && <div className="card-don">+{don} DON!!</div>}
       {showName && image && size !== "large" && <div className="card-name-strip">{def.name}</div>}

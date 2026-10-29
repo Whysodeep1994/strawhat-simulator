@@ -1,4 +1,4 @@
-import { findCard, powerOf } from "./state.js";
+import { costOf, findCard, powerOf } from "./state.js";
 import type { Battle, CardInstance, GameState, Modifier, PlayerId, Prompt } from "./types.js";
 
 /** A face-up card, or just a count for a face-down pile. */
@@ -34,6 +34,8 @@ export interface GameView {
   modifiers: Modifier[];
   /** Current power of every Leader and Character on the field, after DON!! and effects. */
   powers: Record<string, number>;
+  /** Current cost of every Character and Stage on the field, after effects such as "+5 cost" (rule 2-7-1). */
+  costs: Record<string, number>;
   /**
    * Cards the viewer needs to see to answer their prompt, such as the top of
    * their deck during a search or the Life card with a [Trigger].
@@ -86,6 +88,15 @@ export function viewFor(state: GameState, viewer: PlayerId): GameView {
           powerOf(state, c),
         ]),
       ),
+    ),
+    costs: Object.fromEntries(
+      (["p1", "p2"] as const).flatMap((id) => {
+        const p = state.players[id];
+        return [...p.characters, ...(p.stage ? [p.stage] : [])].map((c) => [
+          c.uid,
+          costOf(state, c),
+        ]);
+      }),
     ),
     promptCards: promptCardsFor(state, viewer),
     limbo: state.limbo,

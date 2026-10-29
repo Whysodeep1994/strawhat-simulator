@@ -414,6 +414,7 @@ export function Board({
       rested={card.rested}
       don={card.givenDon}
       power={view.powers[card.uid]}
+      cost={view.costs[card.uid]}
       glow={glowFor(card.uid)}
       onHover={() => setDetail(def(card) ?? null)}
       label={`${owner === me ? "Your" : "Opponent's"} ${def(card)?.name ?? "card"}`}
@@ -779,6 +780,7 @@ export function Board({
                   def={def(card)}
                   image={art(card)}
                   power={view.powers[card.uid]}
+                  cost={view.costs[card.uid]}
                   dim={!option}
                   glow={
                     chosen

@@ -1401,6 +1401,27 @@ button.pile {
 .card-power-chip.down {
   background: #c8343a;
 }
+/* Cost changed by effects, over the printed cost in the top-left corner. */
+.card-cost-chip {
+  position: absolute;
+  top: 2%;
+  left: 2%;
+  min-width: 1.4em;
+  padding: 0.05em 0.25em;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  text-align: center;
+  font-weight: 900;
+  font-size: max(10px, calc(var(--cw) * 0.15));
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+.card-cost-chip.up {
+  background: #1f9a5c;
+}
+.card-cost-chip.down {
+  background: #c8343a;
+}
 .card-don {
   position: absolute;
   top: 34%;
