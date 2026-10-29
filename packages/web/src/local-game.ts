@@ -354,7 +354,7 @@ function lifeChange(
   return `${who} lost ${cards}${double ? " ([Double Attack] deals 2 damage)" : ""}. Life: ${now}.`;
 }
 
-function describeChanges(
+export function describeChanges(
   before: GameState,
   after: GameState,
   human: PlayerId,
@@ -368,6 +368,29 @@ function describeChanges(
       lines.push({
         player,
         text: lifeChange(before, player, who, was.life.length, now.life.length),
+      });
+    }
+    // Life cards an effect turned over in place (rule 3-10-2-1).
+    const wasUp = new Map(was.life.map((c) => [c.uid, !!c.faceUp]));
+    let up = 0;
+    let down = 0;
+    for (const card of now.life) {
+      const old = wasUp.get(card.uid);
+      if (old === undefined || old === !!card.faceUp) continue;
+      if (card.faceUp) up++;
+      else down++;
+    }
+    const whose = who === "You" ? "Your" : "Opponent's";
+    if (up > 0) {
+      lines.push({
+        player,
+        text: `${whose} ${up} Life card${up === 1 ? " was" : "s were"} turned face-up.`,
+      });
+    }
+    if (down > 0) {
+      lines.push({
+        player,
+        text: `${whose} ${down} Life card${down === 1 ? " was" : "s were"} turned face-down.`,
       });
     }
     const onField = new Set(now.characters.map((c) => c.uid));

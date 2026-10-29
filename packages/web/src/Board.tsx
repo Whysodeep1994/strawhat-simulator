@@ -1181,6 +1181,7 @@ function Mat({
   const p = view.players[player];
   const topTrash = p.trash[0];
   const owner = side === "you" ? "Your" : "Opponent's";
+  const faceUpLife = p.life.filter(Boolean).length;
   return (
     <section
       className={`mat ${side} ${image ? "custom" : ""} ${turn ? "turn" : ""}`}
@@ -1210,14 +1211,33 @@ function Mat({
       <Zone area="life" label={`Life ${p.lifeCount}`}>
         <div
           className="life-stack"
-          aria-label={`${owner} Life: ${p.lifeCount}`}
+          aria-label={`${owner} Life: ${p.lifeCount}${faceUpLife ? `, ${faceUpLife} face-up` : ""}`}
           style={{ ["--n" as string]: Math.max(p.lifeCount, 1) }}
         >
-          {Array.from({ length: p.lifeCount }, (_, i) => (
-            <div key={i} className="life-card" style={{ ["--i" as string]: i }}>
-              <CardView faceDown back={back} size="small" />
-            </div>
-          ))}
+          {Array.from({ length: p.lifeCount }, (_, i) => {
+            // The last card drawn sits on top of the pile, so it is the top Life card (life[0]).
+            const card = p.life[p.lifeCount - 1 - i] ?? null;
+            return (
+              <div
+                key={`${i}-${card ? card.uid : "down"}`}
+                className={`life-card ${card ? "face-up" : ""}`}
+                style={{ ["--i" as string]: i }}
+              >
+                {card ? (
+                  <CardView
+                    def={def(card)}
+                    image={art(card)}
+                    size="small"
+                    showName={false}
+                    onHover={() => onDetail(def(card) ?? null)}
+                    label={`Face-up Life card: ${def(card)?.name ?? "card"}`}
+                  />
+                ) : (
+                  <CardView faceDown back={back} size="small" />
+                )}
+              </div>
+            );
+          })}
         </div>
       </Zone>
       <Zone area="deck" label={`Deck ${p.deckCount}`}>
