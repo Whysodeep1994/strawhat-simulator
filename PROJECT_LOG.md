@@ -28,6 +28,10 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-29: Online games check that both pages run the same version of the game and card data.
+  A page left open from before an update played its own moves the old way (its Counters still
+  went to the Leader) and its game drifted from its partner's. Now both players are told to
+  refresh and start a new game.
 - 2026-10-29: Counters from hand now power up the card being attacked (they used to go to the
   Leader). Counter Events that pick a card start with the attacked card picked. The Counter Step
   no longer skips itself when you have no counters: you press Take the hit (or Continue).
