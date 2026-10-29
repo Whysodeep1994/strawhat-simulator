@@ -137,6 +137,8 @@ interface Note {
   got?: Record<string, number>;
   /** Chat lines the partner hasn't got yet. */
   said?: Said;
+  /** Which version of the game this page runs (see BUILD); older pages send none. */
+  build?: string;
   /** How many of the partner's chat lines this player has. */
   heard?: number;
 }
@@ -171,6 +173,18 @@ export type DuelStatus =
   | { kind: "full" }
   | { kind: "playing"; game: LocalGame; partnerHere: boolean }
   | { kind: "error"; message: string };
+
+/**
+ * The version of the game and card data this page runs, set when the site is built. Both pages
+ * replay the same moves, so they must run the same rules and cards: a page left open from before
+ * an update would play its own moves the old way (a Counter going to the Leader, say) and its
+ * game would drift from its partner's.
+ */
+export const BUILD: string = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
+
+/** What a page shows when its partner runs a different version of the game. */
+export const OTHER_VERSION =
+  "You and your friend have different versions of the game. Both of you: refresh the page, then start a new game.";
 
 const NOTE_LIMIT = 3800;
 const ROOM_PREFIX = "duel-";
@@ -295,6 +309,7 @@ export class DuelLink {
     private readonly catalog: CardCatalog,
     private readonly onStatus: (status: DuelStatus, save: DuelSave) => void,
     private readonly looks: Looks = DEFAULT_LOOKS,
+    private readonly build: string = BUILD,
   ) {
     this.save = save;
     for (const look of [looks.mat, looks.back]) {
@@ -385,6 +400,7 @@ export class DuelLink {
       }
     }
     this.partnerHere = !!partner;
+    if (partner && (partner.build ?? "") !== this.build) this.error = OTHER_VERSION;
 
     if (partner) this.receiveLooks(partner);
     if (partner) this.hear(partner);
@@ -617,6 +633,7 @@ export class DuelLink {
       flagged: this.save.overtime?.by ?? null,
       flaggedTurn: this.save.overtime?.from ?? null,
       look: { mat: lookRef(this.looks.mat), back: lookRef(this.looks.back) },
+      build: this.build,
       got: this.gotPieces(partner),
       heard: this.save.heard ?? 0,
       said: null,

@@ -8,6 +8,7 @@ import {
   cleanChat,
   cleanGameCode,
   DuelLink,
+  OTHER_VERSION,
   newGameCode,
   newSave,
   shareDeck,
@@ -99,7 +100,7 @@ interface Player {
   save: DuelSave;
 }
 
-function join(hub: Hub, save: DuelSave, looks?: Looks): Player {
+function join(hub: Hub, save: DuelSave, looks?: Looks, build?: string): Player {
   const room = new FakeRoom(hub);
   const player = { room, save, status: { kind: "waiting" } } as Player;
   player.link = new DuelLink(
@@ -111,6 +112,7 @@ function join(hub: Hub, save: DuelSave, looks?: Looks): Player {
       player.save = next;
     },
     looks,
+    build,
   );
   return player;
 }
@@ -233,6 +235,16 @@ describe("playing a friend online", () => {
     hub.flush();
     expect(gameOf(guest).state.winner).toBe("p1");
     expect(gameOf(host).state.winner).toBe("p1");
+  });
+
+  it("won't play a friend whose page runs another version of the game", () => {
+    const hub = new Hub();
+    const random = mulberry(5);
+    const host = join(hub, newSave("abc234", "host", DEMO_DECKS.red, random), undefined, "new");
+    const guest = join(hub, newSave("abc234", "guest", DEMO_DECKS.green, random), undefined, "old");
+    hub.flush();
+    expect(host.status).toEqual({ kind: "error", message: OTHER_VERSION });
+    expect(guest.status).toEqual({ kind: "error", message: OTHER_VERSION });
   });
 
   it("tells a third player the game is full", () => {
