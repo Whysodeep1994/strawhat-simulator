@@ -211,3 +211,16 @@ describe("current costs on the board", () => {
     expect(view.costs[plain!.uid]).toBe(2);
   });
 });
+
+describe("keywords on the field", () => {
+  it("10-1-2: shows a gained [Double Attack], so the defender knows a hit takes 2 Life", () => {
+    const game = buildScenarioState(
+      { p1: { characters: [{ card: "TEST-DON-DOUBLE", don: 1 }, "TEST-DON-DOUBLE"] } },
+      TEST_CATALOG,
+    );
+    const view = viewFor(game, "p2");
+    const [powered, plain] = game.players.p1.characters;
+    expect(view.keywords[powered!.uid]).toContain("doubleAttack");
+    expect(view.keywords[plain!.uid]).not.toContain("doubleAttack");
+  });
+});

@@ -1,6 +1,6 @@
-import type { CardDefinition } from "@strawhat/engine";
+import type { CardDefinition, Keyword } from "@strawhat/engine";
 import type { KeyboardEvent } from "react";
-import { KEYWORD_NAMES } from "./describe.js";
+import { KEYWORD_HELP, KEYWORD_NAMES } from "./describe.js";
 
 export type Glow =
   | "playable"
@@ -24,6 +24,8 @@ interface Props {
   power?: number | undefined;
   /** Current cost on the field; shown in a chip when effects have changed it. */
   cost?: number | undefined;
+  /** Keywords the card has right now; any it doesn't print, such as a gained [Double Attack], get a tag. */
+  keywords?: Keyword[] | undefined;
   glow?: Glow;
   dim?: boolean;
   size?: "small" | "normal" | "large";
@@ -43,6 +45,7 @@ export function CardView({
   don = 0,
   power,
   cost,
+  keywords,
   glow = null,
   dim,
   size = "normal",
@@ -80,6 +83,7 @@ export function CardView({
     );
   }
 
+  const gained = (keywords ?? []).filter((k) => GAINED_TAGS.has(k) && !def.keywords?.includes(k));
   const shownPower = power ?? def.power;
   const changed = power !== undefined && def.power !== undefined && power !== def.power;
   const costChanged = cost !== undefined && def.cost !== undefined && cost !== def.cost;
@@ -121,10 +125,22 @@ export function CardView({
         </div>
       )}
       {don > 0 && <div className="card-don">+{don} DON!!</div>}
+      {gained.length > 0 && (
+        <div className="card-gained">
+          {gained.map((k) => (
+            <span key={k} title={KEYWORD_HELP[k]}>
+              {KEYWORD_NAMES[k]}
+            </span>
+          ))}
+        </div>
+      )}
       {showName && image && size !== "large" && <div className="card-name-strip">{def.name}</div>}
     </div>
   );
 }
+
+/** Gained keywords worth a tag on the card: the ones that change how much Life a hit takes. */
+const GAINED_TAGS = new Set<Keyword>(["doubleAttack", "banish"]);
 
 /** Used only when a card has no art yet. */
 function DrawnFace({ def }: { def: CardDefinition }) {
