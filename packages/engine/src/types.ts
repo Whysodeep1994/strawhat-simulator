@@ -241,6 +241,15 @@ export interface GameState {
   limbo: CardInstance | null;
   /** A player who takes an extra turn after this one ("take an extra turn"). */
   extraTurn?: PlayerId;
+  /**
+   * Overtime after a game clock ran out: the game ends at the end of this turn, and
+   * `overtimeResult` (rules.ts) decides the winner. See `startOvertime`.
+   */
+  lastTurn?: number;
+  /** Set when the game ended because overtime ran out, rather than by damage or decking out. */
+  overtimeOver?: true;
+  /** The player who last took a card from their Life (damage, or Life added to hand): the last overtime tiebreaker. */
+  lastLifeLost?: PlayerId;
   /** Seeded random state, so a game can be replayed exactly. */
   rng: number;
   nextUid: number;

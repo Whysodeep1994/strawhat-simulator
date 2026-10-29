@@ -3,7 +3,9 @@ import type { GameState, PlayerId } from "@strawhat/engine";
 /**
  * Chess-clock style timers. Each player has 15 minutes for the whole game. A player's clock
  * runs whenever the game is waiting on them, which includes Counter, Blocker and [Trigger]
- * choices on the other player's turn. When it reaches zero, that player loses.
+ * choices on the other player's turn. When it reaches zero, the game goes to overtime: the
+ * current turn is turn 0, three more turns are played, and then the player with more Life wins
+ * (see timeOut in local-game.ts).
  */
 export const CLOCK_MS = 15 * 60 * 1000;
 

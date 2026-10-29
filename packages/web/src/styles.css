@@ -1016,6 +1016,21 @@ button.pile {
   background: linear-gradient(90deg, transparent, rgba(4, 10, 20, 0.85) 20% 80%, transparent);
   animation: banner-sweep 1.5s ease forwards;
 }
+.turn-banner span small {
+  display: block;
+  font-family: inherit;
+  font-size: 0.42em;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+.turn-banner.overtime span {
+  color: var(--danger);
+  animation-duration: 2.5s;
+}
+.turn-banner.overtime span small {
+  color: var(--text);
+  font-size: 0.3em;
+}
 .turn-banner.theirs span {
   color: var(--danger);
   text-shadow:
@@ -1239,6 +1254,23 @@ button.pile {
   font-size: 0.72rem;
   color: var(--muted);
 }
+.status .overtime-tag {
+  margin-top: 3px;
+  align-self: flex-start;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+  color: #1a1206;
+  background: var(--gold);
+}
+.status .overtime-tag.last {
+  color: #fff;
+  background: var(--danger);
+  animation: clock-pulse 1s ease-in-out infinite;
+}
 .status .message {
   font-size: 0.88rem;
   display: flex;
@@ -1297,6 +1329,10 @@ button.pile {
 }
 .clock.on strong {
   color: var(--text);
+}
+.clock.out strong {
+  color: var(--danger);
+  font-size: 0.95rem;
 }
 .clock.low strong {
   color: var(--danger);
