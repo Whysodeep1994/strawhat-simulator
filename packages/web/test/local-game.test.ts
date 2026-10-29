@@ -2,7 +2,14 @@ import { chooseBotAction, validateDeck, viewFor } from "@strawhat/engine";
 import { describe, expect, it } from "vitest";
 import { DEMO_CATALOG, DEMO_DECKS } from "./fixtures/demo-cards.js";
 import { cardText } from "../src/describe.js";
-import { botStep, botToAct, humanAct, newLocalGame, type LocalGame } from "../src/local-game.js";
+import {
+  botStep,
+  botToAct,
+  describeChanges,
+  humanAct,
+  newLocalGame,
+  type LocalGame,
+} from "../src/local-game.js";
 
 function newGame(seed: number): LocalGame {
   return newLocalGame(DEMO_CATALOG, { human: DEMO_DECKS.red, bot: DEMO_DECKS.green }, seed);
@@ -54,6 +61,26 @@ describe("local game against the computer", () => {
     game = humanAct(game, { type: "keepHand", player: "p1" });
     expect(game.log.map((l) => l.text)).toContain("You chose to go first.");
     expect(game.log.map((l) => l.text)).toContain("You kept the opening hand.");
+  });
+
+  it("logs Life cards being turned face-up and face-down (rule 3-10-2-1)", () => {
+    let game = newGame(3);
+    game = humanAct(game, { type: "chooseTurnOrder", player: "p1", goFirst: true });
+    game = humanAct(game, { type: "keepHand", player: "p1" });
+    while (botToAct(game)) game = botStep(game);
+    const before = structuredClone(game.state);
+    const after = structuredClone(game.state);
+    after.players.p1.life[0]!.faceUp = true;
+    after.players.p1.life[1]!.faceUp = true;
+    after.players.p2.life[0]!.faceUp = true;
+    const flippedUp = describeChanges(before, after, "p1").map((l) => l.text);
+    expect(flippedUp).toContain("Your 2 Life cards were turned face-up.");
+    expect(flippedUp).toContain("Opponent's 1 Life card was turned face-up.");
+    const flippedDown = structuredClone(after);
+    flippedDown.players.p1.life[1]!.faceUp = false;
+    expect(describeChanges(after, flippedDown, "p1").map((l) => l.text)).toEqual([
+      "Your 1 Life card was turned face-down.",
+    ]);
   });
 
   it("never shows the computer's hand in your view", () => {
