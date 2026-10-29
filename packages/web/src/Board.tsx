@@ -1027,8 +1027,9 @@ export function Board({
   );
 }
 
-/** The wide-screen layout in styles.css, where the turn panel sits in the side bar. */
-const WIDE = "(min-width: 1000px) and (min-aspect-ratio: 7/5)";
+/** The computer layout in styles.css, where the turn panel sits in the side bar. It must match
+ * the side bar's breakpoint, or taller windows put the turn panel back between the mats. */
+const WIDE = "(min-width: 901px)";
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
