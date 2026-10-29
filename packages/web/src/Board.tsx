@@ -27,6 +27,7 @@ import { cardText, timingTag } from "./describe.js";
 import { CoachTips, ReportView, TutorBox } from "./Develop.js";
 import { botStep, botToAct, humanAct, outOfTime, type LocalGame } from "./local-game.js";
 import { CHAT_LENGTH, type ChatLine } from "./online.js";
+import { counterFor } from "./menu.js";
 import { MIN_TURNS, qualifies, TIER_POINTS, trophyById } from "./trophies.js";
 import { Medal } from "./TrophyToasts.js";
 import { guide, LESSONS, newRules, type RuleNote } from "./tutor.js";
@@ -103,6 +104,9 @@ const CHOOSE_TEXT: Record<string, string> = {
   lifeToDeckTop: "Choose a Life card to put on top of your deck",
   arrangeLife: "Whose Life card do you want to look at?",
 };
+
+/** Choices that help one of your cards: while you defend, the attacked card is picked first. */
+const DEFEND_REASONS = new Set(["powerUp", "grantKeyword", "giveRestedDon"]);
 
 /** Choices where every card is picked and only the order matters: the first one tapped goes on top. */
 const ORDER_REASONS = new Set(["deckTopOrder", "lifeOrder"]);
@@ -195,11 +199,23 @@ export function Board({
     />
   );
 
-  // A new decision resets anything half-done.
+  // A new decision resets anything half-done. While you defend, an effect that powers up or
+  // helps one of your cards starts with the card being attacked already picked.
   useEffect(() => {
     setMode({ kind: "none" });
     setMenu(null);
-    setPicked([]);
+    const target = view.battle?.target;
+    setPicked(
+      myPrompt?.kind === "choose" &&
+        !myPrompt.hidden &&
+        myPrompt.max > 0 &&
+        DEFEND_REASONS.has(myPrompt.reason) &&
+        view.turnPlayer !== me &&
+        target &&
+        myPrompt.options.includes(target)
+        ? [target]
+        : [],
+    );
   }, [game.state]);
 
   // New Player: explain each rule the first time it happens.
@@ -260,13 +276,8 @@ export function Board({
     return () => clearTimeout(timer);
   }, [game, onChange]);
 
-  // With no Counter cards to use, skip the Counter Step after a moment (Master Duel style).
+  // Even with no Counter cards, the Counter Step waits for you to take the hit yourself.
   const hasCounters = legal.some((a) => a.type === "counter" || a.type === "counterEvent");
-  useEffect(() => {
-    if (myPrompt?.kind !== "counter" || hasCounters) return;
-    const timer = setTimeout(() => act({ type: "pass", player: me }), 1100);
-    return () => clearTimeout(timer);
-  }, [myPrompt?.kind, hasCounters, game.state]);
 
   // A banner sweeps across the table when the turn changes, so you can't miss whose it is.
   useEffect(() => {
@@ -362,7 +373,7 @@ export function Board({
     }
     const block = actions.find((a) => a.type === "block");
     if (block) items.push({ label: "Block with this", run: () => act(block) });
-    const counter = actions.find((a) => a.type === "counter");
+    const counter = counterFor(actions, view.battle?.target);
     if (counter) items.push({ label: `Counter +${d?.counter ?? 0}`, run: () => act(counter) });
     const counterEvent = actions.find((a) => a.type === "counterEvent");
     if (counterEvent) items.push({ label: "Play Counter Event", run: () => act(counterEvent) });
@@ -608,7 +619,7 @@ export function Board({
           )}
           {myPrompt?.kind === "counter" && (
             <button className="primary" onClick={() => act({ type: "pass", player: me })}>
-              {!hasCounters ? "No counters…" : safe ? "Done countering" : "Take the hit"}
+              {!safe ? "Take the hit" : hasCounters ? "Done countering" : "Continue"}
             </button>
           )}
           {soundPanel && (
@@ -1357,13 +1368,17 @@ function Defense({
           ? "Tap a glowing [Blocker] to take the hit in its place, or don't block."
           : hasCounters
             ? "Tap a glowing card in your hand to add its counter power."
-            : "You have no counter cards, so the attack goes through…"}
+            : "You have no counter cards in hand."}
       </p>
-      {(step === "block" || hasCounters) && (
-        <button className={need ? "danger" : "primary"} onClick={onPass}>
-          {step === "block" ? "Don't block" : need ? "Take the hit" : "Done countering"}
-        </button>
-      )}
+      <button className={need ? "danger" : "primary"} onClick={onPass}>
+        {step === "block"
+          ? "Don't block"
+          : need
+            ? "Take the hit"
+            : hasCounters
+              ? "Done countering"
+              : "Continue"}
+      </button>
     </div>
   );
 }
