@@ -3,6 +3,7 @@ import {
   definitionOf,
   findCard,
   hasKeyword,
+  keywordsOf,
   legalActions,
   opponentOf,
   playCostOf,
@@ -343,7 +344,9 @@ export function suggestDefense(state: GameState, me: PlayerId): Suggestion | nul
   const leader = battle.target === p.leader.uid;
   const attack = power(state, battle.attacker);
   const need = powerShort(attack, power(state, battle.target));
-  const double = hasKeyword(def(state, battle.attacker) ?? ({} as CardDefinition), "doubleAttack");
+  const attacker = findCard(state, battle.attacker);
+  // Gained [Double Attack] counts too, e.g. from a [DON!! x1] effect.
+  const double = !!attacker && keywordsOf(state, attacker).includes("doubleAttack");
   const targetDef = def(state, battle.target);
   const lethal = leader && (p.life.length === 0 || (double && p.life.length <= 1));
   const worthSaving = leader ? lethal || p.life.length <= 2 : (targetDef?.cost ?? 0) >= 5;

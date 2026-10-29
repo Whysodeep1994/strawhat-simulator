@@ -399,6 +399,45 @@ const cards: CardDefinition[] = [
     ],
   },
   {
+    id: "TEST-DON-DOUBLE",
+    name: "Test DON!! x1 Double Attack",
+    category: "character",
+    colors: ["red"],
+    cost: 4,
+    power: 5000,
+    effects: [
+      {
+        timing: "permanent",
+        conditions: [{ donAtLeast: 1 }],
+        steps: [{ do: "grantKeyword", target: { side: "this" }, keyword: "doubleAttack" }],
+      },
+    ],
+  },
+  {
+    id: "TEST-TRIGGER-HEAL",
+    name: "Test Trigger Heal",
+    category: "event",
+    colors: ["yellow"],
+    cost: 1,
+    effects: [{ timing: "trigger", steps: [{ do: "deckToLife", count: 1 }] }],
+  },
+  {
+    id: "TEST-LIFE-SWAP",
+    name: "Test Life Swap",
+    category: "character",
+    colors: ["yellow"],
+    cost: 1,
+    power: 2000,
+    effects: [
+      {
+        timing: "onPlay",
+        optional: true,
+        costs: [{ lifeToHand: 1 }],
+        steps: [{ do: "handToLife", count: 1 }],
+      },
+    ],
+  },
+  {
     id: "TEST-RUSH-GRANT",
     name: "Test Grant Rush",
     category: "character",

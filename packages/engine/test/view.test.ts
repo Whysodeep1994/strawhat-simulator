@@ -185,3 +185,42 @@ describe("searching the top of your deck", () => {
     expect(after.players.p1.deck).toHaveLength(3);
   });
 });
+
+describe("current costs on the board", () => {
+  it("2-7-1: shows each Character's cost after effects such as +5 cost", () => {
+    const catalog: CardCatalog = {
+      ...TEST_CATALOG,
+      "TEST-C4-UP": {
+        ...TEST_CATALOG["TEST-C4-5000"]!,
+        id: "TEST-C4-UP",
+        effects: [
+          {
+            timing: "permanent",
+            steps: [{ do: "costChange", target: { side: "this" }, amount: 5 }],
+          },
+        ],
+      },
+    };
+    const board = buildScenarioState(
+      { p1: { characters: ["TEST-C4-UP", "TEST-C2-3000"] } },
+      catalog,
+    );
+    const [up, plain] = board.players.p1.characters;
+    const view = viewFor(board, "p2");
+    expect(view.costs[up!.uid]).toBe(9);
+    expect(view.costs[plain!.uid]).toBe(2);
+  });
+});
+
+describe("keywords on the field", () => {
+  it("10-1-2: shows a gained [Double Attack], so the defender knows a hit takes 2 Life", () => {
+    const game = buildScenarioState(
+      { p1: { characters: [{ card: "TEST-DON-DOUBLE", don: 1 }, "TEST-DON-DOUBLE"] } },
+      TEST_CATALOG,
+    );
+    const view = viewFor(game, "p2");
+    const [powered, plain] = game.players.p1.characters;
+    expect(view.keywords[powered!.uid]).toContain("doubleAttack");
+    expect(view.keywords[plain!.uid]).not.toContain("doubleAttack");
+  });
+});
