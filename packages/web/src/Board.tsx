@@ -27,6 +27,7 @@ import { cardText, timingTag } from "./describe.js";
 import { CoachTips, ReportView, TutorBox } from "./Develop.js";
 import { botStep, botToAct, humanAct, outOfTime, type LocalGame } from "./local-game.js";
 import { CHAT_LENGTH, type ChatLine } from "./online.js";
+import { counterFor } from "./menu.js";
 import { MIN_TURNS, qualifies, TIER_POINTS, trophyById } from "./trophies.js";
 import { Medal } from "./TrophyToasts.js";
 import { guide, LESSONS, newRules, type RuleNote } from "./tutor.js";
@@ -372,10 +373,7 @@ export function Board({
     }
     const block = actions.find((a) => a.type === "block");
     if (block) items.push({ label: "Block with this", run: () => act(block) });
-    // A counter powers up the card being attacked, never the Leader by mistake.
-    const counters = actions.filter((a) => a.type === "counter");
-    const counter =
-      counters.find((a) => a.type === "counter" && a.target === view.battle?.target) ?? counters[0];
+    const counter = counterFor(actions, view.battle?.target);
     if (counter) items.push({ label: `Counter +${d?.counter ?? 0}`, run: () => act(counter) });
     const counterEvent = actions.find((a) => a.type === "counterEvent");
     if (counterEvent) items.push({ label: "Play Counter Event", run: () => act(counterEvent) });
