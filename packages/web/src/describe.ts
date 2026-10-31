@@ -421,6 +421,8 @@ function stepText(step: Step): string {
       return "Your face-up Life cards are placed at the bottom of your deck instead of being added to your hand, according to the rules.";
     case "winOnDeckOut":
       return "When your deck is reduced to 0, you win the game instead of losing.";
+    case "trashInsteadOfDamage":
+      return "If you would take damage, you may trash this Character instead.";
     case "deckOnlyType":
       return `You can only include {${step.type}} type cards in your deck.`;
     case "revealedToDeckTop":

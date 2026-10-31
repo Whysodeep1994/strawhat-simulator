@@ -28,6 +28,11 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-31: EB-05 is out and legal. All 61 EB-05 cards were already in the game; the last
+  missing effect now works: Gloriosa (EB05-052) "If you would take damage, you may trash this
+  Character instead" (new engine step `trashInsteadOfDamage`, asked as a yes/no; it stops the
+  whole damage, even at 0 Life). The computer only uses it at 1 Life or less. The title screen
+  shows a small "EB-05 is now available for play!" note.
 - 2026-10-31: Matchup Lab (a user's idea). A new title menu mode: pick deck A and deck B, and the
   computer plays them against each other 100 to 5,000 times on background helpers (Web Workers).
   It shows each deck's win rate with a margin of error, going first vs second, and deck A's "win

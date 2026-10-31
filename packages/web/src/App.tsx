@@ -477,6 +477,10 @@ export function App() {
               </h1>
               <p>Set sail for a game of the One Piece Card Game.</p>
             </header>
+            <p className="news-banner" role="status">
+              <span className="news-tag">New</span> <strong>EB-05</strong> Heroines Edition vol.2 is
+              now available for play!
+            </p>
             {loadError ? (
               <section className="panel">
                 <h2>The cards didn't load</h2>

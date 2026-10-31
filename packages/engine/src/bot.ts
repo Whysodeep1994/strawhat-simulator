@@ -23,8 +23,12 @@ export function chooseBotAction(state: GameState, player: PlayerId): Action {
       return actions.find((a) => a.type === "chooseTurnOrder" && a.goFirst) ?? first;
     case "mulligan":
       return actions.find((a) => a.type === "keepHand") ?? first;
-    case "confirm":
-      return actions.find((a) => a.type === "confirm" && a.accept) ?? first;
+    case "confirm": {
+      // "Trash this Character instead" of taking damage: only worth it when the Life is low.
+      const accept =
+        prompt.reason !== "trashInsteadOfDamage" || state.players[player].life.length <= 1;
+      return actions.find((a) => a.type === "confirm" && a.accept === accept) ?? first;
+    }
     case "choose":
       return chooseCards(
         state,

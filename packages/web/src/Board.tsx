@@ -946,7 +946,13 @@ export function Board({
 
       {myPrompt?.kind === "confirm" && (
         <Modal
-          title={myPrompt.reason === "trigger" ? "Activate this [Trigger]?" : "Use this effect?"}
+          title={
+            myPrompt.reason === "trigger"
+              ? "Activate this [Trigger]?"
+              : myPrompt.reason === "trashInsteadOfDamage"
+                ? "Trash this Character instead of taking damage?"
+                : "Use this effect?"
+          }
         >
           {tutorBox}
           <div className="card-row">

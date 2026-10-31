@@ -395,6 +395,23 @@ export function hasRule(
   );
 }
 
+/**
+ * The first of `player`'s Characters that says "If you would take damage, you may trash this
+ * Character instead", if any (rule 8-1-3-4).
+ */
+export function damageReplacer(state: GameState, player: PlayerId): CardInstance | null {
+  for (const card of state.players[player].characters) {
+    const replaces = effectsOf(state, card).some(
+      (effect) =>
+        effect.timing === "permanent" &&
+        effect.steps.some((s) => s.do === "trashInsteadOfDamage") &&
+        conditionsMet(state, player, card, effect.conditions),
+    );
+    if (replaces) return card;
+  }
+  return null;
+}
+
 /** Whether `player`'s [On Play] effects are negated right now. */
 export function onPlayNegated(state: GameState, player: PlayerId): boolean {
   const leader = state.players[player].leader.uid;
