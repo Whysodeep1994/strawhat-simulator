@@ -157,6 +157,8 @@ export type Frame =
       remaining: number;
       banish: boolean;
       answer: boolean | null;
+      /** Set once a "trash this Character instead" replacement has been offered (or there was none). */
+      offered?: boolean;
     }
   | { kind: "trigger-cleanup" }
   /** Rule 5-2-1-6: the opening draw, after any "at the start of the game" effects. */
@@ -196,9 +198,10 @@ export type Prompt =
       player: PlayerId;
       /**
        * "optional" and "trigger": yes or no. "lifeFromBottom" and "lifeToBottom": yes
-       * means the bottom of the Life cards.
+       * means the bottom of the Life cards. "trashInsteadOfDamage": yes trashes `source`
+       * instead of taking the damage.
        */
-      reason: "optional" | "trigger" | "lifeFromBottom" | "lifeToBottom";
+      reason: "optional" | "trigger" | "lifeFromBottom" | "lifeToBottom" | "trashInsteadOfDamage";
       source: string;
     }
   /** "Choose one": answered with the index of one of `labels`. */

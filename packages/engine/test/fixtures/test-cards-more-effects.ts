@@ -833,6 +833,15 @@ export const MORE_EFFECT_CARDS: CardDefinition[] = [
     ],
   },
   {
+    id: "TEST-TRASH-INSTEAD-OF-DAMAGE",
+    name: "Test Trash Instead of Damage",
+    category: "character",
+    colors: ["yellow"],
+    cost: 4,
+    power: 6000,
+    effects: [{ timing: "permanent", steps: [{ do: "trashInsteadOfDamage" }] }],
+  },
+  {
     id: "TEST-SPECIAL-7000",
     name: "Test Special 7000",
     category: "character",

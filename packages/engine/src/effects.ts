@@ -680,6 +680,12 @@ export type Step =
   | { do: "faceUpLifeToDeckBottom" }
   /** Permanent, on a Leader: "when your deck is reduced to 0, you win the game instead of losing". */
   | { do: "winOnDeckOut" }
+  /**
+   * Permanent, on a Character: "If you would take damage, you may trash this Character
+   * instead" (rule 8-1-3-4). Trashing it prevents the whole damage (both points of a
+   * Double Attack), even at 0 Life.
+   */
+  | { do: "trashInsteadOfDamage" }
   /** Permanent, on a Leader: "you can only include {type} type cards in your deck". Checked by `checkDeck`. */
   | { do: "deckOnlyType"; type: string }
   /** Place the cards revealed by a `revealFromHand` cost at the top of your deck. */

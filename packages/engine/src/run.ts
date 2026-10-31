@@ -8,6 +8,7 @@ import {
   conditionsMet,
   costOf,
   countCards,
+  damageReplacer,
   definitionOf,
   donOnField,
   effectOf,
@@ -1007,8 +1008,9 @@ function runStep(
       frame.memo.push("dealt");
       // `side: "self"`: "you take 1 damage".
       const defender = step.side === "self" ? controller : opponentOf(controller);
-      // Rule 1-2-1-1-1: damage while you have 0 Life cards loses the game.
-      if (state.players[defender].life.length === 0) {
+      // Rule 1-2-1-1-1: damage while you have 0 Life cards loses the game,
+      // unless a "trash this Character instead" replacement is used (see runDamage).
+      if (state.players[defender].life.length === 0 && !damageReplacer(state, defender)) {
         processRules(state, [defender]);
         return "continue";
       }
@@ -1064,6 +1066,7 @@ function runStep(
     // Rules for the game, not steps that happen: read by damage, rule processing, and checkDeck.
     case "faceUpLifeToDeckBottom":
     case "winOnDeckOut":
+    case "trashInsteadOfDamage":
     case "deckOnlyType":
       return "continue";
 
@@ -2530,8 +2533,18 @@ function runBattle(state: GameState, frame: FrameOf<"battle">): Outcome {
         battleKO(state, attacker, uid);
         return "continue";
       }
-      // Rule 7-1-4-1-1-1.
+      // Rule 7-1-4-1-1-1, unless a "trash this Character instead" replacement is used.
       if (state.players[target.player].life.length === 0) {
+        if (damageReplacer(state, target.player)) {
+          state.stack.push({
+            kind: "damage",
+            defender: target.player,
+            remaining: 1,
+            banish: false,
+            answer: null,
+          });
+          return "continue";
+        }
         processRules(state, [target.player]);
         return "continue";
       }
@@ -2611,6 +2624,31 @@ function battleKOReplacement(
 /** Rules 7-1-4-1-1-2, 7-1-4-1-1-3, 10-1-2-1, 10-1-3-1, 10-1-5. */
 function runDamage(state: GameState, frame: FrameOf<"damage">): Outcome {
   const p = state.players[frame.defender];
+  // Rule 8-1-3-4: "If you would take damage, you may trash this Character instead".
+  if (!frame.offered) {
+    const saver = damageReplacer(state, frame.defender);
+    if (saver && frame.answer === null) {
+      state.prompt = {
+        kind: "confirm",
+        player: frame.defender,
+        reason: "trashInsteadOfDamage",
+        source: saver.uid,
+      };
+      return "wait";
+    }
+    frame.offered = true;
+    const accept = saver !== null && frame.answer === true;
+    frame.answer = null;
+    if (saver && accept) {
+      moveFieldCardToTrash(state, saver);
+      return "done";
+    }
+    // Rule 1-2-1-1-1: damage at 0 Life (only reached here when a replacement was offered).
+    if (p.life.length === 0 && frame.remaining > 0) {
+      processRules(state, [frame.defender]);
+      return "done";
+    }
+  }
   while (frame.remaining > 0) {
     // See docs/RULES_QUESTIONS.md #1: running out of Life mid-damage does not end the game.
     const top = p.life[0];

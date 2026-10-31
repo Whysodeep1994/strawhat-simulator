@@ -1,0 +1,34 @@
+{
+  "name": "Trashing the Character instead prevents both damage of a Double Attack",
+  "rules": ["8-1-3-4", "7-1-4-1-1-2", "10-1-2"],
+  "setup": {
+    "p1": {
+      "characters": ["TEST-DOUBLE"]
+    },
+    "p2": {
+      "characters": ["TEST-TRASH-INSTEAD-OF-DAMAGE"]
+    }
+  },
+  "actions": [
+    {
+      "type": "attack",
+      "player": "p1",
+      "attacker": "p1.characters.0",
+      "target": "p2.leader"
+    },
+    {
+      "type": "pass",
+      "player": "p2"
+    },
+    {
+      "type": "confirm",
+      "player": "p2",
+      "accept": true
+    }
+  ],
+  "expect": {
+    "p2.life": 4,
+    "p2.characters": 0,
+    "prompt.kind": "main"
+  }
+}
