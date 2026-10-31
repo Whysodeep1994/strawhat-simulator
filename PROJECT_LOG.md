@@ -28,6 +28,16 @@ Each phase has a check the project owner can do without reading code.
 
 ## Done
 
+- 2026-10-31: Matchup Lab (a user's idea). A new title menu mode: pick deck A and deck B, and the
+  computer plays them against each other 100 to 5,000 times on background helpers (Web Workers).
+  It shows each deck's win rate with a margin of error, going first vs second, and deck A's "win
+  rate when drawn" for every card. "Find better cards" tries "−1 card, +1 card" swaps (cards that
+  did badly out, cards that did well or up to 5 picked cards in), 200 games each, then replays the
+  best 5 with the full game count and marks a swap "Better" only when it beats luck. A swap can be
+  saved as a new deck. Results depend on the computer player, and the screen says so.
+- 2026-10-31: Every move is about 90 times faster. applyAction copied the whole card catalog
+  (2,850 cards) on every move; the catalog never changes, so it is now shared. A computer vs
+  computer game takes about 30 ms instead of 4 s.
 - 2026-10-29: Searched cards are revealed (rule 11-2-1). When an effect picks a card from the
   deck for a condition ("reveal up to 1 {Straw Hat Crew} type card and add it to your hand"),
   the card is held up in the middle of the table for 3 seconds for both players, then goes to

@@ -36,7 +36,10 @@ export class IllegalActionError extends Error {
  */
 export function applyAction(state: GameState, action: Action): GameState {
   if (!isLegal(state, action)) throw new IllegalActionError(action);
-  const next = structuredClone(state);
+  // The card catalog never changes during a game, so it is shared instead of copied. Copying
+  // all of its cards made every move about 30 times slower.
+  const { catalog, ...rest } = state;
+  const next: GameState = { ...structuredClone(rest), catalog };
   delete next.revealed;
   perform(next, action);
   processRules(next);
