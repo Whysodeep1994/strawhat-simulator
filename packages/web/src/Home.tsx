@@ -23,7 +23,15 @@ import {
 } from "./trophies.js";
 import { Medal } from "./TrophyToasts.js";
 
-export type Screen = "title" | "play" | "develop" | "friend" | "decks" | "trophies" | "settings";
+export type Screen =
+  | "title"
+  | "play"
+  | "develop"
+  | "friend"
+  | "decks"
+  | "lab"
+  | "trophies"
+  | "settings";
 
 export const RANDOM = "random";
 
@@ -74,6 +82,12 @@ export function TitleMenu({
         deckCount > 0
           ? `Build, edit and save your decks. You have ${deckCount} saved.`
           : "Build and save your own decks from every card in the game.",
+      disabled: !ready,
+    },
+    {
+      screen: "lab",
+      label: "Matchup Lab",
+      hint: "Pit two decks against each other 1,000 times and find card swaps that win more.",
       disabled: !ready,
     },
     {
