@@ -7,6 +7,7 @@ import { loadCardData, type CardData, type PlayableDeck } from "./card-data.js";
 import { DeckBuilder } from "./DeckBuilder.js";
 import { DevelopScreen, type TrainingSetup } from "./Develop.js";
 import { FriendLobby, FriendSetup } from "./Friend.js";
+import { MatchupLab } from "./MatchupLab.js";
 import {
   deckTitle,
   MatPicker,
@@ -551,6 +552,14 @@ export function App() {
               onDeck={setDeckId}
               onBuild={() => setScreen("decks")}
               onStart={train}
+            />
+          </SubScreen>
+        ) : screen === "lab" ? (
+          <SubScreen title="Matchup Lab" onBack={back}>
+            <MatchupLab
+              data={data}
+              myDecks={myDecks}
+              onSave={(deck) => storeDecks([...myDecks, deck])}
             />
           </SubScreen>
         ) : screen === "play" ? (

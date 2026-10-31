@@ -3740,3 +3740,166 @@ button.pile {
     display: none;
   }
 }
+
+/* The Matchup Lab (MatchupLab.tsx). */
+.lab {
+  width: min(980px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lab-decks {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+.lab .tabs.lab-games {
+  grid-template-columns: repeat(4, 1fr);
+}
+.lab input[type="search"] {
+  font: inherit;
+  color: #2b1a0c;
+  border-radius: 10px;
+  padding: 0.55em 0.75em;
+  min-width: 0;
+}
+.lab-vs {
+  font-family: "Bangers", sans-serif;
+  font-size: 1.6rem;
+  color: var(--gold);
+  padding-bottom: 8px;
+}
+.lab-bar {
+  height: 14px;
+  border-radius: 7px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.lab-bar span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.2s;
+}
+.lab-bar.split {
+  background: var(--c-blue);
+}
+.lab-score {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.lab-score div {
+  display: flex;
+  flex-direction: column;
+}
+.lab-score div:last-child {
+  text-align: right;
+}
+.lab-score strong {
+  font-family: "Bangers", sans-serif;
+  font-size: 2.6rem;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+}
+.lab-score div:last-child strong {
+  color: #8fb6ff;
+}
+.lab-facts {
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.lab-table th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: normal;
+  border-bottom: 1px solid var(--line);
+  padding: 4px 6px;
+}
+.lab-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line);
+}
+.lab-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.lab-card img {
+  width: 28px;
+  height: 39px;
+  object-fit: cover;
+  border-radius: 3px;
+}
+.lab-card small {
+  color: var(--muted);
+}
+.lab-swaps,
+.lab-extras,
+.lab-matches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lab-swaps li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.lab-swaps li.better {
+  border-color: var(--good);
+}
+.lab-swaps li.better strong {
+  color: var(--good);
+}
+.lab-swaps li.worse strong {
+  color: var(--danger);
+}
+.lab-swap-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lab-extras li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lab-matches button {
+  width: 100%;
+  text-align: left;
+}
+@media (max-width: 700px) {
+  .lab-decks {
+    grid-template-columns: 1fr;
+  }
+  .lab-vs {
+    padding: 0;
+    text-align: center;
+  }
+  .lab-swaps li {
+    grid-template-columns: 1fr;
+  }
+  .lab-table th:nth-child(3),
+  .lab-table td:nth-child(3) {
+    display: none;
+  }
+}
