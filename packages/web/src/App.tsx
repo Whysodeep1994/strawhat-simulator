@@ -35,9 +35,12 @@ import {
   cardList,
   copyOf,
   loadDecks,
+  loadLastDeck,
   newDeck,
   playable,
   saveDecks,
+  saveLastDeck,
+  startingDeck,
   type SavedDeck,
 } from "./my-decks.js";
 import { matImage } from "./mat-art.js";
@@ -149,10 +152,12 @@ export function App() {
       (loaded) => {
         if (!live) return;
         setData(loaded);
-        // Start on the player's own first ready deck, else the first official starter deck.
-        const ready = loadDecks().find((d) => playable(d, loaded));
+        // Start on the deck played last, else the player's own first ready deck, else the first
+        // official starter deck.
+        const own = loadDecks().filter((d) => playable(d, loaded));
         const starter = loaded.decks.find((d) => d.official) ?? loaded.decks[0];
-        setDeckId((id) => id ?? ready?.id ?? starter?.id ?? null);
+        const first = own[0]?.id ?? starter?.id ?? null;
+        setDeckId((id) => id ?? startingDeck([...own, ...loaded.decks], loadLastDeck(), first));
       },
       (e: unknown) => live && setLoadError(e instanceof Error ? e.message : String(e)),
     );
@@ -180,6 +185,8 @@ export function App() {
     training?: TrainingSetup["training"],
   ) => {
     if (!data) return;
+    // The New Player lesson hands out its own deck, so it doesn't count as the player's choice.
+    if (training?.mode !== "newPlayer") saveLastDeck(mine.id);
     const seed = Math.floor(Math.random() * 2 ** 31);
     leaveGame();
     recorded.current = false;
@@ -257,12 +264,16 @@ export function App() {
 
   const hostDuel = () => {
     const mine = decks.find((d) => d.id === deckId);
-    if (mine) void startDuel(newSave(newGameCode(), "host", mine));
+    if (!mine) return;
+    saveLastDeck(mine.id);
+    void startDuel(newSave(newGameCode(), "host", mine));
   };
 
   const joinDuel = (code: string) => {
     const mine = decks.find((d) => d.id === deckId);
-    if (mine) void startDuel(newSave(code, "guest", mine));
+    if (!mine) return;
+    saveLastDeck(mine.id);
+    void startDuel(newSave(code, "guest", mine));
   };
 
   /** Leaves the online game. One that isn't over can still be rejoined from the Play a Friend screen. */
@@ -535,6 +546,7 @@ export function App() {
                 deckId={deckId}
                 online={online}
                 saved={savedDuel}
+                lastDeckId={loadLastDeck()}
                 onDeck={setDeckId}
                 onBuild={() => setScreen("decks")}
                 onHost={hostDuel}

@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { buildCardData, type Card } from "../src/card-data.js";
-import { cardList, copyOf, fromList, newDeck, playable, problemsOf } from "../src/my-decks.js";
+import {
+  cardList,
+  copyOf,
+  fromList,
+  newDeck,
+  playable,
+  problemsOf,
+  startingDeck,
+} from "../src/my-decks.js";
 
 const leader: Card = {
   id: "ST99-001",
@@ -87,5 +95,16 @@ describe("my decks", () => {
     expect(noFormat.formatLoaded).toBe(false);
     const rotated = fromList(newDeck(), "ST99-001", [...fifty.slice(0, 49), "ST98-001"]);
     expect(problemsOf(rotated, noFormat)).toEqual([]);
+  });
+});
+
+describe("startingDeck", () => {
+  const decks = [{ id: "a" }, { id: "b" }];
+  it("starts on the deck played last", () => {
+    expect(startingDeck(decks, "b", "a")).toBe("b");
+  });
+  it("falls back when there is no last deck, or it was deleted", () => {
+    expect(startingDeck(decks, null, "a")).toBe("a");
+    expect(startingDeck(decks, "gone", "a")).toBe("a");
   });
 });
