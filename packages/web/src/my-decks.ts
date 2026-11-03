@@ -93,3 +93,31 @@ function isSavedDeck(value: unknown): value is SavedDeck {
 export function copyOf(deck: PlayableDeck, name: string): SavedDeck {
   return { ...fromList(newDeck(), deck.leader, deck.deck), name };
 }
+
+const LAST_KEY = "strawhat.lastDeck";
+
+/** The id of the deck the player last started a game with, so menus can start on it. */
+export function loadLastDeck(): string | null {
+  try {
+    return localStorage.getItem(LAST_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function saveLastDeck(id: string): void {
+  try {
+    localStorage.setItem(LAST_KEY, id);
+  } catch {
+    // Private windows can refuse storage; the menus then start on the first deck instead.
+  }
+}
+
+/** The deck a menu starts on: the last one played if it can still be played, else `fallback`. */
+export function startingDeck(
+  available: { id: string }[],
+  last: string | null,
+  fallback: string | null,
+): string | null {
+  return last && available.some((d) => d.id === last) ? last : fallback;
+}

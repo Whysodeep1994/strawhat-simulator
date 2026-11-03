@@ -3931,3 +3931,13 @@ button.pile {
     display: none;
   }
 }
+
+/* Play a Friend: the deck menu shown before joining a friend's game. */
+.join-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.join-deck p {
+  margin: 0;
+}

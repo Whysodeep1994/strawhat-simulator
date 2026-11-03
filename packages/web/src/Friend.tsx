@@ -4,13 +4,17 @@ import { DeckChooser, readyDecks } from "./Home.js";
 import type { SavedDeck } from "./my-decks.js";
 import { cleanGameCode, type DuelSave, type DuelStatus } from "./online.js";
 
-/** Pick a deck, then host a game (and get a code) or type a friend's code to join theirs. */
+/**
+ * Pick a deck, then host a game (and get a code) or type a friend's code to join theirs. Joining
+ * always stops at a deck menu first, so an invited friend can switch from the deck they played last.
+ */
 export function FriendSetup({
   data,
   myDecks,
   deckId,
   online,
   saved,
+  lastDeckId,
   onDeck,
   onBuild,
   onHost,
@@ -25,6 +29,8 @@ export function FriendSetup({
   online: boolean | null;
   /** An online game this browser was in before. */
   saved: DuelSave | null;
+  /** The deck this player last started a game with. */
+  lastDeckId: string | null;
   onDeck: (id: string) => void;
   onBuild: () => void;
   onHost: () => void;
@@ -33,9 +39,28 @@ export function FriendSetup({
   onForget: () => void;
 }) {
   const [typed, setTyped] = useState("");
+  /** The friend's game code, once typed: the deck menu shows before joining it. */
+  const [joining, setJoining] = useState<string | null>(null);
   const code = cleanGameCode(typed);
   const chosen = [...readyDecks(myDecks, data), ...data.decks].find((d) => d.id === deckId);
   const ready = online === true && !!chosen;
+
+  if (joining) {
+    return (
+      <JoinDeckMenu
+        data={data}
+        myDecks={myDecks}
+        deckId={deckId}
+        code={joining}
+        isLast={!!chosen && chosen.id === lastDeckId}
+        ready={ready}
+        onDeck={onDeck}
+        onBuild={onBuild}
+        onJoin={() => onJoin(joining)}
+        onBack={() => setJoining(null)}
+      />
+    );
+  }
 
   return (
     <div className="home-grid">
@@ -95,7 +120,7 @@ export function FriendSetup({
               className="code-input"
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && code && ready && onJoin(code)}
+              onKeyDown={(e) => e.key === "Enter" && code && online === true && setJoining(code)}
               placeholder="e.g. k7m2qx"
               autoCapitalize="none"
               autoComplete="off"
@@ -103,9 +128,64 @@ export function FriendSetup({
               maxLength={16}
             />
           </label>
-          <button onClick={() => code && onJoin(code)} disabled={!ready || !code}>
-            Join game
+          <button onClick={() => code && setJoining(code)} disabled={online !== true || !code}>
+            Next: choose your deck
           </button>
+        </section>
+      </aside>
+    </div>
+  );
+}
+
+/** The invited friend's last step: check or change their deck, then join the game. */
+function JoinDeckMenu({
+  data,
+  myDecks,
+  deckId,
+  code,
+  isLast,
+  ready,
+  onDeck,
+  onBuild,
+  onJoin,
+  onBack,
+}: {
+  data: CardData;
+  myDecks: SavedDeck[];
+  deckId: string | null;
+  code: string;
+  /** Whether the deck picked now is the one played last. */
+  isLast: boolean;
+  ready: boolean;
+  onDeck: (id: string) => void;
+  onBuild: () => void;
+  onJoin: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="home-grid">
+      <DeckChooser
+        data={data}
+        myDecks={myDecks}
+        deckId={deckId}
+        onDeck={onDeck}
+        onBuild={onBuild}
+      />
+      <aside className="home-side">
+        <section className="panel join-deck">
+          <h2>Choose your deck</h2>
+          <p>
+            You're joining game <strong className="game-code">{code}</strong>.
+          </p>
+          <p className="note">
+            {isLast
+              ? "This is the deck you played last. Pick a different one from the list if you like."
+              : "Pick the deck you want to play from the list."}
+          </p>
+          <button className="primary big" onClick={onJoin} disabled={!ready}>
+            Join with this deck
+          </button>
+          <button onClick={onBack}>Back</button>
         </section>
       </aside>
     </div>
@@ -156,8 +236,8 @@ export function FriendLobby({
             <button onClick={copy}>{copied ? "Copied!" : "Copy"}</button>
           </div>
           <p className="note">
-            They open the game from the same link, choose Play a Friend, pick a deck and type the
-            code.
+            They open the game from the same link, choose Play a Friend, type the code and pick
+            their deck.
           </p>
         </>
       ) : (
