@@ -43,6 +43,8 @@
 .builder-bar,
 .library,
 .show-more,
+.deck-grid-bar,
+.deck-grid-group,
 .step,
 .builder-notice {
   --text: #2e1d0e;
@@ -80,6 +82,8 @@
 .panel,
 .filters,
 .builder-deck,
+.deck-grid-bar,
+.deck-grid-group,
 .status,
 .detail,
 .log,

@@ -69,5 +69,7 @@ Leader first; the library then shows only cards that Leader can use, Standard-le
 Sort the library by card number, cost, power, card type or attribute, low to high or high
 to low. Point at a card to see its art enlarged with every printed detail (card number,
 rarity, cost, power, counter, attribute, types, block, effect text) in the right-hand panel;
-on a touch screen, press and hold a card. Decks save in the browser as you go, and a deck can be played once it's legal in Standard.
+on a touch screen, press and hold a card. **Show deck as cards** (in the deck panel) swaps the card search for
+your deck laid out as card pictures, grouped by card type with copy counts and − / + buttons;
+**Back to card search** returns to the library. Decks save in the browser as you go, and a deck can be played once it's legal in Standard.
 Starter decks are played as printed, even where their cards have rotated out of Standard.

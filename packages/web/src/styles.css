@@ -3984,3 +3984,52 @@ button.pile {
 .join-deck p {
   margin: 0;
 }
+
+/* Deck builder: the deck shown as card pictures in place of the card search. */
+.builder.grid-view .builder-search {
+  display: none;
+}
+.deck-grid {
+  grid-area: search;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.deck-grid-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+}
+.deck-grid-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.deck-grid-group h3 {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  display: flex;
+  gap: 8px;
+}
+.deck-grid-group h3 span {
+  color: var(--muted);
+}
+/* Two or more copies sit as a little stack. */
+.library-card.stacked .card {
+  box-shadow:
+    4px 4px 0 -1px rgba(20, 12, 4, 0.75),
+    7px 7px 0 -2px rgba(20, 12, 4, 0.45);
+}
+.grid-toggle {
+  align-self: stretch;
+}
+.deck-grid-group {
+  padding: 10px 12px 14px;
+}
