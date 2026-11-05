@@ -2,7 +2,14 @@ import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "r
 import type { CardData, PlayableDeck } from "./card-data.js";
 import { deckGroups, deckSubtitle, LeaderInfo, LeaderPicker } from "./LeaderPicker.js";
 import { moveHighlight } from "./menu.js";
-import { cardList, playable, problemsOf, type SavedDeck } from "./my-decks.js";
+import {
+  cardList,
+  FORMAT_NAMES,
+  playable,
+  problemsOf,
+  type FormatId,
+  type SavedDeck,
+} from "./my-decks.js";
 import { matImage, presetImage } from "./mat-art.js";
 import {
   isUpload,
@@ -174,9 +181,13 @@ export function SubScreen({
 type Source = "mine" | "quick";
 
 /** The player's own decks that are ready to play. */
-export function readyDecks(myDecks: SavedDeck[], data: CardData): PlayableDeck[] {
+export function readyDecks(
+  myDecks: SavedDeck[],
+  data: CardData,
+  format: FormatId = "standard",
+): PlayableDeck[] {
   return myDecks.flatMap((d) => {
-    const deck = playable(d, data);
+    const deck = playable(d, data, format);
     return deck ? [deck] : [];
   });
 }
@@ -188,15 +199,28 @@ export function DeckChooser({
   deckId,
   onDeck,
   onBuild,
+  format = "standard",
 }: {
   data: CardData;
   myDecks: SavedDeck[];
   deckId: string | null;
   onDeck: (id: string) => void;
   onBuild: () => void;
+  /** Which of your decks can be picked: Standard ones, or (against a friend) Grand Battle ones. */
+  format?: FormatId;
 }) {
-  const mine = readyDecks(myDecks, data);
-  const unready = myDecks.length - mine.length;
+  const mine = readyDecks(myDecks, data, format);
+  // Grand Battle decks that only work against a friend aren't "to fix" in a Standard menu.
+  const friendOnly =
+    format === "standard"
+      ? myDecks.filter(
+          (d) =>
+            d.format === "grand-battle" &&
+            !playable(d, data) &&
+            playable(d, data, "grand-battle") !== null,
+        ).length
+      : 0;
+  const unready = myDecks.length - mine.length - friendOnly;
   const quick = data.decks;
   const [source, setSource] = useState<Source>(() =>
     mine.some((d) => d.id === deckId) || (mine.length > 0 && !quick.some((d) => d.id === deckId))
@@ -237,7 +261,9 @@ export function DeckChooser({
           <p>
             {unready > 0
               ? `None of your ${unready} saved decks are ready to play yet. Open them in the Deck Builder to see what to fix.`
-              : "You haven't built a deck yet. Build one, or play a Quick deck while you get started."}
+              : friendOnly > 0
+                ? `Your Grand Battle ${friendOnly === 1 ? "deck" : "decks"} can only be played against a friend. Build a Standard deck, or play a Quick deck.`
+                : "You haven't built a deck yet. Build one, or play a Quick deck while you get started."}
           </p>
           <div className="row">
             <button className="primary" onClick={onBuild}>
@@ -267,6 +293,12 @@ export function DeckChooser({
             <p className="note">
               {unready} more {unready === 1 ? "deck needs" : "decks need"} fixing in the Deck
               Builder before {unready === 1 ? "it" : "they"} can be played.
+            </p>
+          )}
+          {source === "mine" && friendOnly > 0 && (
+            <p className="note">
+              {friendOnly} Grand Battle {friendOnly === 1 ? "deck is" : "decks are"} left out: Grand
+              Battle is for Play a Friend.
             </p>
           )}
           {source === "quick" && (
@@ -422,7 +454,7 @@ export function MyDecksScreen({
     <section className="panel decks" aria-labelledby="deck-heading">
       <div className="panel-head">
         <h2 id="deck-heading">My decks</h2>
-        <span className="count">Standard format</span>
+        <span className="count">Standard or Grand Battle</span>
       </div>
       <div className="deck-grid">
         <button className="deck-tile new-deck" onClick={onNew}>
@@ -439,7 +471,7 @@ export function MyDecksScreen({
             key={saved.id}
             saved={saved}
             data={data}
-            problems={playable(saved, data) ? 0 : problemsOf(saved, data).length}
+            problems={problemsOf(saved, data).length}
             onEdit={() => onEdit(saved.id)}
           />
         ))}
@@ -467,7 +499,8 @@ export function MyDecksScreen({
       </div>
       <p className="note">
         Makes a copy in My decks that you can change. Some starter cards have rotated out of
-        Standard, so the Deck Builder will show you what to swap.
+        Standard, so the Deck Builder will show you what to swap, or you can switch the deck to
+        Grand Battle (every block, for Play a Friend).
       </p>
     </section>
   );
@@ -509,6 +542,7 @@ function MyDeckTile({
         <strong>{saved.name}</strong>
         <span>
           {leader?.name ?? "No Leader yet"} · {count}/50
+          {saved.format === "grand-battle" && ` · ${FORMAT_NAMES["grand-battle"]}`}
         </span>
       </span>
       <span className={`badge ${problems ? "practice" : "official"}`}>

@@ -49,6 +49,11 @@ export interface CardData {
   format: DeckFormat;
   /** False until the card data has the official Standard rules; only the base rules apply. */
   formatLoaded: boolean;
+  /**
+   * Grand Battle, for games against a friend: every block, Block 1 included (Bandai's Extra
+   * Regulation), with the same banned lists as Standard.
+   */
+  grandBattle: DeckFormat;
   /** A "how to play" tip for each Leader, by card number, when the card data has them. */
   tips: Record<string, LeaderTip>;
   imageUrl: (card: Card | undefined) => string | undefined;
@@ -75,6 +80,7 @@ export function buildCardData(
   tips: Record<string, LeaderTip> = {},
 ): CardData {
   const standard = formats.find((f) => f.id === "standard");
+  const grandBattle = formats.find((f) => f.id === "grand-battle");
   const catalog: Record<string, Card> = Object.fromEntries(cards.map((c) => [c.id, c]));
   const decks: PlayableDeck[] = [];
   for (const deck of officialDecks) {
@@ -97,6 +103,7 @@ export function buildCardData(
     decks,
     format: standard ?? { ...BASE_RULES, id: "standard", name: "Standard" },
     formatLoaded: standard !== undefined,
+    grandBattle: grandBattle ?? everyBlock(standard),
     tips,
     // Paths are relative to the card data; a full or root-relative URL (an image hosted
     // elsewhere) is used as it is.
@@ -107,6 +114,15 @@ export function buildCardData(
           : `${base}${card.image}`
         : undefined,
   };
+}
+
+/** Grand Battle when the card data doesn't have it yet: Standard's banned lists, every block. */
+function everyBlock(standard: DeckFormat | undefined): DeckFormat {
+  const lists: Partial<DeckFormat> = {};
+  if (standard?.banned) lists.banned = standard.banned;
+  if (standard?.restricted) lists.restricted = standard.restricted;
+  if (standard?.bannedPairs) lists.bannedPairs = standard.bannedPairs;
+  return { ...BASE_RULES, ...lists, id: "grand-battle", name: "Grand Battle" };
 }
 
 /**

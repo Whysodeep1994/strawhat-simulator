@@ -81,6 +81,24 @@ describe("my decks", () => {
     expect(playable(fromList(newDeck(), undefined, fifty), data)).toBeNull();
   });
 
+  it("can be a Grand Battle deck: every block, Standard's bans, played against a friend", () => {
+    const old = fromList(newDeck(), "ST99-001", [...fifty.slice(0, 49), "ST98-001"]);
+    expect(playable(old, data, "grand-battle")).toMatchObject({ leader: "ST99-001" });
+    expect(playable(old, data)).toBeNull();
+
+    const grand = { ...old, format: "grand-battle" as const };
+    expect(problemsOf(grand, data)).toEqual([]);
+    // Still not a Standard deck, so it stays out of games against the computer.
+    expect(problemsOf(grand, data, "standard").length).toBe(1);
+    expect(playable(grand, data)).toBeNull();
+
+    const banned = fromList(newDeck(), "ST99-001", [...fifty.slice(0, 49), "ST99-015"]);
+    expect(problemsOf(banned, data, "grand-battle")[0]?.message).toMatch(/banned in Grand Battle/);
+
+    // A Standard deck is a Grand Battle deck too.
+    expect(playable(fromList(newDeck(), "ST99-001", fifty), data, "grand-battle")).not.toBeNull();
+  });
+
   it("can start as a copy of a Quick deck", () => {
     const quick = { id: "ST99", name: "Test", leader: "ST99-001", deck: fifty, official: true };
     const copy = copyOf(quick, "My Test");

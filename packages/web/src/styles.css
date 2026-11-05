@@ -3985,6 +3985,14 @@ button.pile {
   margin: 0;
 }
 
+/* The Standard / Grand Battle switch in the Deck Builder's deck panel. */
+.deck-format {
+  margin: 10px 0;
+}
+.deck-format .note {
+  margin: 6px 0 0;
+}
+
 /* Deck builder: the deck shown as card pictures in place of the card search. */
 .builder.grid-view .builder-search {
   display: none;

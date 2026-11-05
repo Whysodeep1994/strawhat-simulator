@@ -1,4 +1,4 @@
-import { checkDeck, type CardCatalog } from "@strawhat/engine";
+import { checkDeck, type CardCatalog, type DeckFormat } from "@strawhat/engine";
 import type { CardData, PlayableDeck } from "./card-data.js";
 
 /**
@@ -13,6 +13,28 @@ export interface SavedDeck {
   cards: Record<string, number>;
   /** ISO time of the last change. */
   updated: string;
+  /** The format the Deck Builder checks the deck against. Left out means Standard. */
+  format?: FormatId;
+}
+
+/**
+ * Standard (blocks 2 to 5 and X) is for every game. Grand Battle allows every block, Block 1
+ * included, and is for games against a friend.
+ */
+export type FormatId = "standard" | "grand-battle";
+
+export const FORMAT_NAMES: Record<FormatId, string> = {
+  standard: "Standard",
+  "grand-battle": "Grand Battle",
+};
+
+export function formatFor(id: FormatId, data: CardData): DeckFormat {
+  return id === "grand-battle" ? data.grandBattle : data.format;
+}
+
+/** The format the deck is built for. */
+export function deckFormat(deck: SavedDeck, data: CardData): DeckFormat {
+  return formatFor(deck.format ?? "standard", data);
 }
 
 const KEY = "strawhat.decks";
@@ -61,13 +83,22 @@ export function fromList(deck: SavedDeck, leader: string | undefined, list: stri
   return next;
 }
 
-export function problemsOf(deck: SavedDeck, data: CardData) {
-  return checkDeck(data.catalog as CardCatalog, data.format, deck.leader, cardList(deck));
+/** What keeps the deck out of its own format (or of `format`, when given). */
+export function problemsOf(deck: SavedDeck, data: CardData, format?: FormatId) {
+  const rules = format ? formatFor(format, data) : deckFormat(deck, data);
+  return checkDeck(data.catalog as CardCatalog, rules, deck.leader, cardList(deck));
 }
 
-/** A saved deck that can be played right now: legal in Standard. */
-export function playable(deck: SavedDeck, data: CardData): PlayableDeck | null {
-  if (!deck.leader || problemsOf(deck, data).length > 0) return null;
+/**
+ * A saved deck that can be played right now in `format` (Standard unless given). A Standard deck
+ * is also a Grand Battle deck, since Grand Battle only allows more cards.
+ */
+export function playable(
+  deck: SavedDeck,
+  data: CardData,
+  format: FormatId = "standard",
+): PlayableDeck | null {
+  if (!deck.leader || problemsOf(deck, data, format).length > 0) return null;
   return {
     id: deck.id,
     name: deck.name,
