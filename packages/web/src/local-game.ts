@@ -27,6 +27,7 @@ import {
   type Clock,
 } from "./clock.js";
 import { newStats, trackAction, type GameStats } from "./trophies.js";
+import { reviewGame } from "./coach-review.js";
 
 /**
  * A game as this computer sees it: you against the computer, or against a friend online. It
@@ -57,6 +58,26 @@ export interface LocalGame {
   states?: GameState[];
   /** Cards an effect showed to both players, newest last, for the board to hold up. */
   reveals?: Reveal[];
+  /** The highest reveal id given out so far, so a reveal after an Undo still gets a new one. */
+  revealIds?: number;
+  /** Against the computer: the game just before each of your recent moves, newest last. */
+  undo?: UndoPoint[];
+  /** Moves you took back with Undo this game, oldest first. Pro Drills reports them. */
+  undos?: UndoUse[];
+}
+
+/** The game as it was just before one of your moves, so Undo can go back to it. */
+export type UndoPoint = Omit<LocalGame, "undo" | "undos" | "revealIds">;
+
+/** One use of Undo: which turn it was, the move taken back, and any errors that move made. */
+export interface UndoUse {
+  turn: number;
+  /** "Your turn 3", or "Opponent's turn 2 (defending)", like the coaching report. */
+  round: string;
+  /** The move you took back, in plain words, such as "You played Nami." */
+  move: string;
+  /** Pro Drills: errors in the moves you took back, which Undo let you avoid. */
+  errors: string[];
 }
 
 /** Cards shown to both players, such as a searched card on its way to the hand (rule 11-2-1). */
@@ -151,9 +172,91 @@ export function friendAct(game: LocalGame, action: Action): LocalGame {
   return act(game, action);
 }
 
-/** Applies your action. Throws IllegalActionError if it isn't allowed. */
+/** How many of your moves Undo can take back in a row. */
+export const MAX_UNDO = 50;
+
+/**
+ * Applies your action. Throws IllegalActionError if it isn't allowed. Against the computer,
+ * the game before it is kept so Undo can take it back.
+ */
 export function humanAct(game: LocalGame, action: Action): LocalGame {
-  return act(game, action);
+  const next = act(game, action);
+  if (game.opponent !== "computer") return next;
+  const point: Partial<LocalGame> = { ...game };
+  delete point.undo;
+  delete point.undos;
+  delete point.revealIds;
+  return { ...next, undo: [...(game.undo ?? []), point as UndoPoint].slice(-MAX_UNDO) };
+}
+
+/** Whether Undo can take back a move: only against the computer, while the game is on. */
+export function canUndo(game: LocalGame): boolean {
+  return (
+    game.opponent === "computer" &&
+    game.state.winner === null &&
+    game.state.prompt.kind !== "gameOver" &&
+    (game.undo?.length ?? 0) > 0
+  );
+}
+
+/**
+ * Takes back your last move, and everything the computer did after it, so the game is back
+ * where you made that move. The time you spent stays used on your clock, and the use is kept
+ * in `undos` so the Pro Drills report can count it.
+ */
+export function undoMove(game: LocalGame, now: number = Date.now()): LocalGame {
+  const point = game.undo?.at(-1);
+  if (!point || !canUndo(game)) return game;
+  const me = game.human;
+  const action = game.actions[point.actions.length];
+  const move = (action && describeAction(point.state, action, me)?.text) ?? "You made a move.";
+  const use: UndoUse = {
+    turn: point.state.turn,
+    round: roundName(point.state, me),
+    move,
+    errors: undoneErrors(game, point),
+  };
+  const id = (point.log.at(-1)?.id ?? 0) + 1;
+  const text = `You used Undo and took back a move (${move.replace(/^You /, "").replace(/\.$/, "")}).`;
+  // The clock keeps the time you spent: Undo turns back the game, not the clock.
+  const clock = charge(game.clock, game.state, now);
+  return {
+    ...point,
+    clock: { used: clock.used, since: now },
+    log: [...point.log, { id, player: me, text }].slice(-200),
+    undo: game.undo!.slice(0, -1),
+    undos: [...(game.undos ?? []), use],
+    revealIds: Math.max(game.revealIds ?? 0, game.reveals?.at(-1)?.id ?? 0),
+  };
+}
+
+/** Which of your turns `state` is in, or which of the opponent's when you're defending. */
+function roundName(state: GameState, me: PlayerId): string {
+  const mine = state.turnPlayer === me;
+  const n = state.players[mine ? me : opponentOf(me)].turnsTaken;
+  return mine ? `Your turn ${n}` : `Opponent's turn ${n} (defending)`;
+}
+
+/** Pro Drills: the errors the coaching report finds in the moves Undo is about to take back. */
+function undoneErrors(game: LocalGame, point: UndoPoint): string[] {
+  if (game.training?.mode !== "drills" || !game.states || !point.states) return [];
+  try {
+    const me = game.human;
+    const key = (m: { turn: number; title: string }) => `${m.turn}|${m.title}`;
+    const kept = new Map<string, number>();
+    for (const m of reviewGame(point.states, point.actions, me).mistakes) {
+      kept.set(key(m), (kept.get(key(m)) ?? 0) + 1);
+    }
+    const errors: string[] = [];
+    for (const m of reviewGame(game.states, game.actions, me).mistakes) {
+      const left = kept.get(key(m)) ?? 0;
+      if (left > 0) kept.set(key(m), left - 1);
+      else errors.push(m.title);
+    }
+    return errors;
+  } catch {
+    return [];
+  }
 }
 
 /** The most moves in a row the computer makes before it just passes or ends its turn. */
@@ -224,6 +327,8 @@ export function timeOut(
   return {
     ...game,
     state: startOvertime(game.state, from),
+    // Undo can't go back past the start of overtime.
+    undo: [],
     overtime: { by: player, from },
     clock: { ...game.clock, used: { ...game.clock.used, [player]: CLOCK_MS } },
     log: [...game.log, { id, player: null, text }].slice(-200),
@@ -245,14 +350,16 @@ function act(game: LocalGame, action: Action, now: number = Date.now()): LocalGa
   const shown = (after.revealed ?? [])
     .map((uid) => findCard(after, uid))
     .filter((c): c is CardInstance => c !== null);
+  const revealId = Math.max(game.actions.length, game.revealIds ?? 0) + 1;
   const reveals = shown.length
-    ? [...(game.reveals ?? []), { id: game.actions.length + 1, cards: structuredClone(shown) }]
+    ? [...(game.reveals ?? []), { id: revealId, cards: structuredClone(shown) }]
     : game.reveals;
   return {
     ...game,
     state: after,
     actions: [...game.actions, action],
     ...(reveals && { reveals: reveals.slice(-10) }),
+    ...(shown.length > 0 && { revealIds: revealId }),
     ...(game.states && { states: [...game.states, after] }),
     log: [...game.log, ...entries].slice(-200),
     stats: trackAction(game.stats, game.human, before, action, after),

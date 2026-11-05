@@ -5,11 +5,14 @@ import { cardText } from "../src/describe.js";
 import {
   botStep,
   botToAct,
+  canUndo,
   describeChanges,
   humanAct,
   newLocalGame,
+  undoMove,
   type LocalGame,
 } from "../src/local-game.js";
+import { reviewGame } from "../src/coach-review.js";
 
 function newGame(seed: number): LocalGame {
   return newLocalGame(DEMO_CATALOG, { human: DEMO_DECKS.red, bot: DEMO_DECKS.green }, seed);
@@ -111,5 +114,78 @@ describe("local game against the computer", () => {
         ? botStep(game)
         : humanAct(game, chooseBotAction(game.state, game.human));
     }
+  });
+});
+
+describe("Undo against the computer", () => {
+  /** Plays until it's your main phase with the computer having just moved, then returns. */
+  function toMyMain(game: LocalGame): LocalGame {
+    for (let i = 0; i < 400; i++) {
+      if (botToAct(game)) game = botStep(game);
+      else if (game.state.prompt.kind === "main" && game.state.players.p1.turnsTaken >= 2) break;
+      else game = humanAct(game, chooseBotAction(game.state, game.human));
+    }
+    return game;
+  }
+
+  it("takes back your last move and everything the computer did after it", () => {
+    let game = toMyMain(newGame(5));
+    const before = game;
+    game = humanAct(game, { type: "endTurn", player: "p1" });
+    while (botToAct(game)) game = botStep(game);
+    expect(game.actions.length).toBeGreaterThan(before.actions.length + 1);
+    expect(canUndo(game)).toBe(true);
+
+    const undone = undoMove(game, game.clock.since + 1000);
+    expect(undone.state).toBe(before.state);
+    expect(undone.actions).toEqual(before.actions);
+    expect(undone.undos).toHaveLength(1);
+    expect(undone.undos![0]!.move).toBe("You ended the turn.");
+    expect(undone.log.at(-1)?.text).toMatch(/You used Undo/);
+    // The time you spent stays on your clock.
+    expect(undone.clock.used.p1 + undone.clock.used.p2).toBeGreaterThanOrEqual(
+      game.clock.used.p1 + game.clock.used.p2,
+    );
+  });
+
+  it("can take back several moves in a row, then runs out", () => {
+    let game = newGame(2);
+    game = humanAct(game, { type: "chooseTurnOrder", player: "p1", goFirst: true });
+    game = humanAct(game, { type: "keepHand", player: "p1" });
+    while (botToAct(game)) game = botStep(game);
+    game = undoMove(undoMove(game));
+    expect(game.state.prompt).toEqual({ kind: "chooseTurnOrder", player: "p1" });
+    expect(game.undos).toHaveLength(2);
+    expect(canUndo(game)).toBe(false);
+    expect(undoMove(game)).toBe(game);
+  });
+
+  it("isn't offered online or once the game is over", () => {
+    const online = humanAct(
+      { ...newGame(1), opponent: "friend" },
+      { type: "chooseTurnOrder", player: "p1", goFirst: true },
+    );
+    expect(canUndo(online)).toBe(false);
+    expect(canUndo(playOut(newGame(4)))).toBe(false);
+  });
+
+  it("counts each Undo in the Pro Drills report", () => {
+    let game = newLocalGame(DEMO_CATALOG, { human: DEMO_DECKS.red, bot: DEMO_DECKS.green }, 7, {
+      mode: "drills",
+      liveCoaching: false,
+    });
+    game = toMyMain(game);
+    game = humanAct(game, { type: "endTurn", player: "p1" });
+    while (botToAct(game)) game = botStep(game);
+    game = undoMove(game);
+    expect(game.states).toHaveLength(game.actions.length + 1);
+    game = playOut(game);
+    const plain = reviewGame(game.states!, game.actions, "p1");
+    const review = reviewGame(game.states!, game.actions, "p1", game.undos);
+    expect(review.undos).toHaveLength(1);
+    expect(review.cleanTurns).toBeLessThanOrEqual(plain.cleanTurns);
+    const turn = game.undos![0]!.turn;
+    const hadErrors = plain.mistakes.some((m) => m.turn === turn);
+    expect(review.cleanTurns).toBe(plain.cleanTurns - (hadErrors ? 0 : 1));
   });
 });

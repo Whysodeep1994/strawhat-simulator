@@ -21,6 +21,7 @@ import {
   powerShort,
   usesGivenDon,
 } from "./coach.js";
+import type { UndoUse } from "./local-game.js";
 
 /**
  * The Pro Drills report: every mistake you made in a game, which turn it was, and why it was a
@@ -42,9 +43,11 @@ export interface Mistake {
 
 export interface Review {
   mistakes: Mistake[];
-  /** Your turns played, and how many of them had no mistakes. */
+  /** Your turns played, and how many of them had no mistakes and no Undo. */
   turns: number;
   cleanTurns: number;
+  /** Every time you used Undo, oldest first. */
+  undos: UndoUse[];
 }
 
 interface TurnNotes {
@@ -80,9 +83,15 @@ export function replay(initial: GameState, actions: Action[]): GameState[] {
 
 /**
  * Reviews a game. `states` holds the game before each of `actions` and, last, after them all;
- * Pro Drills keeps them as the game goes, since replaying a long game takes seconds.
+ * Pro Drills keeps them as the game goes, since replaying a long game takes seconds. A turn
+ * where you used Undo doesn't count as clean: a strong player gets it right the first time.
  */
-export function reviewGame(states: GameState[], actions: Action[], me: PlayerId): Review {
+export function reviewGame(
+  states: GameState[],
+  actions: Action[],
+  me: PlayerId,
+  undos: UndoUse[] = [],
+): Review {
   const mistakes: Mistake[] = [];
   const them = opponentOf(me);
   let turnNotes: TurnNotes = { attacked: new Set() };
@@ -180,11 +189,12 @@ export function reviewGame(states: GameState[], actions: Action[], me: PlayerId)
     if (action.player === them && action.type === "attack") attacksAgainstYou++;
   }
 
-  const bad = new Set(mistakes.filter((m) => myTurns.has(m.turn)).map((m) => m.turn));
+  const bad = new Set([...mistakes, ...undos].map((m) => m.turn).filter((t) => myTurns.has(t)));
   return {
     mistakes,
     turns: myTurns.size,
     cleanTurns: [...myTurns].filter((t) => !bad.has(t)).length,
+    undos,
   };
 
   /** Notes on the attack you're defending against right now. */
