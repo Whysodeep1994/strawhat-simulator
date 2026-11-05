@@ -13,7 +13,15 @@ import { setLabel, type Card, type CardData } from "./card-data.js";
 import { CATEGORY_NAMES, COLOR_NAMES, CardPrint } from "./CardPrint.js";
 import { SORT_NAMES, sortCards, type SortKey } from "./card-sort.js";
 import { CardView } from "./CardView.js";
-import { cardList, fromList, problemsOf, type SavedDeck } from "./my-decks.js";
+import {
+  cardList,
+  deckFormat,
+  FORMAT_NAMES,
+  fromList,
+  problemsOf,
+  type FormatId,
+  type SavedDeck,
+} from "./my-decks.js";
 import { sound } from "./sound.js";
 
 interface Props {
@@ -59,6 +67,8 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
   const costFiltered = cost[0] > options.cost.min || cost[1] < options.cost.max;
   const total = Object.values(deck.cards).reduce((sum, n) => sum + n, 0);
   const problems = useMemo(() => problemsOf(deck, data), [deck, data]);
+  const format = deckFormat(deck, data);
+  const formatId: FormatId = deck.format ?? "standard";
 
   const results = useMemo(() => {
     const found = searchCards(catalog, {
@@ -78,11 +88,11 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
     );
     // Cards the format allows come first; the rest stay visible so you can see why they're out.
     const usable = (card: Card) =>
-      card.category === "leader" || copyLimit(data.format, catalog, card.id) > 0;
+      card.category === "leader" || copyLimit(format, catalog, card.id) > 0;
     return [...matching.filter(usable), ...matching.filter((card) => !usable(card))];
   }, [
     catalog,
-    data.format,
+    format,
     text,
     id,
     sets,
@@ -128,8 +138,8 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
       return;
     }
     const have = deck.cards[card.id] ?? 0;
-    const limit = copyLimit(data.format, catalog, card.id);
-    if (limit === 0) return setNotice(`${card.name} can't be used in ${data.format.name}.`);
+    const limit = copyLimit(format, catalog, card.id);
+    if (limit === 0) return setNotice(`${card.name} can't be used in ${format.name}.`);
     if (have >= limit) {
       return setNotice(`You already have ${have} ${card.name}; the limit is ${limit}.`);
     }
@@ -157,11 +167,24 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
   }
 
   function legalityOf(card: Card): string {
-    const name = data.format.name;
-    const limit = copyLimit(data.format, catalog, card.id);
+    const name = format.name;
+    const limit = copyLimit(format, catalog, card.id);
     if (limit > 0)
       return card.category === "leader" ? `Legal in ${name}` : `Up to ${limit} in ${name}`;
-    return data.format.banned?.includes(card.id) ? `Banned in ${name}` : `Not legal in ${name}`;
+    return format.banned?.includes(card.id) ? `Banned in ${name}` : `Not legal in ${name}`;
+  }
+
+  function setFormat(next: FormatId) {
+    if (next === formatId) return;
+    const changed: SavedDeck = { ...deck, updated: new Date().toISOString() };
+    if (next === "grand-battle") changed.format = next;
+    else delete changed.format;
+    onChange(changed);
+    setNotice(
+      next === "grand-battle"
+        ? "Grand Battle: cards from every block, Block 1 included. Play it against a friend."
+        : "Standard: blocks 2 to 5. Play it against anyone.",
+    );
   }
 
   const toggle = <T,>(list: T[], value: T) =>
@@ -183,7 +206,7 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
           maxLength={40}
         />
         <span className={`legal-chip ${problems.length ? "bad" : "good"}`}>
-          {problems.length ? `${total}/50` : `Legal in ${data.format.name}`}
+          {problems.length ? `${total}/50` : `Legal in ${format.name}`}
         </span>
         <span className="saved-note" role="status">
           {saveFailed ? "Not saved: this browser won't store decks" : "Saved"}
@@ -329,7 +352,7 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
                   ? 1
                   : 0
                 : (deck.cards[card.id] ?? 0);
-            const limit = card.category === "leader" ? 1 : copyLimit(data.format, catalog, card.id);
+            const limit = card.category === "leader" ? 1 : copyLimit(format, catalog, card.id);
             return (
               <div
                 key={card.id}
@@ -365,9 +388,7 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
                 />
                 {limit === 0 && (
                   <span className="limit-tag banned">
-                    {data.format.banned?.includes(card.id)
-                      ? "Banned"
-                      : `Not in ${data.format.name}`}
+                    {format.banned?.includes(card.id) ? "Banned" : `Not in ${format.name}`}
                   </span>
                 )}
                 {limit > 0 && limit < 4 && card.category !== "leader" && (
@@ -468,9 +489,30 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
 
             <DeckList deck={deck} data={data} onAdd={add} onRemove={remove} onRead={setDetail} />
 
+            <div className="field deck-format">
+              <span>Format</span>
+              <div className="tabs" role="group" aria-label="Format">
+                {(["standard", "grand-battle"] as const).map((id) => (
+                  <button
+                    key={id}
+                    className={formatId === id ? "on" : ""}
+                    aria-pressed={formatId === id}
+                    onClick={() => setFormat(id)}
+                  >
+                    {FORMAT_NAMES[id]}
+                  </button>
+                ))}
+              </div>
+              <p className="note">
+                {formatId === "grand-battle"
+                  ? "Every block, Block 1 included. Grand Battle decks are played against a friend."
+                  : "Blocks 2 to 5, like official tournaments. Play it against anyone."}
+              </p>
+            </div>
+
             <div className={`deck-check ${problems.length ? "bad" : "good"}`}>
               {problems.length === 0 ? (
-                <p>✓ Ready to play: legal in {data.format.name}.</p>
+                <p>✓ Ready to play: legal in {format.name}.</p>
               ) : (
                 <ul>
                   {problems.slice(0, 6).map((p) => (

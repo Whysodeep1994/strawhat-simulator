@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { CardData } from "./card-data.js";
 import { DeckChooser, readyDecks } from "./Home.js";
-import type { SavedDeck } from "./my-decks.js";
-import { cleanGameCode, type DuelSave, type DuelStatus } from "./online.js";
+import { FORMAT_NAMES, type FormatId, type SavedDeck } from "./my-decks.js";
+import { cleanGameCode, codeFormat, type DuelSave, type DuelStatus } from "./online.js";
 
 /**
  * Pick a deck, then host a game (and get a code) or type a friend's code to join theirs. Joining
@@ -33,7 +33,7 @@ export function FriendSetup({
   lastDeckId: string | null;
   onDeck: (id: string) => void;
   onBuild: () => void;
-  onHost: () => void;
+  onHost: (format: FormatId) => void;
   onJoin: (code: string) => void;
   onRejoin: () => void;
   onForget: () => void;
@@ -41,8 +41,11 @@ export function FriendSetup({
   const [typed, setTyped] = useState("");
   /** The friend's game code, once typed: the deck menu shows before joining it. */
   const [joining, setJoining] = useState<string | null>(null);
+  /** The format of the game to host, or of the friend's game being joined (from its code). */
+  const [hostFormat, setHostFormat] = useState<FormatId>("standard");
+  const format = joining ? codeFormat(joining) : hostFormat;
   const code = cleanGameCode(typed);
-  const chosen = [...readyDecks(myDecks, data), ...data.decks].find((d) => d.id === deckId);
+  const chosen = [...readyDecks(myDecks, data, format), ...data.decks].find((d) => d.id === deckId);
   const ready = online === true && !!chosen;
 
   if (joining) {
@@ -52,6 +55,7 @@ export function FriendSetup({
         myDecks={myDecks}
         deckId={deckId}
         code={joining}
+        format={format}
         isLast={!!chosen && chosen.id === lastDeckId}
         ready={ready}
         onDeck={onDeck}
@@ -65,11 +69,13 @@ export function FriendSetup({
   return (
     <div className="home-grid">
       <DeckChooser
+        key={format}
         data={data}
         myDecks={myDecks}
         deckId={deckId}
         onDeck={onDeck}
         onBuild={onBuild}
+        format={format}
       />
 
       <aside className="home-side">
@@ -106,8 +112,28 @@ export function FriendSetup({
 
         <section className="panel">
           <h2>Start a game</h2>
-          <p className="note">You'll get a code to send your friend.</p>
-          <button className="primary big" onClick={onHost} disabled={!ready}>
+          <div className="field">
+            <span>Format</span>
+            <div className="tabs" role="group" aria-label="Format">
+              {(["standard", "grand-battle"] as const).map((id) => (
+                <button
+                  key={id}
+                  className={hostFormat === id ? "on" : ""}
+                  aria-pressed={hostFormat === id}
+                  onClick={() => setHostFormat(id)}
+                >
+                  {FORMAT_NAMES[id]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="note">
+            {hostFormat === "grand-battle"
+              ? "Grand Battle: decks may use cards from every block, Block 1 included. "
+              : "Standard: blocks 2 to 5, like official tournaments. "}
+            You'll get a code to send your friend.
+          </p>
+          <button className="primary big" onClick={() => onHost(hostFormat)} disabled={!ready}>
             Create a game
           </button>
         </section>
@@ -143,6 +169,7 @@ function JoinDeckMenu({
   myDecks,
   deckId,
   code,
+  format,
   isLast,
   ready,
   onDeck,
@@ -154,6 +181,7 @@ function JoinDeckMenu({
   myDecks: SavedDeck[];
   deckId: string | null;
   code: string;
+  format: FormatId;
   /** Whether the deck picked now is the one played last. */
   isLast: boolean;
   ready: boolean;
@@ -170,13 +198,18 @@ function JoinDeckMenu({
         deckId={deckId}
         onDeck={onDeck}
         onBuild={onBuild}
+        format={format}
       />
       <aside className="home-side">
         <section className="panel join-deck">
           <h2>Choose your deck</h2>
           <p>
-            You're joining game <strong className="game-code">{code}</strong>.
+            You're joining game <strong className="game-code">{code}</strong>, a{" "}
+            {FORMAT_NAMES[format]} game.
           </p>
+          {format === "grand-battle" && (
+            <p className="note">Your Grand Battle decks with Block 1 cards can play here too.</p>
+          )}
           <p className="note">
             {isLast
               ? "This is the deck you played last. Pick a different one from the list if you like."
@@ -230,7 +263,11 @@ export function FriendLobby({
       ) : host ? (
         <>
           <h2>Waiting for your friend</h2>
-          <p>Send your friend this code. The game starts as soon as they join.</p>
+          <p>
+            Send your friend this code. The game starts as soon as they join.
+            {codeFormat(code) === "grand-battle" &&
+              " It's a Grand Battle game, so decks with Block 1 cards can be played."}
+          </p>
           <div className="row">
             <strong className="game-code big-code">{code}</strong>
             <button onClick={copy}>{copied ? "Copied!" : "Copy"}</button>

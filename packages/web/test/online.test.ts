@@ -7,8 +7,10 @@ import {
   CHAT_LENGTH,
   cleanChat,
   cleanGameCode,
+  codeFormat,
   DuelLink,
   OTHER_VERSION,
+  newFormatCode,
   newGameCode,
   newSave,
   shareDeck,
@@ -157,6 +159,15 @@ function mulberry(seed: number) {
 describe("game codes", () => {
   it("are six easy-to-read characters", () => {
     for (let i = 0; i < 50; i++) expect(newGameCode()).toMatch(/^[a-hjkmnp-z2-9]{6}$/);
+  });
+
+  it("marks Grand Battle codes so the friend knows the format before choosing a deck", () => {
+    for (let i = 0; i < 50; i++) {
+      const grand = newFormatCode("grand-battle");
+      expect(grand).toMatch(/^gb[a-hjkmnp-z2-9]{6}$/);
+      expect(codeFormat(cleanGameCode(` ${grand.toUpperCase()} `)!)).toBe("grand-battle");
+      expect(codeFormat(newFormatCode("standard"))).toBe("standard");
+    }
   });
 
   it("accept what people type", () => {

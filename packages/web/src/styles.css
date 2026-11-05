@@ -3941,3 +3941,11 @@ button.pile {
 .join-deck p {
   margin: 0;
 }
+
+/* The Standard / Grand Battle switch in the Deck Builder's deck panel. */
+.deck-format {
+  margin: 10px 0;
+}
+.deck-format .note {
+  margin: 6px 0 0;
+}

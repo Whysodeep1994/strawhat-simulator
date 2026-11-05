@@ -23,7 +23,8 @@ import { newLocalGame, timeOut, type LocalGame } from "./local-game.js";
 import {
   DuelLink,
   loadDuel,
-  newGameCode,
+  codeFormat,
+  newFormatCode,
   newSave,
   onlineRoom,
   roomName,
@@ -41,6 +42,7 @@ import {
   saveDecks,
   saveLastDeck,
   startingDeck,
+  type FormatId,
   type SavedDeck,
 } from "./my-decks.js";
 import { matImage } from "./mat-art.js";
@@ -112,6 +114,20 @@ export function App() {
             ...data.decks,
             ...myDecks.flatMap((d) => {
               const deck = playable(d, data);
+              return deck ? [deck] : [];
+            }),
+          ]
+        : [],
+    [data, myDecks],
+  );
+  // Against a friend, Grand Battle games also take decks with Block 1 cards.
+  const grandBattleDecks = useMemo(
+    () =>
+      data
+        ? [
+            ...data.decks,
+            ...myDecks.flatMap((d) => {
+              const deck = playable(d, data, "grand-battle");
               return deck ? [deck] : [];
             }),
           ]
@@ -262,15 +278,19 @@ export function App() {
     );
   };
 
-  const hostDuel = () => {
-    const mine = decks.find((d) => d.id === deckId);
+  const hostDuel = (format: FormatId) => {
+    const mine = (format === "grand-battle" ? grandBattleDecks : decks).find(
+      (d) => d.id === deckId,
+    );
     if (!mine) return;
     saveLastDeck(mine.id);
-    void startDuel(newSave(newGameCode(), "host", mine));
+    void startDuel(newSave(newFormatCode(format), "host", mine));
   };
 
   const joinDuel = (code: string) => {
-    const mine = decks.find((d) => d.id === deckId);
+    const mine = (codeFormat(code) === "grand-battle" ? grandBattleDecks : decks).find(
+      (d) => d.id === deckId,
+    );
     if (!mine) return;
     saveLastDeck(mine.id);
     void startDuel(newSave(code, "guest", mine));
@@ -599,7 +619,13 @@ export function App() {
               saveFailed={saveFailed}
               onEdit={setEditing}
               onNew={() => addDeck(newDeck())}
-              onCopy={(deck) => addDeck(copyOf(deck, `My ${deckTitle(deck, data)}`))}
+              onCopy={(deck) => {
+                const copy = copyOf(deck, `My ${deckTitle(deck, data)}`);
+                // A starter deck with Block 1 cards starts as a Grand Battle deck, ready to play.
+                if (!playable(copy, data) && playable(copy, data, "grand-battle"))
+                  copy.format = "grand-battle";
+                addDeck(copy);
+              }}
             />
           </SubScreen>
         )}

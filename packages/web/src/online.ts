@@ -6,6 +6,7 @@ import {
   type PlayerId,
 } from "@strawhat/engine";
 import type { Clock } from "./clock.js";
+import type { FormatId } from "./my-decks.js";
 import {
   friendAct,
   humanAct,
@@ -236,6 +237,22 @@ export function newGameCode(random: () => number = Math.random): string {
   let code = "";
   for (let i = 0; i < 6; i++) code += letters[Math.floor(random() * letters.length)];
   return code;
+}
+
+/**
+ * Grand Battle games get a code starting "gb" with 8 characters in all, so a friend who types the
+ * code knows the format before choosing a deck. Standard codes always have 6.
+ */
+const GRAND_BATTLE_CODE = /^gb[a-z0-9]{6}$/;
+
+/** A new code for a game in `format`. */
+export function newFormatCode(format: FormatId, random: () => number = Math.random): string {
+  return format === "grand-battle" ? `gb${newGameCode(random)}` : newGameCode(random);
+}
+
+/** The format a game code was made for. */
+export function codeFormat(code: string): FormatId {
+  return GRAND_BATTLE_CODE.test(code) ? "grand-battle" : "standard";
 }
 
 /** Tidies what someone typed into a game code, or returns null if it can't be one. */
