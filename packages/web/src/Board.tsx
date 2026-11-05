@@ -29,9 +29,11 @@ import { CoachTips, ReportView, TutorBox } from "./Develop.js";
 import {
   botStep,
   botToAct,
+  canUndo,
   humanAct,
   outOfTime,
   overtimeDecided,
+  undoMove,
   type LocalGame,
   type Reveal,
 } from "./local-game.js";
@@ -280,7 +282,12 @@ export function Board({
   const review = useMemo(
     () =>
       training?.mode === "drills" && game.state.winner !== null
-        ? reviewGame(game.states ?? replay(game.initial, game.actions), game.actions, me)
+        ? reviewGame(
+            game.states ?? replay(game.initial, game.actions),
+            game.actions,
+            me,
+            game.undos,
+          )
         : null,
     [game.state.winner, training],
   );
@@ -337,6 +344,27 @@ export function Board({
       setError(e instanceof Error ? e.message : String(e));
     }
   }
+
+  // Undo, against the computer only: takes back your last move. Ctrl+Z (Cmd+Z on a Mac) too.
+  const undoable = canUndo(game);
+  function undo() {
+    if (!canUndo(game)) return;
+    setError(null);
+    setReveal(null);
+    onChange(undoMove(game));
+  }
+  useEffect(() => {
+    if (!undoable) return;
+    const onKey = (e: KeyboardEvent) => {
+      const typing = e.target instanceof HTMLElement && e.target.closest("input, textarea");
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !typing) {
+        e.preventDefault();
+        undo();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [game, undoable]);
 
   // Which actions each card offers, so playable cards glow and a tap opens their options.
   const byCard = useMemo(() => {
@@ -705,6 +733,20 @@ export function Board({
           {myPrompt?.kind === "counter" && (
             <button className="primary" onClick={() => act({ type: "pass", player: me })}>
               {!safe ? "Take the hit" : hasCounters ? "Done countering" : "Continue"}
+            </button>
+          )}
+          {game.opponent === "computer" && view.winner === null && (
+            <button
+              className="ghost"
+              onClick={undo}
+              disabled={!undoable}
+              title={
+                training?.mode === "drills"
+                  ? "Take back your last move (Ctrl+Z). Your coaching report counts each Undo."
+                  : "Take back your last move (Ctrl+Z)"
+              }
+            >
+              Undo
             </button>
           )}
           {soundPanel && (
@@ -1100,8 +1142,12 @@ export function Board({
           {review && (
             <p className="report-teaser">
               {review.mistakes.length === 0
-                ? "Your coaching report: no errors found!"
+                ? review.undos.length > 0
+                  ? "Your coaching report: no errors left in the game."
+                  : "Your coaching report: no errors found!"
                 : `Your coaching report found ${review.mistakes.length} ${review.mistakes.length === 1 ? "error" : "errors"} to learn from.`}
+              {review.undos.length > 0 &&
+                ` You used Undo ${review.undos.length === 1 ? "once" : `${review.undos.length} times`}.`}
             </p>
           )}
           <div className="row">

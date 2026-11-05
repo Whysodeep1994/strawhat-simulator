@@ -3520,6 +3520,27 @@ button.pile {
 .mistake.major .mistake-tag {
   background: var(--danger);
 }
+.mistake.undo {
+  border-left-color: var(--c-blue);
+}
+.mistake.undo .mistake-tag {
+  background: var(--c-blue);
+}
+.report-undos {
+  display: grid;
+  gap: 8px;
+}
+.report-undos h3 {
+  margin: 4px 0 0;
+  font-size: 1rem;
+}
+.report-undos ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
 .report,
 .modal .coach {
   text-align: left;
