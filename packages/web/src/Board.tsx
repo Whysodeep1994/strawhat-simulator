@@ -29,10 +29,12 @@ import { CoachTips, ReportView, TutorBox } from "./Develop.js";
 import {
   botStep,
   botToAct,
+  canUndo,
   hasClock,
   humanAct,
   outOfTime,
   overtimeDecided,
+  undoMove,
   type LocalGame,
   type Reveal,
 } from "./local-game.js";
@@ -281,7 +283,12 @@ export function Board({
   const review = useMemo(
     () =>
       training?.mode === "drills" && game.state.winner !== null
-        ? reviewGame(game.states ?? replay(game.initial, game.actions), game.actions, me)
+        ? reviewGame(
+            game.states ?? replay(game.initial, game.actions),
+            game.actions,
+            me,
+            game.undos,
+          )
         : null,
     [game.state.winner, training],
   );
@@ -339,6 +346,27 @@ export function Board({
     }
   }
 
+  // Undo, against the computer only: takes back your last move. Ctrl+Z (Cmd+Z on a Mac) too.
+  const undoable = canUndo(game);
+  function undo() {
+    if (!canUndo(game)) return;
+    setError(null);
+    setReveal(null);
+    onChange(undoMove(game));
+  }
+  useEffect(() => {
+    if (!undoable) return;
+    const onKey = (e: KeyboardEvent) => {
+      const typing = e.target instanceof HTMLElement && e.target.closest("input, textarea");
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !typing) {
+        e.preventDefault();
+        undo();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [game, undoable]);
+
   // Which actions each card offers, so playable cards glow and a tap opens their options.
   const byCard = useMemo(() => {
     const map = new Map<string, Action[]>();
@@ -347,7 +375,7 @@ export function Board({
       if (a.type === "playCard" || a.type === "activate" || a.type === "counterEvent")
         add(a.card, a);
       else if (a.type === "counter") add(a.card, a);
-      else if (a.type === "giveDon") add(a.target, a);
+      else if (a.type === "giveDon" || a.type === "takeBackDon") add(a.target, a);
       else if (a.type === "attack") add(a.attacker, a);
       else if (a.type === "block") add(a.blocker, a);
     }
@@ -411,6 +439,9 @@ export function Board({
       .forEach((a) => items.push({ label: "Activate effect", run: () => act(a) }));
     const give = actions.find((a) => a.type === "giveDon");
     if (give) items.push({ label: "Give 1 DON!!", run: () => act(give) });
+    // A DON!! given by mistake can be taken back until the card attacks (a house rule).
+    const takeBack = actions.find((a) => a.type === "takeBackDon");
+    if (takeBack) items.push({ label: "Take back 1 DON!!", run: () => act(takeBack) });
     if (actions.some((a) => a.type === "attack")) {
       items.push({ label: "Attack", run: () => setMode({ kind: "attack", attacker: uid }) });
     }
@@ -708,6 +739,20 @@ export function Board({
               {!safe ? "Take the hit" : hasCounters ? "Done countering" : "Continue"}
             </button>
           )}
+          {game.opponent === "computer" && view.winner === null && (
+            <button
+              className="ghost"
+              onClick={undo}
+              disabled={!undoable}
+              title={
+                training?.mode === "drills"
+                  ? "Take back your last move (Ctrl+Z). Your coaching report counts each Undo."
+                  : "Take back your last move (Ctrl+Z)"
+              }
+            >
+              Undo
+            </button>
+          )}
           {soundPanel && (
             <button className="ghost" onClick={() => setShowSound(true)}>
               Sound
@@ -904,43 +949,47 @@ export function Board({
               );
             })}
           </div>
-          {myPrompt.max > 0 && (
-            <p className={`choose-question ${picked.length ? "" : "empty"}`} role="status">
-              {picked.length === 0
-                ? myPrompt.min === 0
-                  ? "Nothing selected. Tap a glowing card to select it, or choose none."
-                  : "Tap a glowing card to select it."
-                : chooseVerb(
-                    myPrompt.reason,
-                    data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""],
-                  ).ask(
-                    myPrompt.hidden
-                      ? `${picked.length} face-down card${picked.length > 1 ? "s" : ""}`
-                      : listNames(picked.map((uid) => nameOf(def, view, uid))),
-                  )}
-            </p>
-          )}
-          <div className="row">
-            <button
-              className="primary"
-              disabled={
-                picked.length < myPrompt.min ||
-                picked.length > myPrompt.max ||
-                (myPrompt.maxTotalPower !== undefined && pickedPower > myPrompt.maxTotalPower)
-              }
-              onClick={() => act({ type: "choose", player: me, cards: picked })}
-            >
-              {myPrompt.max === 0
-                ? "Continue"
-                : picked.length === 0
-                  ? myPrompt.reason === "deckBottom"
-                    ? "Keep them all on top"
-                    : "Choose none"
-                  : `Yes, ${chooseVerb(myPrompt.reason, data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""]).button.toLowerCase()}`}
-            </button>
-            {picked.length > 0 && myPrompt.max > 0 && (
-              <button onClick={() => setPicked([])}>Clear selection</button>
+          {/* Stays in view at the bottom of the window, however many cards there are to pick from
+              (a big hand used to push the button out of reach on phones). */}
+          <div className="choose-footer">
+            {myPrompt.max > 0 && (
+              <p className={`choose-question ${picked.length ? "" : "empty"}`} role="status">
+                {picked.length === 0
+                  ? myPrompt.min === 0
+                    ? "Nothing selected. Tap a glowing card to select it, or choose none."
+                    : "Tap a glowing card to select it."
+                  : chooseVerb(
+                      myPrompt.reason,
+                      data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""],
+                    ).ask(
+                      myPrompt.hidden
+                        ? `${picked.length} face-down card${picked.length > 1 ? "s" : ""}`
+                        : listNames(picked.map((uid) => nameOf(def, view, uid))),
+                    )}
+              </p>
             )}
+            <div className="row">
+              <button
+                className="primary"
+                disabled={
+                  picked.length < myPrompt.min ||
+                  picked.length > myPrompt.max ||
+                  (myPrompt.maxTotalPower !== undefined && pickedPower > myPrompt.maxTotalPower)
+                }
+                onClick={() => act({ type: "choose", player: me, cards: picked })}
+              >
+                {myPrompt.max === 0
+                  ? "Continue"
+                  : picked.length === 0
+                    ? myPrompt.reason === "deckBottom"
+                      ? "Keep them all on top"
+                      : "Choose none"
+                    : `Yes, ${chooseVerb(myPrompt.reason, data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""]).button.toLowerCase()}`}
+              </button>
+              {picked.length > 0 && myPrompt.max > 0 && (
+                <button onClick={() => setPicked([])}>Clear selection</button>
+              )}
+            </div>
           </div>
         </Modal>
       )}
@@ -1101,8 +1150,12 @@ export function Board({
           {review && (
             <p className="report-teaser">
               {review.mistakes.length === 0
-                ? "Your coaching report: no errors found!"
+                ? review.undos.length > 0
+                  ? "Your coaching report: no errors left in the game."
+                  : "Your coaching report: no errors found!"
                 : `Your coaching report found ${review.mistakes.length} ${review.mistakes.length === 1 ? "error" : "errors"} to learn from.`}
+              {review.undos.length > 0 &&
+                ` You used Undo ${review.undos.length === 1 ? "once" : `${review.undos.length} times`}.`}
             </p>
           )}
           <div className="row">

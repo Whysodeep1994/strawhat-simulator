@@ -336,11 +336,15 @@ export function App() {
   useEffect(() => sound.setScene(table ? "game" : "menu"), [!!table]);
 
   // Table sounds for every move, whoever made it: you, the computer, or a friend online.
+  // An Undo goes back in time, so it plays no table sounds.
   const lastState = useRef(table?.state ?? null);
+  const lastMoves = useRef(table?.actions.length ?? 0);
   useEffect(() => {
     const before = lastState.current;
+    const undone = (table?.actions.length ?? 0) < lastMoves.current;
     lastState.current = table?.state ?? null;
-    if (before && table) sound.cue(cuesBetween(before, table.state, table.human));
+    lastMoves.current = table?.actions.length ?? 0;
+    if (before && table && !undone) sound.cue(cuesBetween(before, table.state, table.human));
   }, [table?.state]);
 
   const changeSound = (next: SoundSettings) => {

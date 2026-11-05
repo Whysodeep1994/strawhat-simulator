@@ -253,6 +253,14 @@ export interface GameState {
   overtimeOver?: true;
   /** The player who last took a card from their Life (damage, or Life added to hand): the last overtime tiebreaker. */
   lastLifeLost?: PlayerId;
+  /**
+   * DON!! cards the turn player gave by hand this turn and may still take back, by card uid.
+   * A house rule for mis-taps, not an official rule. A card's entry goes when it attacks, and
+   * all of them go when its player plays a card, uses an effect, or ends the turn, so a DON!!
+   * can't be lent to a card for an effect and then taken back. DON!! whose giving set off a
+   * "when given DON!!" effect is never listed.
+   */
+  takeBackDon?: Record<string, number>;
   /** Seeded random state, so a game can be replayed exactly. */
   rng: number;
   nextUid: number;

@@ -938,6 +938,10 @@ button.pile {
 }
 .hand {
   display: flex;
+  /* A big hand goes onto more rows. In one row it ran off the side of a phone's screen, which
+     made the page wider than the screen and pushed pop-ups (and their buttons) out of reach. */
+  flex-wrap: wrap;
+  row-gap: 6px;
   justify-content: center;
   padding: 4px calc(var(--cw) * 0.4) 0;
   min-height: var(--ch);
@@ -1981,6 +1985,8 @@ button.pile {
   align-items: center;
   justify-content: center;
   padding: 16px;
+  /* A window taller than the screen can still be scrolled to its end. */
+  overflow-y: auto;
   animation: pop 0.15s ease;
 }
 .modal {
@@ -1991,6 +1997,10 @@ button.pile {
   padding: 20px 22px;
   width: min(760px, 100%);
   max-height: calc(100vh - 32px);
+  /* On phones 100vh is the screen without the browser's address and tool bars, so a full-height
+     window hid its buttons behind them. dvh is the part you can actually see. */
+  max-height: calc(100dvh - 32px);
+  margin: auto;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
   text-align: center;
@@ -2219,6 +2229,7 @@ button.pile {
     transform: none;
   }
   .hand {
+    flex-wrap: nowrap;
     justify-content: safe center;
     overflow-x: auto;
     overflow-y: hidden;
@@ -3307,6 +3318,17 @@ button.pile {
 .modal .card.clickable {
   cursor: pointer;
 }
+/* The question and buttons under a list of cards to choose from stick to the bottom of the
+   window, so they never scroll out of reach. */
+.modal .choose-footer {
+  position: sticky;
+  bottom: -20px;
+  z-index: 2;
+  margin: 0 -22px -20px;
+  padding: 6px 22px 16px;
+  background: #0f1a2e;
+  box-shadow: 0 -10px 14px -10px rgba(0, 0, 0, 0.45);
+}
 .choose-question {
   margin: 4px auto 0;
   max-width: 560px;
@@ -3519,6 +3541,27 @@ button.pile {
 }
 .mistake.major .mistake-tag {
   background: var(--danger);
+}
+.mistake.undo {
+  border-left-color: var(--c-blue);
+}
+.mistake.undo .mistake-tag {
+  background: var(--c-blue);
+}
+.report-undos {
+  display: grid;
+  gap: 8px;
+}
+.report-undos h3 {
+  margin: 4px 0 0;
+  font-size: 1rem;
+}
+.report-undos ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
 }
 .report,
 .modal .coach {
@@ -3948,4 +3991,53 @@ button.pile {
 }
 .deck-format .note {
   margin: 6px 0 0;
+}
+
+/* Deck builder: the deck shown as card pictures in place of the card search. */
+.builder.grid-view .builder-search {
+  display: none;
+}
+.deck-grid {
+  grid-area: search;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.deck-grid-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+}
+.deck-grid-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.deck-grid-group h3 {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  display: flex;
+  gap: 8px;
+}
+.deck-grid-group h3 span {
+  color: var(--muted);
+}
+/* Two or more copies sit as a little stack. */
+.library-card.stacked .card {
+  box-shadow:
+    4px 4px 0 -1px rgba(20, 12, 4, 0.75),
+    7px 7px 0 -2px rgba(20, 12, 4, 0.45);
+}
+.grid-toggle {
+  align-self: stretch;
+}
+.deck-grid-group {
+  padding: 10px 12px 14px;
 }

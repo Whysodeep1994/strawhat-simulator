@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { CardData, PlayableDeck } from "./card-data.js";
 import type { Mistake, Review } from "./coach-review.js";
+import type { UndoUse } from "./local-game.js";
 import type { Tip } from "./coach-tips.js";
 import type { Suggestion } from "./coach.js";
 import { DeckChooser, OpponentPicker, RANDOM, readyDecks } from "./Home.js";
@@ -280,11 +281,17 @@ export function ReportView({ review }: { review: Review }) {
         <strong>
           {review.cleanTurns} of {review.turns}
         </strong>{" "}
-        of your turns had no errors · {major} big {major === 1 ? "error" : "errors"}, {minor} small
+        of your turns had no errors{review.undos.length > 0 && " or Undo"} · {major} big{" "}
+        {major === 1 ? "error" : "errors"}, {minor} small · {review.undos.length}{" "}
+        {review.undos.length === 1 ? "Undo" : "Undos"} used
       </p>
-      {review.mistakes.length === 0 ? (
+      {review.mistakes.length === 0 && review.undos.length === 0 ? (
         <p className="note">
           No errors found. Clean sailing! Try a tougher matchup or turn live coaching off.
+        </p>
+      ) : review.mistakes.length === 0 ? (
+        <p className="note">
+          No errors left in the game you finished. Next time, try it without Undo.
         </p>
       ) : (
         <ol className="report-list">
@@ -311,6 +318,40 @@ export function ReportView({ review }: { review: Review }) {
           ))}
         </ol>
       )}
+      {review.undos.length > 0 && <UndoList undos={review.undos} />}
     </div>
+  );
+}
+
+/** The report's Undo section: each move you took back, and any error it was. */
+function UndoList({ undos }: { undos: UndoUse[] }) {
+  const fixed = undos.filter((u) => u.errors.length > 0).length;
+  return (
+    <section className="report-undos">
+      <h3>Undo used {undos.length === 1 ? "once" : `${undos.length} times`}</h3>
+      <p className="note">
+        {fixed > 0
+          ? `${fixed} of the moves you took back ${fixed === 1 ? "was an error" : "were errors"} you spotted yourself. Good eye! In a real match there's no Undo, so aim to catch ${fixed === 1 ? "it" : "them"} before you commit.`
+          : "Turns where you used Undo don't count as clean turns. In a real match there's no Undo, so think each move through before you make it."}
+      </p>
+      <ul>
+        {undos.map((u, i) => (
+          <li key={i} className="mistake undo">
+            <span className="mistake-tag">Undo</span>
+            <strong>
+              Turn {u.turn} · {u.round}
+            </strong>
+            <p>
+              <b>Took back:</b> {u.move}
+            </p>
+            {u.errors.length > 0 && (
+              <p>
+                <b>It would have been an error:</b> {u.errors.join("; ")}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
