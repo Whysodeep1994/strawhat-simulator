@@ -87,7 +87,7 @@ export interface Reveal {
   cards: CardInstance[];
 }
 
-/** Player Development modes. Training games have no game clock, so there's time to learn. */
+/** Player Development modes. Like every game against the computer, they have no clock. */
 export type Training = { mode: "newPlayer" } | { mode: "drills"; liveCoaching: boolean };
 
 export interface Overtime {
@@ -149,6 +149,15 @@ function started(state: GameState, human: PlayerId, opponent: LocalGame["opponen
     stats: newStats(state, human),
     clock: newClock(),
   };
+}
+
+/**
+ * Whether this game has chess clocks. Only games against a friend online do: against the
+ * computer (practice, New Player lessons and Pro Drills) you can take as long as you like to
+ * read the cards.
+ */
+export function hasClock(game: LocalGame): boolean {
+  return game.opponent === "friend";
 }
 
 /** Whether the computer has to act next. */

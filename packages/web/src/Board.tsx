@@ -29,7 +29,7 @@ import { CoachTips, ReportView, TutorBox } from "./Develop.js";
 import {
   botStep,
   botToAct,
-  canUndo,
+  hasClock,
   humanAct,
   outOfTime,
   overtimeDecided,
@@ -525,7 +525,7 @@ export function Board({
         ) : null
       }
     >
-      {!training && <Clocks game={game} onTimeout={onTimeout} />}
+      {hasClock(game) && <Clocks game={game} onTimeout={onTimeout} />}
     </StatusBar>
   );
 
