@@ -4,6 +4,7 @@ import { DEMO_CATALOG, DEMO_DECKS } from "./fixtures/demo-cards.js";
 import { CLOCK_MS, FRIEND_GRACE_MS, formatClock, timeLeft } from "../src/clock.js";
 import {
   friendAct,
+  hasClock,
   humanAct,
   newLocalGame,
   newOnlineGame,
@@ -40,6 +41,22 @@ function newGame() {
 }
 
 describe("game clocks", () => {
+  it("are only used against a friend online, never against the computer", () => {
+    const decks = { human: DEMO_DECKS.red, bot: DEMO_DECKS.green };
+    expect(hasClock(newGame())).toBe(false);
+    expect(hasClock(newLocalGame(DEMO_CATALOG, decks, 7, { mode: "newPlayer" }))).toBe(false);
+    expect(
+      hasClock(newLocalGame(DEMO_CATALOG, decks, 7, { mode: "drills", liveCoaching: false })),
+    ).toBe(false);
+    const online = newOnlineGame(
+      DEMO_CATALOG,
+      { p1: DEMO_DECKS.red, p2: DEMO_DECKS.green },
+      7,
+      "p1",
+    );
+    expect(hasClock(online)).toBe(true);
+  });
+
   it("give each player 15 minutes, shown as m:ss", () => {
     const game = newGame();
     expect(timeLeft(game.clock, game.state, "p1", 0)).toBe(CLOCK_MS);
