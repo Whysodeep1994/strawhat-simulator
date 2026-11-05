@@ -904,43 +904,47 @@ export function Board({
               );
             })}
           </div>
-          {myPrompt.max > 0 && (
-            <p className={`choose-question ${picked.length ? "" : "empty"}`} role="status">
-              {picked.length === 0
-                ? myPrompt.min === 0
-                  ? "Nothing selected. Tap a glowing card to select it, or choose none."
-                  : "Tap a glowing card to select it."
-                : chooseVerb(
-                    myPrompt.reason,
-                    data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""],
-                  ).ask(
-                    myPrompt.hidden
-                      ? `${picked.length} face-down card${picked.length > 1 ? "s" : ""}`
-                      : listNames(picked.map((uid) => nameOf(def, view, uid))),
-                  )}
-            </p>
-          )}
-          <div className="row">
-            <button
-              className="primary"
-              disabled={
-                picked.length < myPrompt.min ||
-                picked.length > myPrompt.max ||
-                (myPrompt.maxTotalPower !== undefined && pickedPower > myPrompt.maxTotalPower)
-              }
-              onClick={() => act({ type: "choose", player: me, cards: picked })}
-            >
-              {myPrompt.max === 0
-                ? "Continue"
-                : picked.length === 0
-                  ? myPrompt.reason === "deckBottom"
-                    ? "Keep them all on top"
-                    : "Choose none"
-                  : `Yes, ${chooseVerb(myPrompt.reason, data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""]).button.toLowerCase()}`}
-            </button>
-            {picked.length > 0 && myPrompt.max > 0 && (
-              <button onClick={() => setPicked([])}>Clear selection</button>
+          {/* Stays in view at the bottom of the window, however many cards there are to pick from
+              (a big hand used to push the button out of reach on phones). */}
+          <div className="choose-footer">
+            {myPrompt.max > 0 && (
+              <p className={`choose-question ${picked.length ? "" : "empty"}`} role="status">
+                {picked.length === 0
+                  ? myPrompt.min === 0
+                    ? "Nothing selected. Tap a glowing card to select it, or choose none."
+                    : "Tap a glowing card to select it."
+                  : chooseVerb(
+                      myPrompt.reason,
+                      data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""],
+                    ).ask(
+                      myPrompt.hidden
+                        ? `${picked.length} face-down card${picked.length > 1 ? "s" : ""}`
+                        : listNames(picked.map((uid) => nameOf(def, view, uid))),
+                    )}
+              </p>
             )}
+            <div className="row">
+              <button
+                className="primary"
+                disabled={
+                  picked.length < myPrompt.min ||
+                  picked.length > myPrompt.max ||
+                  (myPrompt.maxTotalPower !== undefined && pickedPower > myPrompt.maxTotalPower)
+                }
+                onClick={() => act({ type: "choose", player: me, cards: picked })}
+              >
+                {myPrompt.max === 0
+                  ? "Continue"
+                  : picked.length === 0
+                    ? myPrompt.reason === "deckBottom"
+                      ? "Keep them all on top"
+                      : "Choose none"
+                    : `Yes, ${chooseVerb(myPrompt.reason, data.catalog[findInView(view, myPrompt.source)?.cardId ?? ""]).button.toLowerCase()}`}
+              </button>
+              {picked.length > 0 && myPrompt.max > 0 && (
+                <button onClick={() => setPicked([])}>Clear selection</button>
+              )}
+            </div>
           </div>
         </Modal>
       )}

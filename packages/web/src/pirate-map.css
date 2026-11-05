@@ -281,6 +281,9 @@ button.mat-preset,
     inset 0 0 34px rgba(120, 66, 22, 0.5),
     0 20px 60px rgba(0, 0, 0, 0.7);
 }
+.modal .choose-footer {
+  background: var(--paper-grain), #ecd6a6;
+}
 .menu-pop {
   background: var(--paper-grain), var(--parchment);
   border: 1px solid rgba(74, 45, 18, 0.6);
