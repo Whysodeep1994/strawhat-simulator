@@ -46,7 +46,9 @@ function cardCount(state: GameState, player: PlayerId): number {
     p.trash.length +
     p.characters.length +
     p.life.length +
-    (p.stage ? 1 : 0)
+    (p.stage ? 1 : 0) +
+    // A [Trigger] card being activated is in no area for a moment (rule 10-1-5-3).
+    (state.limbo?.owner === player ? 1 : 0)
   );
 }
 

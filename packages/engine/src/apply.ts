@@ -61,15 +61,21 @@ function perform(state: GameState, action: Action): void {
       finishMulligan(state, action.player, action.type === "mulligan");
       return;
     case "playCard":
+      delete state.takeBackDon;
       playCard(state, action.player, action.card, action.trash);
       return;
     case "activate":
+      delete state.takeBackDon;
       pushEffect(state, action.player, action.card, action.effect);
       return;
     case "giveDon":
       giveDon(state, action.player, action.target);
       return;
+    case "takeBackDon":
+      takeBackDon(state, action.player, action.target);
+      return;
     case "attack":
+      if (state.takeBackDon) delete state.takeBackDon[action.attacker];
       declareAttack(state, action.player, action.attacker, action.target);
       return;
     case "block":
@@ -98,6 +104,7 @@ function perform(state: GameState, action: Action): void {
     }
     case "endTurn":
       // Rule 6-6.
+      delete state.takeBackDon;
       state.phase = "end";
       state.stack.push({ kind: "end-phase", stage: 0 });
       return;
@@ -178,7 +185,24 @@ function giveDon(state: GameState, player: PlayerId, target: string): void {
   if (!location) return;
   state.players[player].donActive -= 1;
   location.card.givenDon += 1;
+  const queued = state.pendingEffects.length;
   if (location.player === player) donGiven(state, player);
+  // A DON!! that set off a "when given DON!!" effect has been used, so it can't be taken back.
+  if (location.player !== player || state.pendingEffects.length !== queued) return;
+  state.takeBackDon ??= {};
+  state.takeBackDon[target] = (state.takeBackDon[target] ?? 0) + 1;
+}
+
+/** The house rule in `GameState.takeBackDon`: the DON!! goes back to the cost area, active. */
+function takeBackDon(state: GameState, player: PlayerId, target: string): void {
+  const location = findOnField(state, target);
+  const list = state.takeBackDon;
+  if (!location || !list) return;
+  location.card.givenDon -= 1;
+  state.players[player].donActive += 1;
+  const left = Math.min((list[target] ?? 0) - 1, location.card.givenDon);
+  if (left > 0) list[target] = left;
+  else delete list[target];
 }
 
 /** "When this Leader or any of your Characters is given a DON!! card". */

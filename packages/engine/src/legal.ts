@@ -48,6 +48,7 @@ export function legalActions(state: GameState, player?: PlayerId): Action[] {
           ...playActions(state, who),
           ...activateActions(state, who),
           ...giveDonActions(state, who),
+          ...takeBackDonActions(state, who),
         );
         actions.push(...attackActions(state, who), { type: "endTurn", player: who });
         break;
@@ -182,6 +183,17 @@ function giveDonActions(state: GameState, player: PlayerId): Action[] {
   const p = state.players[player];
   if (p.donActive === 0) return [];
   return [p.leader, ...p.characters].map((c) => ({ type: "giveDon", player, target: c.uid }));
+}
+
+/** The house rule in `GameState.takeBackDon`. */
+function takeBackDonActions(state: GameState, player: PlayerId): Action[] {
+  if (state.turnPlayer !== player) return [];
+  return Object.entries(state.takeBackDon ?? {}).flatMap(([target, count]) => {
+    const location = findOnField(state, target);
+    if (!location || location.player !== player) return [];
+    if (count <= 0 || location.card.givenDon <= 0) return [];
+    return [{ type: "takeBackDon", player, target } as const];
+  });
 }
 
 /** Rules 6-5-6-1, 7-1, 7-1-1-1, 7-1-1-2, 3-7-4, 10-1-1-1, 10-1-6-1. */
