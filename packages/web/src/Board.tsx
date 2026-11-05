@@ -29,6 +29,7 @@ import { CoachTips, ReportView, TutorBox } from "./Develop.js";
 import {
   botStep,
   botToAct,
+  canUndo,
   hasClock,
   humanAct,
   outOfTime,
