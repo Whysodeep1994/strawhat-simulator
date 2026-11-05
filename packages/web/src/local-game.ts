@@ -311,6 +311,8 @@ function describeAction(
       return say(`activated ${name(state, action.card)}.`);
     case "giveDon":
       return say(`gave DON!! to ${name(state, action.target)}.`);
+    case "takeBackDon":
+      return say(`took back a DON!! from ${name(state, action.target)}.`);
     case "attack":
       return say(`attacked ${name(state, action.target)} with ${name(state, action.attacker)}.`);
     case "endTurn":
