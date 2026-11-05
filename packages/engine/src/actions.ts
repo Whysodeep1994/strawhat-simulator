@@ -10,6 +10,8 @@ export type Action =
   /** [Activate: Main] effects (rule 6-5-4-1). `effect` is its index on the card. */
   | { type: "activate"; player: PlayerId; card: string; effect: number }
   | { type: "giveDon"; player: PlayerId; target: string }
+  /** Takes back a DON!! card given by mistake. A house rule, see `GameState.takeBackDon`. */
+  | { type: "takeBackDon"; player: PlayerId; target: string }
   | { type: "attack"; player: PlayerId; attacker: string; target: string }
   | { type: "endTurn"; player: PlayerId }
   | { type: "block"; player: PlayerId; blocker: string }
