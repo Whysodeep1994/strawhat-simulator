@@ -13,6 +13,7 @@ import { setLabel, type Card, type CardData } from "./card-data.js";
 import { CATEGORY_NAMES, COLOR_NAMES, CardPrint } from "./CardPrint.js";
 import { SORT_NAMES, sortCards, type SortKey } from "./card-sort.js";
 import { CardView } from "./CardView.js";
+import { DeckGrid } from "./DeckGrid.js";
 import { cardList, fromList, problemsOf, type SavedDeck } from "./my-decks.js";
 import { sound } from "./sound.js";
 
@@ -48,6 +49,8 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
   const [dialog, setDialog] = useState<"paste" | "copy" | "delete" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [deckOpen, setDeckOpen] = useState(false);
+  /** Show the deck as a grid of card pictures in place of the card search. */
+  const [gridView, setGridView] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("number");
   const [descending, setDescending] = useState(false);
   /** The library card under the pointer; its details replace the deck panel while hovered. */
@@ -168,7 +171,7 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
     list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 
   return (
-    <div className={`builder ${deckOpen ? "deck-open" : ""}`}>
+    <div className={`builder ${deckOpen ? "deck-open" : ""} ${gridView ? "grid-view" : ""}`}>
       <header className="builder-bar">
         <button className="ghost" onClick={onDone}>
           ← Done
@@ -408,6 +411,18 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
         )}
       </section>
 
+      {gridView && (
+        <DeckGrid
+          deck={deck}
+          data={data}
+          onAdd={add}
+          onRemove={remove}
+          onRead={setDetail}
+          onHover={setHovered}
+          onClose={() => setGridView(false)}
+        />
+      )}
+
       <aside
         className="builder-deck"
         aria-label={hovered ? `${hovered.name} details` : "Your deck"}
@@ -464,6 +479,17 @@ export function DeckBuilder({ data, deck, saveFailed, onChange, onDelete, onDone
                 </span>
               </div>
               <CostCurve deck={deck} data={data} />
+              <button
+                className={`grid-toggle ${gridView ? "primary" : ""}`}
+                aria-pressed={gridView}
+                onClick={() => {
+                  setGridView(!gridView);
+                  // On phones the deck sheet covers the screen; close it so the grid shows.
+                  setDeckOpen(false);
+                }}
+              >
+                {gridView ? "☰ Back to card search" : "▦ Show deck as cards"}
+              </button>
             </div>
 
             <DeckList deck={deck} data={data} onAdd={add} onRemove={remove} onRead={setDetail} />
