@@ -1,7 +1,7 @@
 import type { Action } from "./actions.js";
 import { applyAction } from "./apply.js";
 import { legalActions } from "./legal.js";
-import { definitionOf, findCard, powerOf } from "./state.js";
+import { costOf, definitionOf, findCard, powerOf } from "./state.js";
 import { opponentOf, type CardInstance, type GameState, type PlayerId } from "./types.js";
 
 /** Choice reasons that cost the chooser something, so the bot gives up as little as it can. */
@@ -38,6 +38,7 @@ export function chooseBotAction(state: GameState, player: PlayerId): Action {
         prompt.max,
         prompt.reason,
         prompt.maxTotalPower,
+        prompt.maxTotalCost,
       );
     case "block":
       return blockOrPass(state, player, actions);
@@ -54,7 +55,11 @@ function mainAction(state: GameState, player: PlayerId, actions: Action[]): Acti
   const cost = (uid: string) => stat(state, uid, "cost");
 
   // 1. Play the most expensive card that fits, without trashing one of our Characters.
-  const plays = actions.filter((a) => a.type === "playCard" && a.trash === undefined);
+  // Keep plain Characters with a 2000 counter (no [On Play] or [Activate: Main]) in the hand to
+  // defend with, unless the hand is already big.
+  const keep = (a: Action) =>
+    a.type === "playCard" && isCounterCard(state, a.card) && state.players[player].hand.length < 7;
+  const plays = actions.filter((a) => a.type === "playCard" && a.trash === undefined && !keep(a));
   const play = maxBy(plays, (a) => (a.type === "playCard" ? cost(a.card) : 0));
   if (play) return play;
 
@@ -69,7 +74,18 @@ function mainAction(state: GameState, player: PlayerId, actions: Action[]): Acti
   const attackers = new Set(attacks.map((a) => (a.type === "attack" ? a.attacker : "")));
   const gives = actions.filter((a) => a.type === "giveDon" && attackers.has(a.target));
   const leaderUid = state.players[player].leader.uid;
-  const give = gives.find((a) => a.type === "giveDon" && a.target === leaderUid) ?? gives[0];
+  // First bring attackers up to the opponent's Leader's power, closest first, so more of them
+  // can hit; the rest go to the Leader. (Piling every DON!! on the Leader left Characters
+  // too weak to attack at all.)
+  const opponentPower = power(state, opponentLeader.uid);
+  const spare = state.players[player].donActive;
+  const shortBy = (a: Action) =>
+    a.type === "giveDon" ? opponentPower - power(state, a.target) : Infinity;
+  const catchUp = gives.filter((a) => shortBy(a) > 0 && Math.ceil(shortBy(a) / 1000) <= spare);
+  const give =
+    minBy(catchUp, shortBy) ??
+    gives.find((a) => a.type === "giveDon" && a.target === leaderUid) ??
+    gives[0];
   if (give) return give;
 
   // 4. Attack: the Leader when the attack can win, otherwise a rested Character it can K.O.
@@ -133,6 +149,7 @@ function chooseCards(
   max: number,
   reason: string,
   maxTotalPower?: number,
+  maxTotalCost?: number,
 ): Action {
   const cards = options
     .map((uid) => findCard(state, uid))
@@ -147,24 +164,52 @@ function chooseCards(
   }
   // Effects that help: pick as many as allowed, the most valuable first. On the opponent's
   // cards (K.O., rest, bounce) the most valuable is the biggest threat.
-  const ranked = [...cards].sort((a, b) => value(b) - value(a));
-  if (maxTotalPower === undefined) {
+  let ranked = [...cards].sort((a, b) => value(b) - value(a));
+  // Lowering an opponent's Character's power (like EB04-001 Bonney's −1000) is best spent on
+  // a rested one we can then K.O. in battle.
+  if (reason === "powerUp" && cards.length > 0 && cards.every((c) => c.owner !== player)) {
+    const reach = attackReach(state, player);
+    const ko = (c: CardInstance) => c.rested && powerOf(state, c) - 1000 <= reach;
+    ranked = [...ranked.filter(ko), ...ranked.filter((c) => !ko(c))];
+  }
+  const limit = maxTotalPower ?? maxTotalCost;
+  if (limit === undefined) {
     return { type: "choose", player, cards: ranked.slice(0, max).map((c) => c.uid) };
   }
-  // "Up to N Characters with a total power of X or less": take the best that still fit.
+  // "Up to N Characters with a total power (or cost) of X or less": take the best that still
+  // fit. Without this the computer broke the total-cost limit (OP17-079) and its move was refused.
+  const amount = (c: CardInstance) =>
+    maxTotalPower !== undefined ? powerOf(state, c) : costOf(state, c);
   const picked: CardInstance[] = [];
   let total = 0;
   for (const card of ranked) {
     if (picked.length === max) break;
-    const power = powerOf(state, card);
-    if (total + power > maxTotalPower) continue;
+    if (total + amount(card) > limit) continue;
     picked.push(card);
-    total += power;
+    total += amount(card);
   }
   return { type: "choose", player, cards: picked.map((c) => c.uid) };
 }
 
+/** Roughly the most power one of our attacks can reach this turn: our strongest ready attacker plus our spare DON!!. */
+function attackReach(state: GameState, player: PlayerId): number {
+  const p = state.players[player];
+  const ready = [p.leader, ...p.characters].filter((c) => !c.rested);
+  const best = Math.max(0, ...ready.map((c) => powerOf(state, c)));
+  return best + p.donActive * 1000;
+}
+
 // Small helpers.
+
+/** A Character worth more as a 2000 counter than on the field (like EB04-056 Pacifista). */
+function isCounterCard(state: GameState, uid: string): boolean {
+  const found = findCard(state, uid);
+  if (!found) return false;
+  const def = definitionOf(state, found);
+  if (def.category !== "character" || (def.counter ?? 0) < 2000 || (def.power ?? 0) > 6000)
+    return false;
+  return !(def.effects ?? []).some((e) => e.timing === "onPlay" || e.timing === "activateMain");
+}
 
 function changesSomething(state: GameState, action: Action): boolean {
   const snapshot = (s: GameState) => JSON.stringify({ ...s, catalog: null, revealed: null });

@@ -131,4 +131,52 @@ describe("computer opponent", () => {
     state = applyAction(state, first);
     expect(chooseBotAction(state, "p1").type).not.toBe("activate");
   });
+
+  it("gives DON!! to a Character that needs it to hit the Leader before piling it on its own Leader", () => {
+    const state = buildScenarioState(
+      {
+        p1: { characters: ["TEST-C2-3000"], don: { active: 2 } },
+      },
+      TEST_CATALOG,
+    );
+    const character = state.players.p1.characters[0]!.uid;
+    expect(chooseBotAction(state, "p1")).toMatchObject({ type: "giveDon", target: character });
+  });
+
+  it("keeps a plain 2000-counter Character in the hand to defend with", () => {
+    const state = buildScenarioState(
+      {
+        p1: { hand: ["TEST-C4-5000", "TEST-C2-3000"], don: { active: 4 } },
+      },
+      TEST_CATALOG,
+    );
+    const action = chooseBotAction(state, "p1");
+    expect(action.type).toBe("playCard");
+    expect(action.type === "playCard" && action.card).toBe(state.players.p1.hand[1]!.uid);
+  });
+
+  it("keeps to a total cost limit when choosing cards", () => {
+    let state = buildScenarioState(
+      {
+        p2: { characters: ["TEST-C5-6000", "TEST-C4-5000", "TEST-C2-3000"] },
+      },
+      TEST_CATALOG,
+    );
+    state = {
+      ...state,
+      prompt: {
+        kind: "choose",
+        player: "p1",
+        options: state.players.p2.characters.map((c) => c.uid),
+        min: 0,
+        max: 3,
+        reason: "ko",
+        source: state.players.p1.leader.uid,
+        maxTotalCost: 6,
+      },
+    };
+    const action = chooseBotAction(state, "p1");
+    expect(isLegal(state, action)).toBe(true);
+    expect(action.type === "choose" && action.cards.length).toBe(1);
+  });
 });
