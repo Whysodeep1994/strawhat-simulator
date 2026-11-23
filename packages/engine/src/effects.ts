@@ -27,6 +27,8 @@ export interface EffectDefinition {
   replaces?: Replacement;
   /** `youPlayCharacter` only: "When you play a Character ... from your hand". */
   fromHand?: boolean;
+  /** `youPlayCharacter` only: "When a Character is played from your trash". */
+  fromTrash?: boolean;
   /** `donReturned` only: how many DON!! must be returned at once ("when 2 or more ..."). */
   returnedAtLeast?: number;
   /** `characterRemovedByOpponent` only: which of your Characters it watches. */
@@ -311,10 +313,13 @@ export type Cost =
   /** Rest 1 of your active Leader, Characters or Stage matching the filter (e.g. "rest 1 of your [Uta] cards"). */
   | { restOwn: Filter }
   | { restThis: true }
-  /** Add Life cards to your hand, from the top or (player's choice) the top or bottom. */
-  | { lifeToHand: number; from?: "top" | "topOrBottom" }
-  /** Trash cards from the top of your Life cards. */
-  | { trashLife: number; from?: "top" | "topOrBottom" }
+  /**
+   * Add Life cards to your hand, from the top or (player's choice) the top or bottom. `all`:
+   * "add all of your Life cards to your hand" (`lifeToHand` is then the least needed, 1).
+   */
+  | { lifeToHand: number; from?: "top" | "topOrBottom"; all?: boolean }
+  /** Trash cards from the top of your Life cards. `all`: "trash all of your Life cards". */
+  | { trashLife: number; from?: "top" | "topOrBottom"; all?: boolean }
   /** Turn the top (or, with `from: "topOrBottom"`, top or bottom) Life card face-up. It must be face-down. */
   | { lifeFaceUp: number; from?: "top" | "topOrBottom" }
   /** Turn a face-up Life card at the top (or bottom) face-down. */
@@ -351,8 +356,10 @@ export type Cost =
   | { toDeckBottom: number; zone?: "characters" | "stage"; filter?: Filter; side?: "any" }
   /** "Return 20 cards from your trash to your deck and shuffle it". */
   | { trashToDeck: number }
-  /** "K.O. 1 of your Characters other than this Character". */
-  | { koOwnCharacter: number; filter?: Filter }
+  /** "K.O. 1 of your Characters other than this Character". `zone: "stage"`: "K.O. 1 of your Stages". */
+  | { koOwnCharacter: number; filter?: Filter; zone?: "stage" }
+  /** "Give your Leader −2000 power during this turn" (the Leader may be rested). */
+  | { leaderPower: number }
   /** "Play 1 [Kotori] from your hand". */
   | { playFromHand: Filter }
   /** "Add 1 of your Characters ... to the top of your Life cards (face-up)". */
@@ -668,6 +675,8 @@ export type Step =
       faceUp?: boolean;
       /** Only from the trash ("from your trash ... add it to the top of your Life cards"). */
       onlyTrash?: boolean;
+      /** "To the top or bottom of your Life cards": the player picks. */
+      orBottom?: boolean;
     }
   /** Trash all of your face-up Life cards. */
   | { do: "trashFaceUpLife" }
@@ -791,8 +800,17 @@ export type Step =
       played?: string[];
       /** "the same card name as the trashed card" (trashed to pay this effect's cost). */
       sameNameAsTrashed?: boolean;
+      /** "From your deck or trash". Follow with `shuffleDeck`. */
+      orDeck?: boolean;
       ifYouDo?: Step[];
     }
+  /** "Then, shuffle your deck." */
+  | { do: "shuffleDeck" }
+  /**
+   * "Reveal up to 1 ... card from your hand. Activate the [Trigger] effect of the revealed card."
+   * The card stays in your hand.
+   */
+  | { do: "activateHandTrigger"; filter?: Filter }
   /** "Give up to 1 of your currently given DON!! cards to [target]": moves 1 given DON!!. */
   | { do: "moveGivenDon"; target: Target }
   /**

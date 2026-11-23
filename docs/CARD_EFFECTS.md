@@ -58,7 +58,7 @@ opponent's Characters with a cost of 3 or less" is written as:
 | `youActivateEvent`                        | "When you activate an Event" (Main or Counter)                                                                                                                                        | 8-1-3-1 |
 | `opponentCharacterKOd`                    | "When your opponent's Character is K.O.'d" (battle or effect)                                                                                                                         | 8-1-3-1 |
 | `donGiven`                                | "When this Leader or any of your Characters is given a DON!! card"                                                                                                                    | 8-1-3-1 |
-| `youPlayCharacter`                        | "When you play a Character" (`cardFilter`; `fromHand` for "from your hand")                                                                                                           | 8-1-3-1 |
+| `youPlayCharacter`                        | "When you play a Character" (`cardFilter`; `fromHand` for "from your hand", `fromTrash` for "played from your trash")                                                                 | 8-1-3-1 |
 | `opponentPlaysCharacter`                  | "When your opponent plays a Character" (`cardFilter`)                                                                                                                                 | 8-1-3-1 |
 | `koInBattle`                              | "When this Character battles and K.O.'s your opponent's Character"                                                                                                                    | 8-1-3-1 |
 | `youDealDamage`                           | "When you deal damage to your opponent's Life" (any of your attacks)                                                                                                                  | 8-1-3-1 |
@@ -206,7 +206,8 @@ cards), `handToDeckBottom` ("place 1 card from your hand at the bottom of your d
 `restCharacters` ("rest 2 of your Characters", with an optional `filter`), `toDeckBottom` ("place 1 of your Characters at the bottom of your deck"; `"zone": "stage"` for
 Stages, optional `filter`, `"side": "any"` for "place 1 Character with a cost of 2 or less at the
 bottom of the owner's deck", either player's), `trashToDeck` ("return 20 cards from your trash to your deck and shuffle
-it"), `koOwnCharacter` ("K.O. 1 of your Characters", optional `filter`), `koThis` ("K.O. this Character"), `trashOwnCharacter` ("trash 1
+it"), `koOwnCharacter` ("K.O. 1 of your Characters", optional `filter`; `"zone": "stage"` for "K.O. 1
+of your Stages"), `leaderPower` ("give your Leader −2000 power during this turn", rested or not), `koThis` ("K.O. this Character"), `trashOwnCharacter` ("trash 1
 of your Characters", not a K.O.; `"zone": "stage"` trashes your Stage, e.g. "1 [The Ark Noah] from
 your field"), `playFromHand` ("play 1
 [Kotori] from your hand"; the value is a filter),
@@ -367,6 +368,8 @@ conditional wording such as "[DON!! x2] This Character can also attack...".
 | `opponentDonMinus`               | "Your opponent returns 1 DON!! card from their field to their DON!! deck" (`"active": true`: only active ones).                                                                                                                                               |
 | `koImmunity`                     | Permanent: "This Character cannot be K.O.'d by effects of your opponent's Characters with 5000 base power or less" (`from` is the filter for those cards).                                                                                                    |
 | `restImmunity`                   | Permanent: "This Character cannot be rested by your opponent's Leader and Character effects" (`from` is the filter for those cards).                                                                                                                          |
+| `activateHandTrigger`            | "Reveal up to 1 ... card from your hand. Activate the [Trigger] effect of the revealed card" (`filter`). The card stays in hand.                                                                                                                              |
+| `shuffleDeck`                    | "Then, shuffle your deck."                                                                                                                                                                                                                                    |
 | `activateEvent`                  | "Activate up to 1 {Dressrosa} type Event ... from your hand" (`filter`): the Event is trashed and its [Main] effect happens without paying its cost.                                                                                                          |
 | `handToDeckShuffle`              | "Your opponent returns all cards in their hand to their deck and shuffles their deck. Then, your opponent draws 5 cards" (`side`, `draw`; `"draw": "returned"` draws as many as were returned).                                                               |
 | `cannotAttackLeader`             | "You cannot attack a Leader during this turn." Characters can still be attacked.                                                                                                                                                                              |
@@ -426,6 +429,13 @@ Step options:
 [steps]` for "If you do, draw 1 card" (only if a card was played).
 - `lifeToHand` takes `"from": "topOrBottom"` for "add 1 card from the top or bottom of your Life
   cards to your hand".
+- The `lifeToHand` and `trashLife` costs take `"all": true` for "add (trash) all of your Life
+  cards"; set the number to 1, the least the cost needs.
+- `handToLife` takes `"orBottom": true` for "to the top or bottom of your Life cards" (the player
+  answers a confirm; yes means the bottom).
+- `playFromTrash` takes `"orDeck": true` for "from your deck or trash"; follow it with a
+  `shuffleDeck` step ("Then, shuffle your deck").
+- `youPlayCharacter` takes `"fromTrash": true` for "when a Character is played from your trash".
 - `playFromHand` and `playFromTrash` take `"rested": true` for "play ... rested".
 - `playFromHand` takes `count` and `differentNames` like `playFromTrash` ("play up to 3 {Admiral}
   type Character cards with different card names"), and `totalCostAtMost` for "with a total cost

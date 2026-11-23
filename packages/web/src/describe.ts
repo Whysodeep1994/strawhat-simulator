@@ -301,6 +301,10 @@ function costText(cost: Cost): string {
   if ("trashThis" in cost) return "trash this card";
   if ("returnGivenDon" in cost)
     return `return ${cost.returnGivenDon} of your given DON!! cards to your cost area rested`;
+  if ("lifeToHand" in cost && cost.all) return "add all of your Life cards to your hand";
+  if ("trashLife" in cost && cost.all) return "trash all of your Life cards";
+  if ("leaderPower" in cost)
+    return `give your Leader −${Math.abs(cost.leaderPower)} power during this turn`;
   if ("lifeToHand" in cost) {
     const from = cost.from === "topOrBottom" ? "top or bottom" : "top";
     return `add ${cost.lifeToHand} card(s) from the ${from} of your Life cards to your hand`;
@@ -338,7 +342,7 @@ function costText(cost: Cost): string {
   if ("trashToDeck" in cost)
     return `return ${cost.trashToDeck} cards from your trash to your deck and shuffle it`;
   if ("koOwnCharacter" in cost)
-    return `K.O. ${cost.koOwnCharacter} of your Characters${withFilter(cost.filter)}`;
+    return `K.O. ${cost.koOwnCharacter} of your ${cost.zone === "stage" ? "Stages" : "Characters"}${withFilter(cost.filter)}`;
   if ("playFromHand" in cost) return `play 1${filterText(cost.playFromHand)} card from your hand`;
   if ("characterToLife" in cost)
     return `add ${cost.characterToLife} of your Characters${withFilter(cost.filter)} to the top of your Life cards${cost.faceUp ? " face-up" : ""}`;
@@ -412,7 +416,7 @@ function stepText(step: Step): string {
     case "redirectAttack":
       return `Change the target of the attack to ${targetText(step.target)}.`;
     case "handToLife":
-      return `Add up to ${step.count}${filterText(step.filter)} card(s) from your ${step.onlyTrash ? "trash" : step.fromTrash ? "hand or trash" : "hand"} to the top of your Life cards${step.faceUp ? " face-up" : ""}.`;
+      return `Add up to ${step.count}${filterText(step.filter)} card(s) from your ${step.onlyTrash ? "trash" : step.fromTrash ? "hand or trash" : "hand"} to the top${step.orBottom ? " or bottom" : ""} of your Life cards${step.faceUp ? " face-up" : ""}.`;
     case "trashFaceUpLife":
       return "Trash all your face-up Life cards.";
     case "trashDeckTop":
@@ -466,7 +470,11 @@ function stepText(step: Step): string {
         ? `Your opponent plays up to 1${filterText(step.filter)} card from their hand.`
         : `Play up to ${step.count ?? 1}${filterText(step.filter)} card(s)${step.differentNames ? " with different names" : ""}${step.totalCostAtMost !== undefined ? ` with a total cost of ${step.totalCostAtMost} or less` : ""} from your hand${step.orTrash ? " or trash" : ""}${step.differentColor ? " that is a different color than the returned card" : ""}${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
     case "playFromTrash":
-      return `Play up to ${step.count ?? 1}${filterText(step.filter)} card(s)${step.differentNames ? " with different names" : ""}${step.sameNameAsTrashed ? " with the same card name as the trashed card" : ""} from your trash${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
+      return `Play up to ${step.count ?? 1}${filterText(step.filter)} card(s)${step.differentNames ? " with different names" : ""}${step.sameNameAsTrashed ? " with the same card name as the trashed card" : ""} from your ${step.orDeck ? "deck or trash" : "trash"}${step.rested ? " rested" : ""}.${ifYouDoText(step.ifYouDo)}`;
+    case "shuffleDeck":
+      return "Shuffle your deck.";
+    case "activateHandTrigger":
+      return `Reveal up to 1${filterText(step.filter)} card from your hand. Activate the [Trigger] effect of the revealed card.`;
     case "playRested":
       return "Your Character cards are played rested.";
     case "trashFromDeck":

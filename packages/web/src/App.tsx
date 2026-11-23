@@ -513,7 +513,7 @@ export function App() {
               <p>Set sail for a game of the One Piece Card Game.</p>
             </header>
             <p className="news-banner" role="status">
-              <span className="news-tag">New</span> <strong>EB-05</strong> Heroines Edition vol.2 is
+              <span className="news-tag">New</span> <strong>OP-18</strong> The Dominance of God is
               now available for play!
             </p>
             {loadError ? (
