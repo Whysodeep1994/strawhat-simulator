@@ -293,7 +293,11 @@ function counterActions(state: GameState, player: PlayerId): Action[] {
   const actions: Action[] = [];
   for (const card of p.hand) {
     const def = definitionOf(state, card);
-    if (def.category === "character" && counterOf(state, player, card) > 0) {
+    // Stages can have a Counter given by an effect ("All Stage cards in your hand have a +3000 Counter").
+    if (
+      (def.category === "character" || def.category === "stage") &&
+      counterOf(state, player, card) > 0
+    ) {
       for (const target of targets)
         actions.push({ type: "counter", player, card: card.uid, target });
     }

@@ -338,6 +338,8 @@ function payCost(
     returnDon(state, frame.controller, cost.returnActiveDon, true);
   } else if ("activeLeaderPower" in cost) {
     state.modifiers.push({ target: p.leader.uid, power: cost.activeLeaderPower, until: "turn" });
+  } else if ("leaderPower" in cost) {
+    state.modifiers.push({ target: p.leader.uid, power: cost.leaderPower, until: "turn" });
   } else if ("revealFromHand" in cost) {
     // The cards stay in hand; the opponent sees them (rule 11-2-1).
     const options = p.hand.filter(
@@ -403,7 +405,8 @@ function payCost(
     }
     frame.memo = [];
   } else if ("lifeToHand" in cost) {
-    for (let i = frame.memo.length; i < cost.lifeToHand; i++) {
+    const total = cost.all ? frame.memo.length + p.life.length : cost.lifeToHand;
+    for (let i = frame.memo.length; i < total; i++) {
       let fromBottom = false;
       if (cost.from === "topOrBottom" && p.life.length > 1) {
         if (frame.answer === null) {
@@ -423,7 +426,8 @@ function payCost(
     }
     frame.memo = [];
   } else if ("trashLife" in cost) {
-    for (let i = frame.memo.length; i < cost.trashLife; i++) {
+    const total = cost.all ? frame.memo.length + p.life.length : cost.trashLife;
+    for (let i = frame.memo.length; i < total; i++) {
       let fromBottom = false;
       if (cost.from === "topOrBottom" && p.life.length > 1) {
         if (frame.answer === null) {
@@ -542,11 +546,14 @@ function payCost(
     p.trash = p.trash.filter((c) => !chosen.includes(c.uid));
     state.rng = shuffleInPlace(p.deck, state.rng);
   } else if ("koOwnCharacter" in cost) {
-    const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+    const pile = cost.zone === "stage" ? (p.stage ? [p.stage] : []) : p.characters;
+    const own = pile.filter((c) => matchesFilter(state, c, cost.filter, source));
     const n = cost.koOwnCharacter;
     const chosen = choose(state, frame, frame.controller, own, n, n, "ko");
     if (chosen === "wait") return "wait";
-    for (const uid of chosen) knockOut(state, uid, true);
+    for (const uid of chosen)
+      if (p.stage?.uid === uid) moveFieldCardToTrash(state, p.stage);
+      else knockOut(state, uid, true);
   } else if ("playFromHand" in cost) {
     if (frame.memo.length === 0) {
       const options = p.hand.filter(
@@ -1035,17 +1042,66 @@ function runStep(
     case "handToLife": {
       const pool = step.onlyTrash ? p.trash : [...p.hand, ...(step.fromTrash ? p.trash : [])];
       const options = pool.filter((c) => matchesFilter(state, c, step.filter, source, false));
-      const chosen =
-        options.length === 0
-          ? []
-          : choose(state, frame, controller, options, 0, step.count, step.do);
-      if (chosen === "wait") return "wait";
-      const cards = chosen.map((uid) => options.find((c) => c.uid === uid)).filter((c) => !!c);
+      let chosen: string[];
+      if (frame.memo[0] === "picked") chosen = frame.memo.slice(1) as string[];
+      else {
+        const picked =
+          options.length === 0
+            ? []
+            : choose(state, frame, controller, options, 0, step.count, step.do);
+        if (picked === "wait") return "wait";
+        chosen = picked;
+      }
+      // "To the top or bottom of your Life cards": accept means the bottom.
+      let toBottom = false;
+      if (step.orBottom && chosen.length > 0 && p.life.length > 0) {
+        if (frame.answer === null) {
+          frame.memo = ["picked", ...chosen];
+          state.prompt = {
+            kind: "confirm",
+            player: controller,
+            reason: "lifeToBottom",
+            source: chosen[0] as string,
+          };
+          return "wait";
+        }
+        toBottom = frame.answer === true;
+        frame.answer = null;
+      }
+      frame.memo = [];
+      const cards = chosen.map((uid) => pool.find((c) => c.uid === uid)).filter((c) => !!c);
       p.hand = p.hand.filter((c) => !chosen.includes(c.uid));
       p.trash = p.trash.filter((c) => !chosen.includes(c.uid));
       if (step.faceUp) for (const card of cards) card.faceUp = true;
-      p.life.unshift(...cards);
+      if (toBottom) p.life.push(...cards);
+      else p.life.unshift(...cards);
       return "continue";
+    }
+
+    case "shuffleDeck":
+      state.rng = shuffleInPlace(p.deck, state.rng);
+      return "continue";
+
+    case "activateHandTrigger": {
+      // The revealed card's [Trigger] runs on top; the card stays in hand (rule 10-1-5).
+      if (frame.memo.includes("activated")) return "continue";
+      const options = p.hand.filter(
+        (c) =>
+          c.uid !== source.uid &&
+          (definitionOf(state, c).effects ?? []).some((e) => e.timing === "trigger") &&
+          matchesFilter(state, c, step.filter, source, false),
+      );
+      const picked =
+        options.length === 0 ? [] : choose(state, frame, controller, options, 0, 1, step.do);
+      if (picked === "wait") return "wait";
+      const card = p.hand.find((c) => c.uid === picked[0]);
+      if (!card) return "continue";
+      frame.memo.push("activated");
+      const index = (definitionOf(state, card).effects ?? []).findIndex(
+        (e) => e.timing === "trigger",
+      );
+      pushEffect(state, controller, card.uid, index, undefined, true);
+      return "yield";
     }
 
     case "trashFaceUpLife": {
@@ -1246,7 +1302,9 @@ function runStep(
       const both = step.do === "playFromHand" && step.orTrash;
       const piles = both
         ? [owner.hand, owner.trash]
-        : [step.do === "playFromHand" ? owner.hand : owner.trash];
+        : step.do === "playFromTrash" && step.orDeck
+          ? [owner.trash, owner.deck]
+          : [step.do === "playFromHand" ? owner.hand : owner.trash];
       const played = step.played ?? [];
       const budget = step.do === "playFromHand" ? step.totalCostAtMost : undefined;
       // "A different color than the returned Character."
@@ -1874,7 +1932,15 @@ function playChosen(
   const fromTrash = pile === p.trash;
   const fromHand = pile === p.hand;
   pile.splice(index, 1);
-  putOnField(state, controller, card, trash, fromHand, findCard(state, frame.source) ?? undefined);
+  putOnField(
+    state,
+    controller,
+    card,
+    trash,
+    fromHand,
+    findCard(state, frame.source) ?? undefined,
+    fromTrash,
+  );
   if (rested) card.rested = true;
   // "When a {Land of Wano} type Character card is played from your trash, that Character gains [Rush]".
   if (fromTrash && rushFromTrash(state, controller, card))

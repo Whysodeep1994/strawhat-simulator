@@ -878,7 +878,8 @@ export function canPayCosts(
       return false;
     if ("trashToDeck" in cost) fromTrash += cost.trashToDeck;
     if ("koOwnCharacter" in cost) {
-      const own = p.characters.filter((c) => matchesFilter(state, c, cost.filter, source));
+      const pile = cost.zone === "stage" ? (p.stage ? [p.stage] : []) : p.characters;
+      const own = pile.filter((c) => matchesFilter(state, c, cost.filter, source));
       if (own.length < cost.koOwnCharacter) return false;
     }
     if ("playFromHand" in cost) {

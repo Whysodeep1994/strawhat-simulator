@@ -46,19 +46,28 @@ export function queueEffects(
   timing: Timing,
   about?: CardInstance,
   fromHand = false,
+  fromTrash = false,
 ): void {
   effectsOf(state, card).forEach((effect, index) => {
     if (effect.timing !== timing) return;
     if (about && !matchesFilter(state, about, effect.cardFilter, card)) return;
     if (effect.fromHand && !fromHand) return;
+    if (effect.fromTrash && !fromTrash) return;
     state.pendingEffects.push({ controller, source: card.uid, effect: index });
   });
 }
 
 /** Queues `timing` effects on the owner's other field cards about `card`. */
-function queueAbout(state: GameState, card: CardInstance, timing: Timing, fromHand = false): void {
+function queueAbout(
+  state: GameState,
+  card: CardInstance,
+  timing: Timing,
+  fromHand = false,
+  fromTrash = false,
+): void {
   for (const holder of fieldCards(state, card.owner))
-    if (holder.uid !== card.uid) queueEffects(state, card.owner, holder, timing, card, fromHand);
+    if (holder.uid !== card.uid)
+      queueEffects(state, card.owner, holder, timing, card, fromHand, fromTrash);
 }
 
 /**
@@ -196,6 +205,7 @@ export function putOnField(
   trash?: string,
   fromHand = false,
   byCharacter?: CardInstance,
+  fromTrash = false,
 ): void {
   const p = state.players[player];
   card.rested = false;
@@ -210,7 +220,7 @@ export function putOnField(
     p.characters.push(card);
     // "Your Character cards are played rested."
     if (playsRested(state, player)) card.rested = true;
-    queueAbout(state, card, "youPlayCharacter", fromHand);
+    queueAbout(state, card, "youPlayCharacter", fromHand, fromTrash);
     // "When your opponent plays a Character ..."
     const other = player === "p1" ? "p2" : "p1";
     for (const holder of fieldCards(state, other)) {
@@ -262,11 +272,14 @@ export function pushEffect(
   source: string,
   effect: number,
   amount?: number,
+  /** The card is in its owner's hand (a revealed card's [Trigger], see `activateHandTrigger`). */
+  inHand = false,
 ): void {
   const card =
     findOnField(state, source)?.card ??
     state.players[controller].trash.find((c) => c.uid === source) ??
-    (state.limbo?.uid === source ? state.limbo : null);
+    (state.limbo?.uid === source ? state.limbo : null) ??
+    (inHand ? state.players[controller].hand.find((c) => c.uid === source) : undefined);
   if (!card || !effectOf(state, card, effect)) return;
   const frame: Frame = {
     kind: "effect",
