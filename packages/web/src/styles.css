@@ -3572,9 +3572,9 @@ button.pile {
 .leader-pick {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  padding: 8px 12px 8px 8px;
+  padding: 6px 12px 6px 6px;
   border-radius: 10px;
   text-align: left;
   font: inherit;
@@ -3592,9 +3592,9 @@ button.pile {
 }
 .leader-thumb {
   flex: 0 0 auto;
-  width: 54px;
-  aspect-ratio: 600 / 838;
-  border-radius: 4px;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
   overflow: hidden;
   background: rgba(40, 25, 10, 0.25);
   box-shadow: 0 1px 4px rgba(40, 20, 5, 0.45);
@@ -3603,13 +3603,16 @@ button.pile {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Just the Leader's face: the top part of the card art, zoomed in. */
+  object-position: 50% 28%;
+  transform: scale(1.35);
   display: block;
 }
 .leader-thumb.mystery {
   display: grid;
   place-items: center;
   font:
-    700 1.6rem "Pirata One",
+    700 1.3rem "Pirata One",
     Georgia,
     serif;
   color: #fff4dc;
@@ -3622,17 +3625,28 @@ button.pile {
   min-width: 0;
 }
 .leader-row-text strong {
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .leader-row-text span {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  line-height: 1.2;
   color: var(--muted);
 }
 .leader-colors {
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+}
+.leader-sub {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .color-dot {
   display: inline-block;
@@ -3657,7 +3671,7 @@ button.pile {
   background: var(--paper-grain), var(--paper-stains), var(--parchment);
 }
 .leader-pop-list {
-  flex: 0 0 330px;
+  flex: 0 0 320px;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -3696,12 +3710,13 @@ button.pile {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 8px;
+  padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
 }
 .leader-option .leader-thumb {
-  width: 46px;
+  width: 34px;
+  height: 34px;
 }
 .leader-option.active {
   background: rgba(156, 52, 24, 0.14);
@@ -3727,7 +3742,7 @@ button.pile {
   align-items: flex-start;
 }
 .leader-pop-card img {
-  width: 170px;
+  width: 120px;
   flex: 0 0 auto;
   border-radius: 8px;
   box-shadow: 0 6px 16px rgba(40, 20, 5, 0.5);

@@ -136,15 +136,15 @@ export function LeaderPicker({
       if (!r) return;
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const width = Math.min(780, vw - 24);
+      const width = Math.min(680, vw - 24);
       const left = Math.max(12, Math.min(r.left, vw - width - 12));
       const below = vh - r.bottom - 12;
       const above = r.top - 12;
       const up = below < 320 && above > below;
       setPlace(
         up
-          ? { left, width, bottom: vh - r.top + 6, maxHeight: Math.min(600, above - 6) }
-          : { left, width, top: r.bottom + 6, maxHeight: Math.min(600, Math.max(240, below - 6)) },
+          ? { left, width, bottom: vh - r.top + 6, maxHeight: Math.min(520, above - 6) }
+          : { left, width, top: r.bottom + 6, maxHeight: Math.min(520, Math.max(240, below - 6)) },
       );
     };
     placeIt();
@@ -191,8 +191,8 @@ export function LeaderPicker({
   const onKey = (e: KeyboardEvent) => {
     if (e.key === "ArrowDown") move(1);
     else if (e.key === "ArrowUp") move(-1);
-    else if (e.key === "PageDown") move(6);
-    else if (e.key === "PageUp") move(-6);
+    else if (e.key === "PageDown") move(10);
+    else if (e.key === "PageUp") move(-10);
     else if (e.key === "Enter" && current) pick(current);
     else if (e.key === "Escape") close(true);
     else if (e.key === "Tab") close(false);
@@ -328,7 +328,10 @@ function optionClass(id: string, value: string, active: string | null): string {
   return ["leader-option", id === value ? "chosen" : "", id === active ? "active" : ""].join(" ");
 }
 
-/** A deck as one row: a small picture of its Leader card, its name, deck and colours. */
+/**
+ * A deck as one compact row: a small square of its Leader's art, the Leader's name, and a second
+ * line with the deck's colours, name and Life.
+ */
 function DeckRowFace({ deck, data }: { deck: PlayableDeck; data: CardData }) {
   const leader = data.catalog[deck.leader];
   const art = data.imageUrl(leader);
@@ -339,10 +342,12 @@ function DeckRowFace({ deck, data }: { deck: PlayableDeck; data: CardData }) {
       </span>
       <span className="leader-row-text">
         <strong>{leader?.name ?? deck.name}</strong>
-        <span>{deckSubtitle(deck)}</span>
         <span className="leader-colors">
           <ColorDots leader={leader} />
-          {leader ? `Life ${leader.life ?? "?"} · ${leader.power ?? "?"} power` : ""}
+          <span className="leader-sub">
+            {deckSubtitle(deck)}
+            {leader ? ` · Life ${leader.life ?? "?"}` : ""}
+          </span>
         </span>
       </span>
     </>
